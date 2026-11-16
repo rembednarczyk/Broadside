@@ -23,12 +23,17 @@ export interface CombatIntents {
   assault(): void;
 }
 
+export interface PortIntents {
+  trade(service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder", qty: number, ammo?: string): void;
+}
+
 export interface SettingsIntents {
   setLanguage(lang: "en" | "pl"): void;
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
   setColorMode(mode: string): void;
   toggleSettings(): void;
+  newGame(): void;
   toggleHud(): void;
   nextCamera(): void;
 }
@@ -37,5 +42,6 @@ export interface UiIntents {
   readonly helm: HelmIntents;
   readonly sails: SailIntents;
   readonly combat: CombatIntents;
+  readonly port: PortIntents;
   readonly settings: SettingsIntents;
 }

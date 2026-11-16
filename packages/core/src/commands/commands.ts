@@ -32,6 +32,8 @@ export type GameCommand =
   | { readonly type: "oars"; readonly ship: EntityId; readonly on: boolean }
   | { readonly type: "board"; readonly ship: EntityId; readonly target: EntityId }
   /** Land a storming party on a silenced fort within reach. */
-  | { readonly type: "assault"; readonly ship: EntityId; readonly fort: EntityId };
+  | { readonly type: "assault"; readonly ship: EntityId; readonly fort: EntityId }
+  /** Port services while alongside (port: index into the world's ports). */
+  | { readonly type: "trade"; readonly ship: EntityId; readonly port: number; readonly service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder"; readonly ammo?: AmmoId; readonly qty: number };
 
 export type CommandType = GameCommand["type"];

@@ -2,6 +2,10 @@ import { createRoot } from "react-dom/client";
 import { type ColorMode, CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
 import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
+import { localSaveStore } from "./save-store";
+import { readSave, writeSave } from "@broadside/persistence";
+import { type SimSnapshot } from "@broadside/sim";
+import { presentPort } from "./presenters/port-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
@@ -16,7 +20,10 @@ const touch = matchMedia("(pointer: coarse)").matches;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const weatherParam = params.get("weather");
 const weather = weatherParam && weatherParam in WEATHER ? (weatherParam as WeatherKind) : "fresh";
-const session = new GameSession({ seed, weather });
+// Continue the autosave if there is one (unless the address asks for a fresh seed).
+const store = localSaveStore();
+const saved = params.has("seed") ? null : await readSave(store, "autosave").catch(() => null);
+let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapshot) : new GameSession({ seed, weather });
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
 const GFX_KEY = "broadside.graphics";
 const readStored = (): string | null => {
@@ -52,6 +59,12 @@ patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, r
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
+  port: {
+    trade: (service, qty, ammo) => {
+      const p = useHud.getState().port;
+      if (p) session.trade(p.index, service, qty, ammo as AmmoId | undefined);
+    },
+  },
   combat: {
     fire: (mount, side) => session.fire(mount, side),
     loadAmmo: (ammo) => session.loadAmmo(ammo as AmmoId),
@@ -65,6 +78,11 @@ const intents: UiIntents = {
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+    newGame: () => {
+      session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
+      applyGraphics(graphics);
+      patchHud({ settingsOpen: false });
+    },
     toggleHud: () => patchHud({ hudHidden: !useHud.getState().hudHidden }),
     nextCamera: () => {
       const next = CAMERA_MODES[(CAMERA_MODES.indexOf(renderer.camera.mode) + 1) % CAMERA_MODES.length]!;
@@ -79,6 +97,12 @@ addEventListener("resize", () => renderer.resize());
 const audio = new SynthAudio();
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
+// Autosave every minute and when the app goes to the background (phones kill background apps).
+const autosave = () => void writeSave(store, "autosave", session.save(), new Date().toISOString());
+setInterval(autosave, 60_000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") autosave();
+});
 let noticeId = 0;
 const pushNotice = (key: string) => {
   if (useHud.getState().notices.some((n) => n.key === key)) return;
@@ -116,7 +140,14 @@ const frame = (now: number) => {
     frames = 0;
   }
   const me = session.sim.byId(session.playerId);
-  patchHud({ sailing: presentSailing(session.sim, session.playerId), combat: me ? presentCombat(me, session.sim.forts()) : null, target: me?.body ? presentTarget(session.sim, me) : null });
+  patchHud({
+    sailing: presentSailing(session.sim, session.playerId),
+    combat: me ? presentCombat(me, session.sim.forts()) : null,
+    target: me?.body ? presentTarget(session.sim, me) : null,
+    port: me?.body ? presentPort(session.sim, me) : null,
+    gold: session.sim.purse.gold,
+    provisions: session.sim.purse.provisions,
+  });
   requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);

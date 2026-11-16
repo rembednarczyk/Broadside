@@ -1,5 +1,5 @@
 import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
-import { STEP, Simulation, aimFor, aimForFort, fortToStorm } from "@broadside/sim";
+import { STEP, Simulation, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, fortToStorm, restore, snapshot } from "@broadside/sim";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -24,8 +24,18 @@ export class GameSession {
   private steering: -1 | 0 | 1 = 0;
   private course: number;
 
-  constructor(opts: SessionOptions) {
-    this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed) });
+  private readonly options: SimulationOptions;
+
+  /** A new game from a seed, or a saved one continued from its snapshot. */
+  constructor(opts: SessionOptions, saved?: SimSnapshot) {
+    this.options = { seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed) };
+    if (saved) {
+      this.sim = restore(saved, this.options.archipelago ?? null);
+      this.playerId = this.sim.player()!.id;
+      this.course = yawOf(this.sim.player()!.body!.rot);
+      return;
+    }
+    this.sim = new Simulation(this.options);
     const player = this.sim.spawnShip({ classId: "galleon", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
     this.playerId = player.id;
     this.course = 0.2;
@@ -39,6 +49,17 @@ export class GameSession {
     this.sim.spawnShip({ classId: "sloop", faction: "pirates", ...at(520, 650), heading: 3.6, speed: 3, ai: true });
     this.sim.spawnShip({ classId: "frigate", faction: "crown", ...at(1500, -300), heading: 4.2, speed: 3, ai: true });
     this.sim.spawnShip({ classId: "brig", faction: "republic", ...at(1700, 900), heading: 3.4, speed: 3, ai: true });
+  }
+
+  /** Memento of the game for the save slot. */
+  save(): SimSnapshot {
+    for (const e of [...this.sim.world.with("shot")]) this.sim.world.remove(e);
+    return snapshot(this.sim, this.options);
+  }
+
+  /** Port services while alongside a port (index into the world's ports). */
+  trade(port: number, service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder", qty: number, ammo?: AmmoId): void {
+    this.send({ type: "trade", ship: this.playerId, port, service, qty, ...(ammo ? { ammo } : {}) });
   }
 
   private send(cmd: GameCommand): void {

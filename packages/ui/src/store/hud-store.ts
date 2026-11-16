@@ -73,7 +73,22 @@ export interface GraphicsHud {
   readonly renderScale: number;
 }
 
+export interface PortHud {
+  readonly index: number;
+  readonly name: string;
+  readonly owner: string;
+  /** Null: the port refuses to trade (hostile). */
+  readonly factor: number | null;
+  readonly repairCost: number;
+  readonly crewMissing: number;
+  readonly crewCost: number;
+  readonly plunderValue: number;
+}
+
 export interface HudState {
+  readonly gold: number;
+  readonly provisions: number;
+  readonly port: PortHud | null;
   readonly graphics: GraphicsHud;
   readonly settingsOpen: boolean;
   readonly hudHidden: boolean;
@@ -88,6 +103,6 @@ export interface HudState {
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

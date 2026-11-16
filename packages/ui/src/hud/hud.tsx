@@ -6,6 +6,7 @@ import { CombatPanel } from "./combat-panel";
 import { TargetPanel } from "./target-panel";
 import { Notices } from "./notices";
 import { SettingsPanel } from "./settings-panel";
+import { PortPanel } from "./port-panel";
 import { useHud } from "../store/hud-store";
 import { isTextKey, text } from "../i18n/catalog";
 
@@ -30,6 +31,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       <CombatPanel intents={intents.combat} />
       <TargetPanel />
       <Notices />
+      <PortPanel intents={intents.port} />
       <SettingsPanel intents={intents.settings} />
       <div className="corner">
         <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>

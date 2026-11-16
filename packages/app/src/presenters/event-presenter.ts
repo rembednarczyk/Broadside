@@ -43,6 +43,10 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return "notice.struck";
     case "magazineExploded":
       return "notice.magazine";
+    case "gold":
+      return "notice.gold";
+    case "tradeRefused":
+      return "notice.tradeRefused";
     case "fortSilenced":
       return "notice.fortSilenced";
     case "fortCaptured":

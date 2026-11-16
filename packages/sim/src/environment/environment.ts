@@ -15,8 +15,8 @@ export interface Environment {
   swell: number;
   waves: GerstnerWave[];
   /** Dynamic weather, or null for a fixed wind (tests, set pieces). */
-  readonly weather: WeatherState | null;
-  readonly weatherRng: Rng;
+  weather: WeatherState | null;
+  weatherRng: Rng;
   /** Seconds left of a rogue wave group (raised swell). */
   rogue: number;
   /** Islands and seabed, or null for open sea. */

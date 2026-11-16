@@ -107,7 +107,7 @@ export const damageFort = (events: EventQueue, fe: Entity, by: number, mass: num
 };
 
 /** Storming party: up to two thirds of the crew against the garrison (Lanchester-style ratio). */
-export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng): void => {
+export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng, onCapture: (gold: number) => void = () => {}): void => {
   const f = fe.fort!;
   const s = ship.ship!;
   if (!f.silenced) return;
@@ -127,6 +127,7 @@ export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng):
     f.hp = f.def.hp * 0.5;
     f.provokedBy = null;
     events.push({ type: "fortCaptured", fort: fe.id, by: ship.id, gold: f.def.treasury });
+    onCapture(f.def.treasury);
   } else {
     const lost = Math.ceil(party * 0.6);
     s.crew -= lost;

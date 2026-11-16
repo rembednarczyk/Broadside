@@ -3,6 +3,8 @@ import { type HandlerTable } from "./handler";
 import { loadAmmo, orderFire } from "../combat/gunnery";
 import { drop } from "../combat/drops";
 import { assault } from "../combat/forts";
+import { trade } from "../economy/trade";
+import { credit } from "../economy/purse";
 
 /** Bracing for impact: the crew takes cover for a few seconds (less damage, no firing). */
 const BRACE_SECONDS = 3;
@@ -20,8 +22,11 @@ export const combatHandlers: HandlerTable = {
   drop: (e, cmd, ctx) => {
     drop(ctx.world, ctx.events, e, cmd.ammo);
   },
+  trade: (e, cmd, ctx) => {
+    if (e.player) trade(e, cmd, ctx);
+  },
   assault: (e, cmd, ctx) => {
-    for (const f of ctx.world.with("fort")) if (f.id === cmd.fort) assault(ctx.events, e, f, ctx.rng);
+    for (const f of ctx.world.with("fort")) if (f.id === cmd.fort) assault(ctx.events, e, f, ctx.rng, (gold) => e.player && ctx.purse && credit(ctx.purse, ctx.events, gold, "fort"));
   },
   brace: (e) => {
     e.ship.braced = BRACE_SECONDS;

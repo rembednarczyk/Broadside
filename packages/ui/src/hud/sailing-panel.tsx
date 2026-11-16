@@ -8,6 +8,8 @@ const LEVELS = [0, 1, 2, 3, 4] as const;
 export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
   const s = useHud((h) => h.sailing);
   const lang = useHud((h) => h.language);
+  const gold = useHud((h) => h.gold);
+  const days = useHud((h) => h.provisions);
   if (!s) return null;
   const target = s.sailTargets[0] ?? 0;
   const bft = `bft.${s.beaufort}`;
@@ -24,6 +26,10 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
         <span className="value">{s.windKnots.toFixed(0)} {text(lang, "hud.knots")} · {isTextKey(bft) ? text(lang, bft) : ""}</span>
       </div>
       {s.weather && isTextKey(`weather.${s.weather}`) && <div className="row"><span className="label" /><span className="value">{text(lang, `weather.${s.weather}` as TextKey)}</span></div>}
+      <div className="row">
+        <span className="label">{text(lang, "hud.gold")}</span>
+        <span className="value" data-testid="gold">{gold} · {days.toFixed(0)} {text(lang, "hud.days")}</span>
+      </div>
       <div className="row">
         <span className="label">{text(lang, "hud.heel")}</span>
         <span className="value">{s.heelDeg.toFixed(0)}°</span>

@@ -1,4 +1,4 @@
-import { type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
+import { portSites, type PortSite, type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { type Environment, createEnvironment, stepEnvironment } from "./environment/environment";
 import { type SimContext, type System } from "./systems/context";
 import { createSystems } from "./systems/registry";
@@ -10,6 +10,7 @@ import { type FactionId, createShipState } from "./ship/ship-state";
 import { applyCommand } from "./commands/apply";
 import { createCaptain } from "./ai/captain-state";
 import { createFort } from "./combat/forts";
+import { type Purse, createPurse } from "./economy/purse";
 
 /** Bigger guns stand off; light ships close in (metres). */
 const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, galleon: 230, frigate: 260, liner: 280 })[id];
@@ -48,14 +49,28 @@ export class Simulation {
   readonly env: Environment;
   readonly events = new EventQueue();
   private readonly systems: readonly System[] = createSystems();
-  private readonly ctx: SimContext;
-  private nextId = 1;
+  private ctx: SimContext;
+  /** Next entity id (public for save and restore). */
+  nextId = 1;
+  readonly purse: Purse = createPurse();
+  readonly ports: readonly PortSite[];
   private pending: GameCommand[] = [];
   steps = 0;
 
   constructor(opts: SimulationOptions) {
     this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null);
-    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed) };
+    this.ports = opts.archipelago ? portSites(opts.archipelago) : [];
+    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports };
+  }
+
+  /** Generator state of the simulation's random stream (for saves). */
+  rngState(): number {
+    return this.ctx.rng.state();
+  }
+
+  /** Continues the random stream from a saved state (createRng with a state resumes it exactly). */
+  restoreRng(state: number): void {
+    this.ctx = { ...this.ctx, rng: createRng(state) };
   }
 
   spawnShip(spec: SpawnShip): Entity {

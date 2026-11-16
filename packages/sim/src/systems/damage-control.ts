@@ -1,4 +1,11 @@
-import { rollOf } from "@broadside/core";
+import { prizeMoney, rollOf } from "@broadside/core";
+import { credit } from "../economy/purse";
+import { type SimContext } from "./context";
+
+const isPlayer = (ctx: SimContext, id: number): boolean => {
+  for (const e of ctx.world.with("player")) if (e.id === id) return true;
+  return false;
+};
 import { type System } from "./context";
 import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -61,6 +68,10 @@ export const damageControlSystem: System = (ctx, dt) => {
       if (s.sunkFor > SINK_AFTER && e.ttl === undefined) {
         ctx.world.addComponent(e, "ttl", REMOVE_AFTER - SINK_AFTER);
         ctx.events.push({ type: "shipSunk", ship: e.id, by: s.lastHitBy });
+        if (ctx.purse && s.lastHitBy !== null && isPlayer(ctx, s.lastHitBy)) {
+          credit(ctx.purse, ctx.events, prizeMoney(s.model.def.price, false), "prize");
+          ctx.purse.plunder += Math.floor(s.model.def.hold * 15);
+        }
       }
       continue;
     }
