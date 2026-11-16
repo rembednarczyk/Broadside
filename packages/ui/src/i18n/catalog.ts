@@ -5,6 +5,9 @@
 export const EN = {
   "hud.speed": "Speed",
   "settings.title": "Settings",
+  "camera.chase": "Chase",
+  "camera.cinematic": "Cinematic",
+  "camera.deck": "Deck",
   "settings.graphics": "Graphics",
   "settings.resolution": "Resolution",
   "settings.language": "Language",
@@ -99,6 +102,9 @@ export type TextKey = keyof typeof EN;
 export const PL: Record<TextKey, string> = {
   "hud.speed": "Prędkość",
   "settings.title": "Ustawienia",
+  "camera.chase": "Pościg",
+  "camera.cinematic": "Filmowa",
+  "camera.deck": "Pokład",
   "settings.graphics": "Grafika",
   "settings.resolution": "Rozdzielczość",
   "settings.language": "Język",

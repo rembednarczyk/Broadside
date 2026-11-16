@@ -94,8 +94,11 @@ export const rigPlan = (def: ShipClassDef): RigPlan => {
       }
       if (!gaffDone && s.ceHeight >= highestFa && (mi > 0 || def.masts.length === 1)) {
         gaffDone = true;
-        const height = H * 0.5;
-        sails.push({ mast: mi, sail: si, shape: "gaff", width: s.area / (height * 0.85), height, foot: F + 1.6, nodeZ: m.z, nodeY: 0, setFrom: 0, setSpan: 1, yard: true, emblem: false });
+        // A boom never reaches past the taffrail: the sail grows taller instead.
+        const maxWidth = m.z + h.length / 2 - 0.5;
+        const width = Math.min(maxWidth, s.area / (H * 0.5 * 0.85));
+        const height = Math.min(H * 0.75, s.area / (width * 0.85));
+        sails.push({ mast: mi, sail: si, shape: "gaff", width, height, foot: F + 1.6, nodeZ: m.z, nodeY: 0, setFrom: 0, setSpan: 1, yard: true, emblem: false });
         return;
       }
       // Head sails: a jib from the foremast head to the bowsprit, and a spritsail below it.

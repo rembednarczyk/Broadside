@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
+import { CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
 import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { presentSailing } from "./presenters/sailing-presenter";
@@ -56,6 +56,12 @@ const intents: UiIntents = {
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset)),
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+    toggleHud: () => patchHud({ hudHidden: !useHud.getState().hudHidden }),
+    nextCamera: () => {
+      const next = CAMERA_MODES[(CAMERA_MODES.indexOf(renderer.camera.mode) + 1) % CAMERA_MODES.length]!;
+      renderer.camera.mode = next;
+      patchHud({ cameraMode: next });
+    },
   },
 };
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);

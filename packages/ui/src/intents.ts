@@ -27,6 +27,8 @@ export interface SettingsIntents {
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
   toggleSettings(): void;
+  toggleHud(): void;
+  nextCamera(): void;
 }
 
 export interface UiIntents {

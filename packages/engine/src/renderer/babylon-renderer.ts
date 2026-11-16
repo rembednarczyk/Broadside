@@ -148,7 +148,15 @@ export class BabylonRenderer {
         this.camera.frameShip(player.ship!.model.def.hull.length, Math.max(...player.ship!.model.def.masts.map((m) => m.height)));
         this.camera.snap(p.x, p.y, p.z);
         this.framed = true;
-      } else this.camera.follow(p.x, p.y, p.z, dt);
+      } else {
+        const r = player.body.rot;
+        const h = player.ship!.model.def.hull;
+        const c = player.ship!.model.com;
+        // Eye in the waist, off the centreline between main and mizzen, a man's height above the
+        // deck (the reference's deck shot looks up the mainmast through the shrouds).
+        const deckY = h.freeboard + 1.8 - c.y;
+        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [h.beam * 0.3, deckY, -h.length * 0.16 - c.z], length: h.length }, dt);
+      }
     }
     this.applyLook(look);
     const cam = this.camera.camera.position;
