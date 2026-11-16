@@ -121,10 +121,19 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   const want = chooseAmmo(s, t.ship!, range);
   if (s.ammoLoad.broadside !== want && sideLoaded(s, c.side) === 0) cmds.push({ type: "loadAmmo", ship: me.id, mount: "broadside", ammo: want });
   if (range < effective && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range: aimRange, bearing: brg });
+  // Special loads, as the player has them: Greek fire from the bow chaser at close quarters,
+  // rockets from the swivels into the rigging at middle range.
+  // With some hysteresis: a change of load costs a full reload.
+  const fireNow = s.ammoLoad.bowChaser === "greekFire";
+  const bowWant: AmmoId = range < (fireNow ? 95 : 60) && (s.stores.greekFire ?? 0) > 0 ? "greekFire" : "round";
+  if (s.ammoLoad.bowChaser !== bowWant && s.model.guns.some((g) => g.kind === "bowChaser")) cmds.push({ type: "loadAmmo", ship: me.id, mount: "bowChaser", ammo: bowWant });
+  const rocketsNow = s.ammoLoad.swivel === "rocket";
+  const swivelWant: AmmoId = range > (rocketsNow ? 70 : 100) && range < (rocketsNow ? 220 : 190) && (s.stores.rocket ?? 0) > 0 ? "rocket" : "grape";
+  if (s.ammoLoad.swivel !== swivelWant && s.model.guns.some((g) => g.kind === "swivel")) cmds.push({ type: "loadAmmo", ship: me.id, mount: "swivel", ammo: swivelWant });
   if (range < 420 && Math.abs(rel) < 0.18) cmds.push({ type: "fire", ship: me.id, mount: "bowChaser", range: aimRange, bearing: brg });
   if (range < 380 && Math.abs(wrapAngle(rel - Math.PI)) < 0.2) cmds.push({ type: "fire", ship: me.id, mount: "sternChaser", range: aimRange, bearing: brg });
   if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
-  if (range < 120) cmds.push({ type: "fire", ship: me.id, mount: "swivel", side: rel >= 0 ? "starboard" : "port", range });
+  if (range < (s.ammoLoad.swivel === "rocket" ? 200 : 120)) cmds.push({ type: "fire", ship: me.id, mount: "swivel", side: rel >= 0 ? "starboard" : "port", range });
   // Close aboard with a stronger crew: grapple and board (pirates love it).
   const boarders = s.faction === "pirates" ? 1.1 : 1.6;
   if (canBoard(me, t) && s.crew > t.ship!.crew * boarders) cmds.push({ type: "board", ship: me.id, target: t.id });
