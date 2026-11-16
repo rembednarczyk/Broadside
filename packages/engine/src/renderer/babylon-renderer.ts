@@ -6,7 +6,7 @@ import { type GraphicsSettings } from "../graphics-settings";
 import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
-import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
+import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
@@ -106,9 +106,7 @@ export class BabylonRenderer {
     this.ambient.diffuse = new Color3(look.ambient.r * 1.9, look.ambient.g * 1.9, look.ambient.b * 1.9);
     this.ambient.groundColor = new Color3(look.ambient.r * 0.5, look.ambient.g * 0.65, look.ambient.b * 0.7);
     this.ambient.intensity = 1;
-    // Sail cloth is translucent: the sun shows through from behind (cheap transmission term).
-    const glow = 0.05 + 0.1 * Math.min(1, look.sunIntensity / 2);
-    this.materials.sail.emissiveColor = new Color3(glow * look.sunColor.r, glow * look.sunColor.g, glow * 0.95 * look.sunColor.b);
+    setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
     // Haze lit by the sun behind it: a brighter, warmer fog than the bare horizon colour.

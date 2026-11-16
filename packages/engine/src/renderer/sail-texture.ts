@@ -115,3 +115,21 @@ export const paintSail = (ctx: SailPaint, size: number, faction: FactionId, with
   ctx.globalAlpha = 1;
   if (withEmblem) emblem(ctx, faction, size / 2, size * 0.52, size * 0.3);
 };
+
+/**
+ * Glow map of an emblem sail: lanterns hung behind the canvas light the emblem from within at
+ * night (reference s. 11-13). Black everywhere but a soft warm disc behind the emblem.
+ */
+export const paintSailGlow = (ctx: SailPaint & { createRadialGradient?: unknown }, size: number): void => {
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgb(0,0,0)";
+  ctx.fillRect(0, 0, size, size);
+  for (let r = 10; r > 0; r--) {
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = "rgb(255,170,70)";
+    ctx.beginPath();
+    ctx.arc(size / 2, size * 0.52, (size * 0.32 * r) / 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+};

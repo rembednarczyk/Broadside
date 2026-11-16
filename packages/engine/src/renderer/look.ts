@@ -30,8 +30,9 @@ const DAY_ZENITH = rgb(0.16, 0.36, 0.72);
 const DAY_HORIZON = rgb(0.66, 0.78, 0.9);
 const DUSK_ZENITH = rgb(0.18, 0.2, 0.42);
 const DUSK_HORIZON = rgb(0.98, 0.58, 0.32);
-const NIGHT_ZENITH = rgb(0.01, 0.015, 0.04);
-const NIGHT_HORIZON = rgb(0.03, 0.05, 0.09);
+// Night under cloud is dark but legible (moonlight through overcast, as the reference's night shots).
+const NIGHT_ZENITH = rgb(0.05, 0.055, 0.07);
+const NIGHT_HORIZON = rgb(0.11, 0.115, 0.13);
 const STORM = rgb(0.32, 0.35, 0.38);
 
 /**
@@ -56,7 +57,7 @@ export const sceneLook = (hours: number, overcast: number, fog: number): SceneLo
   horizon = mix(horizon, stormTint, cover * 0.8);
   const sunColor = mix(rgb(1, 0.97, 0.9), rgb(1, 0.6, 0.3), golden);
   const sunIntensity = day * (1 - 0.8 * cover) * 2.2;
-  const ambient = scale(mix(horizon, zenith, 0.5), 0.55 + 0.3 * cover);
+  const ambient = scale(mix(horizon, zenith, 0.5), (0.55 + 0.3 * cover) * (1 + 0.8 * (1 - day)));
   const fogDensity = 0.0006 + 0.0012 * cover + 0.006 * clamp01(fog);
   return { sunDir, sunColor, sunIntensity, ambient, skyZenith: zenith, skyHorizon: horizon, fogColor: horizon, fogDensity, cloudCover: cover };
 };

@@ -56,6 +56,8 @@ if (cam) {
 await page.waitForTimeout(3000);
 await page.screenshot({ path: join(outDir, "scene.png") });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));
+// Optional diagnostics: SHOT_EVAL is a function body (b) => value, printed as JSON.
+if (process.env.SHOT_EVAL) console.log("eval:", JSON.stringify(await page.evaluate(new Function("return ((b) => { " + process.env.SHOT_EVAL + " })(globalThis.__broadside)"))));
 console.log(JSON.stringify(stats));
 for (const l of logs.filter((l) => /error|warn/i.test(l)).slice(0, 20)) console.log(l);
 await browser.close();

@@ -6,7 +6,7 @@ import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
-import { type SailPaint, paintSail } from "./sail-texture";
+import { type SailPaint, paintSail, paintSailGlow } from "./sail-texture";
 
 /**
  * Visual of one ship, built from its class (hull lines, rig plan) and synced each frame from
@@ -71,7 +71,29 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;
+  if (emblem) {
+    const glow = new DynamicTexture(`${key}-glow`, { width: 128, height: 128 }, scene, true);
+    paintSailGlow(glow.getContext() as unknown as SailPaint, 128);
+    glow.update(true);
+    m.emissiveTexture = glow;
+  }
   return m;
+};
+
+/**
+ * Night lighting of the ships: emblem sails and gallery windows glow as the daylight goes
+ * (emissive scaled by darkness, so they stay invisible by day as in the reference).
+ */
+export const setNightGlow = (scene: Scene, darkness: number): void => {
+  const k = Math.max(0, Math.min(1, darkness));
+  for (const m of scene.materials) {
+    // StandardMaterial adds the emissive colour everywhere and the emissive texture on top:
+    // the colour stays black, the glow map's level carries the strength.
+    if (!(m instanceof StandardMaterial)) continue;
+    if (m.name.startsWith("sail-") || m.name === "castle") m.emissiveColor = Color3.Black();
+    if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 3 * k;
+    if (m.name === "castle" && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * k;
+  }
 };
 
 export class ShipView {
