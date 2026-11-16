@@ -95,10 +95,28 @@ vec3 skyColor(vec3 dir) {
   return sky;
 }
 
+vec3 underside(vec3 v, vec3 n, float dist) {
+  // Seen from below: inside Snell's window (about 48.6 deg from the zenith, critical angle of
+  // water) the sky shows through, bright and blurred; outside it total internal reflection
+  // mirrors the dark depths.
+  vec3 up = -v;
+  float c = dot(up, -n);
+  float window = smoothstep(0.62, 0.7, c);
+  float sun = pow(max(dot(refract(up, -n, 1.33), sunDirection), 0.0), 40.0);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.6 + sunColor * sun * 4.0;
+  vec3 deep = vec3(0.02, 0.1, 0.1);
+  vec3 col = mix(deep, sky, window);
+  return mix(col, vec3(0.02, 0.13, 0.12), 1.0 - exp(-0.035 * dist));
+}
+
 void main() {
   vec3 viewVec = cameraPosition - vWorld;
   float dist = length(viewVec);
   vec3 v = viewVec / dist;
+  if (dot(viewVec, vNormal) < 0.0) {
+    gl_FragColor = vec4(underside(v, vNormal, dist), 1.0);
+    return;
+  }
   // Small ripples from noise, faded with distance to avoid shimmering.
   float ripple = (1.0 - smoothstep(20.0, 160.0, dist)) * 0.07;
   vec2 rp = vWorld.xz * 0.22 + vec2(time * 0.3, time * 0.18);

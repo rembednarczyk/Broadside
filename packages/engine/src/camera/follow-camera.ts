@@ -14,7 +14,8 @@ export class FollowCamera {
   constructor(scene: Scene, canvas: HTMLCanvasElement | null) {
     this.camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.22, 70, Vector3.Zero(), scene);
     this.camera.lowerBetaLimit = 0.35;
-    this.camera.upperBetaLimit = 1.45;
+    // Below the horizon the camera can dip under the sea (as the reference does).
+    this.camera.upperBetaLimit = 1.78;
     this.camera.lowerRadiusLimit = 18;
     this.camera.upperRadiusLimit = 260;
     this.camera.wheelDeltaPercentage = 0.01;

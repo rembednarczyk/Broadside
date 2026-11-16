@@ -1,13 +1,13 @@
 # Referencja wizualna (klip od użytkownika, 16.11)
 
-Źródło: klip 894×720, 30 kl./s, 31,2 s (bitwa morska w stylu filmowym). Klatki co sekundę: `frames/ref_01.jpg` … `ref_31.jpg`
-(640 px). Porównanie gry z klatką: `tools/shots/compare.sh <zrzut.png> <klip.mp4> <sekunda> <wyjście.jpg>`.
+Źródło: klip 894×720, 30 kl./s, 31,2 s (936 klatek, bitwa morska w stylu filmowym). Zapisana co 5. klatka (6 na sekundę):
+`frames/ref_001.jpg` … `ref_188.jpg` (640 px); klatka `ref_N` to sekunda `(N - 1) / 6`. Porównanie gry z klatką: `tools/shots/compare.sh <zrzut.png> <klip.mp4> <sekunda> <wyjście.jpg>`.
 To jest punkt odniesienia dla każdej zmiany wizualnej: zrzut przed/po zestawiamy z najbliższą klatką.
 
-## Przebieg klipu
-| Klatki | Ujęcie |
+## Przebieg klipu (sekundy)
+| Sekundy | Ujęcie |
 |---|---|
-| 01–08 | Galeon z rufy i z ćwiartki, kamera nisko nad wodą (2–5 m), pod słońce; ścieżka iskier od słońca do kamery |
+| 0–8 | Galeon z rufy i z ćwiartki, kamera nisko nad wodą (2–5 m), pod słońce; ścieżka iskier od słońca do kamery |
 | 09–11 | Statek z boku, ciemniejsze niebo, mniej odblasku; burta i kasztel rufowy z załogą |
 | 12–13 | Zmierzch/noc w burzy: statek od dziobu, świecące godła na żaglach (ciepłe światło), latarnie |
 | 14–18 | Kamera za rufą, statek pod słońce; wysoka, płaska pawęż z relingiem i postaciami; klify we mgle |
@@ -18,12 +18,26 @@ To jest punkt odniesienia dla każdej zmiany wizualnej: zrzut przed/po zestawiam
 | 27–28 | Pod wodą: turkus, okno Snella z rozmytym słońcem, promienie w toni, ciemność w głębi; linia wody rozmyta |
 | 29–31 | Nad wodą z kroplami na obiektywie, gęsta mgła, klify o płaskich szczytach |
 
+## Obserwacje z pełnego przeglądu (188 klatek)
+- Ruch kamery: tuż nad wodą (1–3 m) jedzie po fali; grzbiety przechodzą przez kadr i zanurzają obiektyw (s. 21–23):
+  rozmyta linia wody przez środek kadru, potem pod wodą, po wynurzeniu krople na szkle do końca klipu (s. 26–31).
+- Ławice mgły: jasna, gęsta mgła przesuwa się przez kadr i na sekundę zakrywa statek do bieli (s. 8–9), potem odsłania.
+- Piorun (s. 21): klatka pełnego zbielenia, następnie widoczna rozgałęziona błyskawica do wody z rozbłyskiem na powierzchni,
+  przez ok. 0,5 s chłodny, niebieskawy odcień całej sceny, potem powrót sepii.
+- Noc w burzy (s. 11–13): ciemne, kłębiaste niebo z jasnymi krawędziami, godła na żaglach świecą ciepło (latarnie za płótnem),
+  latarnia na rufie, statek od dziobu z bukszprytem w górę.
+- Rozmycie ruchu: radialne smugi na wodzie przy szybkim obrocie i najeździe kamery (s. 3, 13, 20, 24).
+- Ujęcie z pokładu (s. 17–18): tarcza słońca między żaglami, wanty z drabinkami pod światło, deski pokładu z odblaskiem.
+- Statek: wyraźnie kołysze się i przegłębia; żagle fokmasztu częściowo zwinięte i postrzępione; 6–8 postaci na relingu rufy.
+- Woda: ścieżka iskier jest szeroka i sięga od statku do kamery; iskry świecą też w kilwaterze; fala krótka, ostra, ciemna.
+
 ## Cechy do odwzorowania (stan: ✔ jest, ◐ częściowo, ✘ brak)
 ### Kolor i światło
 - ◐ monochromatyczna sepia, mocny kontrast, prześwietlone niebo przy słońcu, czarne cienie (grade split-tone)
 - ◐ silny bloom wokół słońca, mgiełka obiektywu
 - ◐ promienie słońca przez omasztowanie i chmury
-- ✘ błysk pioruna: cała scena na chwilę biało-niebieska, piorun z rozgałęzieniami do wody
+- ◐ błysk pioruna: zbielenie, potem niebieskawy odcień ok. 0,5 s, rozgałęziona błyskawica do wody z rozbłyskiem
+- ✘ ławice mgły przesuwające się przez scenę
 
 ### Niebo i atmosfera
 - ◐ chmury kłębiaste o ciemnych podstawach i jasnych krawędziach, jasne jądro słońca, dziury w chmurach

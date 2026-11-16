@@ -1,7 +1,8 @@
 import { type Simulation } from "@broadside/sim";
-import { Effect, PostProcess, Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, type Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
+import { Effect, Matrix, PostProcess, Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, type Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
 import { GRADE_FRAGMENT } from "../shaders/grade";
+import { createDropTexture } from "./lens-drops";
 import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
@@ -9,7 +10,7 @@ import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
-import { type DomainEvent } from "@broadside/core";
+import { type DomainEvent, waterHeight } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -47,6 +48,9 @@ export class BabylonRenderer {
   private readonly weather: WeatherView;
   private coast: FarCoast | null = null;
   private sunDisc: Mesh | null = null;
+  /** Screen-space state of the final pass, updated per frame. */
+  private screen = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0 };
+  private dropsLeft = 0;
 
   constructor(opts: RendererOptions) {
     this.engine = new Engine(opts.canvas, opts.quality === "high", { preserveDrawingBuffer: true, stencil: true }, true);
@@ -112,10 +116,19 @@ export class BabylonRenderer {
     p.imageProcessing.colorCurves = curves;
     // Sepia split-tone after the pipeline (the reference's monochrome warmth).
     Effect.ShadersStore["gradeFragmentShader"] = GRADE_FRAGMENT;
-    const grade = new PostProcess("grade", "grade", ["amount", "contrast"], null, 1, this.camera.camera);
+    const grade = new PostProcess("grade", "grade", ["amount", "contrast", "drops", "underwater", "depth", "sunScreen", "flash", "time"], ["dropSampler"], 1, this.camera.camera);
+    const dropTex = createDropTexture(this.scene);
     grade.onApply = (e) => {
+      const f = this.screen;
+      e.setTexture("dropSampler", dropTex);
       e.setFloat("amount", 0.72);
       e.setFloat("contrast", 1.12);
+      e.setFloat("drops", f.drops);
+      e.setFloat("underwater", f.underwater ? 1 : 0);
+      e.setFloat("depth", f.depth);
+      e.setFloat2("sunScreen", f.sunX, f.sunY);
+      e.setFloat("flash", this.weather.flash);
+      e.setFloat("time", f.time);
     };
     p.bloomThreshold = 0.8;
     p.bloomWeight = 0.35;
@@ -221,6 +234,7 @@ export class BabylonRenderer {
     }, sim.env.windSpeed);
     const ws = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
+    this.updateScreen(sim, look, dt);
     this.syncShips(sim);
     this.effects.frame(sim, dt);
     this.weather.frame(sim, dt);
@@ -229,6 +243,25 @@ export class BabylonRenderer {
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
     }
     this.scene.render();
+  }
+
+  /**
+   * Under or above the water, where the sun is on screen, how wet the lens is. Underwater the
+   * scene fog turns into water: teal and thick (light falls off within tens of metres).
+   */
+  private updateScreen(sim: Simulation, look: SceneLook, dt: number): void {
+    const cam = this.camera.camera.position;
+    const surface = waterHeight(sim.env.waves, cam.x, cam.z, sim.env.time);
+    const under = cam.y < surface - 0.05;
+    if (this.screen.underwater && !under) this.dropsLeft = 4;
+    this.dropsLeft = Math.max(0, this.dropsLeft - dt);
+    const rain = sim.env.weather?.rain ?? 0;
+    const sun = Vector3.Project(cam.add(new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z).scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
+    this.screen = { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time };
+    if (under) {
+      this.scene.fogColor = new Color3(0.02, 0.13, 0.12);
+      this.scene.fogDensity = 0.035;
+    }
   }
 
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */

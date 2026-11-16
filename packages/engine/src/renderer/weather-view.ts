@@ -85,7 +85,7 @@ export class WeatherView {
     const wz = Math.cos(sim.env.windDirection) * sim.env.windSpeed;
     this.rain.direction1.set(wx * 0.04, -1, wz * 0.04);
     this.rain.direction2.set(wx * 0.05, -1, wz * 0.05);
-    this.flash = Math.max(0, this.flash - dt * 4);
+    this.flash = Math.max(0, this.flash - dt * 1.6);
     if (this.boltLife > 0) {
       this.boltLife -= dt;
       if (this.boltLife <= 0) {
