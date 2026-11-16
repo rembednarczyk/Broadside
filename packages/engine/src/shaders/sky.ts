@@ -93,14 +93,21 @@ void main() {
         float up = clamp((e - base) / max(tops - base, 1e-3), 0.0, 1.0);
         // Dark at the base, lighter up the heap; the side towards the sun and the thin rims glow.
         float sunSide = pow(max(dot(ring, normalize(sunDirection.xz + 1e-5)), 0.0), 2.0);
-        float rim = smoothstep(0.02, 0.0, edge) * (0.4 + 1.6 * sunSide) * sunUp;
+        float rim = smoothstep(0.025, 0.0, edge) * (0.5 + 2.2 * sunSide) * sunUp;
         vec3 baseCol = mix(skyHorizon * 0.35, vec3(0.05), cloudCover * 0.6);
         vec3 topCol = mix(skyHorizon * 0.9, sunColor, 0.25 + 0.5 * sunSide) * (0.55 + 0.45 * sunUp);
-        vec3 heap = mix(baseCol, topCol, pow(up, 0.7) * (0.6 + 0.4 * puff)) + sunColor * rim * 0.6;
+        vec3 heap = mix(baseCol, topCol, pow(up, 0.7) * (0.6 + 0.4 * puff)) + sunColor * rim * 0.8;
         // Farther banks sink into the haze.
         col = mix(col, mix(heap, skyHorizon, 0.25 + fk * 0.35), bank * (0.95 - fk * 0.25));
       }
     }
+  }
+  // Haze over the horizon (aerial perspective of the sea air), brighter under the sun.
+  {
+    float e = asin(clamp(d.y, -1.0, 1.0));
+    float toward = pow(max(dot(normalize(d.xz + 1e-5), normalize(sunDirection.xz + 1e-5)), 0.0), 3.0);
+    vec3 haze = skyHorizon * (1.0 + 0.35 * toward * sunUp);
+    col = mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
   col += sunColor * pow(max(c, 0.0), 5.0) * 1.6 * sunUp * (0.5 + 0.5 * cloudCover);

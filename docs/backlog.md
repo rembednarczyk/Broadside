@@ -35,7 +35,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] (raport 1) tryb podwodny: okno Snella, promienie w toni, mgła wodna (16.11); kamera przechodzi przez powierzchnię: falujący menisk na obiektywie, pod linią toń, kamera filmowa co jakiś czas się zanurza (16.11)
 - [x] (raport 2) krople na obiektywie, piorun w trzech fazach, ławice mgły (16.11); rozbłysk pioruna na wodzie (16.11)
 - [x] (raport 3) kilwater (klin Kelvina) i piana dziobowa z iskrami w shaderze (16.11); do zrobienia: krótka fala wiatrowa
-- [x] (raport 4) wały cumulusów nad horyzontem: płaska ciemna podstawa, kłęby, jasne brzegi od słońca (16.11); do zrobienia: więcej mgiełki przy horyzoncie, jaśniejsze krawędzie jak w ref_095 (klify mają płaskowyże od 16.11)
+- [x] (raport 4) wały cumulusów nad horyzontem: płaska ciemna podstawa, kłęby, jasne brzegi od słońca (16.11); mgiełka nad horyzontem, jaśniejsze brzegi od słońca, klify z płaskowyżami (16.11)
 - [x] (raport 5) świecące godła i okna nocą (16.11); postrzępione żagle, bocianie gniazdo na grotmaszcie (16.11)
 - [x] (raport 6) rozmycie ruchu (Ultra, Kinowa), kamery: pościg, filmowa, pokład; ukrywanie HUD (16.11)
 
