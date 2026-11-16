@@ -65,3 +65,4 @@ button:disabled { opacity: 0.35; }
 .standing.war i { background: #c0392b; }
 .port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .port-yard small { display: block; font-size: 10px; opacity: 0.8; }
+.port-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0 6px; }

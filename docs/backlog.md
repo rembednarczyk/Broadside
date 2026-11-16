@@ -65,7 +65,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] zlecenia, konwoje z eskortą
 - [x] stocznia: zakup statku z rozliczeniem starego (połowa ceny × stan), pirackie stocznie tylko małe kadłuby (16.11)
 - [x] przeróbki w stoczni: poszycie miedzią (opór ×0,9), wzmocnienia kadłuba (obrażenia ×0,8), zamki skałkowe (rozrzut ×0,6, przeładowanie ×0,9) (16.11)
-- [ ] panel portu w zakładkach (usługi, amunicja, stocznia), bo zasłania statek
+- [x] panel portu w zakładkach: port, amunicja, stocznia (16.11)
 
 ### M5 grafika i telefon
 - [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości
