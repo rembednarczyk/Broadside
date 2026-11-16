@@ -33,6 +33,22 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
           </div>
         </>
       )}
+      {p.factor !== null && p.yard.length > 0 && (
+        <>
+          <div className="label">{text(lang, "port.yard")}</div>
+          <div className="port-yard">
+            {p.yard.map((y) => {
+              const key = `class.${y.classId}`;
+              return (
+                <button key={y.classId} disabled={y.cost > gold} onPointerDown={() => intents.buyShip(y.classId)} data-testid={`buy-${y.classId}`}>
+                  {isTextKey(key) ? text(lang, key) : y.classId}
+                  <small>{y.cost < 0 ? `+${-y.cost}` : y.cost} · {y.guns} {text(lang, "port.guns")}</small>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
       <div className="label">{text(lang, "port.standing")}</div>
       <div className="standings">
         {p.standings.map((s) => {

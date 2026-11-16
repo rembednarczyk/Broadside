@@ -108,7 +108,7 @@ export class ShipView {
   private readonly detail: ShipDetail;
   private shownCrew = -1;
 
-  constructor(scene: Scene, readonly entityId: number, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);

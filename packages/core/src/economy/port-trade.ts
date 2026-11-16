@@ -1,6 +1,7 @@
 import { type AmmoId, AMMO } from "../data/ammo";
 import { type Faction, isHostile } from "../data/factions";
 import { type Relations, standing as standingOf } from "../data/reputation";
+import { type ShipClassId, SHIP_CLASSES } from "../data/ship-classes";
 
 /**
  * Port services and their prices (rules as pure functions, so the economy is tested apart from
@@ -57,3 +58,15 @@ export const plunderValue = (value: number, port: Faction): number => Math.floor
 
 /** Prize money for sinking or taking a ship: a share of her price (plus what was aboard). */
 export const prizeMoney = (shipPrice: number, taken: boolean): number => Math.floor(shipPrice * (taken ? 0.3 : 0.08));
+
+/**
+ * Shipyard. Nation yards build every class; a pirate haven sells only small, fast hulls. The old
+ * ship is taken in part exchange at half its price, scaled by its condition.
+ */
+export const TRADE_IN = 0.5;
+const PIRATE_YARD: readonly ShipClassId[] = ["cutter", "sloop", "schooner", "brig"];
+const NATION_YARD: readonly ShipClassId[] = ["cutter", "gunboat", "sloop", "schooner", "brig", "bomb", "galleon", "frigate", "liner"];
+export const shipyardStock = (owner: Faction): readonly ShipClassId[] => (owner === "pirates" ? PIRATE_YARD : NATION_YARD);
+export const shipPrice = (id: ShipClassId, factor: number): number => Math.ceil(SHIP_CLASSES[id].price * factor);
+/** `condition` 0..1: share of hull and masts left. */
+export const tradeInValue = (id: ShipClassId, condition: number): number => Math.floor(SHIP_CLASSES[id].price * TRADE_IN * Math.max(0, Math.min(1, condition)));

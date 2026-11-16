@@ -9,7 +9,7 @@ import { presentPort } from "./presenters/port-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, type WeatherKind, WEATHER } from "@broadside/core";
+import { type AmmoId, type ShipClassId, type WeatherKind, WEATHER } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import "./style.css";
 
@@ -63,6 +63,10 @@ const intents: UiIntents = {
     trade: (service, qty, ammo) => {
       const p = useHud.getState().port;
       if (p) session.trade(p.index, service, qty, ammo as AmmoId | undefined);
+    },
+    buyShip: (classId) => {
+      const p = useHud.getState().port;
+      if (p) session.buyShip(p.index, classId as ShipClassId);
     },
   },
   combat: {

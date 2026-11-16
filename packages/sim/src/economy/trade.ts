@@ -1,4 +1,5 @@
-import { type GameCommand, type PortSite, ammoPrice, crewPrice, plunderValue, priceFactor, provisionsPrice, repairBill } from "@broadside/core";
+import { type GameCommand, type PortSite, ammoPrice, crewPrice, plunderValue, priceFactor, provisionsPrice, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
+import { changeShip, condition } from "./shipyard";
 import { type ShipEntity } from "../commands/handler";
 import { type SimContext } from "../systems/context";
 import { credit } from "./purse";
@@ -69,6 +70,15 @@ export const trade = (e: ShipEntity, cmd: Trade, ctx: SimContext): void => {
         s.rigging = 1;
         s.guns.forEach((g) => (g.dismounted = false));
       }
+      return;
+    }
+    case "buyShip": {
+      const id = cmd.classId;
+      if (!id || id === s.model.def.id || !shipyardStock(owner).includes(id)) return;
+      // A smaller hull than the one traded in pays the captain the difference.
+      const net = shipPrice(id, factor) - tradeInValue(s.model.def.id, condition(s));
+      if (net < 0) credit(purse, ctx.events, -net, "trade");
+      if (net < 0 || pay(net)) changeShip(e, id);
       return;
     }
     case "sellPlunder": {

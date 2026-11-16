@@ -63,3 +63,5 @@ button:disabled { opacity: 0.35; }
 .standing i { display: block; height: 4px; border-radius: 2px; background: #c9a35a; }
 .standing.war span { color: #e0614f; }
 .standing.war i { background: #c0392b; }
+.port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.port-yard small { display: block; font-size: 10px; opacity: 0.8; }

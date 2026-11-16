@@ -1,5 +1,5 @@
-import { crewPrice, plunderValue, priceFactor, repairBill } from "@broadside/core";
-import { type Entity, type Simulation, portOwner } from "@broadside/sim";
+import { SHIP_CLASSES, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
+import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
 import { type PortHud } from "@broadside/ui";
 
 /** The port the player lies alongside (within reach and nearly stopped), with its prices. */
@@ -30,6 +30,9 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
     crewMissing,
     crewCost: crewPrice(crewMissing, f),
     plunderValue: plunderValue(sim.purse.plunder, owner),
+    yard: shipyardStock(owner)
+      .filter((id) => id !== def.id)
+      .map((id) => ({ classId: id, cost: shipPrice(id, f) - tradeInValue(def.id, condition(s)), crew: SHIP_CLASSES[id].crew, guns: SHIP_CLASSES[id].guns.reduce((a, g) => a + (g.kind === "broadside" ? g.count * 2 : g.count), 0) })),
     standings: (["crown", "republic", "empire"] as const).map((faction) => ({ faction, value: sim.relations[faction] })),
   };
 };

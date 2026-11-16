@@ -1,5 +1,8 @@
 import { type AmmoId } from "../data/ammo";
-import { type MountKind } from "../data/ship-classes";
+import { type MountKind, type ShipClassId } from "../data/ship-classes";
+
+/** Port services (shipyard: buy a new ship, trading the old one in). */
+export type TradeService = "ammo" | "crew" | "repair" | "provisions" | "sellPlunder" | "buyShip";
 
 /**
  * Commands (Command pattern, GoF; "Game Programming Patterns" ch. 2): the only way a player or an
@@ -34,6 +37,6 @@ export type GameCommand =
   /** Land a storming party on a silenced fort within reach. */
   | { readonly type: "assault"; readonly ship: EntityId; readonly fort: EntityId }
   /** Port services while alongside (port: index into the world's ports). */
-  | { readonly type: "trade"; readonly ship: EntityId; readonly port: number; readonly service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder"; readonly ammo?: AmmoId; readonly qty: number };
+  | { readonly type: "trade"; readonly ship: EntityId; readonly port: number; readonly service: TradeService; readonly ammo?: AmmoId; readonly qty: number; readonly classId?: ShipClassId };
 
 export type CommandType = GameCommand["type"];

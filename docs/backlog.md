@@ -63,7 +63,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] reputacja wobec nacji (Observer zdarzeń): ostrzał, zatopienie, abordaż, zdobycie fortu; wróg mojego wroga; wojna = patrole, forty i porty wrogie, łowcy floty (16.11)
 - [x] stosunki z nacjami w panelu portu (16.11)
 - [ ] zlecenia, konwoje z eskortą
-- [ ] klasy statków do kupienia, ulepszenia
+- [x] stocznia: zakup statku z rozliczeniem starego (połowa ceny × stan), pirackie stocznie tylko małe kadłuby (16.11)
+- [ ] ulepszenia statku (poszycie miedzią, wzmocniony kadłub, długie lufy)
 
 ### M5 grafika i telefon
 - [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości

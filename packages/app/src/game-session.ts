@@ -1,4 +1,4 @@
-import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, clamp, wrapAngle, yawOf } from "@broadside/core";
 import { STEP, Simulation, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 
 /**
@@ -55,6 +55,11 @@ export class GameSession {
   save(): SimSnapshot {
     for (const e of [...this.sim.world.with("shot")]) this.sim.world.remove(e);
     return snapshot(this.sim, this.options);
+  }
+
+  /** Buys a ship at the yard of a port alongside (the old one goes in part exchange). */
+  buyShip(port: number, classId: ShipClassId): void {
+    this.send({ type: "trade", ship: this.playerId, port, service: "buyShip", qty: 1, classId });
   }
 
   /** Port services while alongside a port (index into the world's ports). */

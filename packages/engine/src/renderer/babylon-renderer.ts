@@ -129,6 +129,11 @@ export class BabylonRenderer {
     for (const e of sim.ships()) {
       seen.add(e.id);
       let v = this.views.get(e.id);
+      // A ship bought in a yard keeps its id but changes hull: rebuild the view.
+      if (v && v.model !== e.ship!.model) {
+        v.dispose();
+        v = undefined;
+      }
       if (!v) {
         v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows);
         this.views.set(e.id, v);

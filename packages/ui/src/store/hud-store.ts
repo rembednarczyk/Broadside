@@ -91,6 +91,8 @@ export interface PortHud {
   readonly plunderValue: number;
   /** The player's standing with each nation (-1 war .. 1 allied). */
   readonly standings: readonly { readonly faction: string; readonly value: number }[];
+  /** Shipyard: classes for sale and what each costs after the part exchange (negative: the yard pays). */
+  readonly yard: readonly { readonly classId: string; readonly cost: number; readonly crew: number; readonly guns: number }[];
 }
 
 export interface HudState {
