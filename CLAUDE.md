@@ -44,6 +44,6 @@ Co się da, skryptujemy: generatory (kadłuby, ożaglowanie, wyspy, tekstury, d�
 Powtarzana ręczna praca (pomiary, zrzuty, raporty) od razu dostaje skrypt w `tools/` albo audyt w `*.audit.ts`.
 
 ## Definition of Done
-`pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm audit`.
+`pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.
 Zmiana widoczna: zrzut Playwright (SwiftShader) przed/po. Commity Conventional Commits po polsku, małe zmiany,
 bez identyfikatora modelu. Gałąź robocza `claude/youthful-galileo-kzhtmo`, PR tylko na prośbę użytkownika.

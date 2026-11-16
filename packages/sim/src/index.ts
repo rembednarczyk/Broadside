@@ -22,3 +22,4 @@ export * from "./combat/boarding";
 export * from "./combat/smoke";
 export * from "./economy/shipyard";
 export * from "./economy/contracts";
+export { DIRECTOR } from "./world/director";
