@@ -1,7 +1,8 @@
 /**
  * Sky dome: gradient from horizon to zenith, sun disc with a Mie-like halo (Henyey-Greenstein
  * phase, g = 0.76) and two layers of procedural clouds (fbm value noise on a plane projected
- * from the view ray, as in Quilez's "clouds" articles), thicker and darker with cloud cover.
+ * from the view ray, as in Quilez's "clouds" articles), thicker and darker with cloud cover, and
+ * two banks of cumulus heaps over the horizon (silhouettes in azimuth and elevation).
  */
 export const SKY_VERTEX = /* glsl */ `
 precision highp float;
@@ -72,6 +73,34 @@ void main() {
     // Low scud near the horizon: fast, dark, torn.
     float scud = smoothstep(0.55, 0.8, fbm(vec2(d.x / (d.y + 0.05) * 0.6, d.z / (d.y + 0.05) * 0.6) + windOffset * 0.006));
     col = mix(col, shade * 0.8, scud * cloudCover * smoothstep(0.25, 0.02, d.y) * 0.7);
+  }
+  // Cumulus banks over the horizon (towering heaps with flat dark bases and sunlit rims, as in the
+  // reference). A projected cloud plane cannot show a base, so the banks are silhouettes in
+  // azimuth and elevation: a top line from noise around the horizon circle (no seam at +-pi),
+  // puffed by billow noise, over a flat base just above the haze.
+  {
+    float e = asin(clamp(d.y, -1.0, 1.0));
+    vec2 ring = normalize(d.xz + 1e-5);
+    for (int k = 0; k < 2; k++) {
+      float fk = float(k);
+      vec2 rp = ring * (2.2 + fk * 1.7) + vec2(fk * 11.0, fk * 5.0) + windOffset * 0.0004 * (1.0 + fk);
+      float base = 0.012 + fk * 0.03;
+      float tops = base + (0.04 + 0.2 * cloudCover) * smoothstep(0.35, 0.85, fbm(rp)) * (1.0 - fk * 0.35);
+      float puff = billow(vec2(atan(ring.y, ring.x) * (14.0 + fk * 6.0), e * 26.0) + fk * 3.0 + windOffset * 0.001);
+      float edge = tops + (puff - 0.5) * 0.05 - e;
+      float bank = smoothstep(0.0, 0.012, edge) * smoothstep(base - 0.004, base + 0.01, e);
+      if (bank > 0.0) {
+        float up = clamp((e - base) / max(tops - base, 1e-3), 0.0, 1.0);
+        // Dark at the base, lighter up the heap; the side towards the sun and the thin rims glow.
+        float sunSide = pow(max(dot(ring, normalize(sunDirection.xz + 1e-5)), 0.0), 2.0);
+        float rim = smoothstep(0.02, 0.0, edge) * (0.4 + 1.6 * sunSide) * sunUp;
+        vec3 baseCol = mix(skyHorizon * 0.35, vec3(0.05), cloudCover * 0.6);
+        vec3 topCol = mix(skyHorizon * 0.9, sunColor, 0.25 + 0.5 * sunSide) * (0.55 + 0.45 * sunUp);
+        vec3 heap = mix(baseCol, topCol, pow(up, 0.7) * (0.6 + 0.4 * puff)) + sunColor * rim * 0.6;
+        // Farther banks sink into the haze.
+        col = mix(col, mix(heap, skyHorizon, 0.25 + fk * 0.35), bank * (0.95 - fk * 0.25));
+      }
+    }
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
   col += sunColor * pow(max(c, 0.0), 5.0) * 1.6 * sunUp * (0.5 + 0.5 * cloudCover);
