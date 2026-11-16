@@ -22,7 +22,7 @@ export const captainSystem: System = (ctx, dt) => {
     e.captain.think = THINK;
     if (e.captain.mode === "struck") continue;
     const wasStruck = e.ship.struck;
-    const cmds = decide(e, e.captain, { windDirection: ctx.env.windDirection, fog: ctx.env.weather?.fog ?? 0, bed: bedOf(ctx), ships, rng: () => ctx.rng.next(), ports: ctx.ports });
+    const cmds = decide(e, e.captain, { windDirection: ctx.env.windDirection, fog: ctx.env.weather?.fog ?? 0, bed: bedOf(ctx), ships, rng: () => ctx.rng.next(), ports: ctx.ports, relations: ctx.relations });
     for (const c of cmds) applyCommand(e, c, ctx);
     if (e.ship.struck && !wasStruck) ctx.events.push({ type: "shipStruck", ship: e.id, side: e.captain.side });
   }

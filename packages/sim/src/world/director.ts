@@ -1,4 +1,4 @@
-import { type TrafficKind, TRAFFIC, openWater, pickTraffic, isHostile, startStanding } from "@broadside/core";
+import { type TrafficKind, TRAFFIC, openWater, pickTraffic, isHostile, standing } from "@broadside/core";
 import { type SimContext } from "../systems/context";
 import { type Entity } from "./components";
 import { sortedById } from "./world";
@@ -36,7 +36,10 @@ const spawnTraffic = (ctx: SimContext, kind: TrafficKind, px: number, pz: number
   let x = px + Math.sin(ang) * r;
   let z = pz + Math.cos(ang) * r;
   if (ctx.env.archipelago) ({ x, z } = openWater(ctx.env.archipelago, x, z));
-  const faction = pick(kind.factions, ctx.rng.next());
+  // A nation at war with the player sends its own hunters after her.
+  const nations = (["crown", "republic", "empire"] as const).filter((n) => isHostile(ctx.relations[n]));
+  const flags = kind.role === "hunt" ? [...kind.factions, ...nations] : kind.factions;
+  const faction = pick(flags, ctx.rng.next());
   const classId = pick(kind.classes, ctx.rng.next());
   // Sail roughly across the player's patch of sea, so traffic passes by instead of away.
   const heading = Math.atan2(px - x, pz - z) + (ctx.rng.next() - 0.5) * 1.6;
@@ -59,7 +62,7 @@ export const directPopulation = (ctx: SimContext): void => {
     }
     if (e.ship.sinking) continue;
     near++;
-    if (d < DIRECTOR.combat && !e.ship.struck && isHostile(startStanding(e.ship.faction, player.ship.faction))) fighting = true;
+    if (d < DIRECTOR.combat && !e.ship.struck && isHostile(standing(e.ship.faction, player.ship.faction, ctx.relations))) fighting = true;
   }
   if (near >= DIRECTOR.budget) return;
   const kinds = fighting ? TRAFFIC.filter((k) => k.peaceful) : TRAFFIC;

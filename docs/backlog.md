@@ -60,7 +60,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] zderzenia statków i taranowanie, abordaż (reguły, AI piratów, HUD) (16.11)
 - [x] reżyser populacji (Booth, L4D): kupcy między portami, patrole, piraci, łowcy gracza; spawn w pierścieniu, usuwanie dalekich, faza spokoju w walce (16.11)
 - [ ] zasłona dymna, HUD broni specjalnych (ogień grecki, rakiety)
-- [ ] frakcje i reputacja (atak na kupca psuje stosunki), zlecenia, konwoje z eskortą
+- [x] reputacja wobec nacji (Observer zdarzeń): ostrzał, zatopienie, abordaż, zdobycie fortu; wróg mojego wroga; wojna = patrole, forty i porty wrogie, łowcy floty (16.11)
+- [ ] stosunki z nacjami w HUD portu, zlecenia, konwoje z eskortą
 - [ ] klasy statków do kupienia, ulepszenia
 
 ### M5 grafika i telefon

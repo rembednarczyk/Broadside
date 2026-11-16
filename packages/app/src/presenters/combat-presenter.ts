@@ -43,9 +43,9 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     ...(has("sternChaser") ? (["sternChaser"] as const) : []),
     ...(has("mortar") ? (["mortar"] as const) : []),
   ];
-  const aims = arcs.map((a) => aimFor(me, ships, a)).filter((a) => a !== null);
+  const aims = arcs.map((a) => aimFor(me, ships, a, true, sim.relations)).filter((a) => a !== null);
   const aim = aims.sort((a, b) => a.range - b.range)[0];
-  const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
+  const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a, sim.relations)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
   const fa = fortAims[0];
   if (fa && (!aim || fa.range < aim.range)) {
     const f = fa.fort.fort!;

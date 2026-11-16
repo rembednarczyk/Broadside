@@ -1,5 +1,6 @@
 import { type AmmoId, AMMO } from "../data/ammo";
-import { type Faction, isHostile, startStanding } from "../data/factions";
+import { type Faction, isHostile } from "../data/factions";
+import { type Relations, standing as standingOf } from "../data/reputation";
 
 /**
  * Port services and their prices (rules as pure functions, so the economy is tested apart from
@@ -23,9 +24,9 @@ export const BASE_PRICES = {
   provisions: 0.15,
 } as const;
 
-export const priceFactor = (port: Faction, captain: Faction): number | null => {
+export const priceFactor = (port: Faction, captain: Faction, rel: Relations | null = null): number | null => {
   if (port === "pirates") return 1.35;
-  const standing = startStanding(port, captain);
+  const standing = standingOf(port, captain, rel);
   if (isHostile(standing)) return null;
   return standing > 0.4 ? 0.85 : 1;
 };

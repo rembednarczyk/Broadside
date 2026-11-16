@@ -14,7 +14,7 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
   const owner = portOwner(sim.world, index, site);
   const s = me.ship!;
   const def = s.model.def;
-  const factor = owner === s.faction ? 0.7 : priceFactor(owner, s.faction);
+  const factor = owner === s.faction ? 0.7 : priceFactor(owner, s.faction, sim.relations);
   const f = factor ?? 1;
   const hullMissing = s.sections.reduce((a, x) => a + (def.sectionHp - x.hp), 0);
   const mastMissing = s.mastHp.reduce((a, hp) => a + (def.mastHp - hp), 0);

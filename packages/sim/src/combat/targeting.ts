@@ -1,7 +1,7 @@
 import { wrapAngle, yawOf } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { hostileTo } from "../ai/captain";
-import { isHostile, startStanding } from "@broadside/core";
+import { type Relations, isHostile, standing } from "@broadside/core";
 
 /**
  * Target selection for a battery (aim assist for the player, the same rule an AI gun captain
@@ -23,14 +23,14 @@ const ARCS: Readonly<Record<string, { readonly centre: number; readonly half: nu
   swivel: { centre: 0, half: Math.PI, max: 160 },
 };
 
-export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof ARCS, hostileOnly = true): Aim | null => {
+export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof ARCS, hostileOnly = true, rel: Relations | null = null): Aim | null => {
   const a = ARCS[arc]!;
   const b = me.body!;
   const heading = yawOf(b.rot);
   let best: Aim | null = null;
   for (const o of ships) {
     if (o.id === me.id || o.ship!.sinking) continue;
-    if (hostileOnly && !hostileTo(me.ship!, o.ship!) && o.ship!.lastHitBy !== me.id) continue;
+    if (hostileOnly && !hostileTo(me.ship!, o.ship!, rel) && o.ship!.lastHitBy !== me.id) continue;
     const tb = o.body!;
     const r0 = Math.hypot(tb.pos.x - b.pos.x, tb.pos.z - b.pos.z);
     const tof = r0 / 95;
@@ -52,7 +52,7 @@ export interface FortAim {
   readonly aimHeight: number;
 }
 
-export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof typeof ARCS): FortAim | null => {
+export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof typeof ARCS, rel: Relations | null = null): FortAim | null => {
   const a = ARCS[arc]!;
   const b = me.body!;
   const heading = yawOf(b.rot);
@@ -60,7 +60,7 @@ export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof type
   for (const f of forts) {
     const st = f.fort!;
     if (st.silenced) continue;
-    if (st.provokedBy !== me.id && !isHostile(startStanding(me.ship!.faction, st.faction))) continue;
+    if (st.provokedBy !== me.id && !isHostile(standing(me.ship!.faction, st.faction, rel))) continue;
     const range = Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) - st.def.radius * 0.5;
     const bearing = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
     if (range > a.max || Math.abs(wrapAngle(bearing - heading - a.centre)) > a.half) continue;

@@ -1,4 +1,5 @@
-import { portSites, type PortSite, type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, createRng } from "@broadside/core";
+import { portSites, type PortSite, type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Relations, createRelations, createRng } from "@broadside/core";
+import { watchReputation } from "./economy/reputation";
 import { type Environment, createEnvironment, stepEnvironment } from "./environment/environment";
 import { type SimContext, type System } from "./systems/context";
 import { createSystems } from "./systems/registry";
@@ -38,6 +39,8 @@ export class Simulation {
   private ctx: SimContext;
   private readonly ids: IdSource = { next: 1 };
   readonly purse: Purse = createPurse();
+  /** The player's standing with each faction (moved by deeds, see economy/reputation). */
+  readonly relations: Relations = createRelations();
   readonly ports: readonly PortSite[];
   private pending: GameCommand[] = [];
   steps = 0;
@@ -45,7 +48,8 @@ export class Simulation {
   constructor(opts: SimulationOptions) {
     this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null);
     this.ports = opts.archipelago ? portSites(opts.archipelago) : [];
-    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false };
+    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations };
+    watchReputation(this.world, this.events, this.relations);
   }
 
   /** Next entity id (for save and restore). */

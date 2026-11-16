@@ -4,5 +4,5 @@ import { sortedById } from "../world/world";
 
 export const fortSystem: System = (ctx, dt) => {
   const ships = sortedById(ctx.world.with("ship", "body"));
-  for (const e of sortedById(ctx.world.with("fort"))) updateFort(ctx.world, ctx.events, e, ships, dt, ctx.rng);
+  for (const e of sortedById(ctx.world.with("fort"))) updateFort(ctx.world, ctx.events, e, ships, dt, ctx.rng, ctx.relations);
 };

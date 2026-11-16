@@ -1,4 +1,4 @@
-import { type AmmoId, type GameCommand, type SailLevel, isHostile, startStanding, wrapAngle, yawOf, rotateInv } from "@broadside/core";
+import { type AmmoId, type GameCommand, type Relations, type SailLevel, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
@@ -20,6 +20,8 @@ export interface World2D {
   readonly rng: () => number;
   /** Ports merchants sail between (empty: open sea). */
   readonly ports: readonly { readonly x: number; readonly z: number }[];
+  /** The player's standing with each faction (null: standings at the start of a game). */
+  readonly relations: Relations | null;
 }
 
 const DETECT = 900;
@@ -54,13 +56,13 @@ const clearHeading = (me: Entity, heading: number, w: World2D): number => {
 
 const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp, 0) / (s.model.def.sectionHp * s.sections.length);
 
-export const hostileTo = (a: ShipState, b: ShipState): boolean => isHostile(startStanding(a.faction, b.faction));
+export const hostileTo = (a: ShipState, b: ShipState, rel: Relations | null = null): boolean => isHostile(standing(a.faction, b.faction, rel));
 
-const nearestHostile = (me: Entity, ships: readonly Entity[], fog: number): Entity | null => {
+const nearestHostile = (me: Entity, ships: readonly Entity[], fog: number, rel: Relations | null): Entity | null => {
   let best: Entity | null = null;
   let bestD = DETECT * (1 - 0.7 * fog);
   for (const o of ships) {
-    if (o.id === me.id || o.ship!.sinking || o.ship!.struck || !hostileTo(me.ship!, o.ship!)) continue;
+    if (o.id === me.id || o.ship!.sinking || o.ship!.struck || !hostileTo(me.ship!, o.ship!, rel)) continue;
     const d = Math.hypot(o.body!.pos.x - me.body!.pos.x, o.body!.pos.z - me.body!.pos.z);
     if (d < bestD) {
       bestD = d;
@@ -158,8 +160,8 @@ const flee = (me: Entity, t: Entity | null, w: World2D): GameCommand[] => {
 };
 
 /** The player's ship, if a hunter can find her (hunters only chase hostile quarry). */
-const quarry = (me: Entity, ships: readonly Entity[]): Entity | null => {
-  const p = ships.find((o) => o.player && !o.ship!.sinking && hostileTo(me.ship!, o.ship!));
+const quarry = (me: Entity, ships: readonly Entity[], rel: Relations | null): Entity | null => {
+  const p = ships.find((o) => o.player && !o.ship!.sinking && hostileTo(me.ship!, o.ship!, rel));
   if (!p) return null;
   return Math.hypot(p.body!.pos.x - me.body!.pos.x, p.body!.pos.z - me.body!.pos.z) < HUNT_RANGE ? p : null;
 };
@@ -178,7 +180,7 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     c.mode = "flee";
     return flee(me, target, w);
   }
-  const t = target ?? nearestHostile(me, w.ships, w.fog) ?? (c.role === "hunt" ? quarry(me, w.ships) : null);
+  const t = target ?? nearestHostile(me, w.ships, w.fog, w.relations) ?? (c.role === "hunt" ? quarry(me, w.ships, w.relations) : null);
   c.target = t?.id ?? null;
   if (t && c.role === "trade") {
     const d = Math.hypot(t.body!.pos.x - me.body!.pos.x, t.body!.pos.z - me.body!.pos.z);

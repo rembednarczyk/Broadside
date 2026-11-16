@@ -1,4 +1,4 @@
-import { type EventQueue, type FortSite, type Rng, type Vec3, FORT_CLASSES, FORT_RANGE, MORTAR_RANGE, MORTAR_SPEED, isHostile, startStanding, vec3, impactEnergy, DAMAGE_PER_JOULE, AMMO } from "@broadside/core";
+import { type EventQueue, type FortSite, type Rng, type Vec3, FORT_CLASSES, FORT_RANGE, MORTAR_RANGE, MORTAR_SPEED, type Relations, isHostile, standing, vec3, impactEnergy, DAMAGE_PER_JOULE, AMMO } from "@broadside/core";
 import { type Entity, type FortState } from "../world/components";
 import { type SimWorld } from "../world/world";
 import { elevationForRange, MORTAR_ELEVATION, mortarSpeed, muzzleSpeed } from "./aim";
@@ -19,24 +19,24 @@ const MORTAR_RELOAD = 22;
 
 export const fortCentre = (f: FortState): Vec3 => vec3(f.site.x, f.site.y + f.def.height * 0.5, f.site.z);
 
-const targetOf = (f: FortState, ships: readonly Entity[]): { e: Entity; range: number } | null => {
+const targetOf = (f: FortState, ships: readonly Entity[], rel: Relations | null): { e: Entity; range: number } | null => {
   let best: { e: Entity; range: number } | null = null;
   for (const e of ships) {
     const s = e.ship!;
     if (s.sinking || s.struck) continue;
-    if (e.id !== f.provokedBy && !isHostile(startStanding(f.faction, s.faction))) continue;
+    if (e.id !== f.provokedBy && !isHostile(standing(f.faction, s.faction, rel))) continue;
     const r = Math.hypot(e.body!.pos.x - f.site.x, e.body!.pos.z - f.site.z);
     if (r < MORTAR_RANGE && (!best || r < best.range)) best = { e, range: r };
   }
   return best;
 };
 
-export const updateFort = (world: SimWorld, events: EventQueue, fe: Entity, ships: readonly Entity[], dt: number, rng: Rng): void => {
+export const updateFort = (world: SimWorld, events: EventQueue, fe: Entity, ships: readonly Entity[], dt: number, rng: Rng, rel: Relations | null = null): void => {
   const f = fe.fort!;
   f.guns = f.guns.map((g) => (g > 0 ? Math.max(0, g - dt) : g));
   f.mortars = f.mortars.map((g) => (g > 0 ? Math.max(0, g - dt) : g));
   if (f.silenced) return;
-  const t = targetOf(f, ships);
+  const t = targetOf(f, ships, rel);
   if (!t) return;
   const tb = t.e.body!;
   const tof = t.range / 95;
@@ -119,6 +119,7 @@ export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng, 
   if (strength > defence) {
     const lost = Math.min(party, Math.ceil((defence / strength) * party * 0.5));
     s.crew -= lost;
+    const from = f.faction;
     f.faction = s.faction;
     f.garrison = Math.max(10, Math.floor((party - lost) * 0.3));
     s.crew -= Math.min(s.crew, f.garrison);
@@ -126,7 +127,7 @@ export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng, 
     f.silenced = false;
     f.hp = f.def.hp * 0.5;
     f.provokedBy = null;
-    events.push({ type: "fortCaptured", fort: fe.id, by: ship.id, gold: f.def.treasury });
+    events.push({ type: "fortCaptured", fort: fe.id, by: ship.id, gold: f.def.treasury, from });
     onCapture(f.def.treasury);
   } else {
     const lost = Math.ceil(party * 0.6);

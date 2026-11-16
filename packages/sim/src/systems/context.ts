@@ -1,4 +1,4 @@
-import { type EventQueue, type PortSite, type Rng } from "@broadside/core";
+import { type EventQueue, type PortSite, type Relations, type Rng } from "@broadside/core";
 import { type Purse } from "../economy/purse";
 import { type Environment } from "../environment/environment";
 import { type SimWorld } from "../world/world";
@@ -18,6 +18,8 @@ export interface SimContext {
   readonly ids: IdSource;
   /** Population director on (the sandbox) or off (tests, set pieces). */
   readonly traffic: boolean;
+  /** The player's standing with each faction. */
+  readonly relations: Relations;
 }
 
 export type System = (ctx: SimContext, dt: number) => void;

@@ -111,8 +111,8 @@ export class GameSession {
     const me = this.sim.byId(this.playerId);
     if (!me?.body) return;
     const arc = mount === "broadside" ? (side ?? "starboard") : mount;
-    const aim = aimFor(me, this.sim.ships(), arc);
-    const fort = aimForFort(me, this.sim.forts(), arc);
+    const aim = aimFor(me, this.sim.ships(), arc, true, this.sim.relations);
+    const fort = aimForFort(me, this.sim.forts(), arc, this.sim.relations);
     // The nearer of the best ship and the best fort in the arc.
     const useFort = fort && (!aim || fort.range < aim.range);
     const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
