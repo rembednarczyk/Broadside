@@ -23,6 +23,13 @@ export const cueFor = (e: DomainEvent): Cue | null => {
       return { kind: "boom", x: e.at.x, z: e.at.z, size: 2.5 };
     case "collision":
       return { kind: "wood", x: e.at.x, z: e.at.z, size: Math.min(3, e.speed) };
+    case "gold":
+      return { kind: "coins" };
+    case "boarded":
+      return { kind: "clash" };
+    case "contractDone":
+    case "playerRescued":
+      return { kind: "bell" };
     default:
       return null;
   }

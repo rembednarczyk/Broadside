@@ -16,7 +16,11 @@ export type Cue =
   | { readonly kind: "splash"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "wood"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "boom"; readonly x: number; readonly z: number; readonly size: number }
-  | { readonly kind: "bell" };
+  | { readonly kind: "bell" }
+  /** Coins counted into the chest (prize money, pay, sales). */
+  | { readonly kind: "coins" }
+  /** Steel on steel: a boarding fight. */
+  | { readonly kind: "clash" };
 
 const REF_DISTANCE = 40;
 
@@ -133,12 +137,40 @@ export class SynthAudio {
   play(cue: Cue, l: Listener): void {
     if (!this.ctx || this.ctx.state !== "running") return;
     if (cue.kind === "bell") return this.bell();
+    if (cue.kind === "coins") return this.coins();
+    if (cue.kind === "clash") return this.clash();
     const at = this.place(cue.x, cue.z, l);
     if (at.gain < 0.03) return;
     if (cue.kind === "gun") this.burst(at, "lowpass", 900 + 600 / cue.size, 1.1 + cue.size * 0.5, 0.9, 0.9 * cue.size);
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
     else this.burst(at, "lowpass", 600, 2.2 * cue.size, 1, 1.2);
+  }
+
+  /** A few bright pings with a short decay, staggered (coins dropping onto a pile). */
+  private coins(): void {
+    const ctx = this.ctx!;
+    const t0 = ctx.currentTime;
+    [3150, 2620, 3480, 2890, 3720].forEach((f, i) => {
+      const t = t0 + i * 0.06;
+      const o = ctx.createOscillator();
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18);
+      o.connect(g).connect(this.master!);
+      o.start(t);
+      o.stop(t + 0.2);
+    });
+  }
+
+  /** Ringing metal hits: band-passed noise bursts with an inharmonic ring, repeated. */
+  private clash(): void {
+    const near = { gain: 0.8, pan: 0, delay: 0 };
+    for (let i = 0; i < 4; i++) {
+      const at = { ...near, delay: i * 0.17, pan: i % 2 ? 0.3 : -0.3 };
+      this.burst(at, "bandpass", 3200 - i * 300, 0.22, 0.35, 0);
+    }
   }
 
   private bell(): void {
