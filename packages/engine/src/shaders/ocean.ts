@@ -70,6 +70,11 @@ uniform vec3 fogColor;
 uniform float fogDensity;
 uniform float time;
 uniform float foamAmount;
+// Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, 0); up to 8.
+uniform vec4 shipA[8];
+uniform vec4 shipB[8];
+uniform int shipCount;
+uniform float underwater;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
@@ -95,6 +100,38 @@ vec3 skyColor(vec3 dir) {
   return sky;
 }
 
+// Wake of the ships: a Kelvin wedge (half-angle 19.47 deg) behind each stern, turbulent foam
+// along the centre that fades with distance, a bow wave ring at the stem. Returns (foam, glitter).
+vec2 wakes(vec2 p) {
+  float foam = 0.0;
+  float glit = 0.0;
+  for (int i = 0; i < 8; i++) {
+    if (i >= shipCount) break;
+    vec4 a = shipA[i];
+    vec4 b = shipB[i];
+    vec2 d = p - a.xy;
+    float along = dot(d, a.zw);
+    float across = abs(d.x * a.w - d.y * a.z);
+    float halfLen = b.y * 0.5;
+    float speed = b.x;
+    // Bow wave: a foam collar around the forward hull.
+    float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
+    foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;
+    // Behind the stern.
+    float back = -(along + halfLen);
+    if (back > 0.0) {
+      float len = speed * 12.0;
+      float fade = exp(-back / max(len, 1.0));
+      float width = b.z * 0.6 + back * 0.354;
+      float centre = smoothstep(b.z * 0.5 + back * 0.04, 0.0, across) * fade;
+      float arms = smoothstep(2.0, 0.0, abs(across - width)) * fade * 0.3;
+      foam += (centre * 0.45 + arms) * clamp(speed / 5.0, 0.0, 1.0);
+      glit += (centre * 0.6 + arms) * fade;
+    }
+  }
+  return vec2(clamp(foam, 0.0, 1.0), clamp(glit, 0.0, 1.0));
+}
+
 vec3 underside(vec3 v, vec3 n, float dist) {
   // Seen from below: inside Snell's window (about 48.6 deg from the zenith, critical angle of
   // water) the sky shows through, bright and blurred; outside it total internal reflection
@@ -113,7 +150,7 @@ void main() {
   vec3 viewVec = cameraPosition - vWorld;
   float dist = length(viewVec);
   vec3 v = viewVec / dist;
-  if (dot(viewVec, vNormal) < 0.0) {
+  if (underwater > 0.5) {
     gl_FragColor = vec4(underside(v, vNormal, dist), 1.0);
     return;
   }
@@ -141,12 +178,15 @@ void main() {
   float spec = pow(max(dot(n, h), 0.0), 600.0) * 60.0 * fresnel;
   vec2 gp = vWorld.xz * 2.3 + vec2(time * 0.9, time * 0.6);
   vec3 gn = normalize(n + 0.55 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.35 * vec3(vnoise(gp * 3.1) - 0.5, 0.0, vnoise(gp * 3.1 + 5.1) - 0.5));
-  float glitter = pow(max(dot(gn, h), 0.0), 3500.0) * 90.0 * smoothstep(-0.05, 0.25, sunDirection.y);
+  vec2 wk = wakes(vWorld.xz);
+  float glitter = pow(max(dot(gn, h), 0.0), 3500.0 - wk.y * 2000.0) * (90.0 + wk.y * 60.0) * smoothstep(-0.05, 0.25, sunDirection.y);
   col += sunColor * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
   float foamNoise = fbm(vWorld.xz * 0.18 + vec2(time * 0.05, -time * 0.03));
   float foam = clamp(fold * foamAmount * 0.6 * smoothstep(0.5, 0.85, foamNoise + fold * 0.3), 0.0, 1.0);
+  float wakeFoam = wk.x * smoothstep(0.45, 0.75, fbm(vWorld.xz * 0.6 + vec2(time * 0.2, 0.0)) + wk.x * 0.2);
+  foam = max(foam, wakeFoam * 0.5);
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);

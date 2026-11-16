@@ -10,7 +10,7 @@ import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
-import { type DomainEvent, waterHeight } from "@broadside/core";
+import { type DomainEvent, rotateInv, waterHeight, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -235,6 +235,8 @@ export class BabylonRenderer {
     const ws = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
     this.updateScreen(sim, look, dt);
+    const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
+    this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.syncShips(sim);
     this.effects.frame(sim, dt);
     this.weather.frame(sim, dt);
@@ -258,6 +260,7 @@ export class BabylonRenderer {
     const rain = sim.env.weather?.rain ?? 0;
     const sun = Vector3.Project(cam.add(new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z).scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
     this.screen = { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time };
+    this.ocean.setUnderwater(under);
     if (under) {
       this.scene.fogColor = new Color3(0.02, 0.13, 0.12);
       this.scene.fogDensity = 0.035;

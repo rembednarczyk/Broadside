@@ -55,12 +55,29 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater"],
     });
     this.material.backFaceCulling = false;
     this.material.setColor3("waterDeep", new Color3(0.008, 0.03, 0.045));
     this.material.setColor3("waterShallow", new Color3(0.04, 0.16, 0.18));
     this.mesh.material = this.material;
+  }
+
+  setUnderwater(under: boolean): void {
+    this.material.setFloat("underwater", under ? 1 : 0);
+  }
+
+  /** Ships for the wake term (nearest first, at most 8): position, heading, speed and size. */
+  setShips(ships: readonly { x: number; z: number; heading: number; speed: number; length: number; beam: number }[]): void {
+    const a = new Array<number>(32).fill(0);
+    const b = new Array<number>(32).fill(0);
+    ships.slice(0, 8).forEach((s, i) => {
+      a.splice(i * 4, 4, s.x, s.z, Math.sin(s.heading), Math.cos(s.heading));
+      b.splice(i * 4, 4, s.speed, s.length, s.beam, 0);
+    });
+    this.material.setArray4("shipA", a);
+    this.material.setArray4("shipB", b);
+    this.material.setInt("shipCount", Math.min(8, ships.length));
   }
 
   update(waves: readonly GerstnerWave[], time: number, cameraX: number, cameraZ: number, look: OceanLook, windSpeed: number): void {
