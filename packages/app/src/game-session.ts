@@ -144,8 +144,16 @@ export class GameSession {
     this.send({ type: "brace", ship: this.playerId });
   }
 
-  drop(kind: "fireBarrel" | "mine"): void {
+  drop(kind: "fireBarrel" | "mine" | "smoke"): void {
     this.send({ type: "drop", ship: this.playerId, ammo: kind });
+  }
+
+  /** Toggles Greek fire in the bow chaser (back to round shot) or rockets in the swivels (back to grape). */
+  special(mount: "bowChaser" | "swivel"): void {
+    const s = this.sim.byId(this.playerId)?.ship;
+    if (!s) return;
+    const [special, plain]: [AmmoId, AmmoId] = mount === "bowChaser" ? ["greekFire", "round"] : ["rocket", "grape"];
+    this.send({ type: "loadAmmo", ship: this.playerId, mount, ammo: s.ammoLoad[mount] === special ? plain : special });
   }
 
   toggleOars(): void {

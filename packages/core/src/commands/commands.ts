@@ -27,7 +27,7 @@ export type GameCommand =
    */
   | { readonly type: "fire"; readonly ship: EntityId; readonly mount: MountKind; readonly side?: Side; readonly range: number; readonly bearing?: number; readonly aimHeight?: number }
   | { readonly type: "loadAmmo"; readonly ship: EntityId; readonly mount: MountKind; readonly ammo: AmmoId }
-  | { readonly type: "drop"; readonly ship: EntityId; readonly ammo: "fireBarrel" | "mine" }
+  | { readonly type: "drop"; readonly ship: EntityId; readonly ammo: "fireBarrel" | "mine" | "smoke" }
   | { readonly type: "brace"; readonly ship: EntityId }
   | { readonly type: "oars"; readonly ship: EntityId; readonly on: boolean }
   | { readonly type: "board"; readonly ship: EntityId; readonly target: EntityId }

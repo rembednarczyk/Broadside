@@ -34,6 +34,9 @@ export const bindKeyboard = (target: Window, intents: UiIntents, currentSail: ()
     if (e.code === "KeyB") intents.combat.brace();
     if (e.code === "KeyX") intents.combat.drop("fireBarrel");
     if (e.code === "KeyZ") intents.combat.drop("mine");
+    if (e.code === "KeyK") intents.combat.drop("smoke");
+    if (e.code === "KeyJ") intents.combat.special("bowChaser");
+    if (e.code === "KeyL") intents.combat.special("swivel");
     const ammo = ["round", "heavy", "chain", "grape", "hot"][Number(e.key) - 1];
     if (ammo) intents.combat.loadAmmo(ammo);
   };

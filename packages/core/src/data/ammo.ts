@@ -7,7 +7,7 @@ import { type MountKind } from "./ship-classes";
  * specials: fire barrels and drifting mines dropped astern, Greek fire (an Overboard! homage) and
  * Congreve rockets (its lightning).
  */
-export type AmmoId = "round" | "heavy" | "chain" | "grape" | "hot" | "shell" | "fireBarrel" | "mine" | "greekFire" | "rocket";
+export type AmmoId = "round" | "heavy" | "chain" | "grape" | "hot" | "shell" | "fireBarrel" | "mine" | "greekFire" | "rocket" | "smoke";
 
 export interface AmmoDef {
   readonly id: AmmoId;
@@ -46,6 +46,8 @@ export const AMMO: Readonly<Record<AmmoId, AmmoDef>> = {
   fireBarrel: { id: "fireBarrel", mounts: ["astern"], speed: 0, mass: 1, hull: 0.6, sails: 0.8, rigging: 0.4, crew: 0.8, fire: 0.9, spread: 0, reload: 1, price: 8, pellets: 1, blast: 7 },
   mine: { id: "mine", mounts: ["astern"], speed: 0, mass: 1, hull: 2.2, sails: 0.2, rigging: 0.2, crew: 1, fire: 0.25, spread: 0, reload: 1, price: 10, pellets: 1, blast: 6 },
   greekFire: { id: "greekFire", mounts: ["bowChaser"], speed: 0.18, mass: 0.05, hull: 0.15, sails: 1.2, rigging: 0.5, crew: 1.2, fire: 0.6, spread: 0.12, reload: 0.2, price: 6, pellets: 3, blast: 0 },
+  /** Smoke pot dropped astern: a screen that hides the ship from lookouts (no damage). */
+  smoke: { id: "smoke", mounts: ["astern"], speed: 0, mass: 1, hull: 0, sails: 0, rigging: 0, crew: 0, fire: 0, spread: 0, reload: 1, price: 7, pellets: 1, blast: 0 },
   rocket: { id: "rocket", mounts: ["swivel"], speed: 0.8, mass: 0.6, hull: 0.6, sails: 1.5, rigging: 0.8, crew: 0.8, fire: 0.55, spread: 0.05, reload: 2.2, price: 9, pellets: 1, blast: 4 },
 };
 

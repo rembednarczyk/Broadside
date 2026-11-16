@@ -70,6 +70,7 @@ const intents: UiIntents = {
     loadAmmo: (ammo) => session.loadAmmo(ammo as AmmoId),
     brace: () => session.brace(),
     drop: (kind) => session.drop(kind),
+    special: (mount) => session.special(mount),
     assault: () => session.assault(),
     board: () => session.board(),
   },

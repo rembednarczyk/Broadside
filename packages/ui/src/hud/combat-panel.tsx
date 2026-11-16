@@ -49,6 +49,9 @@ export const CombatPanel = ({ intents }: { intents: CombatIntents }) => {
           <button className={c.braced ? "on small" : "small"} onPointerDown={() => intents.brace()}>{t("hud.brace")}</button>
           <button className="small" disabled={c.barrels === 0} onPointerDown={() => intents.drop("fireBarrel")}>{t("hud.barrel")} <small>{c.barrels}</small></button>
           <button className="small" disabled={c.mines === 0} onPointerDown={() => intents.drop("mine")}>{t("hud.mine")} <small>{c.mines}</small></button>
+          <button className="small" disabled={c.smoke === 0} onPointerDown={() => intents.drop("smoke")} data-testid="smoke">{t("hud.smoke")} <small>{c.smoke}</small></button>
+          {c.greekFire && <button className={c.greekFire.on ? "on small" : "small"} disabled={c.greekFire.left === 0 && !c.greekFire.on} onPointerDown={() => intents.special("bowChaser")} data-testid="greek-fire">{t("ammo.greekFire")} <small>{c.greekFire.left}</small></button>}
+          {c.rockets && <button className={c.rockets.on ? "on small" : "small"} disabled={c.rockets.left === 0 && !c.rockets.on} onPointerDown={() => intents.special("swivel")} data-testid="rockets">{t("ammo.rocket")} <small>{c.rockets.left}</small></button>}
           {c.canBoard && <button className="small storm" onPointerDown={() => intents.board()} data-testid="board">{t("hud.board")}</button>}
           {c.canStorm && <button className="small storm" onPointerDown={() => intents.assault()} data-testid="storm">{t("hud.storm")}</button>}
         </div>

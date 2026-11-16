@@ -42,6 +42,10 @@ export interface CombatHud {
   readonly ammo: readonly { readonly id: string; readonly left: number }[];
   readonly barrels: number;
   readonly mines: number;
+  readonly smoke: number;
+  /** Special loads: Greek fire in the bow chaser, rockets in the swivels (left, and whether loaded). */
+  readonly greekFire: { readonly left: number; readonly on: boolean } | null;
+  readonly rockets: { readonly left: number; readonly on: boolean } | null;
   readonly braced: boolean;
   readonly hull: number;
   readonly crew: number;

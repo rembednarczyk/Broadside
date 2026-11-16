@@ -22,6 +22,8 @@ export interface Entity {
   castaway?: Castaway;
   /** A fire barrel or a mine drifting astern. */
   floater?: Floater;
+  /** A smoke screen drifting downwind. */
+  smoke?: SmokeCloud;
   /** An AI captain commanding this ship. */
   captain?: CaptainState;
   /** A waterspout wandering across the sea. */
@@ -55,6 +57,12 @@ export interface Floater {
   z: number;
   readonly ammo: "fireBarrel" | "mine";
   readonly owner: number;
+  age: number;
+}
+
+export interface SmokeCloud {
+  x: number;
+  z: number;
   age: number;
 }
 

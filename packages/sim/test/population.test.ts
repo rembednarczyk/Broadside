@@ -92,3 +92,27 @@ describe("standing orders", () => {
     expect(h.captain!.target).toBe(p.id);
   });
 });
+
+describe("smoke screen", () => {
+  it("hides the player from a lookout until it thins away", async () => {
+    const { SMOKE } = await import("../src/combat/smoke");
+    const sim = new Simulation({ seed: 30, windDirection: 0, windSpeed: 0.1 });
+    const me = sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0, player: true });
+    const p = sim.spawnShip({ classId: "sloop", faction: "pirates", x: 400, z: 0, heading: Math.PI, ai: true });
+    sim.world.add({ id: 0, smoke: { x: 200, z: 0, age: SMOKE.grow } });
+    run(sim, 1);
+    expect(p.captain!.target).toBeNull();
+    run(sim, SMOKE.life);
+    expect(p.captain!.target).toBe(me.id);
+  });
+
+  it("is laid from the stores over the stern", () => {
+    const sim = new Simulation({ seed: 31, windDirection: 0, windSpeed: 5 });
+    const me = sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0, player: true });
+    const before = me.ship!.stores.smoke!;
+    sim.command({ type: "drop", ship: me.id, ammo: "smoke" });
+    run(sim, 0.1);
+    expect(me.ship!.stores.smoke).toBe(before - 1);
+    expect([...sim.world.with("smoke")]).toHaveLength(1);
+  });
+});

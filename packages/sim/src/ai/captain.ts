@@ -4,6 +4,7 @@ import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
+import { type Screen, smokeBetween } from "../combat/smoke";
 
 /**
  * Decisions of an AI captain (finite state machine: patrol -> engage -> flee -> struck). Each
@@ -22,6 +23,8 @@ export interface World2D {
   readonly ports: readonly { readonly x: number; readonly z: number }[];
   /** The player's standing with each faction (null: standings at the start of a game). */
   readonly relations: Relations | null;
+  /** Smoke screens on the water (lookouts cannot see through them). */
+  readonly screens: readonly Screen[];
 }
 
 const DETECT = 900;
@@ -58,11 +61,12 @@ const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp
 
 export const hostileTo = (a: ShipState, b: ShipState, rel: Relations | null = null): boolean => isHostile(standing(a.faction, b.faction, rel));
 
-const nearestHostile = (me: Entity, ships: readonly Entity[], fog: number, rel: Relations | null): Entity | null => {
+const nearestHostile = (me: Entity, ships: readonly Entity[], fog: number, rel: Relations | null, smoke: readonly Screen[]): Entity | null => {
   let best: Entity | null = null;
   let bestD = DETECT * (1 - 0.7 * fog);
   for (const o of ships) {
     if (o.id === me.id || o.ship!.sinking || o.ship!.struck || !hostileTo(me.ship!, o.ship!, rel)) continue;
+    if (smokeBetween(smoke, me.body!.pos.x, me.body!.pos.z, o.body!.pos.x, o.body!.pos.z)) continue;
     const d = Math.hypot(o.body!.pos.x - me.body!.pos.x, o.body!.pos.z - me.body!.pos.z);
     if (d < bestD) {
       bestD = d;
@@ -170,7 +174,8 @@ const quarry = (me: Entity, ships: readonly Entity[], rel: Relations | null): En
 export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   const s = me.ship!;
   if (c.mode === "struck") return [];
-  const target = c.target === null ? null : (w.ships.find((x) => x.id === c.target && !x.ship!.sinking && !x.ship!.struck) ?? null);
+  const seen = (x: Entity): boolean => !smokeBetween(w.screens, me.body!.pos.x, me.body!.pos.z, x.body!.pos.x, x.body!.pos.z);
+  const target = c.target === null ? null : (w.ships.find((x) => x.id === c.target && !x.ship!.sinking && !x.ship!.struck && seen(x)) ?? null);
   if (crewShare(s) < 0.15 || hullShare(s) < 0.15) {
     c.mode = "struck";
     s.struck = true;
@@ -180,7 +185,7 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     c.mode = "flee";
     return flee(me, target, w);
   }
-  const t = target ?? nearestHostile(me, w.ships, w.fog, w.relations) ?? (c.role === "hunt" ? quarry(me, w.ships, w.relations) : null);
+  const t = target ?? nearestHostile(me, w.ships, w.fog, w.relations, w.screens) ?? (c.role === "hunt" ? quarry(me, w.ships, w.relations) : null);
   c.target = t?.id ?? null;
   if (t && c.role === "trade") {
     const d = Math.hypot(t.body!.pos.x - me.body!.pos.x, t.body!.pos.z - me.body!.pos.z);

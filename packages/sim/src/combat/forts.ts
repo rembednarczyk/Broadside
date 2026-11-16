@@ -1,3 +1,4 @@
+import { type Screen, screens, smokeBetween } from "./smoke";
 import { type EventQueue, type FortSite, type Rng, type Vec3, FORT_CLASSES, FORT_RANGE, MORTAR_RANGE, MORTAR_SPEED, type Relations, isHostile, standing, vec3, impactEnergy, DAMAGE_PER_JOULE, AMMO } from "@broadside/core";
 import { type Entity, type FortState } from "../world/components";
 import { type SimWorld } from "../world/world";
@@ -19,12 +20,13 @@ const MORTAR_RELOAD = 22;
 
 export const fortCentre = (f: FortState): Vec3 => vec3(f.site.x, f.site.y + f.def.height * 0.5, f.site.z);
 
-const targetOf = (f: FortState, ships: readonly Entity[], rel: Relations | null): { e: Entity; range: number } | null => {
+const targetOf = (f: FortState, ships: readonly Entity[], rel: Relations | null, smoke: readonly Screen[]): { e: Entity; range: number } | null => {
   let best: { e: Entity; range: number } | null = null;
   for (const e of ships) {
     const s = e.ship!;
     if (s.sinking || s.struck) continue;
     if (e.id !== f.provokedBy && !isHostile(standing(f.faction, s.faction, rel))) continue;
+    if (smokeBetween(smoke, f.site.x, f.site.z, e.body!.pos.x, e.body!.pos.z)) continue;
     const r = Math.hypot(e.body!.pos.x - f.site.x, e.body!.pos.z - f.site.z);
     if (r < MORTAR_RANGE && (!best || r < best.range)) best = { e, range: r };
   }
@@ -36,7 +38,7 @@ export const updateFort = (world: SimWorld, events: EventQueue, fe: Entity, ship
   f.guns = f.guns.map((g) => (g > 0 ? Math.max(0, g - dt) : g));
   f.mortars = f.mortars.map((g) => (g > 0 ? Math.max(0, g - dt) : g));
   if (f.silenced) return;
-  const t = targetOf(f, ships, rel);
+  const t = targetOf(f, ships, rel, screens(world));
   if (!t) return;
   const tb = t.e.body!;
   const tof = t.range / 95;

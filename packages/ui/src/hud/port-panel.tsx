@@ -2,7 +2,7 @@ import { useHud } from "../store/hud-store";
 import { isTextKey, text } from "../i18n/catalog";
 import { type PortIntents } from "../intents";
 
-const AMMO = ["round", "heavy", "chain", "grape", "hot"] as const;
+const AMMO = ["round", "heavy", "chain", "grape", "hot", "shell", "greekFire", "rocket", "smoke", "mine"] as const;
 
 /** Harbour services while alongside: repair, crew, provisions, shot, plunder. */
 export const PortPanel = ({ intents }: { intents: PortIntents }) => {

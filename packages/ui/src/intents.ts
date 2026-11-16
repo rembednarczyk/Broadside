@@ -19,7 +19,9 @@ export interface CombatIntents {
   fire(mount: Mount, side?: "port" | "starboard"): void;
   loadAmmo(ammo: string): void;
   brace(): void;
-  drop(kind: "fireBarrel" | "mine"): void;
+  drop(kind: "fireBarrel" | "mine" | "smoke"): void;
+  /** Toggles the special load of a mount (Greek fire in the bow chaser, rockets in the swivels). */
+  special(mount: "bowChaser" | "swivel"): void;
   assault(): void;
   board(): void;
 }

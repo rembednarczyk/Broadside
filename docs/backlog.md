@@ -59,7 +59,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M4 głębia
 - [x] zderzenia statków i taranowanie, abordaż (reguły, AI piratów, HUD) (16.11)
 - [x] reżyser populacji (Booth, L4D): kupcy między portami, patrole, piraci, łowcy gracza; spawn w pierścieniu, usuwanie dalekich, faza spokoju w walce (16.11)
-- [ ] zasłona dymna, HUD broni specjalnych (ogień grecki, rakiety)
+- [x] zasłona dymna (garnki za rufą, linia wzroku AI i fortów), HUD broni specjalnych (ogień grecki, rakiety), sprzedaż w porcie (16.11)
 - [x] reputacja wobec nacji (Observer zdarzeń): ostrzał, zatopienie, abordaż, zdobycie fortu; wróg mojego wroga; wojna = patrole, forty i porty wrogie, łowcy floty (16.11)
 - [x] stosunki z nacjami w panelu portu (16.11)
 - [ ] zlecenia, konwoje z eskortą

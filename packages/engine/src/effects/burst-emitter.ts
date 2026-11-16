@@ -63,8 +63,9 @@ export class BurstEmitter {
     ps.minAngularSpeed = -0.6;
     ps.maxAngularSpeed = 0.6;
     ps.updateSpeed = 1 / 60;
-    ps.addSizeGradient(0, 1);
-    ps.addSizeGradient(1, style.growth);
+    // With size gradients Babylon ignores min/maxSize, so the gradient carries the start size.
+    ps.addSizeGradient(0, style.minSize, style.maxSize);
+    ps.addSizeGradient(1, style.minSize * style.growth, style.maxSize * style.growth);
     if (style.drag > 0) ps.addLimitVelocityGradient(0, 40, 40);
     if (style.drag > 0) ps.limitVelocityDamping = style.drag;
     ps.startPositionFunction = (_m: unknown, pos: Vector3) => {
