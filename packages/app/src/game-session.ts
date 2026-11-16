@@ -1,4 +1,4 @@
-import { type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
 import { STEP, Simulation, aimFor } from "@broadside/sim";
 
 /**
@@ -25,17 +25,19 @@ export class GameSession {
   private course: number;
 
   constructor(opts: SessionOptions) {
-    this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh" });
+    this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed) });
     const player = this.sim.spawnShip({ classId: "galleon", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
     this.playerId = player.id;
     this.course = 0.2;
     this.send({ type: "course", ship: this.playerId, heading: this.course });
     // Opening encounter: a pirate schooner hunting, a pirate sloop, a crown frigate on patrol and
     // a republic brig the crown is at war with.
-    this.sim.spawnShip({ classId: "schooner", faction: "pirates", x: -380, z: 420, heading: 2.2, speed: 3, ai: true });
-    this.sim.spawnShip({ classId: "sloop", faction: "pirates", x: 520, z: 650, heading: 3.6, speed: 3, ai: true });
-    this.sim.spawnShip({ classId: "frigate", faction: "crown", x: 1500, z: -300, heading: 4.2, speed: 3, ai: true });
-    this.sim.spawnShip({ classId: "brig", faction: "republic", x: 1700, z: 900, heading: 3.4, speed: 3, ai: true });
+    const map = this.sim.env.archipelago!;
+    const at = (x: number, z: number) => openWater(map, x, z);
+    this.sim.spawnShip({ classId: "schooner", faction: "pirates", ...at(-380, 420), heading: 2.2, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "sloop", faction: "pirates", ...at(520, 650), heading: 3.6, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "frigate", faction: "crown", ...at(1500, -300), heading: 4.2, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "brig", faction: "republic", ...at(1700, 900), heading: 3.4, speed: 3, ai: true });
   }
 
   private send(cmd: GameCommand): void {

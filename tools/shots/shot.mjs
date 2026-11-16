@@ -54,7 +54,7 @@ if (cam) {
   }, cam);
 }
 await page.waitForTimeout(3000);
-await page.screenshot({ path: join(outDir, "scene.png") });
+await page.screenshot({ path: join(outDir, "scene.png"), timeout: 90000 });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));
 // Optional diagnostics: SHOT_EVAL is a function body (b) => value, printed as JSON.
 if (process.env.SHOT_EVAL) console.log("eval:", JSON.stringify(await page.evaluate(new Function("return ((b) => { " + process.env.SHOT_EVAL + " })(globalThis.__broadside)"))));

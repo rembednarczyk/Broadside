@@ -46,7 +46,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] izometria: ikony celów i zasięgu dział na wodzie (łuk salwy), czytelność HUD
 
 ### M3 świat
-- [ ] generator archipelagu (wyspy, mielizny, porty, forty), kolizje z dnem
+- [x] generator archipelagu (Poisson disc), wyspy klifowe, piaszczyste, zalesione, mielizny, rafy; wejście na mieliznę; omijanie lądu przez AI; bezpieczny spawn (16.11)
+- [x] wyspy w grafice: teren z tej samej funkcji co fizyka, drzewa, płycizny i przybój w shaderze oceanu (16.11)
 - [ ] porty: amunicja, załoga, naprawa, zapasy, handel; zapis gry
 - [ ] forty 4 klas i przejmowanie
 

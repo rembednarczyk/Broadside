@@ -26,6 +26,7 @@ export type DomainEvent =
   | { readonly type: "shipStruck"; readonly ship: EntityId; readonly side: Side }
   | { readonly type: "boarded"; readonly ship: EntityId; readonly by: EntityId; readonly won: boolean }
   | { readonly type: "lightning"; readonly at: Vec3 }
+  | { readonly type: "grounded"; readonly ship: EntityId; readonly at: Vec3; readonly speed: number }
   | { readonly type: "weatherChanged"; readonly kind: string };
 
 export type DomainEventType = DomainEvent["type"];

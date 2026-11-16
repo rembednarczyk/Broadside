@@ -61,12 +61,21 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
     });
     this.material.backFaceCulling = false;
+    this.setIslands([]);
     this.material.setColor3("waterDeep", new Color3(0.008, 0.03, 0.045));
     this.material.setColor3("waterShallow", new Color3(0.04, 0.16, 0.18));
     this.mesh.material = this.material;
+  }
+
+  /** Islands for the shallows and surf term: (x, z, radius, shoal), at most 32 (nearest first). */
+  setIslands(list: readonly { x: number; z: number; radius: number; shoal: number }[]): void {
+    const a = new Array<number>(128).fill(0);
+    list.slice(0, 32).forEach((is, i) => a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal));
+    this.material.setArray4("islands", a);
+    this.material.setInt("islandCount", Math.min(32, list.length));
   }
 
   setUnderwater(under: boolean): void {

@@ -12,6 +12,7 @@ import { cleanupSystem } from "./cleanup";
 import { captainSystem } from "./captain";
 import { weatherSystem } from "./weather";
 import { spoutSystem } from "./spouts";
+import { groundingSystem } from "./grounding";
 
 /**
  * The only place that orders systems (ADR-0002): an explicit array, never the iteration order of
@@ -23,6 +24,7 @@ export const createSystems = (): readonly System[] => [
   helmSystem,
   sailSystem,
   hydroSystem,
+  groundingSystem,
   integrateSystem,
   gunsSystem,
   shotsSystem,

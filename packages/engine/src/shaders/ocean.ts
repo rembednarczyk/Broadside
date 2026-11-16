@@ -139,6 +139,9 @@ uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
 uniform float underwater;
+// Islands for shallows and surf: (x, z, radius, shoal); up to 32.
+uniform vec4 islands[32];
+uniform int islandCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
@@ -166,6 +169,25 @@ vec3 skyColor(vec3 dir) {
 
 // Wake of the ships: a Kelvin wedge (half-angle 19.47 deg) behind each stern, turbulent foam
 // along the centre that fades with distance, a bow wave ring at the stem. Returns (foam, glitter).
+// Shallows and surf: water over a shoal turns pale and green (light from the sandy bottom), and
+// waves break in a foam band at the shore (distance in island radii with the same coastline
+// wobble as the terrain is approximated by noise).
+vec2 shallows(vec2 p) {
+  float shallow = 0.0;
+  float surf = 0.0;
+  for (int i = 0; i < 32; i++) {
+    if (i >= islandCount) break;
+    vec4 is = islands[i];
+    float d = length(p - is.xy);
+    if (d > is.z * 1.4 + is.w + 60.0) continue;
+    float wob = 0.75 + 0.5 * fbm(normalize(p - is.xy) * 1.8 + 5.0);
+    float t = d / (is.z * wob);
+    shallow = max(shallow, 1.0 - smoothstep(1.0, 1.0 + is.w / is.z, t));
+    surf = max(surf, exp(-pow((t - 1.0) * is.z / 6.0, 2.0)));
+  }
+  return vec2(shallow, surf);
+}
+
 // Contact shading: the hull shades and occludes the water along its sides (ambient occlusion
 // of the hull on the sea), so a ship sits in the water instead of on it.
 float hullOcclusion(vec2 p) {
@@ -289,6 +311,10 @@ void main() {
   foam = max(foam, wakeFoam * 0.5);
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
   col *= hullOcclusion(vWorld.xz);
+  vec2 sh = shallows(vWorld.xz);
+  col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
+  float surfFoam = sh.y * smoothstep(0.35, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3);
+  col = mix(col, vec3(0.9, 0.92, 0.92) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
   float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);

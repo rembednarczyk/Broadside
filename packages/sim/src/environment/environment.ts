@@ -1,4 +1,4 @@
-import { type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D } from "@broadside/core";
+import { type Archipelago, type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D } from "@broadside/core";
 
 /**
  * Wind and sea shared by every ship. The sea follows the wind with a lag (a sea builds up and
@@ -19,18 +19,20 @@ export interface Environment {
   readonly weatherRng: Rng;
   /** Seconds left of a rogue wave group (raised swell). */
   rogue: number;
+  /** Islands and seabed, or null for open sea. */
+  readonly archipelago: Archipelago | null;
 }
 
 /** m/s of sea development per second towards the wind. */
 const SEA_BUILD_RATE = 0.02;
 
-export const createEnvironment = (seed: number, windDirection: number, windSpeed: number, weather?: WeatherKind): Environment => {
+export const createEnvironment = (seed: number, windDirection: number, windSpeed: number, weather?: WeatherKind, archipelago: Archipelago | null = null): Environment => {
   const bands = waveBands(seed, windDirection);
   const weatherRng = subRng(seed, "weather");
   const w = weather ? createWeather(weather, windDirection, seed, weatherRng) : null;
   const wind = w ? w.meanWind : windSpeed;
   const sea: SeaState = { windSpeed: wind, swell: 0 };
-  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0 };
+  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0, archipelago };
 };
 
 /** Extra swell height of a rogue wave group, rising and falling over its 30 seconds. */

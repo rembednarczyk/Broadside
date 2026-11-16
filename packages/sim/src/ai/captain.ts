@@ -13,6 +13,8 @@ export interface World2D {
   readonly windDirection: number;
   /** Fog 0..1 shortens how far a lookout sees. */
   readonly fog: number;
+  /** Seabed height at a point (null: open sea everywhere). */
+  readonly bed: ((x: number, z: number) => number) | null;
   readonly ships: readonly Entity[];
   readonly rng: () => number;
 }
@@ -21,6 +23,27 @@ const DETECT = 900;
 const BROADSIDE_MAX = 430;
 /** The captain orders a broadside when the guns can train onto the target (their limit is ~0.14). */
 const ARC = 0.13;
+
+/**
+ * Obstacle avoidance (Reynolds, "Steering Behaviors For Autonomous Characters", 1999): probe the
+ * seabed along a heading; if land or a shoal lies within the look-ahead, try headings swinging
+ * out to either side until one is clear.
+ */
+const LOOKAHEAD = [60, 130, 250];
+const clearHeading = (me: Entity, heading: number, w: World2D): number => {
+  if (!w.bed) return heading;
+  const b = me.body!;
+  const keel = -me.ship!.model.def.hull.draft - 2;
+  const clear = (h: number): boolean => LOOKAHEAD.every((d) => w.bed!(b.pos.x + Math.sin(h) * d, b.pos.z + Math.cos(h) * d) < keel);
+  if (clear(heading)) return heading;
+  for (let k = 1; k <= 8; k++) {
+    for (const sgn of [1, -1]) {
+      const h = heading + sgn * k * 0.3;
+      if (clear(h)) return wrapAngle(h);
+    }
+  }
+  return wrapAngle(heading + Math.PI);
+};
 
 const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp, 0) / (s.model.def.sectionHp * s.sections.length);
 
@@ -77,7 +100,7 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   const loadedInRange = range < BROADSIDE_MAX && sideLoaded(s, c.side) > 0;
   const closeBias = range > BROADSIDE_MAX * 0.85 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - c.range) / c.range)) * 0.8;
   const desired = brg - abeam + (c.side === "starboard" ? closeBias : -closeBias);
-  const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: sailableHeading(desired, w.windDirection, s) }];
+  const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s), w) }];
   const level: SailLevel = range > c.range * 1.4 ? 3 : 2;
   if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
   const want = chooseAmmo(s, t.ship!, range);
@@ -99,7 +122,7 @@ const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   }
   const desired = Math.atan2(c.wx - b.pos.x, c.wz - b.pos.z);
   return [
-    { type: "course", ship: me.id, heading: sailableHeading(desired, w.windDirection, me.ship!) },
+    { type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, me.ship!), w) },
     ...(me.ship!.sailTarget[0] !== 3 ? [{ type: "sails" as const, ship: me.id, mast: "all" as const, level: 3 as SailLevel }] : []),
   ];
 };
@@ -108,7 +131,7 @@ const flee = (me: Entity, t: Entity | null, w: World2D): GameCommand[] => {
   const b = me.body!;
   const away = t ? Math.atan2(b.pos.x - t.body!.pos.x, b.pos.z - t.body!.pos.z) : yawOf(b.rot);
   return [
-    { type: "course", ship: me.id, heading: sailableHeading(away, w.windDirection, me.ship!) },
+    { type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(away, w.windDirection, me.ship!), w) },
     { type: "sails", ship: me.id, mast: "all", level: 3 },
   ];
 };

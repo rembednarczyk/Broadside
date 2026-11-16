@@ -1,0 +1,42 @@
+import { describe, expect, it } from "vitest";
+import { DEEP_SEA, generateArchipelago, islandHeight, openWater, portSites, terrainHeight } from "../src/world/archipelago";
+
+describe("archipelago", () => {
+  const a = generateArchipelago(1797);
+
+  it("is deterministic and spaced", () => {
+    expect(generateArchipelago(1797)).toEqual(a);
+    expect(a.islands.length).toBeGreaterThan(12);
+    for (const p of a.islands) for (const q of a.islands) if (p !== q) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThanOrEqual(899);
+  });
+
+  it("keeps the start area open sea", () => {
+    for (let x = -600; x <= 600; x += 100) for (let z = -600; z <= 600; z += 100) expect(terrainHeight(a, x, z)).toBe(DEEP_SEA);
+  });
+
+  it("rises above the sea at island centres and shoals near the shore", () => {
+    for (const is of a.islands) {
+      expect(islandHeight(is, is.x, is.z), `island ${is.id}`).toBeGreaterThan(0);
+      expect(islandHeight(is, is.x + is.radius * 3 + is.shoal + 100, is.z)).toBe(DEEP_SEA);
+    }
+  });
+
+  it("puts ports on non-cliff islands, at the water's edge", () => {
+    const ports = portSites(a);
+    expect(ports.length).toBeGreaterThan(2);
+    for (const p of ports) {
+      const is = a.islands[p.island]!;
+      expect(is.kind).not.toBe("cliff");
+      expect(terrainHeight(a, p.x, p.z)).toBeLessThan(5);
+    }
+  });
+});
+
+describe("open water", () => {
+  it("moves a spawn point off the land", () => {
+    const a = generateArchipelago(1797);
+    const is = a.islands[0]!;
+    const p = openWater(a, is.x, is.z);
+    expect(terrainHeight(a, p.x, p.z)).toBe(DEEP_SEA);
+  });
+});

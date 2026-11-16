@@ -10,6 +10,7 @@ import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from 
 import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
+import { IslandsView } from "./islands-view";
 import { type DomainEvent, rotateInv, waterHeight, yawOf } from "@broadside/core";
 
 /**
@@ -45,6 +46,8 @@ export class BabylonRenderer {
   private readonly effects: EffectsDirector;
   private readonly weather: WeatherView;
   private coast: FarCoast | null = null;
+  private islands: IslandsView | null = null;
+  private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
 
@@ -66,6 +69,7 @@ export class BabylonRenderer {
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
+    this.treeBudget = g.particles;
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
   }
 
@@ -161,6 +165,10 @@ export class BabylonRenderer {
     this.applyLook(look);
     const cam = this.camera.camera.position;
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
+    if (!this.islands && sim.env.archipelago) {
+      this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
+      this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
+    }
     this.coast.follow(cam.x, cam.z);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z),
