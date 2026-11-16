@@ -1,6 +1,6 @@
 import { type ShipModel } from "@broadside/sim";
 import { type HullShape, createRng, deckHeight, halfBreadth, hashString, range, stationZ } from "@broadside/core";
-import { Color3, DynamicTexture, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
+import { Color3, DynamicTexture, Matrix, Vector4, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
  * Period detail that sells the silhouette (visual reference, decyzje 16.11): ratlines on the
@@ -117,7 +117,10 @@ export class ShipDetail {
   private castle(scene: Scene, parent: TransformNode, h: HullShape, z0: number, z1: number, wood: StandardMaterial, name: string, lift = 0): Mesh {
     const zm = (z0 + z1) / 2;
     const width = Math.max(beamAt(h, zm), beamAt(h, z1 - 0.5), 0.5) * 2 * (lift > 0 ? 0.9 : 0.98);
-    const box = MeshBuilder.CreateBox(`castle-${name}`, { width, height: CASTLE_HEIGHT, depth: z1 - z0 }, scene);
+    // Sides show the gallery texture; the roof and floor take a plain strip of planking.
+    const side = new Vector4(0, 0, 1, 1);
+    const plank = new Vector4(0, 0.85, 0.05, 0.98);
+    const box = MeshBuilder.CreateBox(`castle-${name}`, { width, height: CASTLE_HEIGHT, depth: z1 - z0, faceUV: [side, side, side, side, plank, plank] }, scene);
     box.position = new Vector3(0, deckAt(h, zm) + lift + CASTLE_HEIGHT / 2, zm);
     box.material = wood;
     box.parent = parent;

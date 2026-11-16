@@ -95,8 +95,8 @@ export const rigPlan = (def: ShipClassDef): RigPlan => {
       }
       // Head sails: a jib from the foremast head to the bowsprit, and a spritsail below it.
       const width = Math.max(4, bowspritEnd.z - m.z);
-      const height = Math.min(H * 0.75, (2 * s.area * 0.75) / width);
-      sails.push({ mast: mi, sail: si, shape: "jib", width, height, foot: F + 1.2, nodeZ: m.z, nodeY: 0, setFrom: 0, setSpan: 1, yard: false, emblem: false });
+      const height = Math.min(H * 0.7, F + H * 0.75 - bowspritEnd.y);
+      sails.push({ mast: mi, sail: si, shape: "jib", width, height, foot: 0, nodeZ: bowspritEnd.z, nodeY: bowspritEnd.y, setFrom: 0, setSpan: 1, yard: false, emblem: false });
       if (mi === 0) {
         const sw = h.beam * 0.9;
         sails.push({ mast: mi, sail: si, shape: "square", width: sw, height: sw * 0.45, foot: base - sw * 0.45 + Math.sin(BOWSPRIT_ANGLE) * bsLen * 0.6 - 0.4, nodeZ: h.length / 2 - 1 + Math.cos(BOWSPRIT_ANGLE) * bsLen * 0.6, nodeY: 0, setFrom: 0.2, setSpan: 0.4, yard: true, emblem: false });

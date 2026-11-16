@@ -208,7 +208,8 @@ export class ShipView {
     const aw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
     const states: SailState[] = this.plans.map((p, i) => {
       const chord = s.sailChord[p.mast]![p.sail]!;
-      const angle = this.fixed[i] ? Math.PI / 2 : chord;
+      // A jib pivots on its stay: only its clew swings, so it turns about half the trim.
+      const angle = this.fixed[i] ? Math.PI / 2 : p.shape === "jib" ? chord * 0.5 : chord;
       const lee = Math.sign(aw.x * Math.cos(angle) - aw.z * Math.sin(angle)) || 1;
       const alive = s.mastHp[p.mast]! > 0;
       const share = alive ? s.sailSet[p.mast]! / setFactor(3, false) : 0;

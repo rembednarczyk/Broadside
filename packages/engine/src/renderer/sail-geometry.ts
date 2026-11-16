@@ -59,9 +59,15 @@ export const sailPositions = (o: SailOutline, set: number, billow: number, out: 
         y = o.foot + v * h + u * v * h * 0.25;
         z = -u * o.width * (1 - 0.25 * v);
       } else {
-        // Jib: triangle, tack forward at the foot, head at the top of the luff.
-        y = o.foot + v * h;
-        z = u * o.width * (1 - v);
+        // Jib: tack at the bowsprit end (origin), luff up the forestay to the head near the
+        // masthead, clew aft and low; u runs from the luff to the leech.
+        const headZ = -o.width * 0.92;
+        const luffY = o.foot + v * h;
+        const luffZ = headZ * v;
+        const leechY = o.foot + h * (0.1 + 0.9 * v);
+        const leechZ = -o.width * 0.55 * (1 - v) + headZ * v;
+        y = luffY + (leechY - luffY) * u;
+        z = luffZ + (leechZ - luffZ) * u;
       }
       const draft = Math.sin(Math.PI * u) * Math.sin(Math.PI * Math.min(1, v * 1.1)) * billow * o.width * 0.12;
       out[k++] = draft;
