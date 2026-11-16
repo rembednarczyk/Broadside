@@ -7,12 +7,16 @@ import { sectionIndex } from "../ship/ship-state";
 /**
  * Running aground. Points along the keel are checked against the seabed; a point below the bed is
  * pushed up by a penalty spring with damping (the usual soft-contact model of game physics) and
- * dragged by friction along the bottom. A hard strike holes the bottom planking of that section.
+ * dragged by friction along the bottom. Grinding fast over the bottom holes the planking of that
+ * section, more the longer and faster it goes on.
  */
 const KEEL_POINTS = 7;
 const FRICTION = 0.6;
 /** Contact speed (m/s) above which the bottom is holed. */
 const HOLE_SPEED = 1.2;
+/** Leak (m³/s per (m/s)²) and planking lost (hp per m) while grinding at a keel point. */
+const GRIND_LEAK = 0.015;
+const GRIND_HP = 12;
 
 const keel = new Map<ShipModel, Vec3[]>();
 const keelOf = (m: ShipModel): Vec3[] => {
@@ -25,7 +29,7 @@ const keelOf = (m: ShipModel): Vec3[] => {
   return k;
 };
 
-export const groundingSystem: System = (ctx) => {
+export const groundingSystem: System = (ctx, dt) => {
   const a = ctx.env.archipelago;
   if (!a) return;
   for (const e of ctx.world.with("ship", "body")) {
@@ -45,9 +49,12 @@ export const groundingSystem: System = (ctx) => {
       if (speed > HOLE_SPEED) {
         const zone = i < 2 ? 2 : i > 4 ? 0 : 1;
         const sec = s.sections[sectionIndex(zone as 0 | 1 | 2, rotateInv(b.rot, v).x > 0)]!;
-        sec.leak += 0.004 * speed * speed;
-        sec.hp = Math.max(0, sec.hp - speed * 4);
-        ctx.events.push({ type: "grounded", ship: e.id, at: wp, speed });
+        // Damage grows with the time the keel grinds on the bottom (per second, not per step).
+        sec.leak += GRIND_LEAK * speed * speed * dt;
+        sec.hp = Math.max(0, sec.hp - GRIND_HP * speed * dt);
+        // Report the grinding a few times a second (sound and spray), not every step.
+        const t = ctx.env.time;
+        if (Math.floor(t * 4) !== Math.floor((t - dt) * 4)) ctx.events.push({ type: "grounded", ship: e.id, at: wp, speed });
       }
     }
   }
