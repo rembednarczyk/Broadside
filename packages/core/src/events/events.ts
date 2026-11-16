@@ -31,6 +31,7 @@ export type DomainEvent =
   | { readonly type: "assaultFailed"; readonly fort: EntityId; readonly by: EntityId; readonly lost: number }
   | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" }
   | { readonly type: "tradeRefused"; readonly port: number; readonly reason: "hostile" | "far" | "gold" }
+  | { readonly type: "collision"; readonly a: EntityId; readonly b: EntityId; readonly at: Vec3; readonly speed: number; readonly ram: boolean }
   | { readonly type: "grounded"; readonly ship: EntityId; readonly at: Vec3; readonly speed: number }
   | { readonly type: "weatherChanged"; readonly kind: string };
 

@@ -15,6 +15,7 @@ import { spoutSystem } from "./spouts";
 import { groundingSystem } from "./grounding";
 import { fortSystem } from "./forts";
 import { provisionsSystem } from "./provisions";
+import { collisionSystem } from "./collisions";
 
 /**
  * The only place that orders systems (ADR-0002): an explicit array, never the iteration order of
@@ -28,6 +29,7 @@ export const createSystems = (): readonly System[] => [
   hydroSystem,
   groundingSystem,
   integrateSystem,
+  collisionSystem,
   gunsSystem,
   fortSystem,
   shotsSystem,
