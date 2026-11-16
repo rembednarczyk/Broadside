@@ -45,17 +45,22 @@ void main() {
   vec3 col = mix(skyHorizon, skyZenith, pow(h, 0.5));
   float c = dot(d, sunDirection);
   float sunUp = smoothstep(-0.1, 0.05, sunDirection.y);
-  col += sunColor * hg(c, 0.76) * 0.35 * sunUp * (1.0 - cloudCover * 0.8);
-  col += sunColor * smoothstep(0.9993, 0.9997, c) * 8.0 * sunUp * (1.0 - cloudCover);
+  col += sunColor * hg(c, 0.76) * 0.5 * sunUp;
+  col += sunColor * pow(max(c, 0.0), 40.0) * 1.2 * sunUp;
+  col += sunColor * smoothstep(0.9993, 0.9997, c) * 8.0 * sunUp * (1.0 - cloudCover * 0.6);
   if (d.y > 0.0) {
     vec2 uv = d.xz / (d.y + 0.12);
     float n1 = fbm(uv * 1.3 + windOffset * 0.002);
     float n2 = fbm(uv * 3.1 - windOffset * 0.003 + 7.0);
-    float density = smoothstep(0.62 - cloudCover * 0.45, 0.95 - cloudCover * 0.3, n1 * 0.7 + n2 * 0.4);
-    vec3 lit = mix(vec3(1.0), sunColor, 0.4) * (0.55 + 0.45 * sunUp);
-    vec3 shade = mix(skyHorizon, vec3(0.25, 0.27, 0.3), cloudCover) * 0.9;
-    vec3 cloud = mix(lit, shade, clamp(n2 * 1.2 + cloudCover * 0.6, 0.0, 1.0));
-    cloud += sunColor * pow(max(c, 0.0), 12.0) * 0.6 * sunUp;
+    float density = smoothstep(0.55 - cloudCover * 0.5, 0.85 - cloudCover * 0.3, n1 * 0.75 + n2 * 0.45);
+    // Thickness estimate from a second lookup towards the sun: thin edges glow (silver lining),
+    // thick cores stay dark (a two-tap Beer-Lambert approximation).
+    vec2 toSun = normalize(sunDirection.xz + 1e-4) * 0.08;
+    float thick = fbm(uv * 1.3 + toSun + windOffset * 0.002);
+    float lightAmt = exp(-3.0 * max(0.0, thick - 0.35)) * sunUp;
+    vec3 lit = mix(vec3(1.0, 0.97, 0.9), sunColor, 0.5) * (0.35 + 1.6 * lightAmt * pow(max(c, 0.0), 3.0) + 0.4 * lightAmt);
+    vec3 shade = mix(skyHorizon * 0.45, vec3(0.1, 0.1, 0.11), cloudCover);
+    vec3 cloud = mix(shade, lit, clamp(lightAmt * (1.0 - n2 * 0.8) * (0.4 + 0.9 * pow(max(c, 0.0), 2.0)), 0.0, 1.0));
     col = mix(col, cloud, density * smoothstep(0.0, 0.12, d.y));
   }
   gl_FragColor = vec4(col, 1.0);

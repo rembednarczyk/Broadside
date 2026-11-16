@@ -58,8 +58,8 @@ export class Ocean {
       uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount"],
     });
     this.material.backFaceCulling = false;
-    this.material.setColor3("waterDeep", new Color3(0.01, 0.07, 0.11));
-    this.material.setColor3("waterShallow", new Color3(0.05, 0.32, 0.36));
+    this.material.setColor3("waterDeep", new Color3(0.008, 0.03, 0.045));
+    this.material.setColor3("waterShallow", new Color3(0.04, 0.16, 0.18));
     this.mesh.material = this.material;
   }
 

@@ -10,7 +10,7 @@ export class FollowCamera {
   private readonly target = new Vector3();
 
   constructor(scene: Scene, canvas: HTMLCanvasElement | null) {
-    this.camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.05, 70, Vector3.Zero(), scene);
+    this.camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.22, 70, Vector3.Zero(), scene);
     this.camera.lowerBetaLimit = 0.35;
     this.camera.upperBetaLimit = 1.45;
     this.camera.lowerRadiusLimit = 18;
@@ -26,7 +26,7 @@ export class FollowCamera {
 
   /** Frames a ship of the given length on first use. */
   frameShip(length: number): void {
-    this.camera.radius = Math.max(30, length * 2.6);
+    this.camera.radius = Math.max(28, length * 2.1);
   }
 
   follow(x: number, y: number, z: number, dt: number): void {

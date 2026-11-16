@@ -44,7 +44,7 @@ const pushNotice = (key: string) => {
 let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
-const hours = Number(params.get("hours") ?? 16.5);
+const hours = Number(params.get("hours") ?? 16.3);
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
@@ -59,7 +59,7 @@ const frame = (now: number) => {
     if (n) pushNotice(n);
   }
   audio.setWeather(session.sim.env.windSpeed, 0.5);
-  renderer.frame(session.sim, { hours, overcast: Number(params.get("overcast") ?? 0.15), fog: 0 }, dt);
+  renderer.frame(session.sim, { hours, overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
   frames++;
   if (fpsAcc > 0.5) {

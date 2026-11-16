@@ -115,19 +115,25 @@ void main() {
   // Subsurface glow where the sun shines through a crest towards the viewer.
   float sss = pow(clamp(dot(v, -sunDirection) * 0.5 + 0.5, 0.0, 1.0), 4.0) * crest;
   body += waterShallow * sss * 0.6 * sunColor;
-  vec3 col = mix(body * (0.35 + 0.65 * max(sunDirection.y, 0.0)), reflection, fresnel);
-  // Sun glint: normalised Blinn-Phong.
+  vec3 col = mix(body * (0.35 + 0.65 * max(sunDirection.y, 0.0)), reflection * 0.8, fresnel);
+  // Sun glint: normalised Blinn-Phong on the wave normal, plus a glitter path: many tiny facets
+  // from high-frequency noise normals, each a sharp highlight (a cheap stochastic-glint model in
+  // the spirit of Zirr and Kaplanyan's real-time glints). Values above 1 feed the bloom.
   vec3 h = normalize(sunDirection + v);
   float spec = pow(max(dot(n, h), 0.0), 600.0) * 60.0 * fresnel;
-  col += sunColor * spec;
+  vec2 gp = vWorld.xz * 2.3 + vec2(time * 0.9, time * 0.6);
+  vec3 gn = normalize(n + 0.55 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.35 * vec3(vnoise(gp * 3.1) - 0.5, 0.0, vnoise(gp * 3.1 + 5.1) - 0.5));
+  float glitter = pow(max(dot(gn, h), 0.0), 3500.0) * 90.0 * smoothstep(-0.05, 0.25, sunDirection.y);
+  col += sunColor * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
   float foamNoise = fbm(vWorld.xz * 0.18 + vec2(time * 0.05, -time * 0.03));
   float foam = clamp(fold * foamAmount * smoothstep(0.35, 0.75, foamNoise + fold * 0.4), 0.0, 1.0);
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
-  // Aerial perspective.
+  // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
-  col = mix(col, fogColor, fog);
+  float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);
+  col = mix(col, fogColor + sunColor * towardSun * 0.9, fog);
   gl_FragColor = vec4(col, 1.0);
 }
 `;

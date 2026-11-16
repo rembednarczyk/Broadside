@@ -57,6 +57,6 @@ export const sceneLook = (hours: number, overcast: number, fog: number): SceneLo
   const sunColor = mix(rgb(1, 0.97, 0.9), rgb(1, 0.6, 0.3), golden);
   const sunIntensity = day * (1 - 0.8 * cover) * 2.2;
   const ambient = scale(mix(horizon, zenith, 0.5), 0.55 + 0.3 * cover);
-  const fogDensity = 0.00018 + 0.0007 * cover + 0.006 * clamp01(fog);
+  const fogDensity = 0.0006 + 0.0012 * cover + 0.006 * clamp01(fog);
   return { sunDir, sunColor, sunIntensity, ambient, skyZenith: zenith, skyHorizon: horizon, fogColor: horizon, fogDensity, cloudCover: cover };
 };

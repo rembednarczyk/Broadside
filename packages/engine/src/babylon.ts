@@ -26,6 +26,8 @@ export type { Particle } from "@babylonjs/core/Particles/particle";
 export { Color4 as ParticleColor } from "@babylonjs/core/Maths/math.color";
 export { SceneInstrumentation } from "@babylonjs/core/Instrumentation/sceneInstrumentation";
 export { Effect } from "@babylonjs/core/Materials/effect";
+export { ColorCurves } from "@babylonjs/core/Materials/colorCurves";
+export { VolumetricLightScatteringPostProcess } from "@babylonjs/core/PostProcesses/volumetricLightScatteringPostProcess";
 
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";

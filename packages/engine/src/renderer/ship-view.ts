@@ -52,7 +52,7 @@ export const createShipMaterials = (scene: Scene): ShipMaterials => {
   wood.diffuseColor = new Color3(0.36, 0.25, 0.14);
   wood.specularColor = new Color3(0.05, 0.05, 0.05);
   const sail = new StandardMaterial("sail", scene);
-  sail.diffuseColor = new Color3(0.93, 0.9, 0.82);
+  sail.diffuseColor = new Color3(0.6, 0.55, 0.46);
   sail.specularColor = new Color3(0.02, 0.02, 0.02);
   sail.backFaceCulling = false;
   sail.twoSidedLighting = true;
