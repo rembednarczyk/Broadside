@@ -10,6 +10,7 @@ export { Matrix, Vector2, Vector3, Vector4, Quaternion } from "@babylonjs/core/M
 export { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 export { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 export { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+export { PointLight } from "@babylonjs/core/Lights/pointLight";
 export { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 export { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
 export { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
