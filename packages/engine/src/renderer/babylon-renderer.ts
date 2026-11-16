@@ -1,5 +1,5 @@
 import { type Simulation } from "@broadside/sim";
-import { Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
+import { Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, type Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
 import { Ocean } from "./ocean";
 import { Sky } from "./sky";
