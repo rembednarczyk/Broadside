@@ -1,5 +1,6 @@
-import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, isHostile, standing, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, STEP, Simulation, hostileTo, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
+import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { STEP, Simulation, type SimulationOptions, type SimSnapshot, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
+import { aimOf } from "./aiming";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -16,19 +17,6 @@ export interface SessionOptions {
 const STEER_RATE = 0.45;
 /** At most this many steps per frame, so a long stall does not spiral (Fiedler). */
 const MAX_STEPS = 8;
-
-/** Enemies farther than this are not framed (beyond the longest broadside). */
-const FOCUS_RANGE = 480;
-
-/** A point where a broadside would fall (for the aiming marks on the water). */
-export interface SalvoMark {
-  readonly x: number;
-  readonly z: number;
-  /** Laid on a target (ship or fort). */
-  readonly locked: boolean;
-  /** Share of the battery loaded. */
-  readonly ready: number;
-}
 
 export class GameSession {
   readonly sim: Simulation;
@@ -135,67 +123,15 @@ export class GameSession {
   }
 
   /** Fires a battery with aim assist: range and bearing of the best target in its arc, if any. */
-  /** Where a battery would lay its guns now: the nearer of the best ship and fort in its arc. */
-  private aimOf(me: Entity, mount: MountKind, side?: "port" | "starboard"): { range: number; bearing?: number; aimHeight: number; locked: boolean } {
-    const arc = mount === "broadside" ? (side ?? "starboard") : mount;
-    const aim = aimFor(me, this.sim.ships(), arc, true, this.sim.relations);
-    const fort = aimForFort(me, this.sim.forts(), arc, this.sim.relations);
-    const useFort = fort && (!aim || fort.range < aim.range);
-    const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
-    const bearing = useFort ? fort.bearing : aim?.bearing;
-    return { range, ...(bearing !== undefined ? { bearing } : {}), aimHeight: useFort ? fort.aimHeight : 0, locked: !!(useFort || aim) };
-  }
 
   fire(mount: MountKind, side?: "port" | "starboard"): void {
     const me = this.sim.byId(this.playerId);
     if (!me?.body) return;
-    const a = this.aimOf(me, mount, side);
+    const a = aimOf(this.sim, me, mount, side);
     this.send({ type: "fire", ship: this.playerId, mount, side, range: a.range, bearing: a.bearing, aimHeight: a.aimHeight });
   }
 
-  /** The nearest enemy ship or fort still fighting within gun range (the camera frames it). */
-  combatFocus(): { x: number; z: number } | null {
-    const me = this.sim.byId(this.playerId);
-    if (!me?.body) return null;
-    const p = me.body.pos;
-    let best: { x: number; z: number; d: number } | null = null;
-    const consider = (x: number, z: number): void => {
-      const d = Math.hypot(x - p.x, z - p.z);
-      if (d < FOCUS_RANGE && (!best || d < best.d)) best = { x, z, d };
-    };
-    for (const o of this.sim.ships()) if (o.id !== me.id && !o.ship!.sinking && !o.ship!.struck && hostileTo(me.ship!, o.ship!, this.sim.relations)) consider(o.body!.pos.x, o.body!.pos.z);
-    for (const f of this.sim.forts()) if (!f.fort!.silenced && isHostile(standing(f.fort!.faction, me.ship!.faction, this.sim.relations))) consider(f.fort!.site.x, f.fort!.site.z);
-    const b = best as { x: number; z: number } | null;
-    return b ? { x: b.x, z: b.z } : null;
-  }
 
-  /**
-   * Where each broadside would fall if fired now (Black Flag's aiming arc): a row of points along
-   * the fall of shot, as long as the gun deck, at the laid range and bearing.
-   */
-  salvoPreview(): SalvoMark[] {
-    const me = this.sim.byId(this.playerId);
-    if (!me?.body || me.ship!.sinking) return [];
-    const b = me.body;
-    const heading = yawOf(b.rot);
-    const s = me.ship!;
-    const half = s.model.def.hull.length * 0.6;
-    const out: SalvoMark[] = [];
-    for (const side of ["port", "starboard"] as const) {
-      const guns = s.model.guns.map((g, i) => ({ g, i })).filter(({ g }) => g.kind === "broadside" && g.side === side);
-      if (guns.length === 0) continue;
-      const ready = guns.filter(({ i }) => s.guns[i]!.reload === 0 && !s.guns[i]!.dismounted).length / guns.length;
-      const a = this.aimOf(me, "broadside", side);
-      const brg = a.bearing ?? heading + (side === "starboard" ? Math.PI / 2 : -Math.PI / 2);
-      const cx = b.pos.x + Math.sin(brg) * a.range;
-      const cz = b.pos.z + Math.cos(brg) * a.range;
-      for (let k = -1; k <= 1; k++) {
-        const t = k * half;
-        out.push({ x: cx + Math.sin(heading) * t, z: cz + Math.cos(heading) * t, locked: a.locked, ready });
-      }
-    }
-    return out;
-  }
 
 
   /** Boards the nearest ship alongside, if any. */
