@@ -114,7 +114,9 @@ export class FollowCamera {
     if (this.mode === "cinematic") {
       this.drift += dt * 0.05;
       this.camera.alpha += dt * 0.05;
-      this.camera.beta = 1.5 + Math.sin(this.drift * 0.7) * 0.03;
+      // Low over the swell, now and then dipping through the surface (the reference's passes
+      // from above to below the water).
+      this.camera.beta = 1.5 + Math.sin(this.drift * 0.7) * 0.03 + 0.12 * Math.pow(Math.max(0, Math.sin(this.drift * 0.45)), 6);
       this.camera.radius = p.length * 2.3;
     }
     if (this.mode === "isometric") this.follow(p.x + this.aim.x, p.y, p.z + this.aim.z, dt);

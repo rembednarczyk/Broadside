@@ -19,6 +19,7 @@ uniform float depth;
 uniform vec2 sunScreen;
 uniform float flash;
 uniform float time;
+uniform float waterline;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vnoise(vec2 p) {
@@ -32,9 +33,19 @@ void main() {
   // Droplet map: rg = refraction offset (0.5 = none), b = droplet mask.
   vec4 d = texture2D(dropSampler, uv * vec2(1.0, 0.6) + vec2(0.0, -time * 0.004));
   uv += (d.rg - 0.5) * 0.06 * d.b * drops;
-  if (underwater > 0.5) uv += vec2(sin(uv.y * 40.0 + time * 2.0), cos(uv.x * 35.0 + time * 1.7)) * 0.0025;
+  // Half in, half out: the surface crosses the lens as a wavering line; below it the view is the
+  // underwater one, on it a blurred meniscus (the reference's camera through the surface).
+  float wl = waterline + 0.012 * sin(uv.x * 14.0 + time * 2.3) + 0.006 * sin(uv.x * 37.0 - time * 3.1);
+  float uw = waterline >= 0.0 ? step(uv.y, wl) : underwater;
+  if (uw > 0.5) uv += vec2(sin(uv.y * 40.0 + time * 2.0), cos(uv.x * 35.0 + time * 1.7)) * 0.0025;
   vec3 c = texture2D(textureSampler, uv).rgb;
-  if (underwater > 0.5) {
+  float band = waterline >= 0.0 ? smoothstep(0.035, 0.0, abs(uv.y - wl)) : 0.0;
+  if (band > 0.0) {
+    vec3 blur = (texture2D(textureSampler, uv + vec2(0.0, 0.012)).rgb + texture2D(textureSampler, uv - vec2(0.0, 0.012)).rgb
+      + texture2D(textureSampler, uv + vec2(0.01, 0.0)).rgb + texture2D(textureSampler, uv - vec2(0.01, 0.0)).rgb) * 0.25;
+    c = mix(c, blur, band);
+  }
+  if (uw > 0.5) {
     float absorb = exp(-depth * 0.08);
     vec3 teal = vec3(0.04, 0.22, 0.2);
     c = mix(teal * 0.35, c * vec3(0.55, 0.95, 0.9), 0.55 * absorb);
@@ -44,6 +55,9 @@ void main() {
     c += vec3(0.5, 0.85, 0.75) * rays * 0.35 * absorb;
     c *= mix(0.25, 1.0, smoothstep(0.0, 0.9, 1.0 - uv.y * 0.0 - length(uv - vec2(0.5, 1.1)) * 0.6));
   }
+  // The meniscus: a thin dark line with a bright edge where the surface meets the glass.
+  c = mix(c, c * 0.55, smoothstep(0.006, 0.0, abs(uv.y - wl)) * step(0.0, waterline));
+  c += vec3(0.25) * smoothstep(0.012, 0.004, abs(uv.y - wl - 0.008)) * step(0.0, waterline);
   // Droplets darken their rims slightly and catch a highlight.
   c = mix(c, c * 0.8 + vec3(0.06), d.b * drops * 0.35);
   // Lightning: a whiteout at the strike, then a cold blue cast that fades (reference s. 21).
@@ -55,7 +69,7 @@ void main() {
   vec3 high = vec3(1.0, 0.95, 0.84);
   vec3 sepia = l < 0.5 ? mix(shadow, mid, l * 2.0) : mix(mid, high, (l - 0.5) * 2.0);
   // Underwater keeps its teal; lightning washes the sepia out towards blue-white.
-  float a = amount * (1.0 - underwater * 0.8) * (1.0 - flash * 0.7);
+  float a = amount * (1.0 - uw * 0.8) * (1.0 - flash * 0.7);
   vec3 g = mix(c, sepia, a);
   g = clamp((g - 0.5) * contrast + 0.5, 0.0, 1.0);
   g = g * g * (3.0 - 2.0 * g) * 0.35 + g * 0.65;

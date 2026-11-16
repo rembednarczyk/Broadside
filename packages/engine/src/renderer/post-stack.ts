@@ -39,10 +39,12 @@ export interface ScreenState {
   sunY: number;
   time: number;
   flash: number;
+  /** Height of the water surface on the lens (0 bottom .. 1 top) while the camera rides the surface; -1 otherwise. */
+  waterline: number;
 }
 
 export class PostStack {
-  readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0 };
+  readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0, waterline: -1 };
   readonly sunDisc: Mesh | null;
   private shaftsPass: VolumetricLightScatteringPostProcess | null = null;
 
@@ -122,7 +124,7 @@ export class PostStack {
 
   private finalPass(scene: Scene, camera: Camera, g: GraphicsSettings): void {
     Effect.ShadersStore["gradeFragmentShader"] = GRADE_FRAGMENT;
-    const grade = new PostProcess("grade", "grade", ["amount", "contrast", "drops", "underwater", "depth", "sunScreen", "flash", "time"], ["dropSampler"], 1, camera);
+    const grade = new PostProcess("grade", "grade", ["amount", "contrast", "drops", "underwater", "depth", "sunScreen", "flash", "time", "waterline"], ["dropSampler"], 1, camera);
     const dropTex = createDropTexture(scene);
     grade.onApply = (e) => {
       const f = this.screen;
@@ -135,6 +137,7 @@ export class PostStack {
       e.setFloat2("sunScreen", f.sunX, f.sunY);
       e.setFloat("flash", g.lens ? f.flash : f.flash * 0.3);
       e.setFloat("time", f.time);
+      e.setFloat("waterline", f.waterline);
     };
   }
 }
