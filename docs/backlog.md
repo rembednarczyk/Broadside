@@ -27,7 +27,11 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### Wygląd (referencja 16.11)
 - [x] korekcja barw, promienie słońca, chmury, mgła, iskry na wodzie, ciemne żagle (16.11)
 - [x] detal statków: ratliny, marsy, kasztele, balustrady, latarnie, załoga (16.11)
-- [ ] wybrzeża na horyzoncie (M3), godła na żaglach, rufa z galeriami okien, piana przy dziobie i kilwater
+- [x] galeon wg referencji: trzy piętra żagli z godłem, maszty dzielone, marsy, blinda, fok od bukszprytu, kasztele z galerią okien (16.11)
+- [x] batching statku: żagle w jednej siatce na materiał, reje jako instancje, maszty scalone (16.11)
+- [ ] daleki brzeg we mgle (pierścień gór), dramatyczniejsze chmury, motion blur, widok spod wody
+- [ ] piana przy dziobie i kilwater z iskrami, większa martwa fala
+- [ ] porównanie klatka w klatkę z referencją: narzędzie zestawiające zrzut gry i klatkę filmu
 
 ### M3 świat
 - [ ] generator archipelagu (wyspy, mielizny, porty, forty), kolizje z dnem
