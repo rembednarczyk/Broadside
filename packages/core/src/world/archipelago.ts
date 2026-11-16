@@ -1,5 +1,5 @@
 import { type Rng, createRng, hashString, pick, range } from "../math/rng";
-import { fbm2 } from "../math/noise";
+import { fbm2, ridged2 } from "../math/noise";
 import { clamp, smoothstep } from "../math/scalar";
 import { type Faction } from "../data/factions";
 import { type FortClassId } from "../data/forts";
@@ -109,13 +109,18 @@ export const islandHeight = (is: Island, x: number, z: number): number => {
   const sea = DEEP_SEA + (1 - smoothstep(1, 1 + is.shoal / r, t)) * (-DEEP_SEA - 1.5);
   if (t >= 1) return sea;
   const n = fbm2(is.seed + 7, x * 0.006, z * 0.006, 4);
+  // Domain warp (Quilez) bends the ridges so they wander like real spurs and gullies.
+  const wx = x * 0.011 + 2.5 * fbm2(is.seed + 21, x * 0.004, z * 0.004, 2);
+  const wz = z * 0.011 + 2.5 * fbm2(is.seed + 22, x * 0.004, z * 0.004, 2);
+  const ridges = ridged2(is.seed + 13, wx, wz, 4);
   if (is.kind === "cliff") {
     const edge = smoothstep(1, 0.9, t);
-    return -1.5 + edge * (is.height * (0.75 + 0.35 * n));
+    // Plateau with gullies cut into it.
+    return -1.5 + edge * is.height * (0.72 + 0.3 * n - 0.22 * (1 - ridges));
   }
-  if (is.kind === "beach") return -1.5 + (1 - t * t) * is.height * (0.6 + 0.6 * n);
-  const peak = Math.pow(clamp(1 - t, 0, 1), 1.4);
-  return -1.5 + peak * is.height * (0.6 + 0.6 * n);
+  const peak = Math.pow(clamp(1 - t, 0, 1), 1.1);
+  if (is.kind === "beach") return -1.5 + (1 - t * t) * is.height * (0.45 + 0.4 * n + 0.35 * ridges * peak);
+  return -1.5 + is.height * (peak * (0.35 + 0.45 * n) + 0.45 * ridges * Math.sqrt(peak));
 };
 
 /** Terrain height of the whole world at a point (the highest island there, or the deep sea). */

@@ -44,6 +44,8 @@ interface FortVisual {
 
 export class FortsView {
   private readonly views = new Map<number, FortVisual>();
+  /** Called with the meshes of each new fort (the renderer keeps them out of the sun shafts). */
+  onBuilt: (meshes: Mesh[]) => void = () => {};
   private stone: StandardMaterial | null = null;
   private iron: StandardMaterial | null = null;
 
@@ -94,16 +96,13 @@ export class FortsView {
       barrel.position.set(g.x + Math.sin(g.angle) * 1.2, g.y, g.z + Math.cos(g.angle) * 1.2);
       return barrel;
     });
-    if (guns.length) {
-      const merged = Mesh.MergeMeshes(guns, true, true)!;
-      merged.material = this.iron;
-      merged.parent = root;
-    }
     const top = layout.towers.reduce((a, t) => (t.height > a.height ? t : a), { x: 0, z: 0, radius: 0, height: f.def.height });
     const pole = MeshBuilder.CreateCylinder("flagpole", { height: 10, diameter: 0.25, tessellation: 5 }, scene);
     pole.position.set(top.x, top.height + 5, top.z);
-    pole.material = this.iron;
-    pole.parent = root;
+    // Guns and the flagpole share the iron: one mesh.
+    const iron = Mesh.MergeMeshes([...guns, pole], true, true)!;
+    iron.material = this.iron;
+    iron.parent = root;
     const flagMat = new StandardMaterial(`fort-flag-${e.id}`, scene);
     flagMat.backFaceCulling = false;
     const flag = MeshBuilder.CreatePlane("fort-flag", { width: 5, height: 3 }, scene);
@@ -111,6 +110,7 @@ export class FortsView {
     flag.material = flagMat;
     flag.parent = root;
     const v: FortVisual = { root, body, flag, flagMat, faction: f.faction };
+    this.onBuilt([body, iron, flag]);
     this.paintFlag(v, f.faction);
     return v;
   }

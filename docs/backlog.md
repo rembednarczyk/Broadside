@@ -50,8 +50,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] wyspy w grafice: teren z tej samej funkcji co fizyka, drzewa, płycizny i przybój w shaderze oceanu (16.11)
 - [ ] porty: amunicja, załoga, naprawa, zapasy, handel; zapis gry
 - [x] forty 4 klas: ostrzał, mury, uciszanie, szturm desantu, modele proceduralne, celowanie w mury, HUD szturmu (16.11)
-- [ ] wydajność świata: scalić siatki wysp w jedną, forty w jedną siatkę na fort (dziś ok. 300 wywołań w zatoce)
-- [ ] kształty wysp: grzbiety i doliny zamiast stożków (szum grzbietowy, deformacja dziedziny)
+- [x] wydajność świata: wyspy w jednej siatce, żelazo fortu w jednej, ląd i forty poza przebiegiem promieni (314 -> 228 wywołań w zatoce) (16.11)
+- [x] kształty wysp: szum grzbietowy z deformacją dziedziny (16.11)
 
 ### M4 głębia
 - [ ] pełna amunicja i bronie specjalne, abordaż, taran, zaparcie, zasłona dymna

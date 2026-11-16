@@ -44,6 +44,7 @@ export interface ScreenState {
 export class PostStack {
   readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0 };
   readonly sunDisc: Mesh | null;
+  private shaftsPass: VolumetricLightScatteringPostProcess | null = null;
 
   constructor(scene: Scene, engine: Engine, camera: Camera, g: GraphicsSettings, excludeFromShafts: Mesh[]) {
     if (g.ssao) {
@@ -110,7 +111,13 @@ export class PostStack {
     vls.weight = 0.6;
     vls.density = 0.9;
     vls.excludedMeshes = exclude;
+    this.shaftsPass = vls;
     return disc;
+  }
+
+  /** Meshes that need not occlude the sun shafts (land, forts): saves a full re-render of them. */
+  excludeFromShafts(meshes: readonly Mesh[]): void {
+    this.shaftsPass?.excludedMeshes.push(...meshes);
   }
 
   private finalPass(scene: Scene, camera: Camera, g: GraphicsSettings): void {

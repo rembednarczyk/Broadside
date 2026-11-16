@@ -7,7 +7,7 @@ import { islandGeometry, treeSpots } from "./island-geometry";
  * instances of a trunk and a crown (Flyweight). Built once from the world seed.
  */
 export class IslandsView {
-  private readonly meshes: Mesh[] = [];
+  readonly meshes: Mesh[] = [];
 
   // Islands receive shadows but do not cast them: kilometres of casters would stretch the shadow
   // frustum over the whole sea and blur the ships' shadows.
@@ -25,6 +25,7 @@ export class IslandsView {
     const crown = MeshBuilder.CreateSphere("tree-crown", { diameter: 1, segments: 4 }, scene);
     crown.material = crownMat;
     const trunks: number[] = [];
+    const terrain: Mesh[] = [];
     const crowns: number[] = [];
     for (const is of a.islands) {
       const g = islandGeometry(is);
@@ -38,15 +39,21 @@ export class IslandsView {
       data.normals = normals;
       data.applyToMesh(mesh);
       mesh.position.set(is.x, 0, is.z);
-      mesh.material = ground;
-      mesh.receiveShadows = true;
-      mesh.freezeWorldMatrix();
-      this.meshes.push(mesh);
+      terrain.push(mesh);
       for (const t of treeSpots(is, Math.round((is.kind === "jungle" ? 160 : 60) * treeBudget))) {
         const h = 9 * t.scale;
         trunks.push(...Matrix.Scaling(t.scale, h, t.scale).multiply(Matrix.Translation(is.x + t.x, t.y + h / 2, is.z + t.z)).m);
         crowns.push(...Matrix.Scaling(6 * t.scale, 4.5 * t.scale, 6 * t.scale).multiply(Matrix.Translation(is.x + t.x, t.y + h, is.z + t.z)).m);
       }
+    }
+    // One draw call for all the land (Batching): positions are baked in by the merge.
+    const land = Mesh.MergeMeshes(terrain, true, true);
+    if (land) {
+      land.name = "islands";
+      land.material = ground;
+      land.receiveShadows = true;
+      land.freezeWorldMatrix();
+      this.meshes.push(land);
     }
     trunk.thinInstanceSetBuffer("matrix", new Float32Array(trunks), 16, true);
     crown.thinInstanceSetBuffer("matrix", new Float32Array(crowns), 16, true);

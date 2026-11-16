@@ -74,6 +74,7 @@ export class BabylonRenderer {
     this.treeBudget = g.particles;
     this.forts = new FortsView(this.scene, this.shadows);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
+    this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);
   }
 
   /** Shadows: cascaded maps on the higher presets (sharp close up, wide range), one map below. */
@@ -170,6 +171,7 @@ export class BabylonRenderer {
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
     if (!this.islands && sim.env.archipelago) {
       this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
+      this.post.excludeFromShafts(this.islands.meshes);
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);

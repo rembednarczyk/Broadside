@@ -42,3 +42,22 @@ export const fbm2 = (seed: number, x: number, y: number, octaves: number): numbe
 };
 
 export const seedOf = (name: string): number => hashString(name);
+
+/**
+ * Ridged multifractal (Musgrave, "Texturing and Modeling", 1994): 1 - |2n - 1| per octave,
+ * squared for sharp crests; ridges and valleys for terrain. Normalised to [0, 1).
+ */
+export const ridged2 = (seed: number, x: number, y: number, octaves: number): number => {
+  let sum = 0;
+  let amp = 0.5;
+  let norm = 0;
+  let f = 1;
+  for (let o = 0; o < octaves; o++) {
+    const r = 1 - Math.abs(2 * noise2(seed + o * 7919, x * f, y * f) - 1);
+    sum += amp * r * r;
+    norm += amp;
+    amp *= 0.5;
+    f *= 2.03;
+  }
+  return sum / norm;
+};
