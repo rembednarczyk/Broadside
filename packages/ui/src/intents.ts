@@ -26,6 +26,7 @@ export interface SettingsIntents {
   setLanguage(lang: "en" | "pl"): void;
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
+  setColorMode(mode: string): void;
   toggleSettings(): void;
   toggleHud(): void;
   nextCamera(): void;

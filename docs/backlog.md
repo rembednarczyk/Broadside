@@ -38,6 +38,12 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] (raport 5) świecące godła i okna nocą (16.11); do zrobienia: bocianie gniazda, postrzępione żagle
 - [x] (raport 6) rozmycie ruchu (Ultra, Kinowa), kamery: pościg, filmowa, pokład; ukrywanie HUD (16.11)
 
+### Prezentacja (decyzje 16.11)
+- [x] presety grafiki, tryby kolorów (sepia, naturalne, żywe), kamera izometryczna domyślna (16.11)
+- [x] kadłub tnie wodę: fala dziobowa, burty, wycięcie, klin Kelvina (16.11)
+- [ ] bryzgi przy uderzeniu dziobu w falę i przy dużej prędkości (z fizyki: pionowa prędkość dziobu względem wody)
+- [ ] izometria: ikony celów i zasięgu dział na wodzie (łuk salwy), czytelność HUD
+
 ### M3 świat
 - [ ] generator archipelagu (wyspy, mielizny, porty, forty), kolizje z dnem
 - [ ] porty: amunicja, załoga, naprawa, zapasy, handel; zapis gry

@@ -6,8 +6,13 @@
 export type GraphicsPreset = "low" | "medium" | "high" | "ultra" | "cinematic";
 export const GRAPHICS_PRESETS: readonly GraphicsPreset[] = ["low", "medium", "high", "ultra", "cinematic"];
 
+/** Colour treatment of the final image: a style choice, independent of the quality preset. */
+export type ColorMode = "sepia" | "natural" | "vibrant";
+export const COLOR_MODES: readonly ColorMode[] = ["sepia", "natural", "vibrant"];
+
 export interface GraphicsSettings {
   readonly preset: GraphicsPreset | "custom";
+  readonly colorMode: ColorMode;
   /** Share of the device pixel ratio rendered (0.5..1). */
   readonly renderScale: number;
   /** Multisample anti-aliasing samples of the post pipeline (1 = off). */
@@ -33,7 +38,7 @@ export interface GraphicsSettings {
   readonly particles: number;
 }
 
-const BASE: Readonly<Record<GraphicsPreset, Omit<GraphicsSettings, "preset">>> = {
+const BASE: Readonly<Record<GraphicsPreset, Omit<GraphicsSettings, "preset" | "colorMode">>> = {
   low: { renderScale: 0.6, msaa: 1, shadowSize: 0, cascades: false, oceanCells: 120, detailWaves: 0, cloudOctaves: 3, sunShafts: 0, bloom: false, ssao: false, motionBlur: false, lens: false, particles: 0.4 },
   medium: { renderScale: 0.75, msaa: 1, shadowSize: 1024, cascades: false, oceanCells: 180, detailWaves: 0, cloudOctaves: 4, sunShafts: 30, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 0.7 },
   high: { renderScale: 1, msaa: 2, shadowSize: 2048, cascades: false, oceanCells: 240, detailWaves: 4, cloudOctaves: 5, sunShafts: 60, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 1 },
@@ -41,10 +46,10 @@ const BASE: Readonly<Record<GraphicsPreset, Omit<GraphicsSettings, "preset">>> =
   cinematic: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 480, detailWaves: 8, cloudOctaves: 6, sunShafts: 120, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.6 },
 };
 
-export const presetSettings = (p: GraphicsPreset): GraphicsSettings => ({ preset: p, ...BASE[p] });
+export const presetSettings = (p: GraphicsPreset, colorMode: ColorMode = "sepia"): GraphicsSettings => ({ preset: p, colorMode, ...BASE[p] });
 
 /** Changes one field; the result is "custom" unless it still equals a preset exactly. */
-export const withSetting = <K extends keyof Omit<GraphicsSettings, "preset">>(s: GraphicsSettings, key: K, value: GraphicsSettings[K]): GraphicsSettings => {
+export const withSetting = <K extends keyof Omit<GraphicsSettings, "preset" | "colorMode">>(s: GraphicsSettings, key: K, value: GraphicsSettings[K]): GraphicsSettings => {
   const next = { ...s, [key]: value };
   const match = GRAPHICS_PRESETS.find((p) => (Object.keys(BASE[p]) as (keyof typeof BASE.low)[]).every((k) => BASE[p][k] === next[k]));
   return { ...next, preset: match ?? "custom" };
@@ -60,7 +65,8 @@ export const parseGraphics = (text: string | null, touch: boolean): GraphicsSett
     const raw = JSON.parse(text) as Partial<GraphicsSettings>;
     const base = defaultGraphics(touch);
     const merged = { ...base, ...raw } as GraphicsSettings;
-    return typeof merged.renderScale === "number" && typeof merged.oceanCells === "number" ? merged : base;
+    const colorMode = COLOR_MODES.includes(merged.colorMode) ? merged.colorMode : "sepia";
+    return typeof merged.renderScale === "number" && typeof merged.oceanCells === "number" ? { ...merged, colorMode } : base;
   } catch {
     return defaultGraphics(touch);
   }

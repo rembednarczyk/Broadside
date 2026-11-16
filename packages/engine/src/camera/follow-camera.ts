@@ -5,8 +5,11 @@ import { ArcRotateCamera, Quaternion, type Scene, Vector3 } from "../babylon";
  * zoom by drag, pinch and wheel (Babylon's ArcRotateCamera inputs), and a critically damped
  * follow of the target (exponential smoothing, frame-rate independent: 1 - exp(-k dt)).
  */
-export type CameraMode = "chase" | "cinematic" | "deck";
-export const CAMERA_MODES: readonly CameraMode[] = ["chase", "cinematic", "deck"];
+export type CameraMode = "isometric" | "chase" | "cinematic" | "deck";
+export const CAMERA_MODES: readonly CameraMode[] = ["isometric", "chase", "cinematic", "deck"];
+
+/** True isometric elevation: atan(1 / sqrt 2) = 35.26 deg above the horizon. */
+const ISO_BETA = Math.PI / 2 - Math.atan(1 / Math.SQRT2);
 
 /** Pose of the followed ship for the camera (world space). */
 export interface ShipPose {
@@ -24,7 +27,8 @@ export interface ShipPose {
 }
 
 export class FollowCamera {
-  mode: CameraMode = "chase";
+  mode: CameraMode = "isometric";
+  private lastMode: CameraMode | null = null;
   private drift = 0;
   readonly camera: ArcRotateCamera;
   private readonly target = new Vector3();
@@ -59,6 +63,17 @@ export class FollowCamera {
    * quarterdeck, riding the ship's roll and pitch).
    */
   place(p: ShipPose, dt: number): void {
+    this.enterMode(p.length);
+    if (this.mode === "isometric") {
+      // Orthographic projection sized by the zoom (the orbit radius), elevation locked.
+      this.camera.beta = ISO_BETA;
+      const half = this.camera.radius * 0.42;
+      const aspect = this.camera.getEngine().getAspectRatio(this.camera);
+      this.camera.orthoTop = half;
+      this.camera.orthoBottom = -half;
+      this.camera.orthoLeft = -half * aspect;
+      this.camera.orthoRight = half * aspect;
+    }
     // The orbit's minimum radius would push a deck eye off the ship.
     this.camera.lowerRadiusLimit = this.mode === "deck" ? 0.5 : 18;
     if (this.mode === "deck") {
@@ -78,9 +93,21 @@ export class FollowCamera {
     this.follow(p.x, p.y, p.z, dt);
   }
 
+  /** Projection and limits when the mode changes (isometric is orthographic, the rest perspective). */
+  private enterMode(length: number): void {
+    if (this.mode === this.lastMode) return;
+    this.lastMode = this.mode;
+    const iso = this.mode === "isometric";
+    this.camera.mode = iso ? 1 : 0; // Camera.ORTHOGRAPHIC_CAMERA : PERSPECTIVE_CAMERA
+    this.camera.upperBetaLimit = iso ? ISO_BETA : 1.78;
+    this.camera.lowerBetaLimit = iso ? ISO_BETA : 0.35;
+    if (iso) this.camera.radius = Math.max(60, length * 3.2);
+    else if (this.mode === "chase") this.camera.radius = Math.max(28, length * 2.1);
+  }
+
   follow(x: number, y: number, z: number, dt: number): void {
     const k = 1 - Math.exp(-6 * dt);
-    this.target.set(this.target.x + (x - this.target.x) * k, this.target.y + (y + this.lift - this.target.y) * k, this.target.z + (z - this.target.z) * k);
+    this.target.set(this.target.x + (x - this.target.x) * k, this.target.y + (y + (this.mode === "isometric" ? 1 : this.lift) - this.target.y) * k, this.target.z + (z - this.target.z) * k);
     this.camera.target.copyFrom(this.target);
   }
 

@@ -22,6 +22,14 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
           </button>
         ))}
       </div>
+      <div className="label">{text(lang, "settings.color")}</div>
+      <div className="presets three">
+        {(["sepia", "natural", "vibrant"] as const).map((c) => (
+          <button key={c} className={g.colorMode === c ? "on" : ""} onPointerDown={() => intents.setColorMode(c)} data-testid={`color-${c}`}>
+            {text(lang, `color.${c}`)}
+          </button>
+        ))}
+      </div>
       <div className="label">{text(lang, "settings.resolution")} {Math.round(g.renderScale * 100)}%</div>
       <input type="range" min={50} max={100} step={5} value={Math.round(g.renderScale * 100)} onChange={(e) => intents.setRenderScale(Number(e.target.value) / 100)} />
       <div className="label">{text(lang, "settings.language")}</div>

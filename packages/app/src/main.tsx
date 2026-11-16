@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
+import { type ColorMode, CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
 import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { presentSailing } from "./presenters/sailing-presenter";
@@ -27,8 +27,13 @@ const readStored = (): string | null => {
   }
 };
 const urlPreset = params.get("quality");
-let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra", "cinematic"].includes(urlPreset) ? presetSettings(urlPreset as GraphicsPreset) : parseGraphics(readStored(), touch);
+const stored = parseGraphics(readStored(), touch);
+let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra", "cinematic"].includes(urlPreset) ? presetSettings(urlPreset as GraphicsPreset, stored.colorMode) : stored;
+const urlColor = params.get("color");
+if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
+const urlCamera = params.get("camera");
 let renderer = new BabylonRenderer({ canvas, graphics });
+if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
   try {
@@ -36,11 +41,13 @@ const applyGraphics = (next: GraphicsSettings) => {
   } catch {
     // Storage unavailable: the choice lasts for this run only.
   }
+  const mode = renderer.camera.mode;
   renderer.dispose();
   renderer = new BabylonRenderer({ canvas, graphics });
-  patchHud({ graphics: { preset: next.preset, renderScale: next.renderScale } });
+  renderer.camera.mode = mode;
+  patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
-patchHud({ graphics: { preset: graphics.preset, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0" });
+patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
@@ -53,7 +60,8 @@ const intents: UiIntents = {
   },
   settings: {
     setLanguage: (language) => patchHud({ language }),
-    setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset)),
+    setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
+    setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
     toggleHud: () => patchHud({ hudHidden: !useHud.getState().hudHidden }),

@@ -23,3 +23,11 @@ describe("graphics settings", () => {
     expect(parseGraphics(JSON.stringify(presetSettings("ultra")), true).preset).toBe("ultra");
   });
 });
+
+describe("colour modes", () => {
+  it("keep the colour mode across presets and fall back to sepia on bad data", () => {
+    expect(presetSettings("ultra", "vibrant").colorMode).toBe("vibrant");
+    expect(withSetting(presetSettings("high", "natural"), "bloom", false).colorMode).toBe("natural");
+    expect(parseGraphics(JSON.stringify({ ...presetSettings("high"), colorMode: "neon" }), false).colorMode).toBe("sepia");
+  });
+});

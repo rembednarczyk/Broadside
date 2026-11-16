@@ -1,7 +1,30 @@
 import { type Camera, ColorCurves, DefaultRenderingPipeline, Effect, type Engine, type Mesh, MeshBuilder, MotionBlurPostProcess, PostProcess, SSAO2RenderingPipeline, type Scene, StandardMaterial, Color3, VolumetricLightScatteringPostProcess } from "../babylon";
 import { GRADE_FRAGMENT } from "../shaders/grade";
 import { createDropTexture } from "./lens-drops";
-import { type GraphicsSettings } from "../graphics-settings";
+import { type ColorMode, type GraphicsSettings } from "../graphics-settings";
+
+/**
+ * Colour modes as data: sepia (the visual reference, default), natural (neutral, true to the
+ * scene's colours) and vibrant (saturated, punchy). Curves feed Babylon's image processing;
+ * `sepia` and `contrast` feed the final pass.
+ */
+interface ColorLook {
+  readonly saturation: number;
+  readonly highlightsHue: number;
+  readonly highlightsDensity: number;
+  readonly shadowsDensity: number;
+  readonly shadowsExposure: number;
+  readonly exposure: number;
+  readonly contrast: number;
+  readonly sepia: number;
+  readonly finalContrast: number;
+}
+
+const COLOR_LOOKS: Readonly<Record<ColorMode, ColorLook>> = {
+  sepia: { saturation: -40, highlightsHue: 40, highlightsDensity: 55, shadowsDensity: 20, shadowsExposure: -30, exposure: 0.95, contrast: 1.45, sepia: 0.72, finalContrast: 1.12 },
+  natural: { saturation: 0, highlightsHue: 40, highlightsDensity: 8, shadowsDensity: 0, shadowsExposure: -8, exposure: 1.05, contrast: 1.2, sepia: 0, finalContrast: 1.04 },
+  vibrant: { saturation: 35, highlightsHue: 35, highlightsDensity: 15, shadowsDensity: 10, shadowsExposure: -12, exposure: 1.1, contrast: 1.3, sepia: 0, finalContrast: 1.1 },
+};
 
 /**
  * The post-processing chain, configured by the graphics settings (Strategy by data): SSAO2 →
@@ -52,20 +75,21 @@ export class PostStack {
     p.imageProcessingEnabled = true;
     p.imageProcessing.toneMappingEnabled = true;
     p.imageProcessing.toneMappingType = 1; // ACES
-    p.imageProcessing.exposure = 0.95;
-    p.imageProcessing.contrast = 1.45;
+    const look = COLOR_LOOKS[g.colorMode];
+    p.imageProcessing.exposure = look.exposure;
+    p.imageProcessing.contrast = look.contrast;
     p.imageProcessing.vignetteEnabled = true;
     p.imageProcessing.vignetteWeight = 2.2;
     const curves = new ColorCurves();
-    curves.globalSaturation = -40;
-    curves.highlightsHue = 40;
-    curves.highlightsDensity = 55;
-    curves.highlightsSaturation = 25;
+    curves.globalSaturation = look.saturation;
+    curves.highlightsHue = look.highlightsHue;
+    curves.highlightsDensity = look.highlightsDensity;
+    curves.highlightsSaturation = g.colorMode === "sepia" ? 25 : 0;
     curves.midtonesHue = 38;
-    curves.midtonesDensity = 40;
-    curves.shadowsHue = 35;
-    curves.shadowsDensity = 20;
-    curves.shadowsExposure = -30;
+    curves.midtonesDensity = g.colorMode === "sepia" ? 40 : 0;
+    curves.shadowsHue = g.colorMode === "sepia" ? 35 : 210;
+    curves.shadowsDensity = look.shadowsDensity;
+    curves.shadowsExposure = look.shadowsExposure;
     p.imageProcessing.colorCurvesEnabled = true;
     p.imageProcessing.colorCurves = curves;
   }
@@ -96,8 +120,8 @@ export class PostStack {
     grade.onApply = (e) => {
       const f = this.screen;
       e.setTexture("dropSampler", dropTex);
-      e.setFloat("amount", 0.72);
-      e.setFloat("contrast", 1.12);
+      e.setFloat("amount", COLOR_LOOKS[g.colorMode].sepia);
+      e.setFloat("contrast", COLOR_LOOKS[g.colorMode].finalContrast);
       e.setFloat("drops", g.lens ? f.drops : 0);
       e.setFloat("underwater", f.underwater ? 1 : 0);
       e.setFloat("depth", f.depth);
