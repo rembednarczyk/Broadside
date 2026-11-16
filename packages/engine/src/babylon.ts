@@ -22,6 +22,8 @@ export { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 export type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 export { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 export { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
+export type { Particle } from "@babylonjs/core/Particles/particle";
+export { Color4 as ParticleColor } from "@babylonjs/core/Maths/math.color";
 export { SceneInstrumentation } from "@babylonjs/core/Instrumentation/sceneInstrumentation";
 export { Effect } from "@babylonjs/core/Materials/effect";
 
@@ -33,3 +35,4 @@ import "@babylonjs/core/Meshes/Builders/boxBuilder";
 import "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import "@babylonjs/core/Meshes/Builders/groundBuilder";
 import "@babylonjs/core/Particles/particleSystemComponent";
+import "@babylonjs/core/Meshes/thinInstanceMesh";

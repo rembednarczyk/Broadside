@@ -12,6 +12,15 @@ export interface SailIntents {
   toggleOars(): void;
 }
 
+export type Mount = "broadside" | "bowChaser" | "sternChaser" | "mortar" | "swivel";
+
+export interface CombatIntents {
+  fire(mount: Mount, side?: "port" | "starboard"): void;
+  loadAmmo(ammo: string): void;
+  brace(): void;
+  drop(kind: "fireBarrel" | "mine"): void;
+}
+
 export interface SettingsIntents {
   setLanguage(lang: "en" | "pl"): void;
 }
@@ -19,5 +28,6 @@ export interface SettingsIntents {
 export interface UiIntents {
   readonly helm: HelmIntents;
   readonly sails: SailIntents;
+  readonly combat: CombatIntents;
   readonly settings: SettingsIntents;
 }

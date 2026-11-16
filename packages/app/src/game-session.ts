@@ -1,5 +1,5 @@
-import { type GameCommand, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
-import { STEP, Simulation } from "@broadside/sim";
+import { type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { STEP, Simulation, aimFor } from "@broadside/sim";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -28,8 +28,12 @@ export class GameSession {
     this.playerId = player.id;
     this.course = 0.2;
     this.send({ type: "course", ship: this.playerId, heading: this.course });
-    this.sim.spawnShip({ classId: "frigate", faction: "crown", x: 260, z: 340, heading: 2.6, speed: 3 });
-    this.sim.spawnShip({ classId: "schooner", faction: "pirates", x: -320, z: 180, heading: 1.2, speed: 3 });
+    // Opening encounter: a pirate schooner hunting, a pirate sloop, a crown frigate on patrol and
+    // a republic brig the crown is at war with.
+    this.sim.spawnShip({ classId: "schooner", faction: "pirates", x: -380, z: 420, heading: 2.2, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "sloop", faction: "pirates", x: 520, z: 650, heading: 3.6, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "frigate", faction: "crown", x: 1500, z: -300, heading: 4.2, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "brig", faction: "republic", x: 1700, z: 900, heading: 3.4, speed: 3, ai: true });
   }
 
   private send(cmd: GameCommand): void {
@@ -70,6 +74,28 @@ export class GameSession {
 
   setSails(level: number): void {
     this.send({ type: "sails", ship: this.playerId, mast: "all", level: clamp(Math.round(level), 0, 4) as SailLevel });
+  }
+
+  /** Fires a battery with aim assist: range and bearing of the best target in its arc, if any. */
+  fire(mount: MountKind, side?: "port" | "starboard"): void {
+    const me = this.sim.byId(this.playerId);
+    if (!me?.body) return;
+    const arc = mount === "broadside" ? (side ?? "starboard") : mount;
+    const aim = aimFor(me, this.sim.ships(), arc);
+    const range = aim?.range ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
+    this.send({ type: "fire", ship: this.playerId, mount, side, range, bearing: aim?.bearing });
+  }
+
+  loadAmmo(ammo: AmmoId): void {
+    this.send({ type: "loadAmmo", ship: this.playerId, mount: "broadside", ammo });
+  }
+
+  brace(): void {
+    this.send({ type: "brace", ship: this.playerId });
+  }
+
+  drop(kind: "fireBarrel" | "mine"): void {
+    this.send({ type: "drop", ship: this.playerId, ammo: kind });
   }
 
   toggleOars(): void {

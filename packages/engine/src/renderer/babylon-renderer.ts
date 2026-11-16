@@ -5,6 +5,8 @@ import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
+import { EffectsDirector } from "../effects/effects-director";
+import { type DomainEvent } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -37,6 +39,7 @@ export class BabylonRenderer {
   private readonly views = new Map<number, ShipView>();
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
+  private readonly effects: EffectsDirector;
 
   constructor(opts: RendererOptions) {
     this.engine = new Engine(opts.canvas, opts.quality === "high", { preserveDrawingBuffer: true, stencil: true }, true);
@@ -51,6 +54,7 @@ export class BabylonRenderer {
     this.ocean = new Ocean(this.scene);
     this.sky = new Sky(this.scene);
     this.materials = createShipMaterials(this.scene);
+    this.effects = new EffectsDirector(this.scene);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
     if (opts.quality === "high") this.createPipeline();
@@ -119,6 +123,11 @@ export class BabylonRenderer {
     }
   }
 
+  /** Domain events of the last steps (Observer): effects react to them. */
+  onEvents(events: readonly DomainEvent[]): void {
+    this.effects.onEvents(events);
+  }
+
   frame(sim: Simulation, env: FrameEnvironment, dt: number): void {
     const look = sceneLook(env.hours, env.overcast, env.fog);
     const player = sim.player();
@@ -143,6 +152,7 @@ export class BabylonRenderer {
     const w = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * w, Math.cos(sim.env.windDirection) * w);
     this.syncShips(sim);
+    this.effects.frame(sim, dt);
     this.scene.render();
   }
 

@@ -28,10 +28,21 @@ const page = await browser.newPage({ viewport: { width: Number(width), height: N
 const logs = [];
 page.on("console", (m) => logs.push(`${m.type()}: ${m.text()}`));
 page.on("pageerror", (e) => logs.push(`pageerror: ${e.message}`));
+// Optional scripted actions during the advance: SHOT_SCRIPT is a function body (b, t) => {...}.
+if (process.env.SHOT_SCRIPT) await page.addInitScript(`globalThis.__shotScript = (b, t) => { ${process.env.SHOT_SCRIPT} }`);
 await page.goto(`http://localhost:${port}/index.html?${query}`);
 await page.waitForFunction(() => globalThis.__broadside !== undefined, null, { timeout: 60000 });
 // Advance simulated time explicitly so the shot does not depend on SwiftShader frame rate.
-await page.evaluate((s) => globalThis.__broadside.session.advance(Number(s)), seconds);
+// Advance in frame-sized steps and forward events to the renderer, as the game loop does.
+await page.evaluate((s) => {
+  const b = globalThis.__broadside;
+  const steps = Math.round(Number(s) * 30);
+  for (let i = 0; i < steps; i++) {
+    b.session.advance(1 / 30);
+    if (globalThis.__shotScript) globalThis.__shotScript(b, i / 30);
+    b.renderer.onEvents(b.session.sim.drainEvents());
+  }
+}, seconds);
 if (cam) {
   // alpha,beta,radius of the follow camera (orbit around the player's ship).
   await page.evaluate((c) => {
