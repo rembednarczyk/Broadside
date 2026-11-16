@@ -13,6 +13,11 @@ import { type MastModel } from "../ship/ship-model";
 const HANDLING_RATE = 0.25;
 /** Damage per second per unit of overload (force / strength - 1). */
 const OVERLOAD_DAMAGE = 0.5;
+/**
+ * Game scale on sail drive (decyzje 16.11): real square riggers make 7-9 kn in a fresh breeze;
+ * the game wants about 10-12 kn. Mast strength is scaled by the same factor.
+ */
+export const SAIL_GAIN = 1.6;
 
 const studdingOf = (m: MastModel): boolean => m.sails.some((s) => s.studding);
 
@@ -46,14 +51,14 @@ export const sailSystem: System = (ctx, dt) => {
         const local = rotateInv(b.rot, vec3(tw.x - pv.x, 0, tw.z - pv.z));
         const area = sail.area * s.sailSet[i]! * (0.3 + 0.7 * s.sailCloth[i]!);
         const f = sailForce(sail.rig, area, local.x, local.z, trim);
-        const world = rotate(b.rot, vec3(f.fx, 0, f.fz));
+        const world = rotate(b.rot, vec3(f.fx * SAIL_GAIN, 0, f.fz * SAIL_GAIN));
         applyForceAt(b, world, ceWorld);
         total = vec3(total.x + world.x, total.y + world.y, total.z + world.z);
         const q = 0.5 * 1.225 * (local.x * local.x + local.z * local.z);
         s.sailChord[i]![j] = f.chord;
         s.sailFill[i]![j] = area > 0 && q > 0 ? Math.hypot(f.fx, f.fz) / (q * area) : 0;
       });
-      const load = Math.hypot(total.x, total.z) / m.strength;
+      const load = Math.hypot(total.x, total.z) / (m.strength * SAIL_GAIN);
       if (load > 1) s.mastHp[i] = Math.max(0, s.mastHp[i]! - (load - 1) * OVERLOAD_DAMAGE * s.model.def.mastHp * dt * 0.1);
       if (s.mastHp[i]! <= 0) {
         s.sailSet[i] = 0;

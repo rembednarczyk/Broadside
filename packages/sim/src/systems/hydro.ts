@@ -11,12 +11,14 @@ import { type GerstnerWave } from "@broadside/core";
  * rudder is a foil at the stern; oars push along the keel.
  */
 const G = 9.81;
-const C_FORWARD = 0.09;
+const C_FORWARD = 0.065;
 const C_SIDE = 1.1;
 const C_BOTTOM = 1.4;
 /** Small linear damping so slow drift and roll settle (skin friction at low speed). */
 const LINEAR_DAMPING = 0.04;
 const RUDDER_MAX = 35 * DEG;
+/** Game scale on the rudder: real ships turn in 3 hull lengths; the game wants about 1.5-2. */
+const RUDDER_GAIN = 2.2;
 
 const waveMultiplier = (speed: number, length: number): number => {
   const fn = Math.abs(speed) / Math.sqrt(G * length);
@@ -56,7 +58,7 @@ const rudderForce = (b: RigidBody, s: ShipState): void => {
   const flow = Math.max(Math.abs(v.z), 0.5);
   const alpha = s.rudder * RUDDER_MAX * Math.sign(v.z || 1) + Math.atan2(v.x, flow);
   const q = 0.5 * WATER_DENSITY * (v.z * v.z + v.x * v.x);
-  const fx = -q * s.model.def.rudderArea * rudderLift(alpha);
+  const fx = -q * s.model.def.rudderArea * RUDDER_GAIN * rudderLift(alpha);
   applyForceAt(b, rotate(b.rot, vec3(fx, 0, 0)), p);
 };
 

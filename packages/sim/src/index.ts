@@ -9,3 +9,7 @@ export * from "./environment/environment";
 export * from "./systems/context";
 export * from "./systems/registry";
 export * from "./commands/apply";
+export * from "./ai/captain-state";
+export * from "./ai/captain";
+export * from "./ai/navigation";
+export * from "./combat/aim";

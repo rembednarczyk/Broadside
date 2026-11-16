@@ -13,3 +13,5 @@ export * from "./data/ship-classes";
 export * from "./data/ammo";
 export * from "./commands/commands";
 export * from "./events/events";
+export * from "./combat/ballistics";
+export * from "./data/factions";

@@ -20,7 +20,11 @@ export type GameCommand =
   | { readonly type: "course"; readonly ship: EntityId; readonly heading: number | null }
   /** Sail plan of one mast, or of every mast. */
   | { readonly type: "sails"; readonly ship: EntityId; readonly mast: number | "all"; readonly level: SailLevel }
-  | { readonly type: "fire"; readonly ship: EntityId; readonly mount: MountKind; readonly side?: Side; readonly range: number }
+  /**
+   * Fire a battery at a range. `bearing` (world heading of the aim point) trains the guns towards
+   * it within their port limits; without it they fire square to their mounting.
+   */
+  | { readonly type: "fire"; readonly ship: EntityId; readonly mount: MountKind; readonly side?: Side; readonly range: number; readonly bearing?: number }
   | { readonly type: "loadAmmo"; readonly ship: EntityId; readonly mount: MountKind; readonly ammo: AmmoId }
   | { readonly type: "drop"; readonly ship: EntityId; readonly ammo: "fireBarrel" | "mine" }
   | { readonly type: "brace"; readonly ship: EntityId }

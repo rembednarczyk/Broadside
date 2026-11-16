@@ -1,11 +1,11 @@
-import { type AmmoId, type MountKind, type SailLevel } from "@broadside/core";
+import { type AmmoId, type Faction, type MountKind, type SailLevel } from "@broadside/core";
 import { type ShipModel } from "./ship-model";
 
 /**
  * Mutable state of one ship while sailing (a component of the ship entity). Hot-path numbers are
  * mutated in place by the systems (ADR-0002, as in SpinalTap ADR-0002).
  */
-export type FactionId = "player" | "crown" | "republic" | "empire" | "pirates";
+export type FactionId = Faction;
 
 /** Hull sections: index = zone * 2 + side; zones bow 0, waist 1, stern 2; sides port 0, starboard 1. */
 export const SECTION_COUNT = 6;
@@ -30,6 +30,8 @@ export interface GunState {
   fuse: number;
   /** Elevation chosen when the gun was queued. */
   elevation: number;
+  /** Training of the gun left or right of its mounting (radians, + towards the bow's right). */
+  train: number;
 }
 
 export interface ShipState {
@@ -90,7 +92,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     rigging: 1,
     sections: Array.from({ length: SECTION_COUNT }, () => ({ hp: def.sectionHp, leak: 0, water: 0, fire: 0 })),
     crew: def.crew,
-    guns: model.guns.map((g) => ({ reload: 0, ammo: defaultAmmo[g.kind] ?? "round", dismounted: false, fuse: -1, elevation: 0 })),
+    guns: model.guns.map((g) => ({ reload: 0, ammo: defaultAmmo[g.kind] ?? "round", dismounted: false, fuse: -1, elevation: 0, train: 0 })),
     ammoLoad: { ...defaultAmmo },
     stores: { round: 40 * def.guns.length, chain: 12, grape: 12, heavy: 8, hot: 4, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2 },
     braced: 0,

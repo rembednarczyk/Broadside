@@ -8,6 +8,10 @@ import { createBody } from "./physics/rigid-body";
 import { shipModel } from "./ship/ship-model";
 import { type FactionId, createShipState } from "./ship/ship-state";
 import { applyCommand } from "./commands/apply";
+import { createCaptain } from "./ai/captain-state";
+
+/** Bigger guns stand off; light ships close in (metres). */
+const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, frigate: 260, liner: 280 })[id];
 
 /** Fixed simulation step (60 Hz). The app accumulates frame time and steps in whole steps. */
 export const STEP = 1 / 60;
@@ -26,6 +30,8 @@ export interface SpawnShip {
   readonly heading: number;
   readonly player?: boolean;
   readonly speed?: number;
+  /** Give the ship an AI captain (every ship but the player's, usually). */
+  readonly ai?: boolean;
 }
 
 /**
@@ -55,6 +61,7 @@ export class Simulation {
     if (spec.speed) body.vel = vec3(Math.sin(spec.heading) * spec.speed, 0, Math.cos(spec.heading) * spec.speed);
     const e: Entity = { id: this.nextId++, body, ship: createShipState(model, spec.faction) };
     if (spec.player) e.player = true;
+    if (spec.ai) e.captain = createCaptain(spec.x, spec.z, preferredRange(spec.classId));
     return this.world.add(e);
   }
 
@@ -68,7 +75,7 @@ export class Simulation {
     this.pending = [];
     for (const c of cmds) {
       const e = this.byId(c.ship);
-      if (e) applyCommand(e, c);
+      if (e) applyCommand(e, c, this.ctx);
     }
     stepEnvironment(this.env, STEP);
     for (const s of this.systems) s(this.ctx, STEP);
@@ -80,7 +87,7 @@ export class Simulation {
   }
 
   byId(id: number): Entity | undefined {
-    for (const e of this.world) if (e.id === id) return e;
+    for (const e of this.world.with("ship")) if (e.id === id) return e;
     return undefined;
   }
 

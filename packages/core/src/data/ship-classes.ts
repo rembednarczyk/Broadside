@@ -111,7 +111,7 @@ export const SHIP_CLASSES: Readonly<Record<ShipClassId, ShipClassDef>> = {
   bomb: {
     id: "bomb",
     hull: hull(28, 9, 3.5, 2.3, { bowFineness: 1.8, bilge: 3 }),
-    masts: [{ z: -1, height: 26, sails: [sq(330, 11), fa(90, 8)] }, { z: -9, height: 18, sails: [fa(140, 7)] }],
+    masts: [{ z: 3, height: 26, sails: [sq(330, 11), fa(90, 8)] }, { z: -7, height: 18, sails: [fa(140, 7)] }],
     guns: [{ kind: "mortar", count: 2, pounder: 130, deckHeight: 2.4 }, { kind: "broadside", count: 4, pounder: 6, deckHeight: 2.2 }, { kind: "swivel", count: 4, pounder: 1, deckHeight: 2.6 }],
     crew: 70, hold: 140, sectionHp: 400, mastHp: 220, rudderArea: 3.4, ballast: 0.8, oars: 0, price: 14000,
   },

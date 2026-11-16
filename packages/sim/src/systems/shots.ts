@@ -1,0 +1,81 @@
+import { AMMO, stepShot, vec3, waterHeight } from "@broadside/core";
+import { type System } from "./context";
+import { type Entity } from "../world/components";
+import { segmentHit, rigBox, type RigBox } from "../combat/hit-test";
+import { applyBlast, applyImpact } from "../combat/damage";
+import { type ShipModel } from "../ship/ship-model";
+import { sortedById } from "../world/world";
+
+/**
+ * Projectiles in flight: ballistics, then the swept segment of the step against every ship, then
+ * the water. Round shot striking the sea at a shallow angle skips (ricochet fire, a deliberate
+ * period technique), anything else splashes; shells burst.
+ */
+const MAX_AGE = 14;
+const OWNER_GRACE = 0.25;
+const rigs = new Map<ShipModel, RigBox>();
+const rigOf = (m: ShipModel): RigBox => {
+  let r = rigs.get(m);
+  if (!r) {
+    r = rigBox(m);
+    rigs.set(m, r);
+  }
+  return r;
+};
+
+const tryShips = (ctx: Parameters<System>[0], shot: Entity, ships: Entity[]): boolean => {
+  const sh = shot.shot!;
+  const from = vec3(sh.s.x - sh.s.vx * (1 / 60), sh.s.y - sh.s.vy * (1 / 60), sh.s.z - sh.s.vz * (1 / 60));
+  const to = vec3(sh.s.x, sh.s.y, sh.s.z);
+  let best: { e: Entity; t: number; local: ReturnType<typeof vec3>; where: "hull" | "rig" } | null = null;
+  for (const e of ships) {
+    if (e.id === sh.owner && sh.age < OWNER_GRACE) continue;
+    const b = e.body!;
+    const reach = e.ship!.model.def.hull.length;
+    if (Math.abs(b.pos.x - to.x) > reach + 10 || Math.abs(b.pos.z - to.z) > reach + 10) continue;
+    const hit = segmentHit(b, e.ship!.model, rigOf(e.ship!.model), from, to);
+    if (hit && (!best || hit.t < best.t)) best = { e, t: hit.t, local: hit.local, where: hit.where };
+  }
+  if (!best) return false;
+  const at = vec3(from.x + (to.x - from.x) * best.t, from.y + (to.y - from.y) * best.t, from.z + (to.z - from.z) * best.t);
+  const speed = Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz);
+  const blast = AMMO[sh.ammo].blast;
+  if (blast > 0) applyBlast(ctx.world, ctx.events, at, blast, sh.ammo, sh.owner, ctx.rng);
+  else applyImpact(ctx.world, ctx.events, best.e, { ammo: sh.ammo, mass: sh.mass, speed, by: sh.owner, local: best.local, world: at, where: best.where }, ctx.rng);
+  return true;
+};
+
+const tryWater = (ctx: Parameters<System>[0], shot: Entity): boolean => {
+  const sh = shot.shot!;
+  const wy = waterHeight(ctx.env.waves, sh.s.x, sh.s.z, ctx.env.time);
+  if (sh.s.y > wy) return false;
+  const speed = Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz);
+  const at = vec3(sh.s.x, wy, sh.s.z);
+  const blast = AMMO[sh.ammo].blast;
+  if (blast > 0) {
+    applyBlast(ctx.world, ctx.events, at, blast * 0.8, sh.ammo, sh.owner, ctx.rng);
+    return true;
+  }
+  const grazing = -sh.s.vy / speed < 0.2;
+  if (grazing && speed > 35 && sh.bounces < 2 && AMMO[sh.ammo].pellets === 1) {
+    sh.bounces++;
+    sh.s.y = wy + 0.05;
+    sh.s.vy = Math.abs(sh.s.vy) * 0.45;
+    sh.s.vx *= 0.62;
+    sh.s.vz *= 0.62;
+    ctx.events.push({ type: "ricochet", at });
+    return false;
+  }
+  ctx.events.push({ type: "splash", at, size: Math.cbrt(sh.mass) });
+  return true;
+};
+
+export const shotsSystem: System = (ctx, dt) => {
+  const ships = sortedById(ctx.world.with("ship", "body")).filter((e) => !e.ship.sinking || e.ship.sunkFor < 5);
+  for (const e of [...ctx.world.with("shot")]) {
+    const sh = e.shot;
+    stepShot(sh.s, sh.k, dt);
+    sh.age += dt;
+    if (tryShips(ctx, e, ships) || tryWater(ctx, e) || sh.age > MAX_AGE) ctx.world.remove(e);
+  }
+};
