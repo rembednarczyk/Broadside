@@ -85,7 +85,11 @@ importers:
         specifier: ^8.3.5
         version: 8.3.8(@types/node@22.20.5)
 
-  packages/core: {}
+  packages/core:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/engine:
     dependencies:
@@ -104,6 +108,10 @@ importers:
       '@broadside/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/sim:
     dependencies:
@@ -113,6 +121,10 @@ importers:
       miniplex:
         specifier: 2.0.0
         version: 2.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/ui:
     dependencies:

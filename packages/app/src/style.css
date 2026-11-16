@@ -1,0 +1,25 @@
+:root { --ink: #f2ead8; --panel: rgba(12, 18, 24, 0.62); --accent: #d9a441; font-family: Georgia, "Times New Roman", serif; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1218; color: var(--ink); touch-action: none; user-select: none; -webkit-user-select: none; }
+#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+.panel { position: absolute; background: var(--panel); border: 1px solid rgba(217, 164, 65, 0.4); border-radius: 10px; padding: 10px 12px; backdrop-filter: blur(4px); }
+.sailing { left: max(12px, env(safe-area-inset-left)); top: 12px; width: 230px; font-size: 14px; }
+.sailing .title { font-size: 17px; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.04em; }
+.row { display: flex; justify-content: space-between; margin: 2px 0; }
+.label { opacity: 0.75; }
+.sail-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 4px; }
+button { font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; padding: 6px 2px; font-size: 11px; touch-action: none; }
+button.on { background: rgba(217, 164, 65, 0.55); border-color: var(--accent); color: #111; }
+button.wide { width: 100%; margin-top: 6px; }
+.compass { position: absolute; right: max(12px, env(safe-area-inset-right)); top: 12px; width: 120px; height: 120px; }
+.compass .dial { fill: var(--panel); stroke: rgba(217, 164, 65, 0.6); stroke-width: 1.5; }
+.compass .bow { fill: var(--ink); }
+.compass .wind { stroke: #7fd0ff; stroke-width: 3; fill: none; stroke-linecap: round; }
+.compass .course { fill: var(--accent); }
+.compass .heading { fill: var(--ink); font-size: 14px; text-anchor: middle; }
+.helm-pad { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; gap: 120px; }
+.helm { width: 76px; height: 76px; border-radius: 50%; font-size: 26px; background: var(--panel); }
+.corner { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; align-items: center; font-size: 11px; opacity: 0.8; }
+.lang { width: 40px; }
+@media (max-width: 700px) { .sailing { width: 190px; font-size: 12px; } .compass { width: 92px; height: 92px; } }

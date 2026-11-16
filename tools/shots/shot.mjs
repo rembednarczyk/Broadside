@@ -1,0 +1,51 @@
+// Screenshot of the built game (Playwright + SwiftShader, as podrcr's scripts/shots): serves
+// packages/app/dist, waits N simulated seconds and saves PNGs. Usage:
+//   node tools/shots/shot.mjs <outDir> [query] [seconds] [width] [height]
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, join } from "node:path";
+import { mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+
+const [outDir = "shots", query = "", seconds = "6", width = "1280", height = "720", cam = ""] = process.argv.slice(2);
+const root = join(process.cwd(), "packages/app/dist");
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+const server = createServer(async (req, res) => {
+  const path = join(root, decodeURIComponent((req.url ?? "/").split("?")[0]) === "/" ? "index.html" : decodeURIComponent(req.url.split("?")[0]));
+  try {
+    res.writeHead(200, { "content-type": types[extname(path)] ?? "application/octet-stream" });
+    res.end(await readFile(path));
+  } catch {
+    res.writeHead(404).end();
+  }
+}).listen(0);
+const port = server.address().port;
+mkdirSync(outDir, { recursive: true });
+const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+const page = await browser.newPage({ viewport: { width: Number(width), height: Number(height) }, deviceScaleFactor: 1 });
+const logs = [];
+page.on("console", (m) => logs.push(`${m.type()}: ${m.text()}`));
+page.on("pageerror", (e) => logs.push(`pageerror: ${e.message}`));
+await page.goto(`http://localhost:${port}/index.html?${query}`);
+await page.waitForFunction(() => globalThis.__broadside !== undefined, null, { timeout: 60000 });
+// Advance simulated time explicitly so the shot does not depend on SwiftShader frame rate.
+await page.evaluate((s) => globalThis.__broadside.session.advance(Number(s)), seconds);
+if (cam) {
+  // alpha,beta,radius of the follow camera (orbit around the player's ship).
+  await page.evaluate((c) => {
+    const [a, b, r] = c.split(",").map(Number);
+    const camera = globalThis.__broadside.renderer.camera.camera;
+    camera.alpha = a;
+    camera.beta = b;
+    camera.radius = r;
+  }, cam);
+}
+await page.waitForTimeout(3000);
+await page.screenshot({ path: join(outDir, "scene.png") });
+const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));
+console.log(JSON.stringify(stats));
+for (const l of logs.filter((l) => /error|warn/i.test(l)).slice(0, 20)) console.log(l);
+await browser.close();
+server.close();

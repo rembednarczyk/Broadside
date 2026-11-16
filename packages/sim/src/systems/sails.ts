@@ -39,7 +39,7 @@ export const sailSystem: System = (ctx, dt) => {
     s.model.masts.forEach((m, i) => {
       if (s.mastHp[i]! <= 0 || s.sailSet[i]! <= 0) return;
       let total: Vec3 = vec3(0, 0, 0);
-      for (const sail of m.sails) {
+      m.sails.forEach((sail, j) => {
         const ceWorld = bodyToWorld(b, sail.ce);
         const tw = windAt(ctx.env, ceWorld.y);
         const pv = pointVelocity(b, ceWorld);
@@ -49,7 +49,10 @@ export const sailSystem: System = (ctx, dt) => {
         const world = rotate(b.rot, vec3(f.fx, 0, f.fz));
         applyForceAt(b, world, ceWorld);
         total = vec3(total.x + world.x, total.y + world.y, total.z + world.z);
-      }
+        const q = 0.5 * 1.225 * (local.x * local.x + local.z * local.z);
+        s.sailChord[i]![j] = f.chord;
+        s.sailFill[i]![j] = area > 0 && q > 0 ? Math.hypot(f.fx, f.fz) / (q * area) : 0;
+      });
       const load = Math.hypot(total.x, total.z) / m.strength;
       if (load > 1) s.mastHp[i] = Math.max(0, s.mastHp[i]! - (load - 1) * OVERLOAD_DAMAGE * s.model.def.mastHp * dt * 0.1);
       if (s.mastHp[i]! <= 0) {
