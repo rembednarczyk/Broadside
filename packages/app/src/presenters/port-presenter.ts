@@ -30,5 +30,6 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
     crewMissing,
     crewCost: crewPrice(crewMissing, f),
     plunderValue: plunderValue(sim.purse.plunder, owner),
+    standings: (["crown", "republic", "empire"] as const).map((faction) => ({ faction, value: sim.relations[faction] })),
   };
 };

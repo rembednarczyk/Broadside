@@ -57,3 +57,9 @@ button:disabled { opacity: 0.35; }
 .harbour { left: 50%; bottom: 120px; transform: translateX(-50%); width: min(460px, 60vw); font-size: 12px; }
 .port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 6px 0; }
 .port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+
+.standings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+.standing { font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+.standing i { display: block; height: 4px; border-radius: 2px; background: #c9a35a; }
+.standing.war span { color: #e0614f; }
+.standing.war i { background: #c0392b; }

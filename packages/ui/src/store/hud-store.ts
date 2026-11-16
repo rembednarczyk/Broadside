@@ -85,6 +85,8 @@ export interface PortHud {
   readonly crewMissing: number;
   readonly crewCost: number;
   readonly plunderValue: number;
+  /** The player's standing with each nation (-1 war .. 1 allied). */
+  readonly standings: readonly { readonly faction: string; readonly value: number }[];
 }
 
 export interface HudState {

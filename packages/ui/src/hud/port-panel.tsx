@@ -33,6 +33,18 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
           </div>
         </>
       )}
+      <div className="label">{text(lang, "port.standing")}</div>
+      <div className="standings">
+        {p.standings.map((s) => {
+          const key = `faction.${s.faction}`;
+          return (
+            <div key={s.faction} className={s.value <= -0.5 ? "standing war" : "standing"}>
+              <span>{isTextKey(key) ? text(lang, key) : s.faction}</span>
+              <i style={{ width: `${Math.round((s.value + 1) * 50)}%` }} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
