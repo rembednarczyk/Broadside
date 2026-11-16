@@ -44,3 +44,10 @@ Jedna zabłąkana kula nie wywołuje wojny, około 25 trafień tak.
   dla gracza. Byt gracza zachowuje id (komendy, kamera, zapis), dostaje nowy kadłub i nowe ciało (masa z klasy).
 - Przeróbki z epoki: poszycie miedzią, wzmocnienia kadłuba (riders), zamki skałkowe. Długie lufy odrzucone, bo
   zmiana prędkości wylotowej rozjechałaby się z tablicą celowania.
+
+## 16.11 Balans walki z audytu AI kontra AI (orkiestrator)
+Audyt `battles.audit.ts` (pary klas, ziarna 1–3, 15 min) pokazał 18 remisów na 18: kadłuby 80–95%, walka z 250–350 m,
+około 5 salw na statek. Zmiany: obrażenia 1/2500 → 1/600 HP na dżul; AI wstrzymuje ogień do 1,6 × preferowanego
+dystansu i wcześniej się zbliża (jak w epoce: ogień z bliska); preferowane dystanse krótsze o ok. 25%; działa
+obracane ręcznymi drągami do ±0,3 rad (wcześniej ±0,14), łuk ognia AI 0,28. Wynik: 12 z 18 bitew rozstrzygniętych w
+4–13 min, wygrywa większy lub lepiej uzbrojony statek. Remisy to w większości ucieczki pokonanych (próg 30% załogi).

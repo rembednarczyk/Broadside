@@ -67,5 +67,8 @@ export const elevationFor = (range: number, speed: number, height: number, k: nu
 /** Kinetic energy of an impact in joules. */
 export const impactEnergy = (massKg: number, speed: number): number => 0.5 * massKg * speed * speed;
 
-/** Hit points per joule: a 12-pounder at muzzle speed (about 33 kJ) does about 13 points. */
-export const DAMAGE_PER_JOULE = 1 / 2500;
+/**
+ * Hit points per joule: a 12-pounder at muzzle speed (about 33 kJ) does about 55 points. Tuned by
+ * the AI battle audit (battles.audit.ts) so a duel of equals is decided in minutes, not hours.
+ */
+export const DAMAGE_PER_JOULE = 1 / 600;

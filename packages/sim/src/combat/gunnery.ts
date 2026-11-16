@@ -15,7 +15,7 @@ const RIPPLE = 0.07;
 /** Base dispersion of a smoothbore (radians, one deviation). */
 const BASE_SPREAD = 0.007;
 /** How far a gun trains in its port either side (about 8 deg); swivels and chasers further. */
-const TRAIN_LIMIT = 0.14;
+const TRAIN_LIMIT = 0.3;
 const TRAIN_LIMIT_FREE = 0.6;
 
 const matches = (g: GunMount, mount: MountKind, side: "port" | "starboard" | undefined): boolean =>

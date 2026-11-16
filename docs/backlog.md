@@ -15,7 +15,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M1 walka
 - [x] działa, pociski, uszkodzenia, tonięcie, rozbitkowie, AI kapitana (16.11, d7ca7b4)
 - [x] efekty, dźwięk syntetyzowany, HUD ognia, wybór celu (16.11, 97621dd)
-- [ ] audyt bitew AI kontra AI (czas walki, zwycięzcy klas) jako `*.audit.ts`
+- [x] audyt bitew AI kontra AI (`battles.audit.ts`) i pierwszy balans walki (16.11)
 - [x] znaczniki upadku salwy na wodzie (pomarańczowe: burta wycelowana, jasne: na ślepo, rosną z ładowaniem dział); kamera izometryczna oddala się w walce i celuje między statki, ujemna bliska płaszczyzna w rzucie ortogonalnym (16.11)
 - [ ] w walce izometrycznej panele HUD w rogach zasłaniają cel: wskaźnik celu za krawędzią albo przesunięcie kadru od paneli
 

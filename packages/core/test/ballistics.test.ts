@@ -25,9 +25,9 @@ describe("ballistics", () => {
     expect(elevationFor(1, MUZZLE_SPEED, 2.5, k, 0.3)).toBeCloseTo(-0.12);
   });
 
-  it("makes a muzzle-speed 12-pounder worth about 13 hit points", () => {
-    expect(impactEnergy(m, MUZZLE_SPEED) * DAMAGE_PER_JOULE).toBeGreaterThan(11);
-    expect(impactEnergy(m, MUZZLE_SPEED) * DAMAGE_PER_JOULE).toBeLessThan(15);
+  it("makes a muzzle-speed 12-pounder worth about 55 hit points", () => {
+    expect(impactEnergy(m, MUZZLE_SPEED) * DAMAGE_PER_JOULE).toBeGreaterThan(48);
+    expect(impactEnergy(m, MUZZLE_SPEED) * DAMAGE_PER_JOULE).toBeLessThan(62);
   });
 });
 

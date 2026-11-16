@@ -108,7 +108,7 @@ describe("AI captain", () => {
   it("engages a hostile ship and damages it", () => {
     const sim = new Simulation({ seed: 21, windDirection: 1.4, windSpeed: 8 });
     const pirate = sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: 0, heading: 0, ai: true, speed: 3 });
-    const prey = sim.spawnShip({ classId: "sloop", faction: "crown", x: 300, z: 200, heading: 2, speed: 3 });
+    const prey = sim.spawnShip({ classId: "sloop", faction: "crown", x: 180, z: 120, heading: 2, speed: 3 });
     sim.command({ type: "sails", ship: prey.id, mast: "all", level: 1 });
     const ev = run(sim, 120);
     expect(pirate.captain!.mode === "engage" || pirate.captain!.mode === "patrol").toBe(true);

@@ -7,7 +7,7 @@ import { type FactionId, createShipState } from "../ship/ship-state";
 import { type CaptainRole, createCaptain } from "../ai/captain-state";
 
 /** Bigger guns stand off; light ships close in (metres). */
-const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, galleon: 230, frigate: 260, liner: 280 })[id];
+const preferredRange = (id: ShipClassId): number => ({ cutter: 90, gunboat: 220, sloop: 120, schooner: 140, brig: 160, bomb: 380, galleon: 170, frigate: 190, liner: 210 })[id];
 
 export interface SpawnShip {
   readonly classId: ShipClassId;

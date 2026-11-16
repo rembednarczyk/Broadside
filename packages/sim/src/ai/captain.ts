@@ -33,8 +33,8 @@ const HUNT_RANGE = 3200;
 /** Merchants run from enemies closer than this. */
 const MERCHANT_WARY = 600;
 const BROADSIDE_MAX = 430;
-/** The captain orders a broadside when the guns can train onto the target (their limit is ~0.14). */
-const ARC = 0.13;
+/** The captain orders a broadside when the guns can train onto the target (their limit is 0.3). */
+const ARC = 0.28;
 
 /**
  * Obstacle avoidance (Reynolds, "Steering Behaviors For Autonomous Characters", 1999): probe the
@@ -110,15 +110,17 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   // preferred range (a proportional bias, clamped).
   // With a loaded side in range the captain bears up to fire (no bias); while reloading he
   // works towards his range.
-  const loadedInRange = range < BROADSIDE_MAX && sideLoaded(s, c.side) > 0;
-  const closeBias = range > BROADSIDE_MAX * 0.85 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - c.range) / c.range)) * 0.8;
+  // Hold fire until within effective range (well inside the guns' reach): close first.
+  const effective = Math.min(BROADSIDE_MAX, c.range * 1.6);
+  const loadedInRange = range < effective && sideLoaded(s, c.side) > 0;
+  const closeBias = range > effective * 0.9 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - c.range) / c.range)) * 0.8;
   const desired = brg - abeam + (c.side === "starboard" ? closeBias : -closeBias);
   const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s), w) }];
   const level: SailLevel = range > c.range * 1.4 ? 3 : 2;
   if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
   const want = chooseAmmo(s, t.ship!, range);
   if (s.ammoLoad.broadside !== want && sideLoaded(s, c.side) === 0) cmds.push({ type: "loadAmmo", ship: me.id, mount: "broadside", ammo: want });
-  if (range < BROADSIDE_MAX && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range: aimRange, bearing: brg });
+  if (range < effective && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range: aimRange, bearing: brg });
   if (range < 420 && Math.abs(rel) < 0.18) cmds.push({ type: "fire", ship: me.id, mount: "bowChaser", range: aimRange, bearing: brg });
   if (range < 380 && Math.abs(wrapAngle(rel - Math.PI)) < 0.2) cmds.push({ type: "fire", ship: me.id, mount: "sternChaser", range: aimRange, bearing: brg });
   if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
