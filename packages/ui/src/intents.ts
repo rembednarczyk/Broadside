@@ -9,6 +9,7 @@ export interface HelmIntents {
 
 export interface SailIntents {
   setSails(level: number): void;
+  setMastSails(mast: number, level: number): void;
   toggleOars(): void;
 }
 

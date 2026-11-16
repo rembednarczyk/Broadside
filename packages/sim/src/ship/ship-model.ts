@@ -58,8 +58,8 @@ export interface ShipModel {
   readonly rudder: Vec3;
 }
 
-/** Sail pressure a mast stands at full sail (Pa): about Beaufort 8 before it starts to suffer. */
-const MAST_PRESSURE = 190;
+/** Sail pressure a mast stands at full sail (Pa): full sail is safe to about Beaufort 7, the period practice of reefing topsails in a strong breeze. */
+const MAST_PRESSURE = 150;
 
 const broadside = (def: ShipClassDef, count: number, pounder: number, deck: number, com: Vec3): GunMount[] => {
   const h = def.hull;

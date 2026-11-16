@@ -96,11 +96,12 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
 /** Gun crews are thinned by casualties first in the waist (sections 2 and 3). */
 const gunCrewShare = (s: ShipState): number => (s.sections[2]!.fire > 0.5 || s.sections[3]!.fire > 0.5 ? 0.6 : 1);
 
-export const updateGuns = (world: SimWorld, events: EventQueue, e: Entity, dt: number, rng: Rng): void => {
+/** `wet` 0..1: rain dampens the powder and slows the reload (up to a third longer). */
+export const updateGuns = (world: SimWorld, events: EventQueue, e: Entity, dt: number, rng: Rng, wet = 0): void => {
   const s = e.ship!;
   s.model.guns.forEach((g, i) => {
     const st = s.guns[i]!;
-    if (st.reload > 0) st.reload = Math.max(0, st.reload - dt);
+    if (st.reload > 0) st.reload = Math.max(0, st.reload - dt / (1 + 0.33 * wet));
     if (st.fuse < 0) return;
     st.fuse -= dt;
     if (st.fuse < 0) {

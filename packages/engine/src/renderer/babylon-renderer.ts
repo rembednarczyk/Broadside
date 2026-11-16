@@ -6,6 +6,7 @@ import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
+import { WeatherView } from "./weather-view";
 import { type DomainEvent } from "@broadside/core";
 
 /**
@@ -22,6 +23,7 @@ export interface RendererOptions {
 
 export interface FrameEnvironment {
   readonly hours: number;
+  /** Fallbacks when the simulation has no dynamic weather. */
   readonly overcast: number;
   readonly fog: number;
 }
@@ -40,6 +42,7 @@ export class BabylonRenderer {
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
   private readonly effects: EffectsDirector;
+  private readonly weather: WeatherView;
   private sunDisc: Mesh | null = null;
 
   constructor(opts: RendererOptions) {
@@ -56,6 +59,7 @@ export class BabylonRenderer {
     this.sky = new Sky(this.scene);
     this.materials = createShipMaterials(this.scene);
     this.effects = new EffectsDirector(this.scene);
+    this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
     if (opts.quality === "high") {
@@ -176,10 +180,12 @@ export class BabylonRenderer {
   /** Domain events of the last steps (Observer): effects react to them. */
   onEvents(events: readonly DomainEvent[]): void {
     this.effects.onEvents(events);
+    this.weather.onEvents(events);
   }
 
   frame(sim: Simulation, env: FrameEnvironment, dt: number): void {
-    const look = sceneLook(env.hours, env.overcast, env.fog);
+    const w = sim.env.weather;
+    const look = sceneLook(env.hours, w ? w.overcast : env.overcast, w ? w.fog : env.fog);
     const player = sim.player();
     if (player?.body) {
       const p = player.body.pos;
@@ -193,16 +199,22 @@ export class BabylonRenderer {
     const cam = this.camera.camera.position;
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z),
-      sunColor: new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b),
+      // Glint and glitter follow the direct sun: clouds take them away.
+      sunColor: new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b).scale(Math.min(1, look.sunIntensity / 2.2)),
       skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b),
       skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b),
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
     }, sim.env.windSpeed);
-    const w = sim.env.windSpeed;
-    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * w, Math.cos(sim.env.windDirection) * w);
+    const ws = sim.env.windSpeed;
+    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
     this.syncShips(sim);
     this.effects.frame(sim, dt);
+    this.weather.frame(sim, dt);
+    if (this.weather.flash > 0) {
+      this.ambient.intensity = 1 + this.weather.flash * 3;
+      this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
+    }
     this.scene.render();
   }
 

@@ -10,7 +10,7 @@ import { type Sprites, createSprites } from "./sprite-textures";
  * water, barrels and mines. Shot and floaters are thin instances of one mesh each (Flyweight).
  */
 export class EffectsDirector {
-  private readonly sprites: Sprites;
+  readonly sprites: Sprites;
   private readonly smoke: BurstEmitter;
   private readonly flash: BurstEmitter;
   private readonly spray: BurstEmitter;
@@ -103,6 +103,7 @@ export class EffectsDirector {
         this.fireSmoke.emit(b.pos.x + p.x, b.pos.y + p.y + 2, b.pos.z + p.z, w.x * 0.1, 1, w.z * 0.1, Math.ceil(n / 2), 2);
       });
     }
+    if (emitFires) for (const e of sim.world.with("spout")) this.spray.emit(e.spout.x, 1, e.spout.z, 0, 1.4, 0, 10, e.spout.radius);
     this.syncInstances(sim);
     for (const em of [this.smoke, this.flash, this.spray, this.splinters, this.flames, this.fireSmoke]) em.flush();
   }

@@ -59,6 +59,7 @@ export const sailSystem: System = (ctx, dt) => {
         s.sailFill[i]![j] = area > 0 && q > 0 ? Math.hypot(f.fx, f.fz) / (q * area) : 0;
       });
       const load = Math.hypot(total.x, total.z) / (m.strength * SAIL_GAIN);
+      s.mastLoad[i] = load;
       if (load > 1) s.mastHp[i] = Math.max(0, s.mastHp[i]! - (load - 1) * OVERLOAD_DAMAGE * s.model.def.mastHp * dt * 0.1);
       if (s.mastHp[i]! <= 0) {
         s.sailSet[i] = 0;

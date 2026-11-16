@@ -1,4 +1,4 @@
-import { EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
+import { type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { type Environment, createEnvironment, stepEnvironment } from "./environment/environment";
 import { type SimContext, type System } from "./systems/context";
 import { createSystems } from "./systems/registry";
@@ -20,6 +20,8 @@ export interface SimulationOptions {
   readonly seed: number;
   readonly windDirection: number;
   readonly windSpeed: number;
+  /** Starting weather; omitted, the wind stays as given (tests, set pieces). */
+  readonly weather?: WeatherKind;
 }
 
 export interface SpawnShip {
@@ -49,7 +51,7 @@ export class Simulation {
   steps = 0;
 
   constructor(opts: SimulationOptions) {
-    this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed);
+    this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather);
     this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed) };
   }
 

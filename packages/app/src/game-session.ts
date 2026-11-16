@@ -1,4 +1,4 @@
-import { type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
 import { STEP, Simulation, aimFor } from "@broadside/sim";
 
 /**
@@ -8,6 +8,8 @@ import { STEP, Simulation, aimFor } from "@broadside/sim";
  */
 export interface SessionOptions {
   readonly seed: number;
+  /** Starting weather (default: fresh wind). */
+  readonly weather?: WeatherKind;
 }
 
 /** Course change while a helm button is held (rad/s). */
@@ -23,7 +25,7 @@ export class GameSession {
   private course: number;
 
   constructor(opts: SessionOptions) {
-    this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8 });
+    this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh" });
     const player = this.sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
     this.playerId = player.id;
     this.course = 0.2;
@@ -70,6 +72,10 @@ export class GameSession {
       if (p?.body) this.course = yawOf(p.body.rot);
     }
     this.steering = direction;
+  }
+
+  setMastSails(mast: number, level: number): void {
+    this.send({ type: "sails", ship: this.playerId, mast, level: clamp(Math.round(level), 0, 4) as SailLevel });
   }
 
   setSails(level: number): void {

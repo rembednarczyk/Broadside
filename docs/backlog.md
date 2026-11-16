@@ -19,8 +19,15 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] wskaźnik miejsca upadku salwy na wodzie (łuk jak w Black Flag)
 
 ### M2 żagle i pogoda
-- [ ] automat pogody z frontami, szkwały, sztorm, mgła, deszcz, pioruny, trąby wodne, fale olbrzymie
-- [ ] HUD planu żagli per maszt, refowanie, ryzyko złamania masztu i wywrotki
+- [x] pogoda jako łańcuch Markowa (8 stanów), porywy, szkwały, pioruny w maszty, trąby wodne, fale olbrzymie, deszcz (gaszenie, mokry proch), mgła (zasięg wykrywania) (16.11)
+- [x] HUD: plan żagli na każdy maszt, obciążenie i ostrzeżenie, rodzaj pogody; deszcz, błyskawice, trąby w grafice; upływ pory dnia (16.11)
+- [ ] fronty pogodowe przesuwające się po mapie (pogoda zależna od miejsca)
+- [ ] widok spod wody (kamera pod powierzchnią, jak w referencji)
+
+### Wygląd (referencja 16.11)
+- [x] korekcja barw, promienie słońca, chmury, mgła, iskry na wodzie, ciemne żagle (16.11)
+- [x] detal statków: ratliny, marsy, kasztele, balustrady, latarnie, załoga (16.11)
+- [ ] wybrzeża na horyzoncie (M3), godła na żaglach, rufa z galeriami okien, piana przy dziobie i kilwater
 
 ### M3 świat
 - [ ] generator archipelagu (wyspy, mielizny, porty, forty), kolizje z dnem

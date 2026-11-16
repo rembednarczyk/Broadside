@@ -5,7 +5,7 @@ import { GameSession } from "./game-session";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId } from "@broadside/core";
+import { type AmmoId, type WeatherKind } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import "./style.css";
 
@@ -14,12 +14,13 @@ const params = new URLSearchParams(location.search);
 const seed = Number(params.get("seed") ?? 1797);
 const touch = matchMedia("(pointer: coarse)").matches;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
-const session = new GameSession({ seed });
+const weatherParam = params.get("weather");
+const session = new GameSession({ seed, weather: (weatherParam ?? "fresh") as WeatherKind });
 const renderer = new BabylonRenderer({ canvas, renderScale: touch ? 0.7 : 1, quality: params.get("quality") === "low" ? "low" : "high" });
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
-  sails: { setSails: (l) => session.setSails(l), toggleOars: () => session.toggleOars() },
+  sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
   combat: {
     fire: (mount, side) => session.fire(mount, side),
     loadAmmo: (ammo) => session.loadAmmo(ammo as AmmoId),
@@ -44,7 +45,9 @@ const pushNotice = (key: string) => {
 let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
-const hours = Number(params.get("hours") ?? 16.3);
+// One game hour passes in four minutes (a day in an hour and a half).
+const startHours = Number(params.get("hours") ?? 16.3);
+const hoursNow = () => (startHours + session.sim.env.time / 240) % 24;
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
@@ -59,7 +62,7 @@ const frame = (now: number) => {
     if (n) pushNotice(n);
   }
   audio.setWeather(session.sim.env.windSpeed, 0.5);
-  renderer.frame(session.sim, { hours, overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
+  renderer.frame(session.sim, { hours: hoursNow(), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
   frames++;
   if (fpsAcc > 0.5) {

@@ -24,6 +24,8 @@ export interface Entity {
   floater?: Floater;
   /** An AI captain commanding this ship. */
   captain?: CaptainState;
+  /** A waterspout wandering across the sea. */
+  spout?: Spout;
 }
 
 export interface Shot {
@@ -52,4 +54,14 @@ export interface Floater {
   readonly ammo: "fireBarrel" | "mine";
   readonly owner: number;
   age: number;
+}
+
+export interface Spout {
+  x: number;
+  z: number;
+  readonly vx: number;
+  readonly vz: number;
+  readonly radius: number;
+  age: number;
+  readonly life: number;
 }

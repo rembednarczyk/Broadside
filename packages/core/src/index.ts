@@ -15,3 +15,4 @@ export * from "./commands/commands";
 export * from "./events/events";
 export * from "./combat/ballistics";
 export * from "./data/factions";
+export * from "./weather/weather";

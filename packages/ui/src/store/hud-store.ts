@@ -18,6 +18,10 @@ export interface SailingHud {
   readonly hasOars: boolean;
   readonly oars: boolean;
   readonly classId: string;
+  /** Weather state key (calm, fresh, storm...) or null for a fixed wind. */
+  readonly weather: string | null;
+  /** Load of each mast as a share of what it stands. */
+  readonly mastLoad: readonly number[];
 }
 
 export interface BatteryHud {

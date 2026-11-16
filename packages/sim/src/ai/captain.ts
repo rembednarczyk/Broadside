@@ -11,6 +11,8 @@ import { relativeBearing, sailableHeading } from "./navigation";
  */
 export interface World2D {
   readonly windDirection: number;
+  /** Fog 0..1 shortens how far a lookout sees. */
+  readonly fog: number;
   readonly ships: readonly Entity[];
   readonly rng: () => number;
 }
@@ -24,9 +26,9 @@ const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp
 
 export const hostileTo = (a: ShipState, b: ShipState): boolean => isHostile(startStanding(a.faction, b.faction));
 
-const nearestHostile = (me: Entity, ships: readonly Entity[]): Entity | null => {
+const nearestHostile = (me: Entity, ships: readonly Entity[], fog: number): Entity | null => {
   let best: Entity | null = null;
-  let bestD = DETECT;
+  let bestD = DETECT * (1 - 0.7 * fog);
   for (const o of ships) {
     if (o.id === me.id || o.ship!.sinking || o.ship!.struck || !hostileTo(me.ship!, o.ship!)) continue;
     const d = Math.hypot(o.body!.pos.x - me.body!.pos.x, o.body!.pos.z - me.body!.pos.z);
@@ -125,7 +127,7 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     c.mode = "flee";
     return flee(me, target, w);
   }
-  const t = target ?? nearestHostile(me, w.ships);
+  const t = target ?? nearestHostile(me, w.ships, w.fog);
   c.target = t?.id ?? null;
   if (!t) {
     c.mode = "patrol";

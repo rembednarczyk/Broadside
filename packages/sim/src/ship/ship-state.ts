@@ -49,6 +49,8 @@ export interface ShipState {
   /** Sail cloth condition per mast (holes): 0..1. */
   sailCloth: number[];
   mastHp: number[];
+  /** Sail force on each mast as a share of what it stands (above 1 it is being damaged). */
+  mastLoad: number[];
   /** Chord angle of each sail as the crew trimmed it (per mast, per sail), for the view. */
   sailChord: number[][];
   /** How full each sail draws, 0 (luffing) to about 1.5 (straining), for the view. */
@@ -87,6 +89,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     sailSet: def.masts.map(() => setFactor(sail, false)),
     sailCloth: def.masts.map(() => 1),
     mastHp: def.masts.map(() => def.mastHp),
+    mastLoad: def.masts.map(() => 0),
     sailChord: model.masts.map((m) => m.sails.map((x) => (x.rig === "square" ? Math.PI / 2 : 0))),
     sailFill: model.masts.map((m) => m.sails.map(() => 0)),
     rigging: 1,

@@ -26,5 +26,7 @@ export const presentSailing = (sim: Simulation, playerId: number): SailingHud | 
     hasOars: s.model.def.oars > 0,
     oars: s.oars,
     classId: s.model.def.id,
+    weather: sim.env.weather?.kind ?? null,
+    mastLoad: [...s.mastLoad],
   };
 };
