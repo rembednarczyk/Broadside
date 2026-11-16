@@ -10,6 +10,7 @@ import { type Sprites } from "../effects/sprite-textures";
  */
 export class WeatherView {
   private readonly rain: ParticleSystem;
+  private readonly fogBanks: ParticleSystem;
   private readonly spoutMeshes = new Map<object, Mesh>();
   private readonly spoutMaterial: StandardMaterial;
   private bolt: LinesMesh | null = null;
@@ -41,12 +42,44 @@ export class WeatherView {
     rain.updateSpeed = 1 / 60;
     rain.start();
     this.rain = rain;
+    this.fogBanks = this.createFogBanks(scene, sprites, particles);
     const m = new StandardMaterial("spout", scene);
     m.diffuseColor = new Color3(0.55, 0.58, 0.6);
     m.emissiveColor = new Color3(0.18, 0.19, 0.2);
     m.alpha = 0.42;
     m.backFaceCulling = false;
     this.spoutMaterial = m;
+  }
+
+  /**
+   * Fog banks: huge soft billboards drifting with the wind in a ring around the camera, dense
+   * enough to swallow a ship for a moment (reference s. 8-9). Their number follows the weather's
+   * fog; standard alpha blending, lit by nothing (fog is lit by the sky colour of the scene).
+   */
+  private createFogBanks(scene: Scene, sprites: Sprites, particles: number): ParticleSystem {
+    const fog = new ParticleSystem("fog-banks", Math.max(40, Math.round(160 * particles)), scene);
+    fog.particleTexture = sprites.puff;
+    fog.emitter = Vector3.Zero();
+    fog.minEmitBox = new Vector3(-420, 4, -420);
+    fog.maxEmitBox = new Vector3(420, 22, 420);
+    fog.color1 = new Color4(0.85, 0.82, 0.76, 0.22);
+    fog.color2 = new Color4(0.78, 0.76, 0.72, 0.16);
+    fog.colorDead = new Color4(0.8, 0.78, 0.74, 0);
+    fog.minSize = 60;
+    fog.maxSize = 140;
+    fog.minLifeTime = 30;
+    fog.maxLifeTime = 55;
+    fog.minEmitPower = 0;
+    fog.maxEmitPower = 0;
+    fog.emitRate = 0;
+    fog.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+    fog.addColorGradient(0, new Color4(0.85, 0.82, 0.76, 0));
+    fog.addColorGradient(0.2, new Color4(0.85, 0.82, 0.76, 0.22));
+    fog.addColorGradient(0.8, new Color4(0.85, 0.82, 0.76, 0.2));
+    fog.addColorGradient(1, new Color4(0.85, 0.82, 0.76, 0));
+    fog.updateSpeed = 1 / 60;
+    fog.start();
+    return fog;
   }
 
   onEvents(events: readonly DomainEvent[]): void {
@@ -85,6 +118,14 @@ export class WeatherView {
     const wz = Math.cos(sim.env.windDirection) * sim.env.windSpeed;
     this.rain.direction1.set(wx * 0.04, -1, wz * 0.04);
     this.rain.direction2.set(wx * 0.05, -1, wz * 0.05);
+    const fogAmount = Math.max(w?.fog ?? 0, (w?.rain ?? 0) * 0.3);
+    // Keep a target number of banks alive (top up a few per frame) rather than a rate: the fog
+    // is there as soon as the weather says so, and thins as it clears.
+    const target = Math.round(fogAmount * this.fogBanks.getCapacity());
+    const missing = target - this.fogBanks.getActiveCount();
+    this.fogBanks.manualEmitCount = missing > 0 ? Math.min(5, missing) : 0;
+    (this.fogBanks.emitter as Vector3).set(t.x, 0, t.z);
+    this.fogBanks.gravity.set(wx * 0.06, 0, wz * 0.06);
     this.flash = Math.max(0, this.flash - dt * 1.6);
     if (this.boltLife > 0) {
       this.boltLife -= dt;

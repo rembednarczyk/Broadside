@@ -178,7 +178,7 @@ float hullOcclusion(vec2 p) {
     float along = dot(d, a.zw) / (b.y * 0.55);
     float across = abs(d.x * a.w - d.y * a.z) / (b.z * 0.5);
     float r = length(vec2(along, across));
-    ao *= mix(0.45, 1.0, smoothstep(0.85, 1.6, r));
+    ao *= mix(0.75, 1.0, smoothstep(0.95, 1.25, r));
   }
   return ao;
 }
@@ -195,6 +195,11 @@ vec2 wakes(vec2 p) {
     float across = abs(d.x * a.w - d.y * a.z);
     float halfLen = b.y * 0.5;
     float speed = b.x;
+    // Waterline foam: water churning against the hull all around its outline, more with speed.
+    float u = along / halfLen;
+    float w = across / (b.z * 0.5);
+    float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
+    foam += exp(-pow((outline - 1.0) / 0.12, 2.0)) * (0.35 + clamp(speed / 6.0, 0.0, 0.5));
     // Bow wave: a foam collar around the forward hull.
     float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
     foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;
