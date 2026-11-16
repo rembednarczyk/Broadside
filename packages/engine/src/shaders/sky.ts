@@ -63,6 +63,8 @@ void main() {
     vec3 cloud = mix(shade, lit, clamp(lightAmt * (1.0 - n2 * 0.8) * (0.4 + 0.9 * pow(max(c, 0.0), 2.0)), 0.0, 1.0));
     col = mix(col, cloud, density * smoothstep(0.0, 0.12, d.y));
   }
+  // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
+  col += sunColor * pow(max(c, 0.0), 5.0) * 1.6 * sunUp * (0.5 + 0.5 * cloudCover);
   gl_FragColor = vec4(col, 1.0);
 }
 `;

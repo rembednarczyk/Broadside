@@ -29,7 +29,7 @@ const BETA = 0.74;
 const MIN_WAVELENGTH = 4;
 const MAX_WAVELENGTH = 240;
 /** Game scale on the spectrum: the full gale sea is taller than fun allows. */
-export const HEIGHT_SCALE = 0.6;
+export const HEIGHT_SCALE = 0.85;
 /** A light ripple remains even in a calm. */
 const RIPPLE = 0.05;
 

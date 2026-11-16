@@ -27,6 +27,6 @@ describe("determinism", () => {
   });
 
   it("matches the golden hash (update by hand only, naming the rule that changed it)", () => {
-    expect(voyage()).toMatchInlineSnapshot(`"c24446d"`);
+    expect(voyage()).toMatchInlineSnapshot(`"32b530d1"`);
   });
 });

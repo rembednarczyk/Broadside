@@ -29,9 +29,14 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] detal statków: ratliny, marsy, kasztele, balustrady, latarnie, załoga (16.11)
 - [x] galeon wg referencji: trzy piętra żagli z godłem, maszty dzielone, marsy, blinda, fok od bukszprytu, kasztele z galerią okien (16.11)
 - [x] batching statku: żagle w jednej siatce na materiał, reje jako instancje, maszty scalone (16.11)
-- [ ] daleki brzeg we mgle (pierścień gór), dramatyczniejsze chmury, motion blur, widok spod wody
-- [ ] piana przy dziobie i kilwater z iskrami, większa martwa fala
-- [ ] porównanie klatka w klatkę z referencją: narzędzie zestawiające zrzut gry i klatkę filmu
+- [x] porównanie klatka w klatkę z referencją (`tools/shots/compare.sh`), raport i klatki w `docs/reference/` (16.11)
+- [x] gradacja sepii, daleki brzeg we mgle, węższe żagle, wyższy galeon, większe morze (16.11)
+- [ ] (raport 1) tryb podwodny: okno Snella, promienie w toni, mgła wodna, rozmyta linia wody
+- [ ] (raport 2) krople na obiektywie, błysk pioruna na scenę, piorun do wody
+- [ ] (raport 3) kilwater i piana dziobowa z iskrami, krótka fala wiatrowa na martwej fali
+- [ ] (raport 4) chmury kłębiaste z ciemnymi podstawami, klify o płaskich szczytach
+- [ ] (raport 5) świecące godła i okna nocą, bocianie gniazda, postrzępione żagle
+- [ ] (raport 6) rozmycie ruchu, ujęcie z pokładu
 
 ### M3 świat
 - [ ] generator archipelagu (wyspy, mielizny, porty, forty), kolizje z dnem

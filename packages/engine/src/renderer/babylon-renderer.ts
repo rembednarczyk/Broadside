@@ -165,7 +165,8 @@ export class BabylonRenderer {
     this.materials.sail.emissiveColor = new Color3(glow * look.sunColor.r, glow * look.sunColor.g, glow * 0.95 * look.sunColor.b);
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
-    this.scene.fogColor = new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b);
+    // Haze lit by the sun behind it: a brighter, warmer fog than the bare horizon colour.
+    this.scene.fogColor = new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b).scale(0.7).add(new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b).scale(0.35 * Math.min(1, look.sunIntensity + 0.3)));
   }
 
   private syncShips(sim: Simulation): void {
