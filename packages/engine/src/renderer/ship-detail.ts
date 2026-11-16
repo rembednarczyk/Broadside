@@ -1,6 +1,6 @@
 import { type ShipModel } from "@broadside/sim";
 import { type HullShape, createRng, deckHeight, halfBreadth, hashString, range, stationZ } from "@broadside/core";
-import { Color3, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
+import { Color3, DynamicTexture, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
  * Period detail that sells the silhouette (visual reference, decyzje 16.11): ratlines on the
@@ -10,6 +10,7 @@ import { Color3, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, t
  */
 export interface DetailMaterials {
   readonly wood: StandardMaterial;
+  readonly castle: StandardMaterial;
   readonly dark: StandardMaterial;
   readonly crew: StandardMaterial;
   readonly lantern: StandardMaterial;
@@ -26,14 +27,52 @@ export const createDetailMaterials = (scene: Scene): DetailMaterials => {
     }
     return m;
   };
-  return { wood: mat("detail-wood", [0.3, 0.2, 0.12]), dark: mat("detail-dark", [0.12, 0.09, 0.07]), crew: mat("detail-crew", [0.38, 0.3, 0.24]), lantern: mat("detail-lantern", [1.6, 1.1, 0.55], true) };
+  return { wood: mat("detail-wood", [0.3, 0.2, 0.12]), castle: castleMaterial(scene), dark: mat("detail-dark", [0.12, 0.09, 0.07]), crew: mat("detail-crew", [0.38, 0.3, 0.24]), lantern: mat("detail-lantern", [1.6, 1.1, 0.55], true) };
+};
+
+/**
+ * Castle sides: dark planking, a row of stern-gallery windows glowing warm (emissive, so the
+ * lanterns read at dusk as in the reference) and a moulding band. One material for all castles.
+ */
+const castleMaterial = (scene: Scene): StandardMaterial => {
+  const tex = new DynamicTexture("castle-tex", { width: 256, height: 128 }, scene, true);
+  const glow = new DynamicTexture("castle-glow", { width: 256, height: 128 }, scene, true);
+  const c = tex.getContext() as CanvasRenderingContext2D;
+  const g = glow.getContext() as CanvasRenderingContext2D;
+  c.fillStyle = "rgb(70,50,34)";
+  c.fillRect(0, 0, 256, 128);
+  c.fillStyle = "rgba(25,16,10,0.7)";
+  for (let y = 8; y < 128; y += 14) c.fillRect(0, y, 256, 2);
+  c.fillStyle = "rgb(120,90,40)";
+  c.fillRect(0, 10, 256, 6);
+  g.fillStyle = "rgb(0,0,0)";
+  g.fillRect(0, 0, 256, 128);
+  for (let x = 14; x < 256; x += 40) {
+    c.fillStyle = "rgb(20,14,10)";
+    c.fillRect(x - 2, 40, 28, 40);
+    c.fillStyle = "rgb(150,110,60)";
+    c.fillRect(x, 42, 24, 36);
+    g.fillStyle = "rgb(255,170,80)";
+    g.fillRect(x + 2, 44, 20, 32);
+    c.fillStyle = "rgb(20,14,10)";
+    c.fillRect(x + 11, 42, 2, 36);
+    c.fillRect(x, 59, 24, 2);
+  }
+  tex.update(true);
+  glow.update(true);
+  const m = new StandardMaterial("castle", scene);
+  m.diffuseTexture = tex;
+  m.emissiveTexture = glow;
+  m.emissiveColor = new Color3(0.55, 0.45, 0.35);
+  m.specularColor = new Color3(0.03, 0.03, 0.03);
+  return m;
 };
 
 /** Ships with a raised quarterdeck (and a forecastle from the frigate up). */
 const castles = (id: string): { quarter: number; fore: number; poop: number } =>
   ({ brig: { quarter: 0.22, fore: 0, poop: 0 }, bomb: { quarter: 0.25, fore: 0, poop: 0 }, galleon: { quarter: 0.36, fore: 0.2, poop: 0.18 }, frigate: { quarter: 0.3, fore: 0.18, poop: 0 }, liner: { quarter: 0.34, fore: 0.2, poop: 0.12 } })[id] ?? { quarter: 0, fore: 0, poop: 0 };
 
-const CASTLE_HEIGHT = 1.9;
+const CASTLE_HEIGHT = 2.3;
 
 const instances = (mesh: Mesh, matrices: Matrix[]): void => {
   const buf = new Float32Array(matrices.length * 16);
@@ -53,9 +92,9 @@ export class ShipDetail {
     const rng = createRng(hashString(key));
     const c = castles(model.def.id);
     const castleMeshes: Mesh[] = [];
-    if (c.quarter > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.quarter, mats.wood, "quarter"));
-    if (c.poop > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.poop, mats.wood, "poop", CASTLE_HEIGHT));
-    if (c.fore > 0) castleMeshes.push(this.castle(scene, parent, h, h.length / 2 - h.length * c.fore, h.length * 0.47, mats.wood, "fore"));
+    if (c.quarter > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.quarter, mats.castle, "quarter"));
+    if (c.poop > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.poop, mats.castle, "poop", CASTLE_HEIGHT));
+    if (c.fore > 0) castleMeshes.push(this.castle(scene, parent, h, h.length / 2 - h.length * c.fore, h.length * 0.47, mats.castle, "fore"));
     for (const m of castleMeshes) shadows?.addShadowCaster(m);
     this.ratlines(scene, parent, model);
     this.rails(scene, parent, h, mats, c);
