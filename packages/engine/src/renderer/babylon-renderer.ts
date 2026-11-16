@@ -195,8 +195,9 @@ export class BabylonRenderer {
       sunDirection: new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z),
       // Glint and glitter follow the direct sun: clouds take them away.
       sunColor: new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b).scale(Math.min(1, look.sunIntensity / 2.2)),
-      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b),
-      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b),
+      // A lightning flash lights the sky the sea reflects (the flash of the last frame).
+      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale(1 + this.weather.flash * 4),
+      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale(1 + this.weather.flash * 3),
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
     }, sim.env.windSpeed, sim.env.windDirection);

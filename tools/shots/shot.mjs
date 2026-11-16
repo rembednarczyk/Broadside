@@ -59,6 +59,11 @@ if (process.env.SHOT_CLICK) {
   for (const id of process.env.SHOT_CLICK.split(",")) await page.locator(`[data-testid="${id}"]`).dispatchEvent("pointerdown");
 }
 await page.waitForTimeout(3000);
+// Optional action right before the shot (short-lived effects): SHOT_BEFORE is a function body (b) => {...}.
+if (process.env.SHOT_BEFORE) {
+  await page.evaluate(new Function("((b) => { " + process.env.SHOT_BEFORE + " })(globalThis.__broadside)"));
+  await page.waitForTimeout(120);
+}
 await page.screenshot({ path: join(outDir, "scene.png"), timeout: 90000 });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));
 // Optional diagnostics: SHOT_EVAL is a function body (b) => value, printed as JSON.
