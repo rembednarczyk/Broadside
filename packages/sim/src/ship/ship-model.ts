@@ -48,6 +48,8 @@ export interface ShipModel {
   readonly hull: HullModel;
   /** Hull samples relative to the centre of mass. */
   readonly samples: readonly HullSample[];
+  /** Coarse samples for ships far from the player (level of detail of the physics). */
+  readonly samplesFar: readonly HullSample[];
   readonly mass: number;
   readonly inertia: Vec3;
   /** Centre of mass in hull space (origin at the waterline, midships). */
@@ -95,6 +97,35 @@ const mounts = (def: ShipClassDef, com: Vec3): GunMount[] =>
       : Array.from({ length: g.count }, (_, i) => centreMount(def, g.kind, i, g.count, g.pounder, g.deckHeight, com)),
   );
 
+/**
+ * Level of detail for the physics: samples merged in a coarse grid (about six along the hull, two
+ * across, two down). Volume is kept and placed at the volume-weighted centre, drag areas are summed,
+ * the vertical extent spans the members, so a far ship floats and drags as before with a quarter
+ * of the work. Close ships, the player's and every one near it, keep the full set.
+ */
+const coarsen = (samples: readonly HullSample[], length: number, beam: number, draft: number): HullSample[] => {
+  const cells = new Map<string, HullSample[]>();
+  for (const s of samples) {
+    const key = `${Math.floor(s.p.z / (length / 6))}|${s.p.x < 0 ? 0 : 1}|${Math.floor(s.p.y / Math.max(1, draft))}`;
+    cells.set(key, [...(cells.get(key) ?? []), s]);
+  }
+  return [...cells.keys()].sort().map((k) => {
+    const g = cells.get(k)!;
+    const volume = g.reduce((a, s) => a + s.volume, 0);
+    const p = g.reduce((a, s) => vec3(a.x + (s.p.x * s.volume) / volume, a.y + (s.p.y * s.volume) / volume, a.z + (s.p.z * s.volume) / volume), vec3(0, 0, 0));
+    const top = Math.max(...g.map((s) => s.p.y + s.height / 2));
+    const bottom = Math.min(...g.map((s) => s.p.y - s.height / 2));
+    return {
+      p: vec3(p.x, (top + bottom) / 2, p.z),
+      volume,
+      height: top - bottom,
+      areaSide: g.reduce((a, s) => a + s.areaSide, 0),
+      areaFront: g.reduce((a, s) => a + s.areaFront, 0),
+      areaBottom: g.reduce((a, s) => a + s.areaBottom, 0),
+    };
+  });
+};
+
 const build = (def: ShipClassDef): ShipModel => {
   const hull = buildHullModel(def.hull);
   const h = def.hull;
@@ -115,7 +146,7 @@ const build = (def: ShipClassDef): ShipModel => {
       strength: area * MAST_PRESSURE * 1.6,
     };
   });
-  return { def, hull, samples, mass, inertia, com, masts, guns: mounts(def, com), rudder: sub(vec3(0, -h.draft * 0.5, -h.length * 0.5), com) };
+  return { def, hull, samples, samplesFar: coarsen(samples, h.length, h.beam, h.draft), mass, inertia, com, masts, guns: mounts(def, com), rudder: sub(vec3(0, -h.draft * 0.5, -h.length * 0.5), com) };
 };
 
 const cache = new Map<ShipClassId, ShipModel>();

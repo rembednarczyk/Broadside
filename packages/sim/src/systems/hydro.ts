@@ -26,11 +26,11 @@ const waveMultiplier = (speed: number, length: number): number => {
   return 1 + 45 * over * over;
 };
 
-const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], t: number): void => {
+const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], t: number, far: boolean): void => {
   const fwd = rotateInv(b.rot, b.vel).z;
   const waveMul = waveMultiplier(fwd, s.model.def.hull.length);
   const drag = refit(s.upgrades, "drag");
-  for (const smp of s.model.samples) {
+  for (const smp of far ? s.model.samplesFar : s.model.samples) {
     const wp = bodyToWorld(b, smp.p);
     const wy = waterHeight(waves, wp.x, wp.z, t);
     const f = clamp((wy - (wp.y - smp.height / 2)) / smp.height, 0, 1);
@@ -81,12 +81,24 @@ const floodWeight = (b: RigidBody, s: ShipState): void => {
   });
 };
 
+/** Ships farther than this from the player float on the coarse samples (LOD of the physics). */
+const FAR = 700;
+
 export const hydroSystem: System = (ctx) => {
+  let px = 0;
+  let pz = 0;
+  let hasPlayer = false;
+  for (const p of ctx.world.with("player", "body")) {
+    px = p.body.pos.x;
+    pz = p.body.pos.z;
+    hasPlayer = true;
+  }
   for (const e of ctx.world.with("ship", "body")) {
     const b = e.body;
     const s = e.ship;
     applyForce(b, vec3(GRAVITY_VEC.x * b.mass, GRAVITY_VEC.y * b.mass, GRAVITY_VEC.z * b.mass));
-    hullForces(b, s, ctx.env.waves, ctx.env.time);
+    const far = hasPlayer && !e.player && Math.hypot(b.pos.x - px, b.pos.z - pz) > FAR;
+    hullForces(b, s, ctx.env.waves, ctx.env.time, far);
     rudderForce(b, s);
     oarForce(b, s);
     floodWeight(b, s);
