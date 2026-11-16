@@ -29,6 +29,7 @@ export interface CombatIntents {
 export interface PortIntents {
   trade(service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder", qty: number, ammo?: string): void;
   buyShip(classId: string): void;
+  refit(upgrade: string): void;
 }
 
 export interface SettingsIntents {

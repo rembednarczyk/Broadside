@@ -69,6 +69,12 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
 });
 
 /** Rebuilds a simulation from a snapshot; the archipelago is regenerated from the seed by the caller. */
+/** Captains saved before standing orders existed patrol. */
+const withOrders = (c: CaptainState): CaptainState => {
+  const o = c as Omit<CaptainState, "role" | "dest"> & Partial<Pick<CaptainState, "role" | "dest">>;
+  return { ...o, role: o.role ?? "patrol", dest: o.dest ?? -1 };
+};
+
 export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Simulation => {
   const o = snap.options;
   const sim = new Simulation({ seed: o.seed, windDirection: o.windDirection, windSpeed: o.windSpeed, ...(o.weather ? { weather: o.weather } : {}), ...(archipelago ? { archipelago } : {}), traffic: o.traffic ?? false });
@@ -86,8 +92,10 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     const body = createBody(model.mass, model.inertia, s.body.pos, s.body.rot);
     body.vel = s.body.vel;
     body.angVel = s.body.angVel;
-    const ship: ShipState = { model, ...clone(s.ship) };
-    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: clone(s.captain) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
+    // Fields added after a save was written get their defaults (refits, standing orders).
+    const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades">;
+    const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [] };
+    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
   for (const f of snap.forts) {
     const e = sim.spawnFort(f.site);

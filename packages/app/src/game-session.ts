@@ -1,4 +1,4 @@
-import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, wrapAngle, yawOf } from "@broadside/core";
 import { STEP, Simulation, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 
 /**
@@ -60,6 +60,11 @@ export class GameSession {
   /** Buys a ship at the yard of a port alongside (the old one goes in part exchange). */
   buyShip(port: number, classId: ShipClassId): void {
     this.send({ type: "trade", ship: this.playerId, port, service: "buyShip", qty: 1, classId });
+  }
+
+  /** Has the yard of a port alongside fit a refit to the current hull. */
+  refit(port: number, upgrade: UpgradeId): void {
+    this.send({ type: "trade", ship: this.playerId, port, service: "upgrade", qty: 1, upgrade });
   }
 
   /** Port services while alongside a port (index into the world's ports). */

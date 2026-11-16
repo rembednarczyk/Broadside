@@ -1,4 +1,4 @@
-import { type AmmoId, type EventQueue, type HitPart, type Rng, type Vec3, AMMO, DAMAGE_PER_JOULE, impactEnergy } from "@broadside/core";
+import { type AmmoId, type EventQueue, type HitPart, type Rng, type Vec3, AMMO, DAMAGE_PER_JOULE, impactEnergy, refit } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type ShipState, sectionIndex } from "../ship/ship-state";
 import { overboard } from "./crew";
@@ -32,7 +32,7 @@ const LEAK_PER_DAMAGE = 0.0016;
 const hullHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQueue, shipId: number): HitPart => {
   const a = AMMO[imp.ammo];
   const sec = s.sections[sectionIndex(zoneOf(s, imp.local.z), imp.local.x > 0)]!;
-  sec.hp = Math.max(0, sec.hp - dmg * a.hull);
+  sec.hp = Math.max(0, sec.hp - dmg * a.hull * refit(s.upgrades, "hullDamage"));
   if (imp.local.y < 0.5) sec.leak += dmg * a.hull * LEAK_PER_DAMAGE * (imp.local.y < 0 ? 1.4 : 0.6);
   // Splinters: the deadliest effect of round shot on crews.
   const killed = Math.min(s.crew, Math.floor(dmg * a.crew * 0.12 + rng.next()));

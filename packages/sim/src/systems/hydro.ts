@@ -1,4 +1,4 @@
-import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterHeight, DEG } from "@broadside/core";
+import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterHeight, DEG, refit } from "@broadside/core";
 import { type System } from "./context";
 import { type RigidBody, GRAVITY_VEC, applyForce, applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -29,6 +29,7 @@ const waveMultiplier = (speed: number, length: number): number => {
 const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], t: number): void => {
   const fwd = rotateInv(b.rot, b.vel).z;
   const waveMul = waveMultiplier(fwd, s.model.def.hull.length);
+  const drag = refit(s.upgrades, "drag");
   for (const smp of s.model.samples) {
     const wp = bodyToWorld(b, smp.p);
     const wy = waterHeight(waves, wp.x, wp.z, t);
@@ -40,7 +41,7 @@ const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], 
     const local = vec3(
       -k * C_SIDE * smp.areaSide * Math.abs(v.x) * v.x - LINEAR_DAMPING * k * smp.areaSide * v.x * 10,
       -k * C_BOTTOM * smp.areaBottom * Math.abs(v.y) * v.y - LINEAR_DAMPING * k * smp.areaBottom * v.y * 10,
-      -k * C_FORWARD * waveMul * smp.areaFront * Math.abs(v.z) * v.z - LINEAR_DAMPING * k * smp.areaFront * v.z,
+      -k * C_FORWARD * waveMul * drag * smp.areaFront * Math.abs(v.z) * v.z - LINEAR_DAMPING * k * smp.areaFront * v.z,
     );
     applyForceAt(b, rotate(b.rot, local), wp);
   }

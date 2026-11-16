@@ -35,6 +35,17 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
       )}
       {p.factor !== null && p.yard.length > 0 && (
         <>
+          <div className="label">{text(lang, "port.refits")}</div>
+          <div className="port-grid">
+            {p.refits.map((r) => {
+              const key = `refit.${r.id}`;
+              return (
+                <button key={r.id} className={r.fitted ? "on" : ""} disabled={r.fitted || r.cost > gold} onPointerDown={() => intents.refit(r.id)} data-testid={`refit-${r.id}`}>
+                  {isTextKey(key) ? text(lang, key) : r.id} <small>{r.fitted ? "✓" : r.cost}</small>
+                </button>
+              );
+            })}
+          </div>
           <div className="label">{text(lang, "port.yard")}</div>
           <div className="port-yard">
             {p.yard.map((y) => {

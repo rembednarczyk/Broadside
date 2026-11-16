@@ -1,4 +1,4 @@
-import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, type EventQueue } from "@broadside/core";
+import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, refit, type EventQueue } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type SimWorld } from "../world/world";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -54,11 +54,11 @@ export const loadAmmo = (s: ShipState, mount: MountKind, ammo: AmmoId): void => 
  * Puts one round in flight (all pellets of a load) from a muzzle along a world direction; shared
  * by ships' guns and forts' batteries. Returns the shot mass per pellet.
  */
-export const launchShot = (world: SimWorld, owner: number, muzzle: Vec3, dir: Vec3, speed: number, pounder: number, ammo: AmmoId, rng: Rng, carrier: Vec3 = vec3(0, 0, 0)): number => {
+export const launchShot = (world: SimWorld, owner: number, muzzle: Vec3, dir: Vec3, speed: number, pounder: number, ammo: AmmoId, rng: Rng, carrier: Vec3 = vec3(0, 0, 0), steadiness = 1): number => {
   const def = AMMO[ammo];
   const mass = shotMass(pounder, ammo) / def.pellets;
   for (let p = 0; p < def.pellets; p++) {
-    const spread = BASE_SPREAD + def.spread;
+    const spread = (BASE_SPREAD + def.spread) * steadiness;
     const d = normalize(add(dir, vec3(gauss(rng) * spread, gauss(rng) * spread * 0.6, gauss(rng) * spread)));
     world.add({
       id: 0,
@@ -94,13 +94,13 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   const axis = normalize(vec3(trained.z, 0, -trained.x));
   const local = rotate(quatFromAxisAngle(axis, -elevation), trained);
   const muzzle = bodyToWorld(b, add(g.pos, scale(g.dir, 1.2)));
-  const mass = launchShot(world, e.id, muzzle, rotate(b.rot, local), speed, g.pounder, st.ammo, rng, b.vel);
+  const mass = launchShot(world, e.id, muzzle, rotate(b.rot, local), speed, g.pounder, st.ammo, rng, b.vel, refit(s.upgrades, "spread"));
   const dirWorld = rotate(b.rot, local);
   // Recoil: the shot's momentum plus the powder gases (about half again) push the ship.
   applyImpulseAt(b, scale(dirWorld, -mass * ammo.pellets * speed * 1.5), muzzle);
   events.push({ type: "gunFired", ship: e.id, at: muzzle, dir: dirWorld, pounder: g.pounder, ammo: st.ammo });
   s.stores[st.ammo] = Math.max(0, (s.stores[st.ammo] ?? 0) - 1);
-  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s));
+  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload");
 };
 
 /** Gun crews are thinned by casualties first in the waist (sections 2 and 3). */

@@ -20,4 +20,5 @@ export * from "./world/archipelago";
 export * from "./data/forts";
 export * from "./data/population";
 export * from "./data/reputation";
+export * from "./data/upgrades";
 export * from "./economy/port-trade";

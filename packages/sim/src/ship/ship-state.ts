@@ -1,4 +1,4 @@
-import { type AmmoId, type Faction, type MountKind, type SailLevel } from "@broadside/core";
+import { type AmmoId, type Faction, type MountKind, type SailLevel, type UpgradeId } from "@broadside/core";
 import { type ShipModel } from "./ship-model";
 
 /**
@@ -63,6 +63,8 @@ export interface ShipState {
   ammoLoad: Partial<Record<MountKind, AmmoId>>;
   /** Gun loads in the hold per ammunition kind. */
   stores: Partial<Record<AmmoId, number>>;
+  /** Yard refits this hull carries (lost when the captain changes ship). */
+  upgrades: UpgradeId[];
   braced: number;
   oars: boolean;
   sinking: boolean;
@@ -97,6 +99,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     crew: def.crew,
     guns: model.guns.map((g) => ({ reload: 0, ammo: defaultAmmo[g.kind] ?? "round", dismounted: false, fuse: -1, elevation: 0, train: 0 })),
     ammoLoad: { ...defaultAmmo },
+    upgrades: [],
     stores: { round: 40 * def.guns.length, chain: 12, grape: 12, heavy: 8, hot: 4, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2, smoke: 2, greekFire: def.guns.some((g) => g.kind === "bowChaser") ? 8 : 0, rocket: def.guns.some((g) => g.kind === "swivel") ? 6 : 0 },
     braced: 0,
     oars: false,

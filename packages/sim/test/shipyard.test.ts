@@ -54,3 +54,31 @@ describe("shipyard part exchange", () => {
     expect(sim.purse.gold).toBeGreaterThan(0);
   });
 });
+
+describe("refits", () => {
+  const sail = (copper: boolean) => {
+    const sim = new Simulation({ seed: 40, windDirection: Math.PI / 2, windSpeed: 9 });
+    const me = sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0, player: true, speed: 4 });
+    if (copper) me.ship!.upgrades.push("copper");
+    sim.command({ type: "course", ship: me.id, heading: 0 });
+    for (let i = 0; i < 60 * 60; i++) sim.step();
+    return Math.hypot(me.body!.vel.x, me.body!.vel.z);
+  };
+
+  it("copper sheathing makes the ship faster", () => {
+    expect(sail(true)).toBeGreaterThan(sail(false) * 1.01);
+  });
+
+  it("is fitted at a yard and paid for, once", () => {
+    const { sim, me, index } = moored();
+    sim.purse.gold = 50000;
+    sim.command({ type: "trade", ship: me.id, port: index, service: "upgrade", qty: 1, upgrade: "riders" });
+    sim.step();
+    const after = sim.purse.gold;
+    expect(me.ship!.upgrades).toEqual(["riders"]);
+    expect(after).toBeLessThan(50000);
+    sim.command({ type: "trade", ship: me.id, port: index, service: "upgrade", qty: 1, upgrade: "riders" });
+    sim.step();
+    expect(sim.purse.gold).toBe(after);
+  });
+});

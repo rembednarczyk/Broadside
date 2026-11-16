@@ -1,4 +1,4 @@
-import { SHIP_CLASSES, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
+import { SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
 import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
 import { type PortHud } from "@broadside/ui";
 
@@ -33,6 +33,7 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
     yard: shipyardStock(owner)
       .filter((id) => id !== def.id)
       .map((id) => ({ classId: id, cost: shipPrice(id, f) - tradeInValue(def.id, condition(s)), crew: SHIP_CLASSES[id].crew, guns: SHIP_CLASSES[id].guns.reduce((a, g) => a + (g.kind === "broadside" ? g.count * 2 : g.count), 0) })),
+    refits: UPGRADE_IDS.map((id) => ({ id, cost: upgradePrice(id, def.price, f), fitted: s.upgrades.includes(id) })),
     standings: (["crown", "republic", "empire"] as const).map((faction) => ({ faction, value: sim.relations[faction] })),
   };
 };

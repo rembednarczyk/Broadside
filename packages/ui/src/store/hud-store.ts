@@ -93,6 +93,8 @@ export interface PortHud {
   readonly standings: readonly { readonly faction: string; readonly value: number }[];
   /** Shipyard: classes for sale and what each costs after the part exchange (negative: the yard pays). */
   readonly yard: readonly { readonly classId: string; readonly cost: number; readonly crew: number; readonly guns: number }[];
+  /** Refits for the current hull: price and whether already fitted. */
+  readonly refits: readonly { readonly id: string; readonly cost: number; readonly fitted: boolean }[];
 }
 
 export interface HudState {
