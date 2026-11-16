@@ -12,7 +12,7 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
   if (!p) return null;
   const fac = `faction.${p.owner}`;
   return (
-    <div className="panel port" data-testid="port">
+    <div className="panel harbour" data-testid="port">
       <div className="title">{p.name} · {isTextKey(fac) ? text(lang, fac) : p.owner}</div>
       {p.factor === null ? (
         <div className="alarm">{text(lang, "port.hostile")}</div>

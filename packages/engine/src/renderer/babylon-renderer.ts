@@ -12,6 +12,7 @@ import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
 import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
+import { TownsView } from "./towns-view";
 import { type DomainEvent, rotateInv, waterHeight, yawOf } from "@broadside/core";
 
 /**
@@ -49,6 +50,7 @@ export class BabylonRenderer {
   private coast: FarCoast | null = null;
   private islands: IslandsView | null = null;
   private readonly forts: FortsView;
+  private towns: TownsView | null = null;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -115,6 +117,7 @@ export class BabylonRenderer {
     this.ambient.groundColor = new Color3(look.ambient.r * 0.5, look.ambient.g * 0.65, look.ambient.b * 0.7);
     this.ambient.intensity = 1;
     setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
+    this.towns?.setNight(1 - Math.min(1, look.sunIntensity / 0.8));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
     // Haze lit by the sun behind it: a brighter, warmer fog than the bare horizon colour.
@@ -172,6 +175,8 @@ export class BabylonRenderer {
     if (!this.islands && sim.env.archipelago) {
       this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
       this.post.excludeFromShafts(this.islands.meshes);
+      this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
+      this.post.excludeFromShafts(this.towns.meshes);
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);

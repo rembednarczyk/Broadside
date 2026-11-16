@@ -50,8 +50,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] wyspy w grafice: teren z tej samej funkcji co fizyka, drzewa, płycizny i przybój w shaderze oceanu (16.11)
 - [x] porty: amunicja, załoga, naprawa, prowiant, sprzedaż łupów; ceny wg frakcji; zdobyty fort = własny port; nagrody za zatopienia i forty (16.11)
 - [x] zapis gry (Memento): migawka, odtworzenie deterministyczne, autozapis co minutę i przy zminimalizowaniu, nowa gra (16.11)
-- [ ] miasteczka portowe: domy, nabrzeże, molo, latarnie
-- [ ] HUD: przycisk ognia lewą burtą ucięty przy krawędzi (sprawdzić układ)
+- [x] miasteczka portowe: domy z dachami dwuspadowymi, molo, latarnie świecące nocą (16.11)
+- [x] HUD: przycisk ognia lewą burtą (kolizja klasy CSS .port z panelem portu) (16.11)
 - [x] forty 4 klas: ostrzał, mury, uciszanie, szturm desantu, modele proceduralne, celowanie w mury, HUD szturmu (16.11)
 - [x] wydajność świata: wyspy w jednej siatce, żelazo fortu w jednej, ląd i forty poza przebiegiem promieni (314 -> 228 wywołań w zatoce) (16.11)
 - [x] kształty wysp: szum grzbietowy z deformacją dziedziny (16.11)
