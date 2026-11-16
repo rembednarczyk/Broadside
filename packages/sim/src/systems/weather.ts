@@ -1,4 +1,4 @@
-import { type Rng, type Vec3, rotate, stepWeather, vec3, windNow } from "@broadside/core";
+import { type Rng, type Vec3, CELL_CLIMATE, rotate, stepWeather, vec3, windNow } from "@broadside/core";
 import { type System, type SimContext } from "./context";
 import { startRogue } from "../environment/environment";
 import { sortedById } from "../world/world";
@@ -53,6 +53,28 @@ const spawnSpout = (ctx: SimContext, ships: Entity[], rng: Rng): void => {
   ctx.events.push({ type: "weatherChanged", kind: "spout" });
 };
 
+/**
+ * Breeds storm cells as the weather allows (a Poisson process at the climate's rate), upwind of a
+ * ship so the cell comes down on it, 1.5 to 2.5 km off.
+ */
+const breedCells = (ctx: SimContext, ships: Entity[], rng: Rng, dt: number): void => {
+  const w = ctx.env.weather!;
+  const climate = CELL_CLIMATE[w.kind];
+  if (ctx.env.cells.length >= climate.max || rng.next() > (climate.perMinute / 60) * dt) return;
+  const near = ships[Math.floor(rng.next() * ships.length)];
+  if (!near) return;
+  const up = ctx.env.windDirection + Math.PI + (rng.next() - 0.5) * 1.2;
+  const dist = 1500 + rng.next() * 1000;
+  ctx.env.cells.push({
+    x: near.body!.pos.x + Math.sin(up) * dist,
+    z: near.body!.pos.z + Math.cos(up) * dist,
+    radius: 350 + rng.next() * 350,
+    strength: climate.strength * (0.7 + rng.next() * 0.3),
+    age: 0,
+    life: 420 + rng.next() * 480,
+  });
+};
+
 export const weatherSystem: System = (ctx, dt) => {
   const w = ctx.env.weather;
   if (!w) return;
@@ -63,6 +85,7 @@ export const weatherSystem: System = (ctx, dt) => {
   if (tick.changed) ctx.events.push({ type: "weatherChanged", kind: tick.changed });
   if (tick.squallStarted) ctx.events.push({ type: "weatherChanged", kind: "squall" });
   const ships = sortedById(ctx.world.with("ship", "body")).filter((e) => !e.ship.sinking);
+  breedCells(ctx, ships, rng, dt);
   if (tick.lightning) strike(ctx, ships, rng);
   if (tick.spout) spawnSpout(ctx, ships, rng);
   if (tick.rogue) {

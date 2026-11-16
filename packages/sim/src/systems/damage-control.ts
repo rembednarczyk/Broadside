@@ -11,6 +11,7 @@ import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { overboard } from "../combat/crew";
 import { sortedById } from "../world/world";
+import { rainAt } from "../environment/environment";
 
 /**
  * Damage control: water comes in through the leaks and is pumped out; carpenters plug holes;
@@ -77,7 +78,7 @@ export const damageControlSystem: System = (ctx, dt) => {
     }
     flood(s, dt);
     const firesBefore = s.sections.map((x) => x.fire > 0);
-    if (burn(e, dt, (ctx.env.weather?.rain ?? 0) > 0.4, () => ctx.rng.next())) {
+    if (burn(e, dt, rainAt(ctx.env, e.body!.pos.x, e.body!.pos.z) > 0.4, () => ctx.rng.next())) {
       ctx.events.push({ type: "magazineExploded", ship: e.id, at: e.body.pos });
       for (const sec of s.sections) sec.hp = Math.max(0, sec.hp - s.model.def.sectionHp * 0.8);
       overboard(ctx.world, ctx.events, e, Math.ceil(s.crew * 0.3), ctx.rng);

@@ -6,7 +6,7 @@ import { type ShipState } from "../ship/ship-state";
 import { shipModel } from "../ship/ship-model";
 import { createBody } from "../physics/rigid-body";
 import { type Purse } from "../economy/purse";
-import { type Relations } from "@broadside/core";
+import { type Relations, type StormCell } from "@broadside/core";
 import { type Jobs } from "../economy/contracts";
 
 /**
@@ -35,7 +35,7 @@ export interface SimSnapshot {
   readonly steps: number;
   readonly nextId: number;
   readonly rng: number;
-  readonly env: { time: number; windDirection: number; windSpeed: number; seaWind: number; swell: number; rogue: number; weatherRng: number; weather: WeatherState | null };
+  readonly env: { time: number; windDirection: number; windSpeed: number; seaWind: number; swell: number; rogue: number; weatherRng: number; weather: WeatherState | null; cells?: StormCell[] };
   readonly purse: Purse;
   /** Absent in saves from before reputation (standings at the start then). */
   readonly relations?: Relations;
@@ -54,7 +54,7 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
   steps: sim.steps,
   nextId: sim.nextId,
   rng: sim.rngState(),
-  env: { time: sim.env.time, windDirection: sim.env.windDirection, windSpeed: sim.env.windSpeed, seaWind: sim.env.seaWind, swell: sim.env.swell, rogue: sim.env.rogue, weatherRng: sim.env.weatherRng.state(), weather: clone(sim.env.weather) },
+  env: { time: sim.env.time, windDirection: sim.env.windDirection, windSpeed: sim.env.windSpeed, seaWind: sim.env.seaWind, swell: sim.env.swell, rogue: sim.env.rogue, weatherRng: sim.env.weatherRng.state(), weather: clone(sim.env.weather), cells: clone(sim.env.cells) },
   purse: { ...sim.purse },
   relations: { ...sim.relations },
   jobs: clone(sim.jobs),
@@ -83,7 +83,7 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
   const sim = new Simulation({ seed: o.seed, windDirection: o.windDirection, windSpeed: o.windSpeed, ...(o.weather ? { weather: o.weather } : {}), ...(archipelago ? { archipelago } : {}), traffic: o.traffic ?? false });
   sim.steps = snap.steps;
   sim.restoreRng(snap.rng);
-  Object.assign(sim.env, { time: snap.env.time, windDirection: snap.env.windDirection, windSpeed: snap.env.windSpeed, seaWind: snap.env.seaWind, swell: snap.env.swell, rogue: snap.env.rogue, weather: clone(snap.env.weather) });
+  Object.assign(sim.env, { time: snap.env.time, windDirection: snap.env.windDirection, windSpeed: snap.env.windSpeed, seaWind: snap.env.seaWind, swell: snap.env.swell, rogue: snap.env.rogue, weather: clone(snap.env.weather), cells: clone(snap.env.cells ?? []) });
   sim.env.weatherRng = createRng(snap.env.weatherRng);
   // The waves derive from the restored sea state: recompute them now (the step only does so
   // when the sea changes).

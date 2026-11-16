@@ -46,7 +46,7 @@ export const sailSystem: System = (ctx, dt) => {
       let total: Vec3 = vec3(0, 0, 0);
       m.sails.forEach((sail, j) => {
         const ceWorld = bodyToWorld(b, sail.ce);
-        const tw = windAt(ctx.env, ceWorld.y);
+        const tw = windAt(ctx.env, ceWorld.y, ceWorld.x, ceWorld.z);
         const pv = pointVelocity(b, ceWorld);
         const local = rotateInv(b.rot, vec3(tw.x - pv.x, 0, tw.z - pv.z));
         const area = sail.area * s.sailSet[i]! * (0.3 + 0.7 * s.sailCloth[i]!);

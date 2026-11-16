@@ -22,7 +22,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M2 żagle i pogoda
 - [x] pogoda jako łańcuch Markowa (8 stanów), porywy, szkwały, pioruny w maszty, trąby wodne, fale olbrzymie, deszcz (gaszenie, mokry proch), mgła (zasięg wykrywania) (16.11)
 - [x] HUD: plan żagli na każdy maszt, obciążenie i ostrzeżenie, rodzaj pogody; deszcz, błyskawice, trąby w grafice; upływ pory dnia (16.11)
-- [ ] fronty pogodowe przesuwające się po mapie (pogoda zależna od miejsca)
+- [x] komórki burzowe dryfujące z wiatrem (lokalny szkwał: mocniejszy wiatr, deszcz moczy proch i gasi pożary), kurtyny deszczu widoczne z daleka, HUD pokazuje wiatr na miejscu (16.11); fale nadal globalne
 - [ ] widok spod wody (kamera pod powierzchnią, jak w referencji)
 
 ### Wygląd (referencja 16.11)

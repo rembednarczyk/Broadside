@@ -1,4 +1,5 @@
-import { type DomainEvent } from "@broadside/core";
+import { type DomainEvent, cellInfluence } from "@broadside/core";
+import { RainShafts } from "./rain-shafts";
 import { type Simulation } from "@broadside/sim";
 import { Color3, Color4, type Mesh, MeshBuilder, ParticleSystem, type Scene, StandardMaterial, Vector3, type LinesMesh, type ArcRotateCamera } from "../babylon";
 import { type Sprites } from "../effects/sprite-textures";
@@ -13,6 +14,7 @@ export class WeatherView {
   private readonly fogBanks: ParticleSystem;
   private readonly spoutMeshes = new Map<object, Mesh>();
   private readonly spoutMaterial: StandardMaterial;
+  private readonly shafts: RainShafts;
   private bolt: LinesMesh | null = null;
   private boltLife = 0;
   /** 0..1 brightness of the current lightning flash, read by the renderer for the lights. */
@@ -48,6 +50,7 @@ export class WeatherView {
     m.emissiveColor = new Color3(0.18, 0.19, 0.2);
     m.alpha = 0.42;
     m.backFaceCulling = false;
+    this.shafts = new RainShafts(scene);
     this.spoutMaterial = m;
   }
 
@@ -110,7 +113,10 @@ export class WeatherView {
 
   frame(sim: Simulation, dt: number): void {
     const w = sim.env.weather;
-    const rainAmount = w?.rain ?? 0;
+    const t0 = this.camera.target;
+    // Inside a storm cell it rains whatever the weather of the open sea.
+    const cell = cellInfluence(sim.env.cells, t0.x, t0.z);
+    const rainAmount = Math.max(w?.rain ?? 0, cell);
     this.rain.emitRate = rainAmount * 5000 * this.particles;
     const t = this.camera.target;
     (this.rain.emitter as Vector3).set(t.x, t.y, t.z);
@@ -118,7 +124,7 @@ export class WeatherView {
     const wz = Math.cos(sim.env.windDirection) * sim.env.windSpeed;
     this.rain.direction1.set(wx * 0.04, -1, wz * 0.04);
     this.rain.direction2.set(wx * 0.05, -1, wz * 0.05);
-    const fogAmount = Math.max(w?.fog ?? 0, (w?.rain ?? 0) * 0.3);
+    const fogAmount = Math.max(w?.fog ?? 0, rainAmount * 0.3);
     // Keep a target number of banks alive (top up a few per frame) rather than a rate: the fog
     // is there as soon as the weather says so, and thins as it clears.
     const target = Math.round(fogAmount * this.fogBanks.getCapacity());
@@ -135,6 +141,7 @@ export class WeatherView {
       }
     }
     this.syncSpouts(sim, dt);
+    this.shafts.sync(sim.env.cells, this.camera.target.x, this.camera.target.z);
   }
 
   private syncSpouts(sim: Simulation, dt: number): void {

@@ -51,3 +51,10 @@ około 5 salw na statek. Zmiany: obrażenia 1/2500 → 1/600 HP na dżul; AI wst
 dystansu i wcześniej się zbliża (jak w epoce: ogień z bliska); preferowane dystanse krótsze o ok. 25%; działa
 obracane ręcznymi drągami do ±0,3 rad (wcześniej ±0,14), łuk ognia AI 0,28. Wynik: 12 z 18 bitew rozstrzygniętych w
 4–13 min, wygrywa większy lub lepiej uzbrojony statek. Remisy to w większości ucieczki pokonanych (próg 30% załogi).
+
+## 16.11 Komórki burzowe (orkiestrator)
+Pogoda zależna od miejsca jako komórki burzowe: ruchome zaburzenie o profilu Gaussa (jak w idealizowanych modelach
+szkwału), z narastaniem i zanikiem w czasie życia, dryfujące z 0,6 prędkości wiatru. Rodzą się w procesie Poissona
+zależnym od stanu pogody (tabela `CELL_CLIMATE`), 1,5–2,5 km pod wiatr od statku. W komórce wiatr do +80%, deszcz
+(mokry proch, gaszenie pożarów), szkwał w HUD. Fale zostają globalne: lokalne fale wymagałyby osobnego pola fal w
+shaderze i w wyporze, co przekracza budżet na telefonie.

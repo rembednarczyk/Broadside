@@ -16,6 +16,7 @@ export * from "./events/events";
 export * from "./combat/ballistics";
 export * from "./data/factions";
 export * from "./weather/weather";
+export * from "./weather/storm-cells";
 export * from "./world/archipelago";
 export * from "./data/forts";
 export * from "./data/population";

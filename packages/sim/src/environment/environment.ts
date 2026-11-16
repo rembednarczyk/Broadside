@@ -1,4 +1,4 @@
-import { type Archipelago, type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D } from "@broadside/core";
+import { type Archipelago, type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D, type StormCell, CELLS, cellInfluence, driftCells } from "@broadside/core";
 
 /**
  * Wind and sea shared by every ship. The sea follows the wind with a lag (a sea builds up and
@@ -21,6 +21,8 @@ export interface Environment {
   rogue: number;
   /** Islands and seabed, or null for open sea. */
   readonly archipelago: Archipelago | null;
+  /** Storm cells drifting over the sea (local squalls). */
+  cells: StormCell[];
 }
 
 /** m/s of sea development per second towards the wind. */
@@ -32,7 +34,7 @@ export const createEnvironment = (seed: number, windDirection: number, windSpeed
   const w = weather ? createWeather(weather, windDirection, seed, weatherRng) : null;
   const wind = w ? w.meanWind : windSpeed;
   const sea: SeaState = { windSpeed: wind, swell: 0 };
-  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0, archipelago };
+  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0, archipelago, cells: [] };
 };
 
 /** Extra swell height of a rogue wave group, rising and falling over its 30 seconds. */
@@ -47,11 +49,21 @@ export const stepEnvironment = (env: Environment, dt: number): void => {
   env.swell = swell;
   const before = env.seaWind;
   env.seaWind = approach(env.seaWind, env.windSpeed, SEA_BUILD_RATE * dt * Math.max(1, Math.abs(env.windSpeed - env.seaWind)));
+  if (env.cells.length) env.cells = driftCells(env.cells, env.windDirection, env.windSpeed, dt);
   if (before !== env.seaWind || swellChanged || env.time <= dt) env.waves = seaWaves(env.bands, { windSpeed: env.seaWind, swell: env.swell });
 };
 
-/** True wind at a height above the sea (power-law profile, exponent 0.11 over open water). */
-export const windAt = (env: Environment, height: number): Wind2D => windVector(env.windDirection, env.windSpeed * Math.pow(Math.max(1, height) / 10, 0.11));
+/**
+ * True wind at a height above the sea (power-law profile, exponent 0.11 over open water), stronger
+ * under a storm cell when a position is given.
+ */
+export const windAt = (env: Environment, height: number, x?: number, z?: number): Wind2D => {
+  const cell = x === undefined || z === undefined ? 0 : cellInfluence(env.cells, x, z);
+  return windVector(env.windDirection, env.windSpeed * (1 + CELLS.gust * cell) * Math.pow(Math.max(1, height) / 10, 0.11));
+};
+
+/** Rain over a point: the sea's weather or a storm cell, whichever is heavier. */
+export const rainAt = (env: Environment, x: number, z: number): number => Math.max(env.weather?.rain ?? 0, cellInfluence(env.cells, x, z));
 
 export const startRogue = (env: Environment): void => {
   if (env.rogue <= 0) env.rogue = ROGUE_SECONDS;

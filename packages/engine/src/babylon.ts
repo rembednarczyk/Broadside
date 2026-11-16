@@ -14,6 +14,7 @@ export { PointLight } from "@babylonjs/core/Lights/pointLight";
 export { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 export { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
 export { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+export { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
 export { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 export { Texture } from "@babylonjs/core/Materials/Textures/texture";
 export { Mesh } from "@babylonjs/core/Meshes/mesh";

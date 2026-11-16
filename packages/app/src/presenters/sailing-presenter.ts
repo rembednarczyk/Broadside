@@ -1,4 +1,4 @@
-import { beaufort, rollOf, rotateInv, windVector, wrapAngle, yawOf } from "@broadside/core";
+import { CELLS, beaufort, cellInfluence, rollOf, rotateInv, windVector, wrapAngle, yawOf } from "@broadside/core";
 import { type Simulation } from "@broadside/sim";
 import { type SailingHud } from "@broadside/ui";
 
@@ -13,20 +13,23 @@ export const presentSailing = (sim: Simulation, playerId: number): SailingHud | 
   const tw = windVector(sim.env.windDirection, sim.env.windSpeed);
   // Wind comes from the opposite of where it blows to.
   const windFrom = Math.atan2(-tw.x, -tw.z);
+  const cell = cellInfluence(sim.env.cells, b.pos.x, b.pos.z);
+  const localWind = sim.env.windSpeed * (1 + CELLS.gust * cell);
   return {
     speedKnots: v.z * 1.944,
     heading,
     course: s.course,
     windFromRelative: wrapAngle(windFrom - heading),
-    windKnots: sim.env.windSpeed * 1.944,
-    beaufort: beaufort(sim.env.windSpeed),
+    windKnots: localWind * 1.944,
+    beaufort: beaufort(localWind),
     sailTargets: [...s.sailTarget],
     sailSet: [...s.sailSet],
     heelDeg: (rollOf(b.rot) * 180) / Math.PI,
     hasOars: s.model.def.oars > 0,
     oars: s.oars,
     classId: s.model.def.id,
-    weather: sim.env.weather?.kind ?? null,
+    // Under a storm cell the captain is in a squall, whatever the open sea is doing.
+    weather: cell > 0.3 ? "squally" : (sim.env.weather?.kind ?? null),
     mastLoad: [...s.mastLoad],
   };
 };
