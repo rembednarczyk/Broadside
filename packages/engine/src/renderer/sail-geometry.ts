@@ -17,6 +17,13 @@ export interface SailOutline {
   readonly foot: number;
 }
 
+/** Texture coordinates of the cloth grid (u along the chord, v up). */
+export const sailUvs = (): number[] => {
+  const uv: number[] = [];
+  for (let r = 0; r <= SAIL_ROWS; r++) for (let c = 0; c <= SAIL_COLS; c++) uv.push(c / SAIL_COLS, r / SAIL_ROWS);
+  return uv;
+};
+
 export const sailIndices = (): number[] => {
   const idx: number[] = [];
   const row = SAIL_COLS + 1;

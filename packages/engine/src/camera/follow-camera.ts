@@ -8,6 +8,8 @@ import { ArcRotateCamera, type Scene, Vector3 } from "../babylon";
 export class FollowCamera {
   readonly camera: ArcRotateCamera;
   private readonly target = new Vector3();
+  /** Height of the aim point above the ship: the middle of the rig frames a ship like the reference. */
+  private lift = 3;
 
   constructor(scene: Scene, canvas: HTMLCanvasElement | null) {
     this.camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.22, 70, Vector3.Zero(), scene);
@@ -25,18 +27,19 @@ export class FollowCamera {
   }
 
   /** Frames a ship of the given length on first use. */
-  frameShip(length: number): void {
+  frameShip(length: number, rigHeight = 10): void {
     this.camera.radius = Math.max(28, length * 2.1);
+    this.lift = rigHeight * 0.35;
   }
 
   follow(x: number, y: number, z: number, dt: number): void {
     const k = 1 - Math.exp(-6 * dt);
-    this.target.set(this.target.x + (x - this.target.x) * k, this.target.y + (y + 3 - this.target.y) * k, this.target.z + (z - this.target.z) * k);
+    this.target.set(this.target.x + (x - this.target.x) * k, this.target.y + (y + this.lift - this.target.y) * k, this.target.z + (z - this.target.z) * k);
     this.camera.target.copyFrom(this.target);
   }
 
   snap(x: number, y: number, z: number): void {
-    this.target.set(x, y + 3, z);
+    this.target.set(x, y + this.lift, z);
     this.camera.target.copyFrom(this.target);
   }
 

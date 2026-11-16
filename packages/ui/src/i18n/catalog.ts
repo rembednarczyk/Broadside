@@ -79,6 +79,7 @@ export const EN = {
   "class.schooner": "Schooner",
   "class.brig": "Brig",
   "class.bomb": "Bomb vessel",
+  "class.galleon": "Galleon",
   "class.frigate": "Frigate",
   "class.liner": "Ship of the line",
 } as const;
@@ -162,6 +163,7 @@ export const PL: Record<TextKey, string> = {
   "class.schooner": "Szkuner",
   "class.brig": "Bryg",
   "class.bomb": "Bombarda",
+  "class.galleon": "Galeon",
   "class.frigate": "Fregata",
   "class.liner": "Okręt liniowy",
 };

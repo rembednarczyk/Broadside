@@ -11,7 +11,7 @@ import { applyCommand } from "./commands/apply";
 import { createCaptain } from "./ai/captain-state";
 
 /** Bigger guns stand off; light ships close in (metres). */
-const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, frigate: 260, liner: 280 })[id];
+const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, galleon: 230, frigate: 260, liner: 280 })[id];
 
 /** Fixed simulation step (60 Hz). The app accumulates frame time and steps in whole steps. */
 export const STEP = 1 / 60;

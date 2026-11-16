@@ -190,7 +190,7 @@ export class BabylonRenderer {
     if (player?.body) {
       const p = player.body.pos;
       if (!this.framed) {
-        this.camera.frameShip(player.ship!.model.def.hull.length);
+        this.camera.frameShip(player.ship!.model.def.hull.length, Math.max(...player.ship!.model.def.masts.map((m) => m.height)));
         this.camera.snap(p.x, p.y, p.z);
         this.framed = true;
       } else this.camera.follow(p.x, p.y, p.z, dt);

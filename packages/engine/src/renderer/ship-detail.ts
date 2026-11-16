@@ -30,8 +30,8 @@ export const createDetailMaterials = (scene: Scene): DetailMaterials => {
 };
 
 /** Ships with a raised quarterdeck (and a forecastle from the frigate up). */
-const castles = (id: string): { quarter: number; fore: number } =>
-  ({ brig: { quarter: 0.22, fore: 0 }, bomb: { quarter: 0.25, fore: 0 }, frigate: { quarter: 0.3, fore: 0.18 }, liner: { quarter: 0.34, fore: 0.2 } })[id] ?? { quarter: 0, fore: 0 };
+const castles = (id: string): { quarter: number; fore: number; poop: number } =>
+  ({ brig: { quarter: 0.22, fore: 0, poop: 0 }, bomb: { quarter: 0.25, fore: 0, poop: 0 }, galleon: { quarter: 0.36, fore: 0.2, poop: 0.18 }, frigate: { quarter: 0.3, fore: 0.18, poop: 0 }, liner: { quarter: 0.34, fore: 0.2, poop: 0.12 } })[id] ?? { quarter: 0, fore: 0, poop: 0 };
 
 const CASTLE_HEIGHT = 1.9;
 
@@ -54,9 +54,9 @@ export class ShipDetail {
     const c = castles(model.def.id);
     const castleMeshes: Mesh[] = [];
     if (c.quarter > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.quarter, mats.wood, "quarter"));
+    if (c.poop > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.poop, mats.wood, "poop", CASTLE_HEIGHT));
     if (c.fore > 0) castleMeshes.push(this.castle(scene, parent, h, h.length / 2 - h.length * c.fore, h.length * 0.47, mats.wood, "fore"));
     for (const m of castleMeshes) shadows?.addShadowCaster(m);
-    this.tops(scene, parent, model, mats);
     this.ratlines(scene, parent, model);
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);
@@ -75,26 +75,15 @@ export class ShipDetail {
     this.setCrew(model.def.crew, model.def.crew);
   }
 
-  private castle(scene: Scene, parent: TransformNode, h: HullShape, z0: number, z1: number, wood: StandardMaterial, name: string): Mesh {
+  private castle(scene: Scene, parent: TransformNode, h: HullShape, z0: number, z1: number, wood: StandardMaterial, name: string, lift = 0): Mesh {
     const zm = (z0 + z1) / 2;
-    const width = Math.max(beamAt(h, zm), beamAt(h, z1 - 0.5), 0.5) * 2 * 0.98;
+    const width = Math.max(beamAt(h, zm), beamAt(h, z1 - 0.5), 0.5) * 2 * (lift > 0 ? 0.9 : 0.98);
     const box = MeshBuilder.CreateBox(`castle-${name}`, { width, height: CASTLE_HEIGHT, depth: z1 - z0 }, scene);
-    box.position = new Vector3(0, deckAt(h, zm) + CASTLE_HEIGHT / 2, zm);
+    box.position = new Vector3(0, deckAt(h, zm) + lift + CASTLE_HEIGHT / 2, zm);
     box.material = wood;
     box.parent = parent;
     box.receiveShadows = true;
     return box;
-  }
-
-  private tops(scene: Scene, parent: TransformNode, model: ShipModel, mats: DetailMaterials): void {
-    const h = model.def.hull;
-    for (const m of model.def.masts) {
-      if (m.height < 18) continue;
-      const top = MeshBuilder.CreateCylinder(`top-${m.z}`, { height: 0.35, diameter: Math.min(5, h.beam * 0.42), tessellation: 10 }, scene);
-      top.position = new Vector3(0, h.freeboard + m.height * 0.58, m.z);
-      top.material = mats.dark;
-      top.parent = parent;
-    }
   }
 
   /** Shrouds with ratlines: rungs every 0.55 m between neighbouring shrouds (a ladder net). */

@@ -26,7 +26,7 @@ export class GameSession {
 
   constructor(opts: SessionOptions) {
     this.sim = new Simulation({ seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh" });
-    const player = this.sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
+    const player = this.sim.spawnShip({ classId: "galleon", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
     this.playerId = player.id;
     this.course = 0.2;
     this.send({ type: "course", ship: this.playerId, heading: this.course });

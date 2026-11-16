@@ -6,7 +6,7 @@ import { type HullShape } from "../hull/hull-shape";
  * lives in the systems, a class only describes a hull, a rig, guns and crew. Numbers are
  * coarsened from period vessels (cutter to third-rate ship of the line, 1700-1800).
  */
-export type ShipClassId = "cutter" | "gunboat" | "sloop" | "schooner" | "brig" | "bomb" | "frigate" | "liner";
+export type ShipClassId = "cutter" | "gunboat" | "sloop" | "schooner" | "brig" | "bomb" | "galleon" | "frigate" | "liner";
 
 export interface SailDef {
   readonly rig: RigType;
@@ -114,6 +114,18 @@ export const SHIP_CLASSES: Readonly<Record<ShipClassId, ShipClassDef>> = {
     masts: [{ z: 3, height: 26, sails: [sq(330, 11), fa(90, 8)] }, { z: -7, height: 18, sails: [fa(140, 7)] }],
     guns: [{ kind: "mortar", count: 2, pounder: 130, deckHeight: 2.4 }, { kind: "broadside", count: 4, pounder: 6, deckHeight: 2.2 }, { kind: "swivel", count: 4, pounder: 1, deckHeight: 2.6 }],
     crew: 70, hold: 140, sectionHp: 400, mastHp: 220, rudderArea: 3.4, ballast: 0.8, oars: 0, price: 14000,
+  },
+  // A late galleon: short, deep and high-charged, with towering castles (the visual reference ship).
+  galleon: {
+    id: "galleon",
+    hull: hull(40, 11.5, 4.6, 3.2, { bowFineness: 1.8, sternFineness: 2.4, transom: 0.78, bilge: 3, sheer: 3.4 }),
+    masts: [
+      { z: 10, height: 36, sails: [sq(430, 15), fa(120, 8)] },
+      { z: -1, height: 41, sails: [sq(540, 17)] },
+      { z: -12, height: 29, sails: [fa(150, 10), sq(150, 16)] },
+    ],
+    guns: [{ kind: "broadside", count: 14, pounder: 12, deckHeight: 2.8 }, { kind: "bowChaser", count: 2, pounder: 9, deckHeight: 3.6 }, { kind: "sternChaser", count: 2, pounder: 9, deckHeight: 4.6 }, { kind: "swivel", count: 8, pounder: 1, deckHeight: 4.5 }],
+    crew: 220, hold: 320, sectionHp: 620, mastHp: 380, rudderArea: 6, ballast: 0.78, oars: 0, price: 32000,
   },
   frigate: {
     id: "frigate",
