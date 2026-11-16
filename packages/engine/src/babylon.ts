@@ -38,3 +38,5 @@ import "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import "@babylonjs/core/Meshes/Builders/groundBuilder";
 import "@babylonjs/core/Particles/particleSystemComponent";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
+import "@babylonjs/core/Meshes/Builders/capsuleBuilder";
+import "@babylonjs/core/Meshes/Builders/planeBuilder";

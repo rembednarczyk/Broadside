@@ -3,6 +3,7 @@ import { rotateInv, vec3, windVector } from "@broadside/core";
 import { Color3, DynamicTexture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
+import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { SAIL_COLS, SAIL_ROWS, type SailOutline, sailIndices, sailPositions } from "./sail-geometry";
 
 /**
@@ -35,6 +36,7 @@ export interface ShipMaterials {
   readonly sail: StandardMaterial;
   readonly rope: StandardMaterial;
   readonly flag: Readonly<Record<FactionId, StandardMaterial>>;
+  readonly detail: DetailMaterials;
 }
 
 export const createShipMaterials = (scene: Scene): ShipMaterials => {
@@ -69,7 +71,7 @@ export const createShipMaterials = (scene: Scene): ShipMaterials => {
       return [f, m];
     }),
   ) as Record<FactionId, StandardMaterial>;
-  return { hull, deck, wood, sail, rope, flag };
+  return { hull, deck, wood, sail, rope, flag, detail: createDetailMaterials(scene) };
 };
 
 const outlinesFor = (model: ShipModel, mastIndex: number): SailOutline[] => {
@@ -97,6 +99,8 @@ export class ShipView {
   private readonly masts: Mesh[] = [];
   private readonly flag: Mesh;
   private readonly flagPositions: Float32Array;
+  private readonly detail: ShipDetail;
+  private shownCrew = -1;
 
   constructor(scene: Scene, readonly entityId: number, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
@@ -119,6 +123,7 @@ export class ShipView {
       outlinesFor(model, i).forEach((outline, j) => this.sails.push(this.buildSail(scene, hullSpace, mast.z, outline, i, j, mats, shadows)));
     });
     this.buildRigging(scene, hullSpace, model, mats);
+    this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows);
     const first = model.def.masts.reduce((a, b) => (b.height > a.height ? b : a));
     const flag = this.buildFlag(scene, mats.flag[faction]);
     flag.mesh.parent = hullSpace;
@@ -249,6 +254,10 @@ export class ShipView {
       }
     }
     this.masts.forEach((m, i) => m.setEnabled(s.mastHp[i]! > 0));
+    if (s.crew !== this.shownCrew) {
+      this.shownCrew = s.crew;
+      this.detail.setCrew(s.crew, s.model.def.crew);
+    }
     this.updateFlag(aw.x, aw.z, time);
   }
 
