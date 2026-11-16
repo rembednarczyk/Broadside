@@ -18,9 +18,15 @@ export interface World2D {
   readonly bed: ((x: number, z: number) => number) | null;
   readonly ships: readonly Entity[];
   readonly rng: () => number;
+  /** Ports merchants sail between (empty: open sea). */
+  readonly ports: readonly { readonly x: number; readonly z: number }[];
 }
 
 const DETECT = 900;
+/** Hunters know roughly where the player sails (word in the taverns) and seek her out. */
+const HUNT_RANGE = 3200;
+/** Merchants run from enemies closer than this. */
+const MERCHANT_WARY = 600;
 const BROADSIDE_MAX = 430;
 /** The captain orders a broadside when the guns can train onto the target (their limit is ~0.14). */
 const ARC = 0.13;
@@ -118,9 +124,20 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   return cmds;
 };
 
+/** Next port for a merchant: any but the one it is leaving, picked from the stream. */
+const nextPort = (c: CaptainState, w: World2D): void => {
+  if (w.ports.length === 0) return;
+  let k = Math.floor(w.rng() * w.ports.length);
+  if (k === c.dest && w.ports.length > 1) k = (k + 1) % w.ports.length;
+  c.dest = k;
+  c.wx = w.ports[k]!.x;
+  c.wz = w.ports[k]!.z;
+};
+
 const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   const b = me.body!;
-  if (Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 120) {
+  if (c.role === "trade" && (c.dest < 0 || Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 260)) nextPort(c, w);
+  else if (Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 120) {
     c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
     c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
   }
@@ -140,6 +157,13 @@ const flee = (me: Entity, t: Entity | null, w: World2D): GameCommand[] => {
   ];
 };
 
+/** The player's ship, if a hunter can find her (hunters only chase hostile quarry). */
+const quarry = (me: Entity, ships: readonly Entity[]): Entity | null => {
+  const p = ships.find((o) => o.player && !o.ship!.sinking && hostileTo(me.ship!, o.ship!));
+  if (!p) return null;
+  return Math.hypot(p.body!.pos.x - me.body!.pos.x, p.body!.pos.z - me.body!.pos.z) < HUNT_RANGE ? p : null;
+};
+
 /** One decision of the captain; mutates its state and returns the commands it gives. */
 export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   const s = me.ship!;
@@ -154,8 +178,18 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     c.mode = "flee";
     return flee(me, target, w);
   }
-  const t = target ?? nearestHostile(me, w.ships, w.fog);
+  const t = target ?? nearestHostile(me, w.ships, w.fog) ?? (c.role === "hunt" ? quarry(me, w.ships) : null);
   c.target = t?.id ?? null;
+  if (t && c.role === "trade") {
+    const d = Math.hypot(t.body!.pos.x - me.body!.pos.x, t.body!.pos.z - me.body!.pos.z);
+    if (d < MERCHANT_WARY) {
+      c.mode = "flee";
+      return flee(me, t, w);
+    }
+    c.target = null;
+    c.mode = "patrol";
+    return patrol(me, c, w);
+  }
   if (!t) {
     c.mode = "patrol";
     return patrol(me, c, w);

@@ -28,7 +28,7 @@ export class GameSession {
 
   /** A new game from a seed, or a saved one continued from its snapshot. */
   constructor(opts: SessionOptions, saved?: SimSnapshot) {
-    this.options = { seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed) };
+    this.options = { seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed), traffic: true };
     if (saved) {
       this.sim = restore(saved, this.options.archipelago ?? null);
       this.playerId = this.sim.player()!.id;

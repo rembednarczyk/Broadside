@@ -57,8 +57,11 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] kształty wysp: szum grzbietowy z deformacją dziedziny (16.11)
 
 ### M4 głębia
-- [ ] pełna amunicja i bronie specjalne, abordaż, taran, zaparcie, zasłona dymna
-- [ ] klasy statków do kupienia, ulepszenia, frakcje i reputacja, zlecenia, konwoje
+- [x] zderzenia statków i taranowanie, abordaż (reguły, AI piratów, HUD) (16.11)
+- [x] reżyser populacji (Booth, L4D): kupcy między portami, patrole, piraci, łowcy gracza; spawn w pierścieniu, usuwanie dalekich, faza spokoju w walce (16.11)
+- [ ] zasłona dymna, HUD broni specjalnych (ogień grecki, rakiety)
+- [ ] frakcje i reputacja (atak na kupca psuje stosunki), zlecenia, konwoje z eskortą
+- [ ] klasy statków do kupienia, ulepszenia
 
 ### M5 grafika i telefon
 - [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości

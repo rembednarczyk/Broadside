@@ -16,6 +16,7 @@ import { groundingSystem } from "./grounding";
 import { fortSystem } from "./forts";
 import { provisionsSystem } from "./provisions";
 import { collisionSystem } from "./collisions";
+import { populationSystem } from "./population";
 
 /**
  * The only place that orders systems (ADR-0002): an explicit array, never the iteration order of
@@ -39,4 +40,5 @@ export const createSystems = (): readonly System[] => [
   castawaySystem,
   provisionsSystem,
   cleanupSystem,
+  populationSystem,
 ];

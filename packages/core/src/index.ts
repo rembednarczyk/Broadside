@@ -18,4 +18,5 @@ export * from "./data/factions";
 export * from "./weather/weather";
 export * from "./world/archipelago";
 export * from "./data/forts";
+export * from "./data/population";
 export * from "./economy/port-trade";
