@@ -64,7 +64,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] stosunki z nacjami w panelu portu (16.11)
 - [x] zlecenia z portów: nagroda za pirata, eskorta kupca do innego portu, napad (porty pirackie); oferta z ziarna co 5 min, jedno naraz, termin, zapłata i dobra wola nadawcy, HUD (16.11)
 - [x] konwoje: prowadzący kupiec, drugi kupiec i eskorta trzymają szyk (podążanie za liderem, Reynolds), konwój płynie tempem najwolniejszego (16.11)
-- [ ] audyt prędkości klas na kursach względem wiatru (`*.audit.ts`), bo fregata ostro na wiatr ledwo idzie
+- [x] audyt biegunowy trzyma kurs sternikiem (wcześniej statki odpadały i kolumny mieszały kursy) (16.11)
 - [x] stocznia: zakup statku z rozliczeniem starego (połowa ceny × stan), pirackie stocznie tylko małe kadłuby (16.11)
 - [x] przeróbki w stoczni: poszycie miedzią (opór ×0,9), wzmocnienia kadłuba (obrażenia ×0,8), zamki skałkowe (rozrzut ×0,6, przeładowanie ×0,9) (16.11)
 - [x] panel portu w zakładkach: port, amunicja, stocznia (16.11)
@@ -75,6 +75,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 
 ### M6 balans
 - [ ] audyty bitew AI kontra AI, poprawki, wydanie końcowe
+- [ ] fregata nie szybsza od galeonu (audyt 16.11: 90° 8,1 kn wobec 8,2; 135° 8,9 wobec 9,2); historycznie fregata wyraźnie szybsza: większa powierzchnia żagli albo smuklejszy kadłub, z nowym złotym hashem
 
 ## Dług i pomysły
 - Fizyka: 10 fregat to ok. 1,25 ms na krok na desktopie; dla dalekich statków rzadsza siatka próbek (LOD fizyki).

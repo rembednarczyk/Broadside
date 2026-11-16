@@ -5,11 +5,13 @@ import { Simulation } from "../src/simulation";
 it("speed polar, leeway, heel and step cost of every class (report)", () => {
   for (const id of SHIP_CLASS_IDS) {
     const row: string[] = [];
-    for (const off of [45, 60, 90, 135, 180]) {
+    for (const off of [45, 60, 75, 90, 135, 180]) {
       // heading 0; wind blowing towards angle such that wind comes from `off` deg off the bow
       const windDir = Math.PI - (off * Math.PI) / 180;
       const sim = new Simulation({ seed: 3, windDirection: windDir, windSpeed: 8 });
       const e = sim.spawnShip({ classId: id, faction: "player", x: 0, z: 0, heading: 0 });
+      // The helmsman holds the heading, so each column is one point of sail.
+      sim.command({ type: "course", ship: e.id, heading: 0 });
       let heel = 0;
       for (let i = 0; i < 60 * 90; i++) { sim.step(); heel = Math.max(heel, Math.abs(rollOf(e.body!.rot))); }
       const v = rotateInv(e.body!.rot, e.body!.vel);
