@@ -24,6 +24,16 @@ const weatherParam = params.get("weather");
 const weather = weatherParam && weatherParam in WEATHER ? (weatherParam as WeatherKind) : "fresh";
 // Continue the autosave if there is one (unless the address asks for a fresh seed).
 const store = localSaveStore();
+/** Set once the player has closed the how-to-play card. */
+const HELP_KEY = "broadside.help";
+// First start: show how to play (closed once, remembered).
+const helpSeen = ((): boolean => {
+  try {
+    return localStorage.getItem(HELP_KEY) === "1";
+  } catch {
+    return false;
+  }
+})();
 const saved = params.has("seed") ? null : await readSave(store, "autosave").catch(() => null);
 let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapshot) : new GameSession({ seed, weather });
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
@@ -57,6 +67,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
+if (!helpSeen) patchHud({ helpOpen: true });
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
@@ -94,6 +105,17 @@ const intents: UiIntents = {
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+    toggleHelp: () => {
+      const open = !useHud.getState().helpOpen;
+      patchHud({ helpOpen: open, settingsOpen: false });
+      if (!open) {
+        try {
+          localStorage.setItem(HELP_KEY, "1");
+        } catch {
+          // Storage can be unavailable (private mode): the card simply shows again next time.
+        }
+      }
+    },
     newGame: () => {
       session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
       applyGraphics(graphics);

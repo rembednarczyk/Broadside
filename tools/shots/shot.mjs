@@ -28,6 +28,8 @@ const page = await browser.newPage({ viewport: { width: Number(width), height: N
 const logs = [];
 page.on("console", (m) => logs.push(`${m.type()}: ${m.text()}`));
 page.on("pageerror", (e) => logs.push(`pageerror: ${e.message}`));
+// Shots show the game, not the first-start help card.
+await page.addInitScript('localStorage.setItem("broadside.help", "1")');
 // Optional scripted actions during the advance: SHOT_SCRIPT is a function body (b, t) => {...}.
 if (process.env.SHOT_SCRIPT) await page.addInitScript(`globalThis.__shotScript = (b, t) => { ${process.env.SHOT_SCRIPT} }`);
 await page.goto(`http://localhost:${port}/index.html?${query}`);

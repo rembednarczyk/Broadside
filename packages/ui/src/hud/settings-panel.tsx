@@ -32,6 +32,7 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
       </div>
       <div className="label">{text(lang, "settings.resolution")} {Math.round(g.renderScale * 100)}%</div>
       <input type="range" min={50} max={100} step={5} value={Math.round(g.renderScale * 100)} onChange={(e) => intents.setRenderScale(Number(e.target.value) / 100)} />
+      <button className="wide" onPointerDown={() => intents.toggleHelp()} data-testid="open-help">{text(lang, "help.open")}</button>
       <button className="wide" onPointerDown={() => intents.newGame()} data-testid="new-game">{text(lang, "settings.newGame")}</button>
       <div className="label">{text(lang, "settings.language")}</div>
       <div className="presets">

@@ -39,6 +39,7 @@ export interface SettingsIntents {
   setRenderScale(scale: number): void;
   setColorMode(mode: string): void;
   toggleSettings(): void;
+  toggleHelp(): void;
   newGame(): void;
   toggleHud(): void;
   nextCamera(): void;

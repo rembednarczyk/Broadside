@@ -101,3 +101,7 @@ button:disabled { opacity: 0.35; }
   .notice { font-size: 13px; }
   .corner { bottom: 6px; right: 6px; }
 }
+.help { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 86vw); max-height: 84vh; overflow-y: auto; font-size: 13px; z-index: 6; }
+.help ul { margin: 6px 0 10px; padding-left: 18px; }
+.help li { margin: 4px 0; line-height: 1.35; }
+@media (max-height: 500px) { .help { font-size: 10px; width: 80vw; } .help li { margin: 2px 0; } }

@@ -125,6 +125,8 @@ export interface HudState {
   readonly marker: { readonly x: number; readonly y: number; readonly angle: number; readonly range: number } | null;
   readonly graphics: GraphicsHud;
   readonly settingsOpen: boolean;
+  /** The how-to-play card (shown on the first start). */
+  readonly helpOpen: boolean;
   readonly hudHidden: boolean;
   readonly cameraMode: string;
   readonly sailing: SailingHud | null;
@@ -137,6 +139,6 @@ export interface HudState {
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);
