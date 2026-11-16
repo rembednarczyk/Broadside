@@ -7,18 +7,16 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] monorepo pnpm, ESLint, depcruise, code-health, Vitest (16.11)
 - [x] `core`: matematyka, RNG, fale Gerstnera z widma PM, aerodynamika żagli, kształt kadłuba, klasy statków, amunicja, komendy, zdarzenia (16.11)
 - [x] `sim`: bryła sztywna, wypór, opór, ster, wiosła, żagle z obsługą, sternik PID, złoty hash (16.11)
-- [ ] `engine`: scena Babylon, ocean (shader Gerstnera z uniformów `packWaves`), niebo, światło, kamera trzecioosobowa, siatka kadłuba z `core/hull`, maszty i żagle
-- [ ] `app`: pętla ze stałym krokiem, wejście (klawiatura, dotyk), HUD minimum (kurs, prędkość, wiatr, żagle)
-- [ ] CI (`ci.yml`), `android.yml` + Capacitor, pierwszy APK
-- [ ] Playwright: rozruch i zrzut sceny
+- [x] `engine`: scena Babylon, ocean (shader Gerstnera z uniformów `packWaves`), niebo, światło, kamera, kadłub z `core/hull` z teksturą malowania, maszty i żagle (16.11)
+- [x] `app`: pętla ze stałym krokiem, klawiatura i dotyk, HUD (16.11)
+- [x] CI (`ci.yml`), `android.yml` + Capacitor, pierwszy APK zielony (16.11)
+- [x] narzędzie zrzutów `tools/shots/shot.mjs` (16.11)
 
 ### M1 walka
-- [ ] działa: ładowanie, salwa burtowa falą, działa pościgowe, moździerz, działko obrotowe; elewacja z zadanego zasięgu
-- [ ] pociski: balistyka z oporem, rykoszet od wody, trafienia w sekcje, maszty, żagle, olinowanie, załogę
-- [ ] model uszkodzeń: przecieki, zalewanie przedziałów, pożary, magazyn prochu, tonięcie
-- [ ] załoga za burtą i wyławianie (hołd Overboard!)
-- [ ] AI kapitana: automat stanów (patrol, pościg, ustawienie do burty, ucieczka), sternik i żagle
-- [ ] efekty: dym, ogień, rozbryzgi, odłamki; dźwięk syntetyzowany
+- [x] działa, pociski, uszkodzenia, tonięcie, rozbitkowie, AI kapitana (16.11, d7ca7b4)
+- [x] efekty, dźwięk syntetyzowany, HUD ognia, wybór celu (16.11, 97621dd)
+- [ ] audyt bitew AI kontra AI (czas walki, zwycięzcy klas) jako `*.audit.ts`
+- [ ] wskaźnik miejsca upadku salwy na wodzie (łuk jak w Black Flag)
 
 ### M2 żagle i pogoda
 - [ ] automat pogody z frontami, szkwały, sztorm, mgła, deszcz, pioruny, trąby wodne, fale olbrzymie
