@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useHud } from "../store/hud-store";
 import { isTextKey, text, type TextKey } from "../i18n/catalog";
 import { type SailIntents } from "../intents";
@@ -10,12 +11,14 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
   const lang = useHud((h) => h.language);
   const gold = useHud((h) => h.gold);
   const days = useHud((h) => h.provisions);
+  // Phones hide the per-mast rows until asked (a toggle shown only on small screens).
+  const [open, setOpen] = useState(false);
   if (!s) return null;
   const target = s.sailTargets[0] ?? 0;
   const bft = `bft.${s.beaufort}`;
   const cls = `class.${s.classId}`;
   return (
-    <div className="panel sailing">
+    <div className={open ? "panel sailing open" : "panel sailing"}>
       <div className="title">{isTextKey(cls) ? text(lang, cls) : s.classId}</div>
       <div className="row">
         <span className="label">{text(lang, "hud.speed")}</span>
@@ -42,6 +45,9 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
           </button>
         ))}
       </div>
+      {s.sailTargets.length > 1 && (
+        <button className="masts-toggle" onPointerDown={() => setOpen(!open)} data-testid="masts-toggle">{text(lang, "hud.masts")} {open ? "▴" : "▾"}</button>
+      )}
       {s.sailTargets.length > 1 && (
         <div className="masts">
           {s.sailTargets.map((lvl, i) => (

@@ -73,7 +73,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M5 grafika i telefon
 - [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości
 - [x] kompaktowy HUD na telefon w poziomie (wysokość < 500 px): bez masztów, przechyłu i pogody w panelu żeglugi, mniejsze przyciski (16.11)
-- [ ] sterowanie masztami osobno na telefonie (rozwijany panel), budżety wydajności, wydanie v1.0.0
+- [x] maszty osobno na telefonie: rozwijany wiersz w panelu żeglugi (16.11)
+- [ ] budżety wydajności na telefonie, wydanie v1.0.0
 
 ### M6 balans
 - [ ] audyty bitew AI kontra AI, poprawki, wydanie końcowe

@@ -46,6 +46,7 @@ button:disabled { opacity: 0.35; }
 .mast-row { display: grid; grid-template-columns: 1fr 26px 70px 26px; align-items: center; gap: 4px; font-size: 11px; }
 .mast-row button { padding: 2px 0; font-size: 13px; }
 .mast-row .lvl { text-align: center; }
+.masts-toggle { display: none; }
 .mast-row.warn { color: #ffd27f; }
 .mast-row.alarm, .sailing .alarm { color: #ff8a65; }
 .settings { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, 80vw); font-size: 13px; z-index: 5; }
@@ -79,6 +80,9 @@ button:disabled { opacity: 0.35; }
   .sailing { width: 168px; font-size: 11px; top: 6px; left: max(6px, env(safe-area-inset-left)); }
   .sailing .title { font-size: 13px; margin-bottom: 2px; }
   .sailing .heel, .sailing .weather, .sailing .masts, .sailing .sails-label { display: none; }
+  .masts-toggle { display: block; width: 100%; margin-top: 3px; padding: 2px 0; font-size: 9px; }
+  .sailing.open .masts { display: flex; }
+  .sailing.open .mast-row { font-size: 9px; grid-template-columns: 1fr 22px 52px 22px; }
   .sail-buttons { gap: 2px; }
   .sail-buttons button { font-size: 8px; padding: 4px 0; }
   .combat { top: 6px; width: 48vw; font-size: 9px; }
