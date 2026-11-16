@@ -129,7 +129,8 @@ export const SHIP_CLASSES: Readonly<Record<ShipClassId, ShipClassDef>> = {
   },
   frigate: {
     id: "frigate",
-    hull: hull(45, 12, 5, 3.6),
+    // Fine-lined and lighter than a liner of her length: frigates were the fast ships of a fleet.
+    hull: hull(45, 11.4, 4.4, 3.6, { bowFineness: 2.6 }),
     masts: [
       { z: 12, height: 40, sails: [sq(520, 17), fa(180, 10)] },
       { z: 0, height: 45, sails: [sq(600, 19)] },

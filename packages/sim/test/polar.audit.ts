@@ -3,7 +3,7 @@ import { SHIP_CLASS_IDS, rollOf, rotateInv, yawOf } from "@broadside/core";
 import { Simulation } from "../src/simulation";
 
 it("speed polar, leeway, heel and step cost of every class (report)", () => {
-  for (const id of SHIP_CLASS_IDS) {
+  for (const id of process.env.CLASSES ? (process.env.CLASSES.split(",") as typeof SHIP_CLASS_IDS) : SHIP_CLASS_IDS) {
     const row: string[] = [];
     for (const off of [45, 60, 75, 90, 135, 180]) {
       // heading 0; wind blowing towards angle such that wind comes from `off` deg off the bow

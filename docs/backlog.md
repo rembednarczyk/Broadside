@@ -75,7 +75,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 
 ### M6 balans
 - [ ] audyty bitew AI kontra AI, poprawki, wydanie końcowe
-- [ ] fregata nie szybsza od galeonu (audyt 16.11: 90° 8,1 kn wobec 8,2; 135° 8,9 wobec 9,2); historycznie fregata wyraźnie szybsza: większa powierzchnia żagli albo smuklejszy kadłub, z nowym złotym hashem
+- [x] fregata smuklejsza (szer. 11,4 m, zanurzenie 4,4 m, ostrzejszy dziób): 90° 9,3 kn i 135° 9,9 kn wobec galeonu 8,2 i 9,2 (16.11)
 
 ## Dług i pomysły
 - Fizyka: 10 fregat to ok. 1,25 ms na krok na desktopie; dla dalekich statków rzadsza siatka próbek (LOD fizyki).
