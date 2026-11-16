@@ -145,6 +145,8 @@ export class BabylonRenderer {
         this.views.set(e.id, v);
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);
+      const cam = this.camera.camera.position;
+      v.setDistance(Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z));
     }
     for (const [id, v] of this.views) {
       if (!seen.has(id)) {

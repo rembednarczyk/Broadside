@@ -96,6 +96,9 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
   }
 };
 
+/** Beyond this distance a ship drops its ratlines, rails, lanterns and crew. */
+const FINE_DETAIL = 320;
+
 export class ShipView {
   readonly root: TransformNode;
   private cloth!: SailCloth;
@@ -106,6 +109,11 @@ export class ShipView {
   private readonly flag: Mesh;
   private readonly flagPositions: Float32Array;
   private readonly detail: ShipDetail;
+
+  /** Level of detail by distance to the camera (metres). */
+  setDistance(d: number): void {
+    this.detail.setFine(d < FINE_DETAIL);
+  }
   private shownCrew = -1;
 
   constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null) {
