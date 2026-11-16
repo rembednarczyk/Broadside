@@ -5,6 +5,8 @@ import { create } from "zustand";
  * selectors (one field each), as in SpinalTap's ui store.
  */
 export interface SailingHud {
+  /** Shallow water on the course ahead (the leadsman calls it). */
+  readonly shoalAhead: boolean;
   readonly speedKnots: number;
   readonly heading: number;
   readonly course: number | null;

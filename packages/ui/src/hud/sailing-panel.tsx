@@ -61,6 +61,7 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
         </div>
       )}
       {s.mastLoad.some((l) => l > 1) && <div className="alarm">{text(lang, "hud.strain")}</div>}
+      {s.shoalAhead && <div className="alarm shoal" data-testid="shoal">{text(lang, "hud.shoal")}</div>}
       {s.hasOars && (
         <button className={s.oars ? "on wide" : "wide"} onPointerDown={() => intents.toggleOars()}>
           {text(lang, "hud.oars")}

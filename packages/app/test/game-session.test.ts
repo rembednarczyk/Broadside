@@ -34,3 +34,18 @@ describe("game session", () => {
     expect(presentSailing(s.sim, s.playerId)!.sailTargets.every((l) => l === 1)).toBe(true);
   });
 });
+
+describe("leadsman", () => {
+  it("calls shoal water when the course runs onto an island, not in open sea", () => {
+    const s = new GameSession({ seed: 1 });
+    const me = s.sim.byId(s.playerId)!;
+    const is = s.sim.env.archipelago!.islands[0]!;
+    const out = is.radius + is.shoal + 200;
+    me.body!.pos = { x: is.x, y: me.body!.pos.y, z: is.z - out };
+    me.body!.rot = { x: 0, y: 0, z: 0, w: 1 };
+    expect(presentSailing(s.sim, s.playerId)!.shoalAhead).toBe(true);
+    me.body!.pos = { x: is.x, y: me.body!.pos.y, z: is.z - out - 3000 };
+    me.body!.rot = { x: 0, y: 1, z: 0, w: 0 };
+    expect(presentSailing(s.sim, s.playerId)!.shoalAhead).toBe(false);
+  });
+});
