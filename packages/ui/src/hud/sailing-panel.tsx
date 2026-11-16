@@ -25,16 +25,16 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
         <span className="label">{text(lang, "hud.wind")}</span>
         <span className="value">{s.windKnots.toFixed(0)} {text(lang, "hud.knots")} · {isTextKey(bft) ? text(lang, bft) : ""}</span>
       </div>
-      {s.weather && isTextKey(`weather.${s.weather}`) && <div className="row"><span className="label" /><span className="value">{text(lang, `weather.${s.weather}` as TextKey)}</span></div>}
-      <div className="row">
+      {s.weather && isTextKey(`weather.${s.weather}`) && <div className="row weather"><span className="label" /><span className="value">{text(lang, `weather.${s.weather}` as TextKey)}</span></div>}
+      <div className="row gold">
         <span className="label">{text(lang, "hud.gold")}</span>
         <span className="value" data-testid="gold">{gold} · {days.toFixed(0)} {text(lang, "hud.days")}</span>
       </div>
-      <div className="row">
+      <div className="row heel">
         <span className="label">{text(lang, "hud.heel")}</span>
         <span className="value">{s.heelDeg.toFixed(0)}°</span>
       </div>
-      <div className="label">{text(lang, "hud.sails")}</div>
+      <div className="label sails-label">{text(lang, "hud.sails")}</div>
       <div className="sail-buttons">
         {LEVELS.map((l) => (
           <button key={l} className={l === target ? "on" : ""} onPointerDown={() => intents.setSails(l)} data-testid={`sail-${l}`}>

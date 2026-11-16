@@ -72,3 +72,28 @@ button:disabled { opacity: 0.35; }
 .enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 4px #000; }
 .enemy-marker .arrow { font-size: 22px; line-height: 22px; }
 .enemy-marker small { font-size: 11px; color: #f1e3c6; }
+
+/* Phones in landscape (height under 500 px): a compact HUD that leaves the middle of the sea clear. */
+@media (max-height: 500px) {
+  .panel { padding: 5px 8px; border-radius: 8px; }
+  .sailing { width: 168px; font-size: 11px; top: 6px; left: max(6px, env(safe-area-inset-left)); }
+  .sailing .title { font-size: 13px; margin-bottom: 2px; }
+  .sailing .heel, .sailing .weather, .sailing .masts, .sailing .sails-label { display: none; }
+  .sail-buttons { gap: 2px; }
+  .sail-buttons button { font-size: 8px; padding: 4px 0; }
+  .combat { top: 6px; width: 48vw; font-size: 9px; }
+  .combat .ammo, .combat .batteries { gap: 2px; margin-bottom: 2px; }
+  .combat .ammo button, .combat .batteries button { min-width: 38px; font-size: 8px; padding: 3px 1px; }
+  .compass { width: 76px; height: 76px; top: 6px; right: max(6px, env(safe-area-inset-right)); }
+  .target { top: 88px; width: 132px; font-size: 10px; right: max(6px, env(safe-area-inset-right)); }
+  .job { top: 128px; width: 168px; font-size: 10px; left: max(6px, env(safe-area-inset-left)); }
+  .fire.side { bottom: max(76px, calc(env(safe-area-inset-bottom) + 70px)); width: 84px; height: 62px; font-size: 14px; }
+  .fire.port { left: max(8px, env(safe-area-inset-left)); }
+  .fire.starboard { right: max(8px, env(safe-area-inset-right)); }
+  .helm-pad { gap: 90px; bottom: max(8px, env(safe-area-inset-bottom)); }
+  .helm { width: 58px; height: 58px; font-size: 20px; }
+  .harbour { bottom: 70px; width: 58vw; max-height: 62vh; overflow-y: auto; font-size: 10px; }
+  .notices { top: 28%; }
+  .notice { font-size: 13px; }
+  .corner { bottom: 6px; right: 6px; }
+}
