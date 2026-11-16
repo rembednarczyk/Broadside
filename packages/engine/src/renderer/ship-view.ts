@@ -177,6 +177,15 @@ export class ShipView {
       const mi = model.def.masts.findIndex((ms) => Math.abs(ms.z - t.z) < 1e-6);
       parts[Math.max(0, mi)]!.push(top);
     });
+    // Crow's nest: a lookout's barrel on the topgallant mast of the tallest mast, above its highest top.
+    const main = model.def.masts.reduce((best, m, i) => (m.height > model.def.masts[best]!.height ? i : best), 0);
+    const mainTops = plan.tops.filter((t) => Math.abs(t.z - model.def.masts[main]!.z) < 1e-6);
+    if (mainTops.length > 1 && model.def.masts[main]!.height > 25) {
+      const high = mainTops.reduce((a, b) => (b.y > a.y ? b : a));
+      const nest = MeshBuilder.CreateCylinder(`nest-${this.entityId}`, { height: 1.3, diameterTop: 1.25, diameterBottom: 1.05, tessellation: 12, cap: 1 }, scene);
+      nest.position = new Vector3(0, high.y + 3.2, high.z);
+      parts[main]!.push(nest);
+    }
     parts.forEach((list, i) => {
       const merged = Mesh.MergeMeshes(list, true, true)!;
       merged.name = `mast-${this.entityId}-${i}`;

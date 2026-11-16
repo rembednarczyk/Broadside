@@ -36,7 +36,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] (raport 2) krople na obiektywie, piorun w trzech fazach, ławice mgły (16.11); rozbłysk pioruna na wodzie (16.11)
 - [x] (raport 3) kilwater (klin Kelvina) i piana dziobowa z iskrami w shaderze (16.11); do zrobienia: krótka fala wiatrowa
 - [ ] (raport 4) chmury kłębiaste z ciemnymi podstawami, klify o płaskich szczytach
-- [x] (raport 5) świecące godła i okna nocą (16.11); postrzępione żagle (16.11); do zrobienia: bocianie gniazda
+- [x] (raport 5) świecące godła i okna nocą (16.11); postrzępione żagle, bocianie gniazdo na grotmaszcie (16.11)
 - [x] (raport 6) rozmycie ruchu (Ultra, Kinowa), kamery: pościg, filmowa, pokład; ukrywanie HUD (16.11)
 
 ### Prezentacja (decyzje 16.11)
