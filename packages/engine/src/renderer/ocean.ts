@@ -51,7 +51,7 @@ export class Ocean {
   constructor(scene: Scene, cells = 220, detailWaves = 0) {
     this.cells = cells;
     const rng = createRng(4242);
-    this.detail = Array.from({ length: detailWaves }, (_, i) => makeWave(range(rng, 0, Math.PI * 2), 1.4 + i * 0.7, 0.025 + i * 0.006, 0.7, range(rng, 0, Math.PI * 2), 8));
+    this.detail = Array.from({ length: detailWaves }, (_, i) => makeWave(range(rng, -0.9, 0.9), 1.3 + i * 0.83 + range(rng, -0.2, 0.2), 0.012 + i * 0.004, 0.6, range(rng, 0, Math.PI * 2), 8));
     this.mesh = new Mesh("ocean", scene);
     const grid = buildOceanGrid(cells);
     const data = new VertexData();
@@ -86,7 +86,7 @@ export class Ocean {
     this.material.setInt("shipCount", Math.min(8, ships.length));
   }
 
-  update(waves: readonly GerstnerWave[], time: number, cameraX: number, cameraZ: number, look: OceanLook, windSpeed: number): void {
+  update(waves: readonly GerstnerWave[], time: number, cameraX: number, cameraZ: number, look: OceanLook, windSpeed: number, windDirection = 0): void {
     const packed = packWaves(waves);
     this.material.setArray4("waveA", Array.from(packed.a));
     this.material.setArray4("waveB", Array.from(packed.b));
@@ -96,7 +96,10 @@ export class Ocean {
     const ox = Math.round(cameraX / f) * f;
     const oz = Math.round(cameraZ / f) * f;
     const k = Math.min(1.6, Math.max(0.2, windSpeed / 10));
-    const det = packWaves(this.detail.map((w) => ({ ...w, amplitude: w.amplitude * k, qa: w.qa * k })));
+    // Detail waves travel around the wind direction (rotated from the generated spread).
+    const c = Math.cos(windDirection);
+    const s = Math.sin(windDirection);
+    const det = packWaves(this.detail.map((w) => ({ ...w, dirX: w.dirX * c + w.dirZ * s, dirZ: -w.dirX * s + w.dirZ * c, amplitude: w.amplitude * k, qa: w.qa * k })));
     this.material.setArray4("detailA", Array.from(det.a));
     this.material.setArray4("detailB", Array.from(det.b));
     this.material.setInt("detailCount", this.detail.length);

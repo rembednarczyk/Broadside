@@ -72,7 +72,7 @@ const castleMaterial = (scene: Scene): StandardMaterial => {
 const castles = (id: string): { quarter: number; fore: number; poop: number } =>
   ({ brig: { quarter: 0.22, fore: 0, poop: 0 }, bomb: { quarter: 0.25, fore: 0, poop: 0 }, galleon: { quarter: 0.36, fore: 0.2, poop: 0.18 }, frigate: { quarter: 0.3, fore: 0.18, poop: 0 }, liner: { quarter: 0.34, fore: 0.2, poop: 0.12 } })[id] ?? { quarter: 0, fore: 0, poop: 0 };
 
-const CASTLE_HEIGHT = 2.3;
+const CASTLE_HEIGHT = 2.8;
 
 const instances = (mesh: Mesh, matrices: Matrix[]): void => {
   const buf = new Float32Array(matrices.length * 16);

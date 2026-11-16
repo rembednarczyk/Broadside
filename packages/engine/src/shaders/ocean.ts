@@ -22,10 +22,54 @@ uniform int waveCount;
 uniform vec4 detailA[8];
 uniform vec4 detailB[8];
 uniform int detailCount;
+uniform vec4 shipA[8];
+uniform vec4 shipB[8];
+uniform int shipCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
 varying float vHeight;
+
+// Hull-water interaction on the surface (visual): each ship pushes up a bow wave growing with
+// the square of its speed (wave-making, cf. Froude scaling), piles water along its sides, holds
+// the sea below its keel inside the hull outline (so the hull cuts the water and no crest shows
+// through the deck), and leaves Kelvin-wedge ridges astern. Data: (x, z, dirX, dirZ) and
+// (speed, length, beam, 0) per ship.
+float hullWater(vec2 p) {
+  float h = 0.0;
+  for (int i = 0; i < 8; i++) {
+    if (i >= shipCount) break;
+    vec4 a = shipA[i];
+    vec4 b = shipB[i];
+    vec2 d = p - a.xy;
+    float along = dot(d, a.zw);
+    float across = d.x * a.w - d.y * a.z;
+    float halfLen = b.y * 0.5;
+    float halfBeam = b.z * 0.5;
+    float speed = b.x;
+    float u = along / halfLen;
+    float w = across / halfBeam;
+    // Inside the waterline outline (an ellipse narrowing to the bow): keep the sea under the hull.
+    float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
+    h -= 2.5 * (1.0 - smoothstep(0.45, 0.7, outline));
+    float sq = min(speed * speed, 49.0);
+    // Bow wave: a crest just ahead of the stem, spreading to the sides.
+    float bow = exp(-pow((along - halfLen - 0.8) / (halfLen * 0.18 + 1.0), 2.0)) * exp(-pow(across / (halfBeam * 1.6), 2.0));
+    h += 0.035 * sq * bow;
+    // Water piled along the sides, strongest forward.
+    float side = exp(-pow((abs(across) - halfBeam - 1.0) / 1.6, 2.0)) * smoothstep(-1.1, 0.6, u) * (1.0 - smoothstep(0.9, 1.3, u));
+    h += 0.012 * sq * side;
+    // Stern: a trough under the counter, then the Kelvin arms (half-angle 19.47 deg) fading astern.
+    float back = -(along + halfLen);
+    if (back > 0.0) {
+      float fade = exp(-back / (8.0 + speed * 6.0));
+      float arm = abs(abs(across) - (halfBeam + back * 0.354));
+      h += 0.02 * sq * exp(-arm * arm / 2.5) * fade;
+      h -= 0.015 * sq * exp(-back / 4.0) * exp(-across * across / (halfBeam * halfBeam));
+    }
+  }
+  return h;
+}
 
 void gerstner(vec4 a, vec4 b, vec2 p0, inout vec3 p, inout vec3 tx, inout vec3 tz, inout float jxx, inout float jzz, inout float jxz) {
   vec2 d = a.xy;
@@ -59,6 +103,15 @@ void main() {
     if (i >= detailCount) break;
     gerstner(detailA[i], detailB[i], p0, p, tx, tz, jxx, jzz, jxz);
   }
+  // Ships: displacement and its slope (finite differences) folded into the normal.
+  float hw = hullWater(p.xz);
+  if (shipCount > 0) {
+    float hx = hullWater(p.xz + vec2(0.4, 0.0));
+    float hz = hullWater(p.xz + vec2(0.0, 0.4));
+    tx.y += (hx - hw) / 0.4;
+    tz.y += (hz - hw) / 0.4;
+    p.y += hw;
+  }
   vNormal = normalize(cross(tz, tx));
   vFold = jxx * jzz - jxz * jxz;
   vHeight = p.y;
@@ -69,6 +122,7 @@ void main() {
 
 export const OCEAN_FRAGMENT = /* glsl */ `
 precision highp float;
+precision highp int;
 uniform vec3 cameraPosition;
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
@@ -112,6 +166,23 @@ vec3 skyColor(vec3 dir) {
 
 // Wake of the ships: a Kelvin wedge (half-angle 19.47 deg) behind each stern, turbulent foam
 // along the centre that fades with distance, a bow wave ring at the stem. Returns (foam, glitter).
+// Contact shading: the hull shades and occludes the water along its sides (ambient occlusion
+// of the hull on the sea), so a ship sits in the water instead of on it.
+float hullOcclusion(vec2 p) {
+  float ao = 1.0;
+  for (int i = 0; i < 8; i++) {
+    if (i >= shipCount) break;
+    vec4 a = shipA[i];
+    vec4 b = shipB[i];
+    vec2 d = p - a.xy;
+    float along = dot(d, a.zw) / (b.y * 0.55);
+    float across = abs(d.x * a.w - d.y * a.z) / (b.z * 0.5);
+    float r = length(vec2(along, across));
+    ao *= mix(0.45, 1.0, smoothstep(0.85, 1.6, r));
+  }
+  return ao;
+}
+
 vec2 wakes(vec2 p) {
   float foam = 0.0;
   float glit = 0.0;
@@ -164,10 +235,20 @@ void main() {
     gl_FragColor = vec4(underside(v, vNormal, dist), 1.0);
     return;
   }
-  // Small ripples from noise, faded with distance to avoid shimmering.
-  float ripple = (1.0 - smoothstep(20.0, 160.0, dist)) * 0.07;
-  vec2 rp = vWorld.xz * 0.22 + vec2(time * 0.3, time * 0.18);
-  vec3 n = normalize(vNormal + ripple * vec3(fbm(rp) - 0.5, 0.0, fbm(rp + 5.2) - 0.5));
+  // Micro-surface: wind chop as normal detail from two scales of fbm (finite differences),
+  // scrolling downwind. Faded by screen-space footprint (fwidth) so it never shimmers: the
+  // detail fades where one pixel covers more than a ripple.
+  vec2 wind = vec2(0.9, 0.5);
+  vec2 q1 = vWorld.xz * 0.7 + wind * time * 0.35;
+  vec2 q2 = vWorld.xz * 2.4 - wind.yx * time * 0.6;
+  float e = 0.15;
+  float a0 = fbm(q1); float ax = fbm(q1 + vec2(e, 0.0)); float az = fbm(q1 + vec2(0.0, e));
+  float b0 = fbm(q2); float bx = fbm(q2 + vec2(e, 0.0)); float bz = fbm(q2 + vec2(0.0, e));
+  float foot = length(fwidth(vWorld.xz));
+  float detail1 = (1.0 - smoothstep(0.6, 3.0, foot)) * 0.55;
+  float detail2 = (1.0 - smoothstep(0.15, 0.9, foot)) * 0.35;
+  vec3 dn = vec3(-(ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(az - a0) / e * detail1 - (bz - b0) / e * detail2);
+  vec3 n = normalize(vNormal + dn * 0.35);
   float nv = clamp(dot(n, v), 0.0, 1.0);
   // Schlick Fresnel, F0 of water = 0.02.
   float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);
@@ -186,10 +267,11 @@ void main() {
   // the spirit of Zirr and Kaplanyan's real-time glints). Values above 1 feed the bloom.
   vec3 h = normalize(sunDirection + v);
   float spec = pow(max(dot(n, h), 0.0), 600.0) * 60.0 * fresnel;
-  vec2 gp = vWorld.xz * 2.3 + vec2(time * 0.9, time * 0.6);
-  vec3 gn = normalize(n + 0.55 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.35 * vec3(vnoise(gp * 3.1) - 0.5, 0.0, vnoise(gp * 3.1 + 5.1) - 0.5));
+  vec2 gp = vWorld.xz * 6.0 + vec2(time * 1.4, time * 0.9);
+  float gfade = 1.0 - smoothstep(0.05, 0.4, foot * 6.0);
+  vec3 gn = normalize(n + gfade * (0.5 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.4 * vec3(vnoise(gp * 2.7) - 0.5, 0.0, vnoise(gp * 2.7 + 5.1) - 0.5)));
   vec2 wk = wakes(vWorld.xz);
-  float glitter = pow(max(dot(gn, h), 0.0), 3500.0 - wk.y * 2000.0) * (90.0 + wk.y * 60.0) * smoothstep(-0.05, 0.25, sunDirection.y);
+  float glitter = pow(max(dot(gn, h), 0.0), 5000.0 - wk.y * 2500.0) * (70.0 + wk.y * 50.0) * smoothstep(-0.05, 0.25, sunDirection.y);
   col += sunColor * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
@@ -198,6 +280,7 @@ void main() {
   float wakeFoam = wk.x * smoothstep(0.45, 0.75, fbm(vWorld.xz * 0.6 + vec2(time * 0.2, 0.0)) + wk.x * 0.2);
   foam = max(foam, wakeFoam * 0.5);
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
+  col *= hullOcclusion(vWorld.xz);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
   float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);

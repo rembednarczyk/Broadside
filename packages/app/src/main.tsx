@@ -40,7 +40,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer = new BabylonRenderer({ canvas, graphics });
   patchHud({ graphics: { preset: next.preset, renderScale: next.renderScale } });
 };
-patchHud({ graphics: { preset: graphics.preset, renderScale: graphics.renderScale } });
+patchHud({ graphics: { preset: graphics.preset, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0" });
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },

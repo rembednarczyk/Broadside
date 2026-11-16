@@ -33,14 +33,14 @@ export const liveryOps = (input: LiveryInput): PaintOp[] => {
   const rng = createRng(hashString(input.seed));
   const ops: PaintOp[] = [];
   // Topsides: planks of slightly varying tone.
-  ops.push({ op: "rect", u0: 0, v0: v(0), u1: 1, v1: 1, color: "rgb(122,88,54)" });
+  ops.push({ op: "rect", u0: 0, v0: v(0), u1: 1, v1: 1, color: "rgb(78,56,36)" });
   for (let y = 0.2; y < h.freeboard + h.sheer + BULWARK; y += 0.32) {
     const k = range(rng, 0.85, 1.1);
-    ops.push({ op: "rect", u0: 0, v0: v(y), u1: 1, v1: v(y + 0.3), color: css([0.48, 0.35, 0.22], k) });
+    ops.push({ op: "rect", u0: 0, v0: v(y), u1: 1, v1: v(y + 0.3), color: css([0.32, 0.23, 0.15], k) });
     ops.push({ op: "hline", v: v(y), width: 1, color: "rgba(30,20,12,0.6)" });
   }
   // Below the waterline: copper sheathing with plate seams.
-  ops.push({ op: "rect", u0: 0, v0: 0, u1: 1, v1: v(0.12), color: "rgb(150,86,52)" });
+  ops.push({ op: "rect", u0: 0, v0: 0, u1: 1, v1: v(0.12), color: "rgb(52,38,28)" });
   for (let y = -h.draft; y < 0.1; y += 0.45) ops.push({ op: "hline", v: v(y), width: 1, color: "rgba(80,40,20,0.5)" });
   // Black wale and the livery band along the gun deck.
   ops.push({ op: "rect", u0: 0, v0: v(0.12), u1: 1, v1: v(0.6), color: "rgb(28,22,18)" });
