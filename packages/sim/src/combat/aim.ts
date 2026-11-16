@@ -12,6 +12,7 @@ export const muzzleSpeed = (ammo: AmmoId, mortar: boolean): number => (mortar ? 
 
 export const elevationForRange = (range: number, pounder: number, ammo: AmmoId, height: number): number => {
   const r = Math.max(10, Math.round(range / 5) * 5);
+  // Launch height above the aim point; negative when aiming up at a fort's walls.
   const h = Math.round(height * 2) / 2;
   const key = `${r}|${pounder}|${ammo}|${h}`;
   let e = table.get(key);

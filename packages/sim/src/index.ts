@@ -14,3 +14,4 @@ export * from "./ai/captain";
 export * from "./ai/navigation";
 export * from "./combat/aim";
 export * from "./combat/targeting";
+export * from "./combat/forts";

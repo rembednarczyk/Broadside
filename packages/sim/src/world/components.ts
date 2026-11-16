@@ -1,6 +1,6 @@
 import { type RigidBody } from "../physics/rigid-body";
 import { type ShipState } from "../ship/ship-state";
-import { type AmmoId, type ShotState } from "@broadside/core";
+import { type AmmoId, type Faction, type FortClassDef, type FortSite, type ShotState } from "@broadside/core";
 import { type CaptainState } from "../ai/captain-state";
 
 /**
@@ -26,6 +26,8 @@ export interface Entity {
   captain?: CaptainState;
   /** A waterspout wandering across the sea. */
   spout?: Spout;
+  /** A shore fort. */
+  fort?: FortState;
 }
 
 export interface Shot {
@@ -64,4 +66,18 @@ export interface Spout {
   readonly radius: number;
   age: number;
   readonly life: number;
+}
+
+export interface FortState {
+  readonly def: FortClassDef;
+  readonly site: FortSite;
+  faction: Faction;
+  hp: number;
+  /** Seconds to reload, per gun; -1 = destroyed. */
+  guns: number[];
+  mortars: number[];
+  garrison: number;
+  /** Ship that fired on the fort (it fires back whatever the standing). */
+  provokedBy: number | null;
+  silenced: boolean;
 }

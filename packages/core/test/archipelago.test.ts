@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DEEP_SEA, generateArchipelago, islandHeight, openWater, portSites, terrainHeight } from "../src/world/archipelago";
+import { DEEP_SEA, fortSites, generateArchipelago, islandHeight, openWater, portSites, terrainHeight } from "../src/world/archipelago";
+import { FORT_CLASSES } from "../src/data/forts";
 
 describe("archipelago", () => {
   const a = generateArchipelago(1797);
@@ -38,5 +39,19 @@ describe("open water", () => {
     const is = a.islands[0]!;
     const p = openWater(a, is.x, is.z);
     expect(terrainHeight(a, p.x, p.z)).toBe(DEEP_SEA);
+  });
+});
+
+describe("forts", () => {
+  it("guards every port and stands on land", () => {
+    const a = generateArchipelago(1797);
+    const forts = fortSites(a);
+    const ports = portSites(a);
+    for (let i = 0; i < ports.length; i++) expect(forts.some((f) => f.port === i)).toBe(true);
+    for (const f of forts) {
+      expect(f.y).toBeGreaterThanOrEqual(2);
+      expect(FORT_CLASSES[f.classId].guns).toBeGreaterThan(0);
+    }
+    expect(fortSites(a)).toEqual(forts);
   });
 });

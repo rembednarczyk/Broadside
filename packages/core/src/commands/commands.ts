@@ -22,13 +22,16 @@ export type GameCommand =
   | { readonly type: "sails"; readonly ship: EntityId; readonly mast: number | "all"; readonly level: SailLevel }
   /**
    * Fire a battery at a range. `bearing` (world heading of the aim point) trains the guns towards
-   * it within their port limits; without it they fire square to their mounting.
+   * it within their port limits; without it they fire square to their mounting. `aimHeight` is
+   * the height of the aim point above the sea (a fort's walls), 0 for a hull at the waterline.
    */
-  | { readonly type: "fire"; readonly ship: EntityId; readonly mount: MountKind; readonly side?: Side; readonly range: number; readonly bearing?: number }
+  | { readonly type: "fire"; readonly ship: EntityId; readonly mount: MountKind; readonly side?: Side; readonly range: number; readonly bearing?: number; readonly aimHeight?: number }
   | { readonly type: "loadAmmo"; readonly ship: EntityId; readonly mount: MountKind; readonly ammo: AmmoId }
   | { readonly type: "drop"; readonly ship: EntityId; readonly ammo: "fireBarrel" | "mine" }
   | { readonly type: "brace"; readonly ship: EntityId }
   | { readonly type: "oars"; readonly ship: EntityId; readonly on: boolean }
-  | { readonly type: "board"; readonly ship: EntityId; readonly target: EntityId };
+  | { readonly type: "board"; readonly ship: EntityId; readonly target: EntityId }
+  /** Land a storming party on a silenced fort within reach. */
+  | { readonly type: "assault"; readonly ship: EntityId; readonly fort: EntityId };
 
 export type CommandType = GameCommand["type"];

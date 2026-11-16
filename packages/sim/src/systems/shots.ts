@@ -1,8 +1,9 @@
-import { AMMO, stepShot, vec3, waterHeight } from "@broadside/core";
+import { AMMO, stepShot, terrainHeight, vec3, waterHeight } from "@broadside/core";
 import { type System } from "./context";
 import { type Entity } from "../world/components";
 import { segmentHit, rigBox, type RigBox } from "../combat/hit-test";
 import { applyBlast, applyImpact } from "../combat/damage";
+import { damageFort, hitsFort } from "../combat/forts";
 import { type ShipModel } from "../ship/ship-model";
 import { sortedById } from "../world/world";
 
@@ -45,6 +46,34 @@ const tryShips = (ctx: Parameters<System>[0], shot: Entity, ships: Entity[]): bo
   return true;
 };
 
+const tryForts = (ctx: Parameters<System>[0], shot: Entity): boolean => {
+  const sh = shot.shot!;
+  const from = vec3(sh.s.x - sh.s.vx / 60, sh.s.y - sh.s.vy / 60, sh.s.z - sh.s.vz / 60);
+  const to = vec3(sh.s.x, sh.s.y, sh.s.z);
+  for (const f of ctx.world.with("fort")) {
+    if (f.id === sh.owner) continue;
+    const t = hitsFort(f.fort, from, to);
+    if (t === null) continue;
+    const at = vec3(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, from.z + (to.z - from.z) * t);
+    damageFort(ctx.events, f, sh.owner, sh.mass, Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz), sh.ammo, at, ctx.rng);
+    if (AMMO[sh.ammo].blast > 0) ctx.events.push({ type: "explosion", at, radius: AMMO[sh.ammo].blast });
+    return true;
+  }
+  return false;
+};
+
+/** Shot striking land: it buries itself in the hillside with a puff of earth. */
+const tryLand = (ctx: Parameters<System>[0], shot: Entity): boolean => {
+  const a = ctx.env.archipelago;
+  if (!a) return false;
+  const sh = shot.shot!;
+  if (sh.s.y > 150) return false;
+  const ground = terrainHeight(a, sh.s.x, sh.s.z);
+  if (ground < 0 || sh.s.y > ground) return false;
+  ctx.events.push({ type: "explosion", at: vec3(sh.s.x, ground, sh.s.z), radius: AMMO[sh.ammo].blast > 0 ? AMMO[sh.ammo].blast : 1 });
+  return true;
+};
+
 const tryWater = (ctx: Parameters<System>[0], shot: Entity): boolean => {
   const sh = shot.shot!;
   const wy = waterHeight(ctx.env.waves, sh.s.x, sh.s.z, ctx.env.time);
@@ -76,6 +105,6 @@ export const shotsSystem: System = (ctx, dt) => {
     const sh = e.shot;
     stepShot(sh.s, sh.k, dt);
     sh.age += dt;
-    if (tryShips(ctx, e, ships) || tryWater(ctx, e) || sh.age > MAX_AGE) ctx.world.remove(e);
+    if (tryShips(ctx, e, ships) || tryForts(ctx, e) || tryLand(ctx, e) || tryWater(ctx, e) || sh.age > MAX_AGE) ctx.world.remove(e);
   }
 };

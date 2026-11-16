@@ -2,6 +2,7 @@ import { type Rng, createRng, hashString, pick, range } from "../math/rng";
 import { fbm2 } from "../math/noise";
 import { clamp, smoothstep } from "../math/scalar";
 import { type Faction } from "../data/factions";
+import { type FortClassId } from "../data/forts";
 
 /**
  * The archipelago: islands placed by Poisson-disc sampling (Bridson, "Fast Poisson Disk Sampling
@@ -166,4 +167,54 @@ export const openWater = (a: Archipelago, x: number, z: number, clearance = 120)
     if (deep(px, pz)) return { x: px, z: pz };
   }
   return { x, z };
+};
+
+export interface FortSite {
+  readonly x: number;
+  readonly z: number;
+  /** Ground height the fort stands on. */
+  readonly y: number;
+  readonly classId: FortClassId;
+  readonly faction: Faction;
+  /** Port the fort guards (index into portSites), or null for a lone work. */
+  readonly port: number | null;
+}
+
+/** Point on an island's land at a given bearing, a little inland from the shore. */
+const onShore = (a: Archipelago, is: Island, bearing: number): { x: number; z: number; y: number } => {
+  let best = { x: is.x, z: is.z, y: islandHeight(is, is.x, is.z) };
+  for (let r = is.radius * 1.3; r > 0; r -= 6) {
+    const x = is.x + Math.cos(bearing) * r;
+    const z = is.z + Math.sin(bearing) * r;
+    const y = islandHeight(is, x, z);
+    if (y > 2) {
+      best = { x: x - Math.cos(bearing) * 8, z: z - Math.sin(bearing) * 8, y: Math.max(2, islandHeight(is, x - Math.cos(bearing) * 8, z - Math.sin(bearing) * 8)) };
+      break;
+    }
+  }
+  return best;
+};
+
+/**
+ * Forts: every port gets one guarding its landing (class by owner and island size: pirate havens
+ * a battery, nations a star fort, the largest a citadel), and some cliff islands carry a lone
+ * watchtower or battery commanding the channels.
+ */
+export const fortSites = (a: Archipelago): FortSite[] => {
+  const rng = createRng(hashString(`forts-${a.seed}`));
+  const ports = portSites(a);
+  const out: FortSite[] = ports.map((p, i) => {
+    const is = a.islands[p.island]!;
+    const bearing = Math.atan2(p.z - is.z, p.x - is.x) + range(rng, -0.4, 0.4);
+    const site = onShore(a, is, bearing);
+    const classId: FortClassId = p.faction === "pirates" ? "battery" : is.radius > 220 ? "citadel" : "starFort";
+    return { ...site, classId, faction: p.faction, port: i };
+  });
+  for (const is of a.islands.filter((i) => i.kind === "cliff")) {
+    if (rng.next() < 0.45) {
+      const site = onShore(a, is, rng.next() * Math.PI * 2);
+      out.push({ ...site, classId: rng.next() < 0.6 ? "watchtower" : "battery", faction: pick(rng, ["crown", "republic", "empire", "pirates"] as const), port: null });
+    }
+  }
+  return out;
 };

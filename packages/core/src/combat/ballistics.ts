@@ -36,12 +36,13 @@ export const stepShot = (s: ShotState, k: number, dt: number): void => {
   s.z += s.vz * dt;
 };
 
-/** Distance a shot travels over flat water from a height (numerical, used to build the aim table). */
+/** Distance at which a shot comes down through the aim plane, launched `height` above it (numerical, for the aim table). */
 export const flatRange = (speed: number, elevation: number, height: number, k: number, dt = 1 / 60): number => {
   const s: ShotState = { x: 0, y: height, z: 0, vx: 0, vy: Math.sin(elevation) * speed, vz: Math.cos(elevation) * speed };
   for (let i = 0; i < 60 * 60; i++) {
     stepShot(s, k, dt);
-    if (s.y <= 0) return s.z;
+    // Down through the aim plane (a launch below it, aiming up at walls, must rise first).
+    if (s.y <= 0 && s.vy < 0) return s.z;
   }
   return s.z;
 };

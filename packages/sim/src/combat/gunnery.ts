@@ -1,4 +1,4 @@
-import { type AmmoId, type GameCommand, type MountKind, type Rng, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, type EventQueue } from "@broadside/core";
+import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, type EventQueue } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type SimWorld } from "../world/world";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -22,14 +22,14 @@ const matches = (g: GunMount, mount: MountKind, side: "port" | "starboard" | und
   g.kind === mount && (side === undefined || g.side === "centre" || g.side === side);
 
 /** Queues the guns of a battery; returns how many were queued. */
-export const orderFire = (s: ShipState, mount: MountKind, side: "port" | "starboard" | undefined, range: number, rng: Rng, train = 0): number => {
+export const orderFire = (s: ShipState, mount: MountKind, side: "port" | "starboard" | undefined, range: number, rng: Rng, train = 0, aimHeight = 0): number => {
   let n = 0;
   s.model.guns.forEach((g, i) => {
     const st = s.guns[i]!;
     if (!matches(g, mount, side) || st.dismounted || st.reload > 0 || st.fuse >= 0) return;
     if ((s.stores[st.ammo] ?? 0) <= 0) return;
     st.fuse = n * RIPPLE + rng.next() * 0.03;
-    st.elevation = g.kind === "mortar" ? range : elevationForRange(range, g.pounder, st.ammo, g.pos.y + s.model.com.y);
+    st.elevation = g.kind === "mortar" ? range : elevationForRange(range, g.pounder, st.ammo, g.pos.y + s.model.com.y - aimHeight);
     const limit = g.kind === "broadside" ? TRAIN_LIMIT : TRAIN_LIMIT_FREE;
     st.train = Math.max(-limit, Math.min(limit, train));
     n++;
@@ -50,6 +50,33 @@ export const loadAmmo = (s: ShipState, mount: MountKind, ammo: AmmoId): void => 
   });
 };
 
+/**
+ * Puts one round in flight (all pellets of a load) from a muzzle along a world direction; shared
+ * by ships' guns and forts' batteries. Returns the shot mass per pellet.
+ */
+export const launchShot = (world: SimWorld, owner: number, muzzle: Vec3, dir: Vec3, speed: number, pounder: number, ammo: AmmoId, rng: Rng, carrier: Vec3 = vec3(0, 0, 0)): number => {
+  const def = AMMO[ammo];
+  const mass = shotMass(pounder, ammo) / def.pellets;
+  for (let p = 0; p < def.pellets; p++) {
+    const spread = BASE_SPREAD + def.spread;
+    const d = normalize(add(dir, vec3(gauss(rng) * spread, gauss(rng) * spread * 0.6, gauss(rng) * spread)));
+    world.add({
+      id: 0,
+      shot: {
+        s: { x: muzzle.x, y: muzzle.y, z: muzzle.z, vx: carrier.x + d.x * speed, vy: carrier.y + d.y * speed, vz: carrier.z + d.z * speed },
+        k: dragFactor(mass, ammo === "chain" ? 0.9 : 0.47),
+        mass,
+        ammo,
+        owner,
+        pounder,
+        age: 0,
+        bounces: 0,
+      },
+    });
+  }
+  return mass;
+};
+
 const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, gi: number, rng: Rng): void => {
   const s = e.ship!;
   const b = e.body!;
@@ -67,24 +94,7 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   const axis = normalize(vec3(trained.z, 0, -trained.x));
   const local = rotate(quatFromAxisAngle(axis, -elevation), trained);
   const muzzle = bodyToWorld(b, add(g.pos, scale(g.dir, 1.2)));
-  const mass = shotMass(g.pounder, st.ammo) / ammo.pellets;
-  for (let p = 0; p < ammo.pellets; p++) {
-    const spread = BASE_SPREAD + ammo.spread;
-    const d = normalize(add(rotate(b.rot, local), vec3(gauss(rng) * spread, gauss(rng) * spread * 0.6, gauss(rng) * spread)));
-    world.add({
-      id: 0,
-      shot: {
-        s: { x: muzzle.x, y: muzzle.y, z: muzzle.z, vx: b.vel.x + d.x * speed, vy: b.vel.y + d.y * speed, vz: b.vel.z + d.z * speed },
-        k: dragFactor(mass, st.ammo === "chain" ? 0.9 : 0.47),
-        mass,
-        ammo: st.ammo,
-        owner: e.id,
-        pounder: g.pounder,
-        age: 0,
-        bounces: 0,
-      },
-    });
-  }
+  const mass = launchShot(world, e.id, muzzle, rotate(b.rot, local), speed, g.pounder, st.ammo, rng, b.vel);
   const dirWorld = rotate(b.rot, local);
   // Recoil: the shot's momentum plus the powder gases (about half again) push the ship.
   applyImpulseAt(b, scale(dirWorld, -mass * ammo.pellets * speed * 1.5), muzzle);

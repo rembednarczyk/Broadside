@@ -1,4 +1,4 @@
-import { type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
+import { type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Quat, type ShipClassId, type Vec3, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { type Environment, createEnvironment, stepEnvironment } from "./environment/environment";
 import { type SimContext, type System } from "./systems/context";
 import { createSystems } from "./systems/registry";
@@ -9,6 +9,7 @@ import { shipModel } from "./ship/ship-model";
 import { type FactionId, createShipState } from "./ship/ship-state";
 import { applyCommand } from "./commands/apply";
 import { createCaptain } from "./ai/captain-state";
+import { createFort } from "./combat/forts";
 
 /** Bigger guns stand off; light ships close in (metres). */
 const preferredRange = (id: ShipClassId): number => ({ cutter: 120, gunboat: 260, sloop: 160, schooner: 190, brig: 210, bomb: 400, galleon: 230, frigate: 260, liner: 280 })[id];
@@ -67,6 +68,15 @@ export class Simulation {
     if (spec.player) e.player = true;
     if (spec.ai) e.captain = createCaptain(spec.x, spec.z, preferredRange(spec.classId));
     return this.world.add(e);
+  }
+
+  /** Builds a fort at a site (shore works fire on hostile ships in range). */
+  spawnFort(site: FortSite): Entity {
+    return this.world.add({ id: this.nextId++, fort: createFort(site) });
+  }
+
+  forts(): Entity[] {
+    return sortedById(this.world.with("fort"));
   }
 
   /** Queues a command for the next step. */
