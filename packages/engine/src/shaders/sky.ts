@@ -52,14 +52,14 @@ void main() {
     vec2 uv = d.xz / (d.y + 0.12);
     float n1 = fbm(uv * 1.3 + windOffset * 0.002);
     float n2 = fbm(uv * 3.1 - windOffset * 0.003 + 7.0);
-    float density = smoothstep(0.55 - cloudCover * 0.5, 0.85 - cloudCover * 0.3, n1 * 0.75 + n2 * 0.45);
+    float density = smoothstep(0.5 - cloudCover * 0.45, 0.8 - cloudCover * 0.3, n1 * 0.8 + n2 * 0.45);
     // Thickness estimate from a second lookup towards the sun: thin edges glow (silver lining),
     // thick cores stay dark (a two-tap Beer-Lambert approximation).
     vec2 toSun = normalize(sunDirection.xz + 1e-4) * 0.08;
     float thick = fbm(uv * 1.3 + toSun + windOffset * 0.002);
     float lightAmt = exp(-3.0 * max(0.0, thick - 0.35)) * sunUp;
     vec3 lit = mix(vec3(1.0, 0.97, 0.9), sunColor, 0.5) * (0.35 + 1.6 * lightAmt * pow(max(c, 0.0), 3.0) + 0.4 * lightAmt);
-    vec3 shade = mix(skyHorizon * 0.45, vec3(0.1, 0.1, 0.11), cloudCover);
+    vec3 shade = mix(skyHorizon * 0.3, vec3(0.06, 0.06, 0.065), cloudCover);
     vec3 cloud = mix(shade, lit, clamp(lightAmt * (1.0 - n2 * 0.8) * (0.4 + 0.9 * pow(max(c, 0.0), 2.0)), 0.0, 1.0));
     col = mix(col, cloud, density * smoothstep(0.0, 0.12, d.y));
   }

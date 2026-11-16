@@ -1,12 +1,14 @@
 import { type Simulation } from "@broadside/sim";
-import { Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, type Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
+import { Effect, PostProcess, Color3, Color4, ColorCurves, DefaultRenderingPipeline, DirectionalLight, Engine, HemisphericLight, type Mesh, MeshBuilder, Scene, SceneInstrumentation, ShadowGenerator, StandardMaterial, Vector3, VolumetricLightScatteringPostProcess } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
+import { GRADE_FRAGMENT } from "../shaders/grade";
 import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
+import { FarCoast } from "./far-coast";
 import { type DomainEvent } from "@broadside/core";
 
 /**
@@ -43,6 +45,7 @@ export class BabylonRenderer {
   private framed = false;
   private readonly effects: EffectsDirector;
   private readonly weather: WeatherView;
+  private coast: FarCoast | null = null;
   private sunDisc: Mesh | null = null;
 
   constructor(opts: RendererOptions) {
@@ -89,24 +92,31 @@ export class BabylonRenderer {
     p.imageProcessingEnabled = true;
     p.imageProcessing.toneMappingEnabled = true;
     p.imageProcessing.toneMappingType = 1; // ACES
-    p.imageProcessing.exposure = 1.25;
-    p.imageProcessing.contrast = 1.32;
+    p.imageProcessing.exposure = 0.95;
+    p.imageProcessing.contrast = 1.45;
     p.imageProcessing.vignetteEnabled = true;
     p.imageProcessing.vignetteWeight = 2.2;
     // Grade after the visual reference (decyzje 16.11): desaturated, warm sepia highlights,
     // slightly cool shadows, high contrast (a lift-gamma-gain style grade via colour curves).
     const curves = new ColorCurves();
-    curves.globalSaturation = -42;
-    curves.highlightsHue = 38;
-    curves.highlightsDensity = 38;
+    curves.globalSaturation = -40;
+    curves.highlightsHue = 40;
+    curves.highlightsDensity = 55;
     curves.highlightsSaturation = 25;
-    curves.midtonesHue = 35;
-    curves.midtonesDensity = 22;
-    curves.shadowsHue = 205;
-    curves.shadowsDensity = 18;
-    curves.shadowsExposure = -18;
+    curves.midtonesHue = 38;
+    curves.midtonesDensity = 40;
+    curves.shadowsHue = 35;
+    curves.shadowsDensity = 20;
+    curves.shadowsExposure = -30;
     p.imageProcessing.colorCurvesEnabled = true;
     p.imageProcessing.colorCurves = curves;
+    // Sepia split-tone after the pipeline (the reference's monochrome warmth).
+    Effect.ShadersStore["gradeFragmentShader"] = GRADE_FRAGMENT;
+    const grade = new PostProcess("grade", "grade", ["amount", "contrast"], null, 1, this.camera.camera);
+    grade.onApply = (e) => {
+      e.setFloat("amount", 0.72);
+      e.setFloat("contrast", 1.12);
+    };
     p.bloomThreshold = 0.8;
     p.bloomWeight = 0.35;
     p.bloomKernel = 32;
@@ -197,6 +207,8 @@ export class BabylonRenderer {
     }
     this.applyLook(look);
     const cam = this.camera.camera.position;
+    if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
+    this.coast.follow(cam.x, cam.z);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z),
       // Glint and glitter follow the direct sun: clouds take them away.

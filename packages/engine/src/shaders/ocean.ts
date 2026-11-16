@@ -115,7 +115,7 @@ void main() {
   // Subsurface glow where the sun shines through a crest towards the viewer.
   float sss = pow(clamp(dot(v, -sunDirection) * 0.5 + 0.5, 0.0, 1.0), 4.0) * crest;
   body += waterShallow * sss * 0.6 * sunColor;
-  vec3 col = mix(body * (0.35 + 0.65 * max(sunDirection.y, 0.0)), reflection * 0.8, fresnel);
+  vec3 col = mix(body * (0.35 + 0.65 * max(sunDirection.y, 0.0)), reflection * 0.45, fresnel);
   // Sun glint: normalised Blinn-Phong on the wave normal, plus a glitter path: many tiny facets
   // from high-frequency noise normals, each a sharp highlight (a cheap stochastic-glint model in
   // the spirit of Zirr and Kaplanyan's real-time glints). Values above 1 feed the bloom.

@@ -47,11 +47,16 @@ export interface RigPlan {
   readonly mastTops: readonly { readonly y: number; readonly z: number }[];
 }
 
+/**
+ * Tiers as on the reference ship: narrower than the physics area would make them (the view
+ * shows canvas at 0.72 of its width) with clear gaps between the yards.
+ */
 const TIERS = [
-  { share: 0.44, from: 0.1, to: 0.4, setFrom: 0.45, setSpan: 0.4, widthK: 1 },
-  { share: 0.36, from: 0.44, to: 0.7, setFrom: 0, setSpan: 0.45, widthK: 0.86 },
-  { share: 0.2, from: 0.74, to: 0.92, setFrom: 0.75, setSpan: 0.25, widthK: 0.66 },
+  { share: 0.44, from: 0.12, to: 0.38, setFrom: 0.45, setSpan: 0.4, widthK: 1 },
+  { share: 0.36, from: 0.45, to: 0.68, setFrom: 0, setSpan: 0.45, widthK: 0.86 },
+  { share: 0.2, from: 0.75, to: 0.9, setFrom: 0.75, setSpan: 0.25, widthK: 0.66 },
 ] as const;
+const VISUAL_WIDTH = 0.72;
 
 const BOWSPRIT_ANGLE = 0.5;
 
@@ -83,7 +88,7 @@ export const rigPlan = (def: ShipClassDef): RigPlan => {
         for (const t of TIERS) {
           const height = H * (t.to - t.from);
           const width = (s.area * t.share) / height / (1 - 0.06);
-          sails.push({ mast: mi, sail: si, shape: "square", width: width * t.widthK + width * (1 - t.widthK) * 0.5, height, foot: F + H * t.from, nodeZ: m.z, nodeY: 0, setFrom: t.setFrom, setSpan: t.setSpan, yard: true, emblem: t.share > 0.3 });
+          sails.push({ mast: mi, sail: si, shape: "square", width: (width * t.widthK + width * (1 - t.widthK) * 0.5) * VISUAL_WIDTH, height, foot: F + H * t.from, nodeZ: m.z, nodeY: 0, setFrom: t.setFrom, setSpan: t.setSpan, yard: true, emblem: t.share > 0.3 });
         }
         return;
       }

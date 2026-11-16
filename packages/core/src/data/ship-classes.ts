@@ -118,11 +118,11 @@ export const SHIP_CLASSES: Readonly<Record<ShipClassId, ShipClassDef>> = {
   // A late galleon: short, deep and high-charged, with towering castles (the visual reference ship).
   galleon: {
     id: "galleon",
-    hull: hull(40, 11.5, 4.6, 3.8, { bowFineness: 1.8, sternFineness: 2.4, transom: 0.78, bilge: 3, sheer: 4.2 }),
+    hull: hull(35, 11, 4.4, 4.4, { bowFineness: 1.7, sternFineness: 2.2, transom: 0.8, bilge: 3, sheer: 4.6 }),
     masts: [
-      { z: 10, height: 36, sails: [sq(430, 15), fa(120, 8)] },
+      { z: 9, height: 36, sails: [sq(430, 15), fa(120, 8)] },
       { z: -1, height: 41, sails: [sq(540, 17)] },
-      { z: -12, height: 29, sails: [fa(150, 10), sq(150, 16)] },
+      { z: -10.5, height: 29, sails: [fa(150, 10), sq(150, 16)] },
     ],
     guns: [{ kind: "broadside", count: 14, pounder: 12, deckHeight: 2.8 }, { kind: "bowChaser", count: 2, pounder: 9, deckHeight: 3.6 }, { kind: "sternChaser", count: 2, pounder: 9, deckHeight: 4.6 }, { kind: "swivel", count: 8, pounder: 1, deckHeight: 4.5 }],
     crew: 220, hold: 320, sectionHp: 620, mastHp: 380, rudderArea: 6, ballast: 0.78, oars: 0, price: 32000,
