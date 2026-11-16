@@ -42,7 +42,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] presety grafiki, tryby kolorów (sepia, naturalne, żywe), kamera izometryczna domyślna (16.11)
 - [x] kadłub tnie wodę: fala dziobowa, burty, wycięcie, klin Kelvina (16.11)
 - [x] bryzgi przy uderzeniu dziobu w falę i przy dużej prędkości, z fizyki (16.11)
-- [ ] wzburzone morze przy wichurze: więcej krótkiej fali wiatrowej (dziś energia PM w falach ~240 m wygląda płasko)
+- [x] wzburzone morze: widmo JONSWAP z rozbiegiem 60 km, faktura fal w skali ok. 4 m (16.11)
 - [ ] izometria: ikony celów i zasięgu dział na wodzie (łuk salwy), czytelność HUD
 
 ### M3 świat

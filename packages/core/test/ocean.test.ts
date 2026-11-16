@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { displacement, makeWave, waterHeight, waterNormal, packWaves, MAX_WAVES } from "../src/ocean/gerstner";
-import { seaWaves, waveBands, significantHeight, spectrum } from "../src/ocean/sea-state";
+import { seaWaves, waveBands, significantHeight, spectrum, peakOmega } from "../src/ocean/sea-state";
 
 describe("Gerstner waves", () => {
   const waves = seaWaves(waveBands(7, 0.3), { windSpeed: 10, swell: 0 });
@@ -62,5 +62,17 @@ describe("sea state", () => {
   it("is deterministic for a seed", () => {
     expect(waveBands(42, 1)).toEqual(waveBands(42, 1));
     expect(waveBands(42, 1)).not.toEqual(waveBands(43, 1));
+  });
+});
+
+describe("JONSWAP sea", () => {
+  it("peaks shorter than a fully developed sea and stays below its height", () => {
+    const bands = waveBands(1, 0);
+    const waves = seaWaves(bands, { windSpeed: 15, swell: 0 });
+    const hs = 4 * Math.sqrt(waves.reduce((s, w) => s + (w.amplitude * w.amplitude) / 2, 0));
+    expect(hs).toBeGreaterThan(1);
+    expect(hs).toBeLessThan(significantHeight(15));
+    const wp = peakOmega(15);
+    expect((2 * Math.PI * 9.81) / (wp * wp)).toBeLessThan(120);
   });
 });

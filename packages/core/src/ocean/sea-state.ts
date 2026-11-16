@@ -2,8 +2,11 @@ import { subRng, range } from "../math/rng";
 import { type GerstnerWave, GRAVITY, MAX_WAVES, makeWave } from "./gerstner";
 
 /**
- * Sea from wind (Pierson-Moskowitz spectrum, 1964):
- *   S(w) = alpha g^2 / w^5 * exp(-beta (g / (U w))^4),  alpha = 8.1e-3, beta = 0.74.
+ * Sea from wind with the JONSWAP spectrum (Hasselmann et al. 1973), fetch-limited: shorter,
+ * steeper waves than a fully developed Pierson-Moskowitz sea, as in the waters of an archipelago.
+ *   wp = 22 (g^2 / (U F))^(1/3),  alpha = 0.076 (U^2 / (F g))^0.22,
+ *   S(w) = alpha g^2 / w^5 * exp(-5/4 (wp / w)^4) * gamma^r,  r = exp(-(w - wp)^2 / (2 s^2 wp^2)),
+ *   gamma = 3.3, s = 0.07 below the peak and 0.09 above.
  * The sea is MAX_WAVES fixed bands (wavelength, direction, phase drawn once from the seed); only
  * the amplitudes follow the wind, a_i = sqrt(2 S(w_i) dw_i). Changing the wind therefore changes
  * the sea smoothly, without phase jumps (a band's position never moves).
@@ -24,20 +27,29 @@ export interface SeaState {
   readonly swell: number;
 }
 
-const ALPHA = 8.1e-3;
-const BETA = 0.74;
+/** Fetch in metres (distance the wind has blown over open water). */
+export const FETCH = 60_000;
+const GAMMA = 3.3;
 const MIN_WAVELENGTH = 4;
-const MAX_WAVELENGTH = 240;
+const MAX_WAVELENGTH = 160;
 /** Game scale on the spectrum: the full gale sea is taller than fun allows. */
-export const HEIGHT_SCALE = 0.85;
+export const HEIGHT_SCALE = 1;
 /** A light ripple remains even in a calm. */
 const RIPPLE = 0.05;
 
+/** Significant height of a fully developed (Pierson-Moskowitz) sea, the upper bound of a fetch-limited one. */
 export const significantHeight = (windSpeed: number): number => (0.21 * windSpeed * windSpeed) / GRAVITY;
 
-export const spectrum = (omega: number, windSpeed: number): number => {
+/** Peak angular frequency of the fetch-limited sea. */
+export const peakOmega = (windSpeed: number, fetch = FETCH): number => 22 * Math.cbrt((GRAVITY * GRAVITY) / (Math.max(0.5, windSpeed) * fetch));
+
+export const spectrum = (omega: number, windSpeed: number, fetch = FETCH): number => {
   if (windSpeed < 0.1) return 0;
-  return ((ALPHA * GRAVITY * GRAVITY) / omega ** 5) * Math.exp(-BETA * (GRAVITY / (windSpeed * omega)) ** 4);
+  const wp = peakOmega(windSpeed, fetch);
+  const alpha = 0.076 * Math.pow((windSpeed * windSpeed) / (fetch * GRAVITY), 0.22);
+  const sigma = omega <= wp ? 0.07 : 0.09;
+  const r = Math.exp(-((omega - wp) ** 2) / (2 * sigma * sigma * wp * wp));
+  return ((alpha * GRAVITY * GRAVITY) / omega ** 5) * Math.exp(-1.25 * (wp / omega) ** 4) * Math.pow(GAMMA, r);
 };
 
 const omegaOf = (wavelength: number): number => Math.sqrt((GRAVITY * 2 * Math.PI) / wavelength);

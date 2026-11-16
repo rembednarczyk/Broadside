@@ -244,11 +244,14 @@ void main() {
   float e = 0.15;
   float a0 = fbm(q1); float ax = fbm(q1 + vec2(e, 0.0)); float az = fbm(q1 + vec2(0.0, e));
   float b0 = fbm(q2); float bx = fbm(q2 + vec2(e, 0.0)); float bz = fbm(q2 + vec2(0.0, e));
+  vec2 q0 = vWorld.xz * 0.22 + wind * time * 0.25;
+  float c0 = fbm(q0); float cx = fbm(q0 + vec2(e, 0.0)); float cz = fbm(q0 + vec2(0.0, e));
   float foot = length(fwidth(vWorld.xz));
+  float detail0 = (1.0 - smoothstep(2.0, 9.0, foot)) * 0.9;
   float detail1 = (1.0 - smoothstep(0.6, 3.0, foot)) * 0.55;
   float detail2 = (1.0 - smoothstep(0.15, 0.9, foot)) * 0.35;
-  vec3 dn = vec3(-(ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(az - a0) / e * detail1 - (bz - b0) / e * detail2);
-  vec3 n = normalize(vNormal + dn * 0.35);
+  vec3 dn = vec3(-(cx - c0) / e * detail0 - (ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(cz - c0) / e * detail0 - (az - a0) / e * detail1 - (bz - b0) / e * detail2);
+  vec3 n = normalize(vNormal + dn * 0.5);
   float nv = clamp(dot(n, v), 0.0, 1.0);
   // Schlick Fresnel, F0 of water = 0.02.
   float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);
