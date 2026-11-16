@@ -3,6 +3,7 @@ import { type HandlerTable } from "./handler";
 import { loadAmmo, orderFire } from "../combat/gunnery";
 import { drop } from "../combat/drops";
 import { assault } from "../combat/forts";
+import { board } from "../combat/boarding";
 import { trade } from "../economy/trade";
 import { credit } from "../economy/purse";
 
@@ -21,6 +22,9 @@ export const combatHandlers: HandlerTable = {
   loadAmmo: (e, cmd) => loadAmmo(e.ship, cmd.mount, cmd.ammo),
   drop: (e, cmd, ctx) => {
     drop(ctx.world, ctx.events, e, cmd.ammo);
+  },
+  board: (e, cmd, ctx) => {
+    for (const t of ctx.world.with("ship", "body")) if (t.id === cmd.target) board(ctx.events, e, t, ctx.rng, e.player ? ctx.purse : null);
   },
   trade: (e, cmd, ctx) => {
     if (e.player) trade(e, cmd, ctx);

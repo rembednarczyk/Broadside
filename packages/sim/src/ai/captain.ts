@@ -3,6 +3,7 @@ import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { relativeBearing, sailableHeading } from "./navigation";
+import { canBoard } from "../combat/boarding";
 
 /**
  * Decisions of an AI captain (finite state machine: patrol -> engage -> flee -> struck). Each
@@ -110,6 +111,9 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   if (range < 380 && Math.abs(wrapAngle(rel - Math.PI)) < 0.2) cmds.push({ type: "fire", ship: me.id, mount: "sternChaser", range: aimRange, bearing: brg });
   if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
   if (range < 120) cmds.push({ type: "fire", ship: me.id, mount: "swivel", side: rel >= 0 ? "starboard" : "port", range });
+  // Close aboard with a stronger crew: grapple and board (pirates love it).
+  const boarders = s.faction === "pirates" ? 1.1 : 1.6;
+  if (canBoard(me, t) && s.crew > t.ship!.crew * boarders) cmds.push({ type: "board", ship: me.id, target: t.id });
   if (range < 110 && Math.abs(wrapAngle(rel - Math.PI)) < 0.4 && w.rng() < 0.05) cmds.push({ type: "drop", ship: me.id, ammo: w.rng() < 0.5 ? "fireBarrel" : "mine" });
   return cmds;
 };

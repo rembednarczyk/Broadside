@@ -18,3 +18,4 @@ export * from "./combat/forts";
 export * from "./economy/purse";
 export * from "./economy/trade";
 export * from "./save/snapshot";
+export * from "./combat/boarding";

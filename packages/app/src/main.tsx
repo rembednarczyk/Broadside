@@ -71,6 +71,7 @@ const intents: UiIntents = {
     brace: () => session.brace(),
     drop: (kind) => session.drop(kind),
     assault: () => session.assault(),
+    board: () => session.board(),
   },
   settings: {
     setLanguage: (language) => patchHud({ language }),
@@ -142,7 +143,7 @@ const frame = (now: number) => {
   const me = session.sim.byId(session.playerId);
   patchHud({
     sailing: presentSailing(session.sim, session.playerId),
-    combat: me ? presentCombat(me, session.sim.forts()) : null,
+    combat: me ? presentCombat(me, session.sim.forts(), session.sim.ships()) : null,
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     gold: session.sim.purse.gold,

@@ -1,5 +1,5 @@
 import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
-import { STEP, Simulation, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, fortToStorm, restore, snapshot } from "@broadside/sim";
+import { STEP, Simulation, type SimulationOptions, type SimSnapshot, aimFor, aimForFort, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -118,6 +118,14 @@ export class GameSession {
     const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
     const bearing = useFort ? fort.bearing : aim?.bearing;
     this.send({ type: "fire", ship: this.playerId, mount, side, range, bearing, aimHeight: useFort ? fort.aimHeight : 0 });
+  }
+
+  /** Boards the nearest ship alongside, if any. */
+  board(): void {
+    const me = this.sim.byId(this.playerId);
+    if (!me?.body) return;
+    const t = this.sim.ships().filter((o) => o.id !== me.id && canBoard(me, o)).sort((a, b) => Math.hypot(a.body!.pos.x - me.body!.pos.x, a.body!.pos.z - me.body!.pos.z) - Math.hypot(b.body!.pos.x - me.body!.pos.x, b.body!.pos.z - me.body!.pos.z))[0];
+    if (t) this.send({ type: "board", ship: this.playerId, target: t.id });
   }
 
   /** Storms the nearest silenced fort within reach, if any. */

@@ -21,6 +21,7 @@ export interface CombatIntents {
   brace(): void;
   drop(kind: "fireBarrel" | "mine"): void;
   assault(): void;
+  board(): void;
 }
 
 export interface PortIntents {

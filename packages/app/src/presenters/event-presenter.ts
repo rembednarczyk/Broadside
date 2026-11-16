@@ -21,6 +21,8 @@ export const cueFor = (e: DomainEvent): Cue | null => {
       return { kind: "boom", x: e.at.x, z: e.at.z, size: 3 };
     case "lightning":
       return { kind: "boom", x: e.at.x, z: e.at.z, size: 2.5 };
+    case "collision":
+      return { kind: "wood", x: e.at.x, z: e.at.z, size: Math.min(3, e.speed) };
     default:
       return null;
   }
@@ -43,6 +45,11 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return "notice.struck";
     case "magazineExploded":
       return "notice.magazine";
+    case "boarded":
+      if (e.by === playerId) return e.won ? "notice.boardWon" : "notice.boardLost";
+      return e.ship === playerId ? "notice.boarded" : null;
+    case "collision":
+      return e.ram && (e.a === playerId || e.b === playerId) ? "notice.rammed" : null;
     case "gold":
       return "notice.gold";
     case "tradeRefused":

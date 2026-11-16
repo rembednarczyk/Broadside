@@ -50,6 +50,8 @@ export interface CombatHud {
   readonly water: number;
   /** A silenced enemy fort is within reach of a landing party. */
   readonly canStorm: boolean;
+  /** A ship is alongside and slow enough to board. */
+  readonly canBoard: boolean;
 }
 
 export interface TargetHud {

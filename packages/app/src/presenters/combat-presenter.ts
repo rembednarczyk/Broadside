@@ -1,5 +1,5 @@
 import { type MountKind, canFire, AMMO_IDS, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, fortToStorm } from "@broadside/sim";
+import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm } from "@broadside/sim";
 import { type BatteryHud, type CombatHud, type TargetHud } from "@broadside/ui";
 
 /** Reads the player's guns, stores and condition, and the current target (Presenter). */
@@ -9,7 +9,7 @@ const battery = (s: ShipState, kind: MountKind, side?: "port" | "starboard"): Ba
   return { count: idx.length, ready: idx.length ? ready / idx.length : 0 };
 };
 
-export const presentCombat = (e: Entity, forts: readonly Entity[] = []): CombatHud | null => {
+export const presentCombat = (e: Entity, forts: readonly Entity[] = [], ships: readonly Entity[] = []): CombatHud | null => {
   const s = e.ship;
   if (!s) return null;
   return {
@@ -30,6 +30,7 @@ export const presentCombat = (e: Entity, forts: readonly Entity[] = []): CombatH
     fires: s.sections.filter((x) => x.fire > 0).length,
     water: s.sections.reduce((a, x) => a + x.water, 0),
     canStorm: e.body ? fortToStorm(e, forts) !== null : false,
+    canBoard: e.body ? ships.some((o) => o.id !== e.id && canBoard(e, o)) : false,
   };
 };
 

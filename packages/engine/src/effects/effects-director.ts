@@ -78,6 +78,10 @@ export class EffectsDirector {
           this.splinters.emit(e.at.x, e.at.y, e.at.z, 0, 0.6, 0, Math.min(30, 6 + Math.round(e.damage)), 0.8);
           this.smoke.emit(e.at.x, e.at.y, e.at.z, 0, 0.3, 0, 3, 0.6);
           break;
+        case "collision":
+          this.splinters.emit(e.at.x, e.at.y + 2, e.at.z, 0, 0.7, 0, Math.min(60, Math.round(e.speed * 12)), 3);
+          this.spray.emit(e.at.x, e.at.y, e.at.z, 0, 1, 0, Math.min(40, Math.round(e.speed * 8)), 3);
+          break;
         case "explosion":
           this.lights.fire(e.at.x, e.at.y + 2, e.at.z, 2);
           this.embers.emit(e.at.x, e.at.y + 1, e.at.z, 0, 1, 0, 30, e.radius * 0.3);
