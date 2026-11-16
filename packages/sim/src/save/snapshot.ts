@@ -74,8 +74,8 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
 /** Rebuilds a simulation from a snapshot; the archipelago is regenerated from the seed by the caller. */
 /** Captains saved before standing orders existed patrol. */
 const withOrders = (c: CaptainState): CaptainState => {
-  const o = c as Omit<CaptainState, "role" | "dest"> & Partial<Pick<CaptainState, "role" | "dest">>;
-  return { ...o, role: o.role ?? "patrol", dest: o.dest ?? -1 };
+  const o = c as Omit<CaptainState, "role" | "dest" | "leader"> & Partial<Pick<CaptainState, "role" | "dest" | "leader">>;
+  return { ...o, role: o.role ?? "patrol", dest: o.dest ?? -1, leader: o.leader ?? -1 };
 };
 
 export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Simulation => {

@@ -24,7 +24,9 @@ describe("population director", () => {
     const sim = sandbox(3);
     run(sim, DIRECTOR.period * (DIRECTOR.budget + 1) + 1);
     const ships = ai(sim);
-    expect(ships.length).toBe(DIRECTOR.budget);
+    // A convoy arrives whole, so the sea may hold a few ships over the budget.
+    expect(ships.length).toBeGreaterThanOrEqual(DIRECTOR.budget);
+    expect(ships.length).toBeLessThanOrEqual(DIRECTOR.budget + 3);
     for (const s of ships) expect(Math.hypot(s.body!.pos.x, s.body!.pos.z)).toBeLessThan(DIRECTOR.keep);
   });
 
@@ -60,7 +62,8 @@ describe("population director", () => {
   });
 
   it("picks traffic by weight", () => {
-    expect(pickTraffic(0).id).toBe("merchant");
+    expect(pickTraffic(0).id).toBe("convoy");
+    expect(pickTraffic(0.2).id).toBe("merchant");
     expect(pickTraffic(0.999).id).toBe("hunter");
   });
 });
@@ -114,5 +117,18 @@ describe("smoke screen", () => {
     run(sim, 0.1);
     expect(me.ship!.stores.smoke).toBe(before - 1);
     expect([...sim.world.with("smoke")]).toHaveLength(1);
+  });
+});
+
+describe("convoys", () => {
+  it("followers keep station on the leader, who waits for them", () => {
+    const sim = new Simulation({ seed: 50, windDirection: Math.PI / 2, windSpeed: 8 });
+    const lead = sim.spawnShip({ classId: "brig", faction: "crown", x: 0, z: 0, heading: 0, ai: true, role: "trade", wx: 0, wz: 5000, speed: 3 });
+    const esc = sim.spawnShip({ classId: "frigate", faction: "crown", x: 60, z: -140, heading: 0, ai: true, speed: 3 });
+    esc.captain!.leader = lead.id;
+    run(sim, 90);
+    const gap = Math.hypot(esc.body!.pos.x - lead.body!.pos.x, esc.body!.pos.z - lead.body!.pos.z);
+    expect(gap).toBeLessThan(320);
+    expect(lead.body!.pos.z).toBeGreaterThan(150);
   });
 });

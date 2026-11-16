@@ -43,7 +43,16 @@ const spawnTraffic = (ctx: SimContext, kind: TrafficKind, px: number, pz: number
   const classId = pick(kind.classes, ctx.rng.next());
   // Sail roughly across the player's patch of sea, so traffic passes by instead of away.
   const heading = Math.atan2(px - x, pz - z) + (ctx.rng.next() - 0.5) * 1.6;
-  spawnShip(ctx.world, ctx.ids, { classId, faction, x, z, heading, speed: 3, ai: true, role: kind.role, wx: px + (ctx.rng.next() - 0.5) * 1200, wz: pz + (ctx.rng.next() - 0.5) * 1200 });
+  const lead = spawnShip(ctx.world, ctx.ids, { classId, faction, x, z, heading, speed: 3, ai: true, role: kind.role, wx: px + (ctx.rng.next() - 0.5) * 1200, wz: pz + (ctx.rng.next() - 0.5) * 1200 });
+  if (!kind.convoy) return;
+  // Followers astern of the leader; escorts patrol (they fight), merchantmen trade (they run).
+  const follow = (cls: typeof classId, role: "trade" | "patrol", k: number): void => {
+    const f = spawnShip(ctx.world, ctx.ids, { classId: cls, faction, x: x - Math.sin(heading) * 150 * k + Math.cos(heading) * 60 * (k % 2 ? 1 : -1), z: z - Math.cos(heading) * 150 * k, heading, speed: 3, ai: true, role });
+    f.captain!.leader = lead.id;
+  };
+  let k = 1;
+  for (let m = 0; m < kind.convoy.merchants; m++) follow(pick(kind.classes, ctx.rng.next()), "trade", k++);
+  for (const esc of kind.convoy.escorts) follow(esc, "patrol", k++);
 };
 
 /** One pass of the director: despawn the far, then top the budget up (one ship per pass). */

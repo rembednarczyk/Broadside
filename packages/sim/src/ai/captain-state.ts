@@ -24,6 +24,8 @@ export interface CaptainState {
   role: CaptainRole;
   /** Destination port index while trading (-1: none). */
   dest: number;
+  /** Ship this one keeps station on in a convoy (-1: sails alone). */
+  leader: number;
 }
 
-export const createCaptain = (wx: number, wz: number, range: number, role: CaptainRole = "patrol"): CaptainState => ({ mode: "patrol", target: null, think: 0, wx, wz, side: "starboard", range, role, dest: -1 });
+export const createCaptain = (wx: number, wz: number, range: number, role: CaptainRole = "patrol"): CaptainState => ({ mode: "patrol", target: null, think: 0, wx, wz, side: "starboard", range, role, dest: -1, leader: -1 });

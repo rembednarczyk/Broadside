@@ -140,17 +140,44 @@ const nextPort = (c: CaptainState, w: World2D): void => {
   c.wz = w.ports[k]!.z;
 };
 
+/**
+ * Station keeping in a convoy (Reynolds' leader following, "Steering Behaviors", 1999): steer for
+ * a point astern and abeam of the leader, and match its canvas.
+ */
+const STATION_ASTERN = 140;
+const keepStation = (me: Entity, leader: Entity, w: World2D): GameCommand[] => {
+  const b = me.body!;
+  const lb = leader.body!;
+  const lh = yawOf(lb.rot);
+  const side = me.id % 2 === 0 ? 1 : -1;
+  const sx = lb.pos.x - Math.sin(lh) * STATION_ASTERN + Math.cos(lh) * 60 * side;
+  const sz = lb.pos.z - Math.cos(lh) * STATION_ASTERN - Math.sin(lh) * 60 * side;
+  const gap = Math.hypot(sx - b.pos.x, sz - b.pos.z);
+  // Close the gap at full sail, then hold station under the leader's canvas.
+  const desired = gap > 40 ? Math.atan2(sx - b.pos.x, sz - b.pos.z) : lh;
+  const level = (gap > 200 ? 3 : (leader.ship!.sailTarget[0] ?? 2)) as SailLevel;
+  return [
+    { type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, me.ship!), w) },
+    ...(me.ship!.sailTarget[0] !== level ? [{ type: "sails" as const, ship: me.id, mast: "all" as const, level }] : []),
+  ];
+};
+
 const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   const b = me.body!;
+  const leader = c.leader >= 0 ? w.ships.find((x) => x.id === c.leader && !x.ship!.sinking && !x.ship!.struck) : undefined;
+  if (leader) return keepStation(me, leader, w);
   if (c.role === "trade" && (c.dest < 0 || Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 260)) nextPort(c, w);
   else if (Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 120) {
     c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
     c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
   }
   const desired = Math.atan2(c.wx - b.pos.x, c.wz - b.pos.z);
+  // A convoy sails at the pace of its slowest ship: shorten sail while a follower lags.
+  const lagging = w.ships.some((f) => f.captain?.leader === me.id && !f.ship!.sinking && Math.hypot(f.body!.pos.x - b.pos.x, f.body!.pos.z - b.pos.z) > 320);
+  const level: SailLevel = lagging ? 1 : 3;
   return [
     { type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, me.ship!), w) },
-    ...(me.ship!.sailTarget[0] !== 3 ? [{ type: "sails" as const, ship: me.id, mast: "all" as const, level: 3 as SailLevel }] : []),
+    ...(me.ship!.sailTarget[0] !== level ? [{ type: "sails" as const, ship: me.id, mast: "all" as const, level }] : []),
   ];
 };
 
