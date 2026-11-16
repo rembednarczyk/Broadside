@@ -1,5 +1,5 @@
-import { type DomainEvent, windVector, rotate, vec3, waterHeight } from "@broadside/core";
-import { type Simulation } from "@broadside/sim";
+import { type DomainEvent, windVector, rotate, rotateInv, vec3, waterHeight, waterVerticalSpeed } from "@broadside/core";
+import { type Simulation, pointVelocity } from "@broadside/sim";
 import { Color3, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, Vector3 } from "../babylon";
 import { BurstEmitter, rgba } from "./burst-emitter";
 import { type Sprites, createSprites } from "./sprite-textures";
@@ -105,8 +105,39 @@ export class EffectsDirector {
       });
     }
     if (emitFires) for (const e of sim.world.with("spout")) this.spray.emit(e.spout.x, 1, e.spout.z, 0, 1.4, 0, 10, e.spout.radius);
+    this.bowSpray(sim, dt);
     this.syncInstances(sim);
     for (const em of [this.smoke, this.flash, this.spray, this.splinters, this.flames, this.fireSmoke]) em.flush();
+  }
+
+  /**
+   * Spray at the bow, driven by the physics: when the stem drives down into a wave (its vertical
+   * speed relative to the water surface below a threshold) a burst flies up and out to both sides,
+   * bigger with the ship's speed; at speed a light plume streams from the cutwater all the time.
+   */
+  private bowSpray(sim: Simulation, dt: number): void {
+    const env = sim.env;
+    for (const e of sim.ships()) {
+      const b = e.body!;
+      const s = e.ship!;
+      const h = s.model.def.hull;
+      const stem = vec3(0, 0.3 - s.model.com.y, h.length * 0.48 - s.model.com.z);
+      const p = rotate(b.rot, stem);
+      const wx = b.pos.x + p.x;
+      const wy = b.pos.y + p.y;
+      const wz = b.pos.z + p.z;
+      const surface = waterHeight(env.waves, wx, wz, env.time);
+      if (wy - surface > 1.2) continue;
+      const fwd = Math.max(0, rotateInv(b.rot, b.vel).z);
+      const rel = pointVelocity(b, vec3(wx, wy, wz)).y - waterVerticalSpeed(env.waves, wx, wz, env.time);
+      const side = rotate(b.rot, vec3(1, 0, 0));
+      const slam = rel < -1.2 ? Math.min(40, Math.round(-rel * fwd * 2)) : 0;
+      const plume = fwd > 3 && Math.random() < dt * 20 ? Math.round(fwd - 2) : 0;
+      for (const sx of [-1, 1]) {
+        const n = slam + plume;
+        if (n > 0) this.spray.emit(wx + side.x * sx * h.beam * 0.3, surface + 0.3, wz + side.z * sx * h.beam * 0.3, side.x * sx * 0.6, 1 + slam * 0.03, side.z * sx * 0.6, n, 1.2);
+      }
+    }
   }
 
   private syncInstances(sim: Simulation): void {
