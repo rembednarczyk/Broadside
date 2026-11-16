@@ -78,6 +78,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] audyt soak piaskownicy (`soak.audit.ts`): godzina gry, liczba bytów stała (ok. 40), 1,0–1,4 ms na krok symulacji (16.11)
 - [x] ostrzeżenie „mielizna przed dziobem” (sonda 40–250 m po kursie) (16.11)
 - [x] karta „Jak grać” przy pierwszym uruchomieniu i w ustawieniach (16.11)
+- [x] floty oblegają forty nacji, z którymi są w wojnie (ostrzał burtą i moździerzem, szturm po uciszeniu), forty zmieniają właścicieli bez gracza (16.11)
 - [ ] budżety wydajności na prawdziwym telefonie, wydanie v1.0.0
 
 ### M6 balans

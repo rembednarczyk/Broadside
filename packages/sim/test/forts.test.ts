@@ -63,3 +63,22 @@ describe("forts", () => {
     expect(fort.fort!.faction).toBe("crown");
   });
 });
+
+describe("sieges by the navies", () => {
+  it("a man-of-war bombards the fort of a nation at war with hers", () => {
+    const sim = new Simulation({ seed: 9, windDirection: Math.PI / 2, windSpeed: 7 });
+    const fort = sim.spawnFort(site("watchtower", "republic"));
+    const frigate = sim.spawnShip({ classId: "frigate", faction: "crown", x: 0, z: -600, heading: 0, ai: true, speed: 3 });
+    frigate.ship!.stores.round = 1000;
+    const ev = run(sim, 240);
+    expect(ev.some((e) => e.type === "gunFired" && e.ship === frigate.id)).toBe(true);
+    expect(ev.some((e) => e.type === "hit" && e.ship === fort.id)).toBe(true);
+  });
+
+  it("leaves a friendly fort alone", () => {
+    const sim = new Simulation({ seed: 9, windDirection: Math.PI / 2, windSpeed: 7 });
+    sim.spawnFort(site("watchtower", "crown"));
+    const frigate = sim.spawnShip({ classId: "frigate", faction: "crown", x: 0, z: -600, heading: 0, ai: true, speed: 3 });
+    expect(run(sim, 60).some((e) => e.type === "gunFired" && e.ship === frigate.id)).toBe(false);
+  });
+});

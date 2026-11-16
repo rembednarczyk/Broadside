@@ -74,7 +74,7 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
     case "fortSilenced":
       return "notice.fortSilenced";
     case "fortCaptured":
-      return e.by === playerId ? "notice.fortCaptured" : null;
+      return e.by === playerId ? "notice.fortCaptured" : "notice.fortFell";
     case "assaultFailed":
       return e.by === playerId ? "notice.assaultFailed" : null;
     case "grounded":

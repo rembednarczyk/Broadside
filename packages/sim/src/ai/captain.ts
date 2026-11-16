@@ -25,6 +25,8 @@ export interface World2D {
   readonly relations: Relations | null;
   /** Smoke screens on the water (lookouts cannot see through them). */
   readonly screens: readonly Screen[];
+  /** Shore forts (navies bombard and storm the forts of nations they are at war with). */
+  readonly forts: readonly Entity[];
 }
 
 const DETECT = 900;
@@ -201,6 +203,55 @@ const flee = (me: Entity, t: Entity | null, w: World2D): GameCommand[] => {
   ];
 };
 
+/** How far a navy captain looks for an enemy fort to attack, and the range he bombards it from. */
+const FORT_SIGHT = 900;
+const BOMBARD = 300;
+
+const enemyFort = (me: Entity, w: World2D): Entity | null => {
+  let best: Entity | null = null;
+  let bestD = FORT_SIGHT;
+  for (const f of w.forts) {
+    const st = f.fort!;
+    if (st.faction === me.ship!.faction || !isHostile(standing(me.ship!.faction, st.faction, w.relations))) continue;
+    const d = Math.hypot(st.site.x - me.body!.pos.x, st.site.z - me.body!.pos.z);
+    if (d < bestD) {
+      bestD = d;
+      best = f;
+    }
+  }
+  return best;
+};
+
+/**
+ * Siege: close to bombarding range, lie broadside on to the walls and fire whenever the guns
+ * bear; once the fort is silenced, land a party if the crew outnumbers the garrison well.
+ */
+const bombard = (me: Entity, c: CaptainState, fe: Entity, w: World2D): GameCommand[] => {
+  const s = me.ship!;
+  const b = me.body!;
+  const st = fe.fort!;
+  const range = Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) - st.def.radius * 0.5;
+  if (st.silenced) {
+    if (range < st.def.radius + 150 && s.crew * 0.66 > st.garrison * 1.6) return [{ type: "assault", ship: me.id, fort: fe.id }];
+    const brg = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
+    return [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(brg, w.windDirection, s), w) }];
+  }
+  const heading = yawOf(b.rot);
+  const brg = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
+  const rel = relativeBearing(heading, b.pos.x, b.pos.z, st.site.x, st.site.z);
+  c.side = rel >= 0 ? "starboard" : "port";
+  const abeam = c.side === "starboard" ? Math.PI / 2 : -Math.PI / 2;
+  const bias = Math.max(-0.6, Math.min(0.6, (range - BOMBARD) / BOMBARD)) * 0.9;
+  const desired = range > BOMBARD * 1.5 ? brg : brg - abeam + (c.side === "starboard" ? bias : -bias);
+  const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s), w) }];
+  const level: SailLevel = range > BOMBARD * 1.5 ? 3 : 2;
+  if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
+  const aimHeight = st.site.y + st.def.height * 0.5;
+  if (range < BROADSIDE_MAX && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range, bearing: brg, aimHeight });
+  if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range, bearing: brg, aimHeight });
+  return cmds;
+};
+
 /** The player's ship, if a hunter can find her (hunters only chase hostile quarry). */
 const quarry = (me: Entity, ships: readonly Entity[], rel: Relations | null): Entity | null => {
   const p = ships.find((o) => o.player && !o.ship!.sinking && hostileTo(me.ship!, o.ship!, rel));
@@ -237,6 +288,12 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
   }
   if (!t) {
     c.mode = "patrol";
+    // A man-of-war with no ship to fight goes for an enemy fort in sight.
+    const fort = c.role === "patrol" && c.leader < 0 ? enemyFort(me, w) : null;
+    if (fort) {
+      c.mode = "engage";
+      return bombard(me, c, fort, w);
+    }
     return patrol(me, c, w);
   }
   c.mode = "engage";
