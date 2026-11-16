@@ -5,7 +5,7 @@ import { GameSession } from "./game-session";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, type WeatherKind } from "@broadside/core";
+import { type AmmoId, type WeatherKind, WEATHER } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import "./style.css";
 
@@ -15,7 +15,8 @@ const seed = Number(params.get("seed") ?? 1797);
 const touch = matchMedia("(pointer: coarse)").matches;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const weatherParam = params.get("weather");
-const session = new GameSession({ seed, weather: (weatherParam ?? "fresh") as WeatherKind });
+const weather = weatherParam && weatherParam in WEATHER ? (weatherParam as WeatherKind) : "fresh";
+const session = new GameSession({ seed, weather });
 const renderer = new BabylonRenderer({ canvas, renderScale: touch ? 0.7 : 1, quality: params.get("quality") === "low" ? "low" : "high" });
 
 const intents: UiIntents = {
