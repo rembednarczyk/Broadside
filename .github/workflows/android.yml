@@ -1,0 +1,67 @@
+name: Android APK
+
+# The game as an Android app (ADR-0001): Capacitor WebView with the web build inside the APK.
+# Every push builds a signed release APK as a workflow artifact; a v* tag also attaches it to the
+# GitHub release of the tag. The signing key is committed (private game, see app/build.gradle).
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+    paths-ignore: ["docs/**", "**/*.md"]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Copy the web build into the Android project
+        working-directory: packages/app
+        run: pnpm exec cap sync android
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then name="${GITHUB_REF_NAME#v}"; else name="0.1.0-${GITHUB_SHA::7}"; fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Assemble release APK
+        working-directory: packages/app/android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Broadside-${{ steps.version.outputs.name }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Broadside-apk
+          path: Broadside-*.apk
+          retention-days: 30
+      - name: Attach to the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Broadside $GITHUB_REF_NAME" --notes "APK do instalacji ręcznej."
+          gh release upload "$GITHUB_REF_NAME" Broadside-*.apk --clobber
