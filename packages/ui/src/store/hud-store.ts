@@ -61,7 +61,14 @@ export interface TargetHud {
   readonly side: "port" | "starboard" | "ahead" | "astern";
 }
 
+export interface GraphicsHud {
+  readonly preset: string;
+  readonly renderScale: number;
+}
+
 export interface HudState {
+  readonly graphics: GraphicsHud;
+  readonly settingsOpen: boolean;
   readonly sailing: SailingHud | null;
   readonly combat: CombatHud | null;
   readonly target: TargetHud | null;
@@ -72,6 +79,6 @@ export interface HudState {
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ graphics: { preset: "high", renderScale: 1 }, settingsOpen: false, sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

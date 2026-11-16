@@ -24,6 +24,9 @@ export interface CombatIntents {
 
 export interface SettingsIntents {
   setLanguage(lang: "en" | "pl"): void;
+  setGraphicsPreset(preset: string): void;
+  setRenderScale(scale: number): void;
+  toggleSettings(): void;
 }
 
 export interface UiIntents {

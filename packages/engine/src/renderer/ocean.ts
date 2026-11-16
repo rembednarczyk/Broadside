@@ -1,4 +1,4 @@
-import { type GerstnerWave, MAX_WAVES, packWaves } from "@broadside/core";
+import { type GerstnerWave, MAX_WAVES, createRng, makeWave, packWaves, range } from "@broadside/core";
 import { Color3, Mesh, type Scene, ShaderMaterial, VertexData, Vector2, type Vector3 } from "../babylon";
 import { OCEAN_FRAGMENT, OCEAN_VERTEX } from "../shaders/ocean";
 
@@ -9,22 +9,21 @@ import { OCEAN_FRAGMENT, OCEAN_VERTEX } from "../shaders/ocean";
  * finest spacing, so the displaced surface does not swim under the camera.
  */
 const HALF = 3000;
-const CELLS = 220;
 /** Exponent of the warp: 1 is uniform; larger packs vertices near the centre. */
 const WARP = 2.6;
-const FINEST = (HALF * 2) / CELLS / 12;
+const finest = (cells: number): number => (HALF * 2) / cells / 12;
 
 const warp = (t: number): number => Math.sign(t) * Math.pow(Math.abs(t), WARP) * HALF;
 
-export const buildOceanGrid = (): { positions: number[]; indices: number[] } => {
+export const buildOceanGrid = (cells = 220): { positions: number[]; indices: number[] } => {
   const positions: number[] = [];
   const indices: number[] = [];
-  for (let j = 0; j <= CELLS; j++) {
-    for (let i = 0; i <= CELLS; i++) positions.push(warp((i / CELLS) * 2 - 1), 0, warp((j / CELLS) * 2 - 1));
+  for (let j = 0; j <= cells; j++) {
+    for (let i = 0; i <= cells; i++) positions.push(warp((i / cells) * 2 - 1), 0, warp((j / cells) * 2 - 1));
   }
-  const row = CELLS + 1;
-  for (let j = 0; j < CELLS; j++) {
-    for (let i = 0; i < CELLS; i++) {
+  const row = cells + 1;
+  for (let j = 0; j < cells; j++) {
+    for (let i = 0; i < cells; i++) {
       const a = j * row + i;
       indices.push(a, a + row, a + 1, a + 1, a + row, a + row + 1);
     }
@@ -45,9 +44,16 @@ export class Ocean {
   readonly mesh: Mesh;
   private readonly material: ShaderMaterial;
 
-  constructor(scene: Scene) {
+  private readonly cells: number;
+  /** Visual-only short waves, amplitudes for a 10 m/s wind (scaled with the wind each frame). */
+  private readonly detail: GerstnerWave[];
+
+  constructor(scene: Scene, cells = 220, detailWaves = 0) {
+    this.cells = cells;
+    const rng = createRng(4242);
+    this.detail = Array.from({ length: detailWaves }, (_, i) => makeWave(range(rng, 0, Math.PI * 2), 1.4 + i * 0.7, 0.025 + i * 0.006, 0.7, range(rng, 0, Math.PI * 2), 8));
     this.mesh = new Mesh("ocean", scene);
-    const grid = buildOceanGrid();
+    const grid = buildOceanGrid(cells);
     const data = new VertexData();
     data.positions = grid.positions;
     data.indices = grid.indices;
@@ -55,7 +61,7 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount"],
     });
     this.material.backFaceCulling = false;
     this.material.setColor3("waterDeep", new Color3(0.008, 0.03, 0.045));
@@ -86,8 +92,14 @@ export class Ocean {
     this.material.setArray4("waveB", Array.from(packed.b));
     this.material.setInt("waveCount", Math.min(packed.count, MAX_WAVES));
     this.material.setFloat("time", time);
-    const ox = Math.round(cameraX / FINEST) * FINEST;
-    const oz = Math.round(cameraZ / FINEST) * FINEST;
+    const f = finest(this.cells);
+    const ox = Math.round(cameraX / f) * f;
+    const oz = Math.round(cameraZ / f) * f;
+    const k = Math.min(1.6, Math.max(0.2, windSpeed / 10));
+    const det = packWaves(this.detail.map((w) => ({ ...w, amplitude: w.amplitude * k, qa: w.qa * k })));
+    this.material.setArray4("detailA", Array.from(det.a));
+    this.material.setArray4("detailB", Array.from(det.b));
+    this.material.setInt("detailCount", this.detail.length);
     this.material.setVector2("gridOffset", new Vector2(ox, oz));
     this.material.setVector3("sunDirection", look.sunDirection);
     this.material.setColor3("sunColor", look.sunColor);

@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { BabylonRenderer, SynthAudio } from "@broadside/engine";
+import { BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
 import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { presentSailing } from "./presenters/sailing-presenter";
@@ -17,7 +17,30 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 const weatherParam = params.get("weather");
 const weather = weatherParam && weatherParam in WEATHER ? (weatherParam as WeatherKind) : "fresh";
 const session = new GameSession({ seed, weather });
-const renderer = new BabylonRenderer({ canvas, renderScale: touch ? 0.7 : 1, quality: params.get("quality") === "low" ? "low" : "high" });
+// Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
+const GFX_KEY = "broadside.graphics";
+const readStored = (): string | null => {
+  try {
+    return localStorage.getItem(GFX_KEY);
+  } catch {
+    return null;
+  }
+};
+const urlPreset = params.get("quality");
+let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra", "cinematic"].includes(urlPreset) ? presetSettings(urlPreset as GraphicsPreset) : parseGraphics(readStored(), touch);
+let renderer = new BabylonRenderer({ canvas, graphics });
+const applyGraphics = (next: GraphicsSettings) => {
+  graphics = next;
+  try {
+    localStorage.setItem(GFX_KEY, JSON.stringify(next));
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+  renderer.dispose();
+  renderer = new BabylonRenderer({ canvas, graphics });
+  patchHud({ graphics: { preset: next.preset, renderScale: next.renderScale } });
+};
+patchHud({ graphics: { preset: graphics.preset, renderScale: graphics.renderScale } });
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
@@ -28,7 +51,12 @@ const intents: UiIntents = {
     brace: () => session.brace(),
     drop: (kind) => session.drop(kind),
   },
-  settings: { setLanguage: (language) => patchHud({ language }) },
+  settings: {
+    setLanguage: (language) => patchHud({ language }),
+    setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset)),
+    setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
+    toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+  },
 };
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
 bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
@@ -76,4 +104,4 @@ const frame = (now: number) => {
   requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);
-(globalThis as unknown as { __broadside: unknown }).__broadside = { session, renderer };
+Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer }) });

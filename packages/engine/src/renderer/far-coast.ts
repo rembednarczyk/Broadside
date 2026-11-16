@@ -13,9 +13,13 @@ export const coastHeights = (seed: number): number[] => {
   const h: number[] = [];
   for (let i = 0; i < SEGMENTS; i++) {
     const a = i / SEGMENTS;
-    const mask = Math.max(0, noise1(seed, a * 6) - 0.42) / 0.58;
-    const ridge = fbm2(seed + 3, Math.cos(a * Math.PI * 2) * 4 + 9, Math.sin(a * Math.PI * 2) * 4 + 9, 5);
-    h.push(Math.max(0, mask * (60 + ridge * 260)));
+    // Headlands with steep sides and flat tops (sea cliffs and mesas, as in the reference):
+    // a sharp step on the mask, a gently rolling plateau, a little crag on the edges.
+    const mask = noise1(seed, a * 7);
+    const edge = Math.min(1, Math.max(0, (mask - 0.5) / 0.06));
+    const plateau = 110 + fbm2(seed + 3, Math.cos(a * Math.PI * 2) * 3 + 9, Math.sin(a * Math.PI * 2) * 3 + 9, 3) * 120;
+    const crag = fbm2(seed + 11, a * 180, 0.5, 2) * 25;
+    h.push(edge * (plateau + crag * (1 - edge * 0.7)));
   }
   return h;
 };

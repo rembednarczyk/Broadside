@@ -48,3 +48,6 @@ button:disabled { opacity: 0.35; }
 .mast-row .lvl { text-align: center; }
 .mast-row.warn { color: #ffd27f; }
 .mast-row.alarm, .sailing .alarm { color: #ff8a65; }
+.settings { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, 80vw); font-size: 13px; z-index: 5; }
+.settings .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 4px 0 10px; }
+.settings input[type=range] { width: 100%; margin-bottom: 10px; }

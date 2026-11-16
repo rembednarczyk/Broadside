@@ -17,8 +17,8 @@ export class WeatherView {
   /** 0..1 brightness of the current lightning flash, read by the renderer for the lights. */
   flash = 0;
 
-  constructor(private readonly scene: Scene, sprites: Sprites, private readonly camera: ArcRotateCamera) {
-    const rain = new ParticleSystem("rain", 6000, scene);
+  constructor(private readonly scene: Scene, sprites: Sprites, private readonly camera: ArcRotateCamera, private readonly particles = 1) {
+    const rain = new ParticleSystem("rain", Math.max(500, Math.round(6000 * particles)), scene);
     rain.particleTexture = sprites.streak;
     rain.emitter = Vector3.Zero();
     rain.minEmitBox = new Vector3(-60, 40, -60);
@@ -78,7 +78,7 @@ export class WeatherView {
   frame(sim: Simulation, dt: number): void {
     const w = sim.env.weather;
     const rainAmount = w?.rain ?? 0;
-    this.rain.emitRate = rainAmount * 5000;
+    this.rain.emitRate = rainAmount * 5000 * this.particles;
     const t = this.camera.target;
     (this.rain.emitter as Vector3).set(t.x, t.y, t.z);
     const wx = Math.sin(sim.env.windDirection) * sim.env.windSpeed;

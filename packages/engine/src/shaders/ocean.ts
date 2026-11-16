@@ -17,10 +17,33 @@ uniform float time;
 uniform vec4 waveA[${MAX_WAVES}];
 uniform vec4 waveB[${MAX_WAVES}];
 uniform int waveCount;
+// Visual-only short waves (graphics detail; the simulation does not see them, their height is
+// centimetres): same Gerstner form, same layout.
+uniform vec4 detailA[8];
+uniform vec4 detailB[8];
+uniform int detailCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
 varying float vHeight;
+
+void gerstner(vec4 a, vec4 b, vec2 p0, inout vec3 p, inout vec3 tx, inout vec3 tz, inout float jxx, inout float jzz, inout float jxz) {
+  vec2 d = a.xy;
+  float k = a.z;
+  float th = k * dot(d, p0) - a.w * time + b.z;
+  float c = cos(th);
+  float s = sin(th);
+  p.x += b.y * d.x * c;
+  p.z += b.y * d.y * c;
+  p.y += b.x * s;
+  float qk = b.y * k;
+  float ak = b.x * k;
+  tx += vec3(-qk * d.x * d.x * s, ak * d.x * c, -qk * d.x * d.y * s);
+  tz += vec3(-qk * d.x * d.y * s, ak * d.y * c, -qk * d.y * d.y * s);
+  jxx -= qk * d.x * d.x * s;
+  jzz -= qk * d.y * d.y * s;
+  jxz -= qk * d.x * d.y * s;
+}
 
 void main() {
   vec2 p0 = position.xz + gridOffset;
@@ -30,24 +53,11 @@ void main() {
   float jxx = 1.0; float jzz = 1.0; float jxz = 0.0;
   for (int i = 0; i < ${MAX_WAVES}; i++) {
     if (i >= waveCount) break;
-    vec4 a = waveA[i];
-    vec4 b = waveB[i];
-    vec2 d = a.xy;
-    float k = a.z;
-    float th = k * dot(d, p0) - a.w * time + b.z;
-    float c = cos(th);
-    float s = sin(th);
-    p.x += b.y * d.x * c;
-    p.z += b.y * d.y * c;
-    p.y += b.x * s;
-    // Partial derivatives of the displaced surface for the analytic normal.
-    float qk = b.y * k;
-    float ak = b.x * k;
-    tx += vec3(-qk * d.x * d.x * s, ak * d.x * c, -qk * d.x * d.y * s);
-    tz += vec3(-qk * d.x * d.y * s, ak * d.y * c, -qk * d.y * d.y * s);
-    jxx -= qk * d.x * d.x * s;
-    jzz -= qk * d.y * d.y * s;
-    jxz -= qk * d.x * d.y * s;
+    gerstner(waveA[i], waveB[i], p0, p, tx, tz, jxx, jzz, jxz);
+  }
+  for (int i = 0; i < 8; i++) {
+    if (i >= detailCount) break;
+    gerstner(detailA[i], detailB[i], p0, p, tx, tz, jxx, jzz, jxz);
   }
   vNormal = normalize(cross(tz, tx));
   vFold = jxx * jzz - jxz * jxz;

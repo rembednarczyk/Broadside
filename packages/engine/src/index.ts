@@ -4,3 +4,4 @@ export { hullGeometry } from "./renderer/hull-geometry";
 export { sailPositions, type SailOutline } from "./renderer/sail-geometry";
 export { buildOceanGrid } from "./renderer/ocean";
 export { SynthAudio, type Cue, type Listener } from "./audio/synth-audio";
+export * from "./graphics-settings";

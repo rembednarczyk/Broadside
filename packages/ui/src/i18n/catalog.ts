@@ -4,6 +4,16 @@
  */
 export const EN = {
   "hud.speed": "Speed",
+  "settings.title": "Settings",
+  "settings.graphics": "Graphics",
+  "settings.resolution": "Resolution",
+  "settings.language": "Language",
+  "gfx.low": "Low",
+  "gfx.medium": "Medium",
+  "gfx.high": "High",
+  "gfx.ultra": "Ultra",
+  "gfx.cinematic": "Cinematic",
+  "gfx.custom": "Custom",
   "hud.mast": "Mast",
   "hud.strain": "Strained!",
   "weather.calm": "Calm",
@@ -88,6 +98,16 @@ export type TextKey = keyof typeof EN;
 
 export const PL: Record<TextKey, string> = {
   "hud.speed": "Prędkość",
+  "settings.title": "Ustawienia",
+  "settings.graphics": "Grafika",
+  "settings.resolution": "Rozdzielczość",
+  "settings.language": "Język",
+  "gfx.low": "Niska",
+  "gfx.medium": "Średnia",
+  "gfx.high": "Wysoka",
+  "gfx.ultra": "Ultra",
+  "gfx.cinematic": "Kinowa",
+  "gfx.custom": "Własna",
   "hud.mast": "Maszt",
   "hud.strain": "Przeciążony!",
   "weather.calm": "Cisza",

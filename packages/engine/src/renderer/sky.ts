@@ -1,5 +1,5 @@
 import { Color3, Mesh, MeshBuilder, type Scene, ShaderMaterial, Vector2, Vector3 } from "../babylon";
-import { SKY_FRAGMENT, SKY_VERTEX } from "../shaders/sky";
+import { SKY_VERTEX, skyFragment } from "../shaders/sky";
 import { type SceneLook } from "./look";
 
 /** Sky dome drawn behind everything (depth at the far plane), centred on the camera. */
@@ -7,9 +7,9 @@ export class Sky {
   readonly mesh: Mesh;
   private readonly material: ShaderMaterial;
 
-  constructor(scene: Scene) {
+  constructor(scene: Scene, octaves = 5) {
     this.mesh = MeshBuilder.CreateSphere("sky", { diameter: 2000, segments: 24, sideOrientation: Mesh.BACKSIDE }, scene);
-    this.material = new ShaderMaterial("sky", scene, { vertexSource: SKY_VERTEX, fragmentSource: SKY_FRAGMENT }, {
+    this.material = new ShaderMaterial("sky", scene, { vertexSource: SKY_VERTEX, fragmentSource: skyFragment(octaves) }, {
       attributes: ["position"],
       uniforms: ["worldViewProjection", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "cloudCover", "time", "windOffset"],
     });

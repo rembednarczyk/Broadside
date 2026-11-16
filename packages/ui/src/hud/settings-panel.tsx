@@ -1,0 +1,34 @@
+import { useHud } from "../store/hud-store";
+import { isTextKey, text } from "../i18n/catalog";
+import { type SettingsIntents } from "../intents";
+
+const PRESETS = ["low", "medium", "high", "ultra", "cinematic"] as const;
+
+/** Graphics quality presets, render resolution and language. */
+export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
+  const open = useHud((h) => h.settingsOpen);
+  const g = useHud((h) => h.graphics);
+  const lang = useHud((h) => h.language);
+  if (!open) return null;
+  const custom = `gfx.${g.preset}`;
+  return (
+    <div className="panel settings" data-testid="settings">
+      <div className="title">{text(lang, "settings.title")}</div>
+      <div className="label">{text(lang, "settings.graphics")} · {isTextKey(custom) ? text(lang, custom) : g.preset}</div>
+      <div className="presets">
+        {PRESETS.map((p) => (
+          <button key={p} className={g.preset === p ? "on" : ""} onPointerDown={() => intents.setGraphicsPreset(p)} data-testid={`gfx-${p}`}>
+            {text(lang, `gfx.${p}`)}
+          </button>
+        ))}
+      </div>
+      <div className="label">{text(lang, "settings.resolution")} {Math.round(g.renderScale * 100)}%</div>
+      <input type="range" min={50} max={100} step={5} value={Math.round(g.renderScale * 100)} onChange={(e) => intents.setRenderScale(Number(e.target.value) / 100)} />
+      <div className="label">{text(lang, "settings.language")}</div>
+      <div className="presets">
+        <button className={lang === "en" ? "on" : ""} onPointerDown={() => intents.setLanguage("en")}>English</button>
+        <button className={lang === "pl" ? "on" : ""} onPointerDown={() => intents.setLanguage("pl")}>Polski</button>
+      </div>
+    </div>
+  );
+};

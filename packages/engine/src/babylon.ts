@@ -30,6 +30,11 @@ export { Effect } from "@babylonjs/core/Materials/effect";
 export { PostProcess } from "@babylonjs/core/PostProcesses/postProcess";
 export { ColorCurves } from "@babylonjs/core/Materials/colorCurves";
 export { VolumetricLightScatteringPostProcess } from "@babylonjs/core/PostProcesses/volumetricLightScatteringPostProcess";
+export { MotionBlurPostProcess } from "@babylonjs/core/PostProcesses/motionBlurPostProcess";
+export { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
+export { CascadedShadowGenerator } from "@babylonjs/core/Lights/Shadows/cascadedShadowGenerator";
+export type { Camera } from "@babylonjs/core/Cameras/camera";
+export type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
@@ -42,3 +47,5 @@ import "@babylonjs/core/Particles/particleSystemComponent";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
 import "@babylonjs/core/Meshes/Builders/capsuleBuilder";
 import "@babylonjs/core/Meshes/Builders/planeBuilder";
+import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
+import "@babylonjs/core/Rendering/prePassRendererSceneComponent";

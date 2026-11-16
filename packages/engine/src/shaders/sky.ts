@@ -15,7 +15,8 @@ void main() {
 }
 `;
 
-export const SKY_FRAGMENT = /* glsl */ `
+/** Sky fragment shader with the cloud noise octaves of the graphics settings. */
+export const skyFragment = (octaves: number): string => /* glsl */ `
 precision highp float;
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
@@ -34,7 +35,13 @@ float vnoise(vec2 p) {
 }
 float fbm(vec2 p) {
   float s = 0.0; float a = 0.5;
-  for (int i = 0; i < 5; i++) { s += a * vnoise(p); p = p * 2.02 + vec2(3.1, 1.7); a *= 0.5; }
+  for (int i = 0; i < ${octaves}; i++) { s += a * vnoise(p); p = p * 2.02 + vec2(3.1, 1.7); a *= 0.5; }
+  return s;
+}
+// Billow noise (1 - |2n - 1|): puffy, rounded shapes, the usual cumulus primitive.
+float billow(vec2 p) {
+  float s = 0.0; float a = 0.5;
+  for (int i = 0; i < ${octaves}; i++) { s += a * (1.0 - abs(2.0 * vnoise(p) - 1.0)); p = p * 2.07 + vec2(1.3, 4.1); a *= 0.5; }
   return s;
 }
 float hg(float c, float g) { return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * c, 1.5) / 12.566; }
@@ -50,18 +57,21 @@ void main() {
   col += sunColor * smoothstep(0.9993, 0.9997, c) * 8.0 * sunUp * (1.0 - cloudCover * 0.6);
   if (d.y > 0.0) {
     vec2 uv = d.xz / (d.y + 0.12);
-    float n1 = fbm(uv * 1.3 + windOffset * 0.002);
-    float n2 = fbm(uv * 3.1 - windOffset * 0.003 + 7.0);
+    float n1 = mix(fbm(uv * 1.3 + windOffset * 0.002), billow(uv * 0.9 + windOffset * 0.0015), 0.6);
+    float n2 = billow(uv * 2.6 - windOffset * 0.003 + 7.0);
     float density = smoothstep(0.5 - cloudCover * 0.45, 0.8 - cloudCover * 0.3, n1 * 0.8 + n2 * 0.45);
     // Thickness estimate from a second lookup towards the sun: thin edges glow (silver lining),
     // thick cores stay dark (a two-tap Beer-Lambert approximation).
     vec2 toSun = normalize(sunDirection.xz + 1e-4) * 0.08;
-    float thick = fbm(uv * 1.3 + toSun + windOffset * 0.002);
+    float thick = mix(fbm(uv * 1.3 + toSun + windOffset * 0.002), billow(uv * 0.9 + toSun + windOffset * 0.0015), 0.6);
     float lightAmt = exp(-3.0 * max(0.0, thick - 0.35)) * sunUp;
     vec3 lit = mix(vec3(1.0, 0.97, 0.9), sunColor, 0.5) * (0.35 + 1.6 * lightAmt * pow(max(c, 0.0), 3.0) + 0.4 * lightAmt);
     vec3 shade = mix(skyHorizon * 0.3, vec3(0.06, 0.06, 0.065), cloudCover);
     vec3 cloud = mix(shade, lit, clamp(lightAmt * (1.0 - n2 * 0.8) * (0.4 + 0.9 * pow(max(c, 0.0), 2.0)), 0.0, 1.0));
     col = mix(col, cloud, density * smoothstep(0.0, 0.12, d.y));
+    // Low scud near the horizon: fast, dark, torn.
+    float scud = smoothstep(0.55, 0.8, fbm(vec2(d.x / (d.y + 0.05) * 0.6, d.z / (d.y + 0.05) * 0.6) + windOffset * 0.006));
+    col = mix(col, shade * 0.8, scud * cloudCover * smoothstep(0.25, 0.02, d.y) * 0.7);
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
   col += sunColor * pow(max(c, 0.0), 5.0) * 1.6 * sunUp * (0.5 + 0.5 * cloudCover);
