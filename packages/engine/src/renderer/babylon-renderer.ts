@@ -236,6 +236,12 @@ export class BabylonRenderer {
     }
   }
 
+  /** Screen position of a world point as fractions of the canvas (0..1, y down). */
+  project(x: number, y: number, z: number): { x: number; y: number } {
+    const p = Vector3.Project(new Vector3(x, y, z), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
+    return { x: p.x, y: p.y };
+  }
+
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */
   drawCalls(): number {
     return this.instrumentation.drawCallsCounter.current;

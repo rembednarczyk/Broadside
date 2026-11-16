@@ -69,3 +69,6 @@ button:disabled { opacity: 0.35; }
 .port-tabs { grid-template-columns: repeat(4, 1fr); }
 .job { left: max(12px, env(safe-area-inset-left)); top: 286px; width: 220px; font-size: 12px; }
 .offer button { width: 100%; margin-top: 6px; }
+.enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 4px #000; }
+.enemy-marker .arrow { font-size: 22px; line-height: 22px; }
+.enemy-marker small { font-size: 11px; color: #f1e3c6; }

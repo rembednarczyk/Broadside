@@ -7,6 +7,7 @@ import { readSave, writeSave } from "@broadside/persistence";
 import { type SimSnapshot } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
+import { presentMarker } from "./presenters/marker-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
@@ -148,7 +149,8 @@ const frame = (now: number) => {
   audio.setWeather(session.sim.env.windSpeed, 0.5);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
-  renderer.focus = combatFocus(session.sim, session.playerId);
+  const focus = combatFocus(session.sim, session.playerId);
+  renderer.focus = focus;
   renderer.frame(session.sim, { hours: hoursNow(), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
   frames++;
@@ -164,6 +166,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
+    marker: focus && me?.body ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z)) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

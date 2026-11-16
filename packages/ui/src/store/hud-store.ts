@@ -119,6 +119,8 @@ export interface HudState {
   readonly port: PortHud | null;
   /** The contract the player has taken. */
   readonly job: JobHud | null;
+  /** Arrow towards the nearest enemy when it is off screen or under a panel (screen fractions, radians). */
+  readonly marker: { readonly x: number; readonly y: number; readonly angle: number; readonly range: number } | null;
   readonly graphics: GraphicsHud;
   readonly settingsOpen: boolean;
   readonly hudHidden: boolean;
@@ -133,6 +135,6 @@ export interface HudState {
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);
