@@ -63,3 +63,8 @@ shaderze i w wyporze, co przekracza budżet na telefonie.
 Audyt soak pokazał, że po zatonięciu gracza gra stawała w miejscu. Wzorem Overboard! (załoga ląduje w wodzie, gra trwa)
 kapitan po zatonięciu albo utracie całej załogi trafia do najbliższego portu, który go przyjmie, na slupie z 60%
 załogi. Złoto zostaje (u agenta na lądzie), łupy w ładowni przepadają. Byt gracza zachowuje id.
+
+## 16.11 IBL pominięte (orkiestrator)
+Oświetlenie obrazem (IBL) z sondy odbić nie wchodzi: materiały statków i lądu to StandardMaterial (drewno, płótno,
+kamień, prawie bez połysku), a odbicie nieba w oceanie liczy jego własny shader z tych samych kolorów nieba. Sonda
+odbić kosztowałaby sześć dodatkowych renderów sceny na aktualizację, co przekracza budżet telefonu przy małym zysku.

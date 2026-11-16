@@ -23,7 +23,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] pogoda jako łańcuch Markowa (8 stanów), porywy, szkwały, pioruny w maszty, trąby wodne, fale olbrzymie, deszcz (gaszenie, mokry proch), mgła (zasięg wykrywania) (16.11)
 - [x] HUD: plan żagli na każdy maszt, obciążenie i ostrzeżenie, rodzaj pogody; deszcz, błyskawice, trąby w grafice; upływ pory dnia (16.11)
 - [x] komórki burzowe dryfujące z wiatrem (lokalny szkwał: mocniejszy wiatr, deszcz moczy proch i gasi pożary), kurtyny deszczu widoczne z daleka, HUD pokazuje wiatr na miejscu (16.11); fale nadal globalne
-- [ ] widok spod wody (kamera pod powierzchnią, jak w referencji)
+- [x] widok spod wody: okno Snella, promienie w toni, przejście kamery przez powierzchnię z meniskiem (16.11)
 
 ### Wygląd (referencja 16.11)
 - [x] korekcja barw, promienie słońca, chmury, mgła, iskry na wodzie, ciemne żagle (16.11)
@@ -44,7 +44,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] kadłub tnie wodę: fala dziobowa, burty, wycięcie, klin Kelvina (16.11)
 - [x] bryzgi przy uderzeniu dziobu w falę i przy dużej prędkości, z fizyki (16.11)
 - [x] wzburzone morze: widmo JONSWAP z rozbiegiem 60 km, faktura fal w skali ok. 4 m (16.11)
-- [ ] izometria: ikony celów i zasięgu dział na wodzie (łuk salwy), czytelność HUD
+- [x] izometria: znaczniki upadku salwy, oddalanie w walce, strzałka do wroga pod panelem (16.11)
 
 ### M3 świat
 - [x] generator archipelagu (Poisson disc), wyspy klifowe, piaszczyste, zalesione, mielizny, rafy; wejście na mieliznę; omijanie lądu przez AI; bezpieczny spawn (16.11)
@@ -71,7 +71,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] panel portu w zakładkach: port, amunicja, stocznia (16.11)
 
 ### M5 grafika i telefon
-- [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości
+- [x] przebieg grafiki (piana, kilwater, cienie, SSAO, bloom, mgła, promienie, rozmycie ruchu), presety i suwak rozdzielczości (16.11); IBL pominięte (decyzje)
 - [x] kompaktowy HUD na telefon w poziomie (wysokość < 500 px): bez masztów, przechyłu i pogody w panelu żeglugi, mniejsze przyciski (16.11)
 - [x] maszty osobno na telefonie: rozwijany wiersz w panelu żeglugi (16.11)
 - [x] ratunek kapitana (Overboard!): po zatonięciu albo utracie całej załogi gracz trafia do najbliższego przyjaznego portu na slupie, złoto zostaje, łupy przepadają (16.11)
