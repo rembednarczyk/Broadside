@@ -9,6 +9,14 @@ import { type SailPlan } from "./rig-plan";
  */
 const VERTS = (SAIL_COLS + 1) * (SAIL_ROWS + 1);
 
+/** Integer hash to 0..1 (Wang-style mixing): which cells of a sail are shot through first. */
+const holeHash = (plan: number, cell: number): number => {
+  let h = (plan * 374761393 + cell * 668265263) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+};
+
 export interface SailState {
   /** Rotation of the sail about its mast (radians, Babylon's rotation.y convention). */
   readonly angle: number;
@@ -34,6 +42,8 @@ export class SailCloth {
   private readonly yardPlans: { plan: SailPlan; index: number; length: number }[] = [];
   private readonly local = new Float32Array(VERTS * 3);
   private readonly yardBuf: Float32Array;
+  /** Holes shown per plan (quantised damage), to rebuild indices only when it changes. */
+  private readonly torn: number[];
 
   constructor(scene: Scene, parent: TransformNode, name: string, plans: readonly SailPlan[], materialFor: (p: SailPlan) => StandardMaterial, wood: StandardMaterial, shadows: ShadowGenerator | null) {
     const byMat = new Map<StandardMaterial, number[]>();
@@ -73,6 +83,43 @@ export class SailCloth {
       if (p.yard) this.yardPlans.push({ plan: p, index: i, length: p.shape === "square" ? p.width * 1.18 : p.width });
     });
     this.yardBuf = new Float32Array(this.yardPlans.length * 16);
+    this.torn = plans.map(() => 0);
+  }
+
+  /**
+   * Shot holes: as the canvas of a mast is shot away, cells of its sails drop out in a fixed
+   * pattern per sail (an integer hash, so the same damage always shows the same holes). The
+   * edge cells stay (the bolt ropes), so the sail keeps its outline and hangs from its yard.
+   */
+  setDamage(clothByMast: readonly number[]): void {
+    for (const g of this.groups) {
+      let dirty = false;
+      g.plans.forEach((p, k) => {
+        const level = Math.round((1 - (clothByMast[p.mast] ?? 1)) * 10);
+        if (level !== this.torn[g.indexOf[k]!]) dirty = true;
+      });
+      if (!dirty) continue;
+      const base = sailIndices();
+      const indices: number[] = [];
+      g.plans.forEach((p, k) => {
+        const plan = g.indexOf[k]!;
+        const level = Math.round((1 - (clothByMast[p.mast] ?? 1)) * 10);
+        this.torn[plan] = level;
+        const cut = level * 0.05;
+        for (let q = 0; q < SAIL_COLS * SAIL_ROWS; q++) {
+          const row = Math.floor(q / SAIL_COLS);
+          const col = q % SAIL_COLS;
+          // Bolt ropes hold the edges: holes are shot through the body of the canvas.
+          const inner = row > 0 && row < SAIL_ROWS - 1 && col > 0 && col < SAIL_COLS - 1;
+          // A hole is a cell of degenerate triangles: the index buffer keeps its length, so the
+          // mesh's draw range stays valid.
+          const hole = inner && holeHash(plan, q) < cut;
+          for (let j = 0; j < 6; j++) indices.push((hole ? base[q * 6]! : base[q * 6 + j]!) + k * VERTS);
+        }
+      });
+      g.indices.splice(0, g.indices.length, ...indices);
+      g.mesh.updateIndices(indices);
+    }
   }
 
   /** `states[i]` belongs to `plans[i]` of the constructor. */

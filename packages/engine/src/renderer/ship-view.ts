@@ -239,6 +239,7 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03 };
     });
+    this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states);
     this.masts.forEach((m, i) => m.setEnabled(s.mastHp[i]! > 0));
     if (s.crew !== this.shownCrew) {
