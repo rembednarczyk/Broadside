@@ -16,7 +16,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] działa, pociski, uszkodzenia, tonięcie, rozbitkowie, AI kapitana (16.11, d7ca7b4)
 - [x] efekty, dźwięk syntetyzowany, HUD ognia, wybór celu (16.11, 97621dd)
 - [ ] audyt bitew AI kontra AI (czas walki, zwycięzcy klas) jako `*.audit.ts`
-- [ ] wskaźnik miejsca upadku salwy na wodzie (łuk jak w Black Flag)
+- [x] znaczniki upadku salwy na wodzie (pomarańczowe: burta wycelowana, jasne: na ślepo, rosną z ładowaniem dział); kamera izometryczna oddala się w walce i celuje między statki, ujemna bliska płaszczyzna w rzucie ortogonalnym (16.11)
+- [ ] w walce izometrycznej panele HUD w rogach zasłaniają cel: wskaźnik celu za krawędzią albo przesunięcie kadru od paneli
 
 ### M2 żagle i pogoda
 - [x] pogoda jako łańcuch Markowa (8 stanów), porywy, szkwały, pioruny w maszty, trąby wodne, fale olbrzymie, deszcz (gaszenie, mokry proch), mgła (zasięg wykrywania) (16.11)

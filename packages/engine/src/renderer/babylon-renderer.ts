@@ -8,6 +8,7 @@ import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
+import { SalvoMarks } from "./salvo-marks";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
 import { IslandsView } from "./islands-view";
@@ -47,6 +48,10 @@ export class BabylonRenderer {
   private framed = false;
   private readonly effects: EffectsDirector;
   private readonly weather: WeatherView;
+  /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
+  readonly salvo: SalvoMarks;
+  /** Nearest enemy the isometric camera keeps in frame (the app sets it each frame). */
+  focus: { x: number; z: number } | null = null;
   private coast: FarCoast | null = null;
   private islands: IslandsView | null = null;
   private readonly forts: FortsView;
@@ -70,6 +75,7 @@ export class BabylonRenderer {
     this.sky = new Sky(this.scene, g.cloudOctaves);
     this.materials = createShipMaterials(this.scene);
     this.effects = new EffectsDirector(this.scene, g.particles);
+    this.salvo = new SalvoMarks(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
@@ -171,7 +177,7 @@ export class BabylonRenderer {
         // Eye in the waist, off the centreline between main and mizzen, a man's height above the
         // deck (the reference's deck shot looks up the mainmast through the shrouds).
         const deckY = h.freeboard + 1.8 - c.y;
-        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [h.beam * 0.3, deckY, -h.length * 0.16 - c.z], length: h.length }, dt);
+        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [h.beam * 0.3, deckY, -h.length * 0.16 - c.z], length: h.length, focus: this.focus }, dt);
       }
     }
     this.applyLook(look);
@@ -202,6 +208,7 @@ export class BabylonRenderer {
     this.syncShips(sim);
     this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
     this.weather.frame(sim, dt);
+    this.salvo.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
     if (this.weather.flash > 0) {
       this.ambient.intensity = 1 + this.weather.flash * 3;
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));

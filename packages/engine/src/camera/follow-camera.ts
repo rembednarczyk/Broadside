@@ -24,6 +24,8 @@ export interface ShipPose {
   /** Eye point on the quarterdeck in body space (x, y, z) for the deck camera. */
   readonly deck: readonly [number, number, number];
   readonly length: number;
+  /** Nearest enemy in a fight: the isometric view widens to keep both ships in frame. */
+  readonly focus?: { readonly x: number; readonly z: number } | null;
 }
 
 export class FollowCamera {
@@ -34,6 +36,14 @@ export class FollowCamera {
   private readonly target = new Vector3();
   /** Height of the aim point above the ship: the middle of the rig frames a ship like the reference. */
   private lift = 3;
+  /** Extra half-height of the isometric frame for a fight (smoothed). */
+  private combatHalf = 0;
+  private readonly aim = { x: 0, z: 0 };
+  /** The player's isometric zoom (wheel, pinch); the orbit radius also carries the combat pull-back. */
+  private isoZoom = 0;
+  private setRadius = -1;
+  /** Half-height of the isometric frame in metres (marks on the water scale with it). */
+  viewHalf = 60;
 
   constructor(scene: Scene, canvas: HTMLCanvasElement | null) {
     this.camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.22, 70, Vector3.Zero(), scene);
@@ -67,7 +77,24 @@ export class FollowCamera {
     if (this.mode === "isometric") {
       // Orthographic projection sized by the zoom (the orbit radius), elevation locked.
       this.camera.beta = ISO_BETA;
-      const half = this.camera.radius * 0.42;
+      // Combat framing (Black Flag pulls back in a fight): widen to hold both ships, and aim
+      // halfway between them.
+      if (this.camera.radius !== this.setRadius) this.isoZoom = this.camera.radius;
+      const base = this.isoZoom * 0.42;
+      const gap = p.focus ? Math.hypot(p.focus.x - p.x, p.focus.z - p.z) : 0;
+      const wanted = p.focus ? Math.max(0, Math.min(240, gap * 0.62 + 30) - base) : 0;
+      const k = 1 - Math.exp(-1.5 * dt);
+      this.combatHalf += (wanted - this.combatHalf) * k;
+      const share = p.focus ? 0.5 : 0;
+      this.aim.x += ((p.focus ? p.focus.x - p.x : 0) * share - this.aim.x) * k;
+      this.aim.z += ((p.focus ? p.focus.z - p.z : 0) * share - this.aim.z) * k;
+      const half = base + this.combatHalf;
+      // In an orthographic view the bottom of a wider frame comes nearer the eye than the eye's
+      // distance: a near plane behind the eye (allowed in an orthographic projection) keeps the
+      // sea in frame without moving the eye (the fog, which grows with distance, stays the same).
+      this.camera.radius = this.isoZoom;
+      this.setRadius = this.camera.radius;
+      this.viewHalf = half;
       const aspect = this.camera.getEngine().getAspectRatio(this.camera);
       this.camera.orthoTop = half;
       this.camera.orthoBottom = -half;
@@ -90,7 +117,8 @@ export class FollowCamera {
       this.camera.beta = 1.5 + Math.sin(this.drift * 0.7) * 0.03;
       this.camera.radius = p.length * 2.3;
     }
-    this.follow(p.x, p.y, p.z, dt);
+    if (this.mode === "isometric") this.follow(p.x + this.aim.x, p.y, p.z + this.aim.z, dt);
+    else this.follow(p.x, p.y, p.z, dt);
   }
 
   /** Projection and limits when the mode changes (isometric is orthographic, the rest perspective). */
@@ -100,6 +128,7 @@ export class FollowCamera {
     const iso = this.mode === "isometric";
     this.camera.mode = iso ? 1 : 0; // Camera.ORTHOGRAPHIC_CAMERA : PERSPECTIVE_CAMERA
     this.camera.upperBetaLimit = iso ? ISO_BETA : 1.78;
+    this.camera.minZ = iso ? -1500 : 0.5;
     this.camera.lowerBetaLimit = iso ? ISO_BETA : 0.35;
     if (iso) this.camera.radius = Math.max(60, length * 3.2);
     else if (this.mode === "chase") this.camera.radius = Math.max(28, length * 2.1);

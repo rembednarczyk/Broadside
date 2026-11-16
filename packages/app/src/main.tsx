@@ -145,6 +145,9 @@ const frame = (now: number) => {
     if (n) pushNotice(n);
   }
   audio.setWeather(session.sim.env.windSpeed, 0.5);
+  renderer.salvo.visible = !useHud.getState().hudHidden;
+  renderer.salvo.set(session.salvoPreview());
+  renderer.focus = session.combatFocus();
   renderer.frame(session.sim, { hours: hoursNow(), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
   frames++;
