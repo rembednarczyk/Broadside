@@ -4,12 +4,12 @@ import { rigPlan } from "../src/renderer/rig-plan";
 import { paintSail, type SailPaint } from "../src/renderer/sail-texture";
 
 describe("rig plan", () => {
-  it("splits square canvas into three tiers per square sail and keeps every sail mapped", () => {
+  it("splits square canvas into three tiers (emblems on course and topsail) and keeps every sail mapped", () => {
     for (const id of SHIP_CLASS_IDS) {
       const def = SHIP_CLASSES[id];
       const plan = rigPlan(def);
       const squares = def.masts.flatMap((m) => m.sails).filter((s) => s.rig === "square").length;
-      expect(plan.sails.filter((s) => s.shape === "square" && s.emblem).length, id).toBe(squares);
+      expect(plan.sails.filter((s) => s.shape === "square" && s.emblem).length, id).toBe(squares * 2);
       for (const s of plan.sails) {
         expect(def.masts[s.mast]!.sails[s.sail], id).toBeDefined();
         expect(s.width, id).toBeGreaterThan(0);

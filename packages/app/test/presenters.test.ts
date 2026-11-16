@@ -10,7 +10,7 @@ describe("combat presenter", () => {
     const s = new GameSession({ seed: 3 });
     const me = s.sim.byId(s.playerId)!;
     const c = presentCombat(me)!;
-    expect(c.port.count).toBe(9);
+    expect(c.port.count).toBe(me.ship!.model.guns.filter((g) => g.kind === "broadside" && g.side === "port").length);
     expect(c.port.ready).toBe(1);
     expect(c.ammo.map((a) => a.id)).toContain("chain");
     expect(c.hull).toBe(1);
