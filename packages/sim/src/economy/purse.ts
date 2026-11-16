@@ -14,7 +14,7 @@ export interface Purse {
 
 export const createPurse = (): Purse => ({ gold: 2000, plunder: 0, provisions: 30 });
 
-export const credit = (p: Purse, events: EventQueue, amount: number, reason: "prize" | "fort" | "trade" | "plunder"): void => {
+export const credit = (p: Purse, events: EventQueue, amount: number, reason: "prize" | "fort" | "trade" | "plunder" | "contract"): void => {
   if (amount <= 0) return;
   p.gold += amount;
   events.push({ type: "gold", amount, reason });

@@ -7,6 +7,7 @@ import { shipModel } from "../ship/ship-model";
 import { createBody } from "../physics/rigid-body";
 import { type Purse } from "../economy/purse";
 import { type Relations } from "@broadside/core";
+import { type Jobs } from "../economy/contracts";
 
 /**
  * Save game as a Memento (GoF): a plain JSON-able snapshot of everything that is not derived
@@ -38,6 +39,7 @@ export interface SimSnapshot {
   readonly purse: Purse;
   /** Absent in saves from before reputation (standings at the start then). */
   readonly relations?: Relations;
+  readonly jobs?: Jobs;
   readonly ships: readonly ShipSnap[];
   readonly forts: readonly { id: number; site: FortSite; state: Omit<FortState, "def" | "site"> }[];
   readonly castaways: readonly Castaway[];
@@ -55,6 +57,7 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
   env: { time: sim.env.time, windDirection: sim.env.windDirection, windSpeed: sim.env.windSpeed, seaWind: sim.env.seaWind, swell: sim.env.swell, rogue: sim.env.rogue, weatherRng: sim.env.weatherRng.state(), weather: clone(sim.env.weather) },
   purse: { ...sim.purse },
   relations: { ...sim.relations },
+  jobs: clone(sim.jobs),
   ships: sim.ships().map((e) => {
     const { model: _model, ...fields } = e.ship!;
     const b = e.body!;
@@ -87,6 +90,7 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
   sim.env.waves = seaWaves(sim.env.bands, { windSpeed: snap.env.seaWind, swell: snap.env.swell });
   Object.assign(sim.purse, snap.purse);
   if (snap.relations) Object.assign(sim.relations, snap.relations);
+  if (snap.jobs) sim.jobs.active = clone(snap.jobs.active);
   for (const s of snap.ships) {
     const model = shipModel(s.classId);
     const body = createBody(model.mass, model.inertia, s.body.pos, s.body.rot);

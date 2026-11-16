@@ -1,9 +1,26 @@
-import { SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
+import { type ContractOffer, SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
 import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
-import { type PortHud } from "@broadside/ui";
+import { type JobHud, type PortHud } from "@broadside/ui";
 
 /** The port the player lies alongside (within reach and nearly stopped), with its prices. */
 const ALONGSIDE = 180;
+
+const offerView = (sim: Simulation, o: ContractOffer | null): JobHud | null =>
+  o ? { kind: o.kind, classId: o.classId, faction: o.faction, reward: o.reward, dest: o.dest >= 0 ? (sim.ports[o.dest]?.name ?? null) : null, minutes: Math.round(o.time / 60) } : null;
+
+/** The player's active contract: where the ship it is about lies (or the port to reach). */
+export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
+  const c = sim.jobs.active;
+  if (!c) return null;
+  const base = offerView(sim, c.offer)!;
+  const t = sim.byId(c.target);
+  const b = me.body!;
+  const at = c.offer.kind === "escort" ? sim.ports[c.offer.dest] : t?.body?.pos;
+  const minutes = Math.max(0, Math.ceil((c.deadline - sim.env.time) / 60));
+  if (!at) return { ...base, minutes };
+  const bearing = ((Math.atan2(at.x - b.pos.x, at.z - b.pos.z) * 180) / Math.PI + 360) % 360;
+  return { ...base, minutes, distance: Math.hypot(at.x - b.pos.x, at.z - b.pos.z), bearing };
+};
 
 export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
   const b = me.body!;
@@ -34,6 +51,7 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
       .filter((id) => id !== def.id)
       .map((id) => ({ classId: id, cost: shipPrice(id, f) - tradeInValue(def.id, condition(s)), crew: SHIP_CLASSES[id].crew, guns: SHIP_CLASSES[id].guns.reduce((a, g) => a + (g.kind === "broadside" ? g.count * 2 : g.count), 0) })),
     refits: UPGRADE_IDS.map((id) => ({ id, cost: upgradePrice(id, def.price, f), fitted: s.upgrades.includes(id) })),
+    offer: sim.jobs.active ? null : offerView(sim, sim.contractOffer(index)),
     standings: (["crown", "republic", "empire"] as const).map((faction) => ({ faction, value: sim.relations[faction] })),
   };
 };

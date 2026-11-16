@@ -1,5 +1,6 @@
 import { type GameCommand, type PortSite, ammoPrice, crewPrice, plunderValue, priceFactor, provisionsPrice, repairBill, shipPrice, shipyardStock, tradeInValue, upgradePrice } from "@broadside/core";
 import { changeShip, condition } from "./shipyard";
+import { acceptContract } from "./contracts";
 import { type ShipEntity } from "../commands/handler";
 import { type SimContext } from "../systems/context";
 import { credit } from "./purse";
@@ -87,6 +88,9 @@ export const trade = (e: ShipEntity, cmd: Trade, ctx: SimContext): void => {
       if (pay(upgradePrice(u, s.model.def.price, factor))) s.upgrades.push(u);
       return;
     }
+    case "contract":
+      acceptContract(e, cmd.port, owner, ctx);
+      return;
     case "sellPlunder": {
       const value = plunderValue(purse.plunder, owner);
       purse.plunder = 0;

@@ -53,6 +53,11 @@ if (cam) {
     camera.radius = r;
   }, cam);
 }
+// Optional HUD clicks after the advance: SHOT_CLICK is a comma-separated list of data-testid values.
+if (process.env.SHOT_CLICK) {
+  await page.waitForTimeout(500);
+  for (const id of process.env.SHOT_CLICK.split(",")) await page.locator(`[data-testid="${id}"]`).dispatchEvent("pointerdown");
+}
 await page.waitForTimeout(3000);
 await page.screenshot({ path: join(outDir, "scene.png"), timeout: 90000 });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));

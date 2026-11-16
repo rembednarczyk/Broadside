@@ -2,6 +2,7 @@ import { type AmmoId } from "../data/ammo";
 import { type EntityId, type Side } from "../commands/commands";
 import { type Vec3 } from "../math/vec3";
 import { type Faction } from "../data/factions";
+import { type ContractKind } from "../data/contracts";
 
 /**
  * Domain events (Observer / Event Queue, "Game Programming Patterns" ch. 4 and 15): the simulation
@@ -30,11 +31,14 @@ export type DomainEvent =
   | { readonly type: "fortSilenced"; readonly fort: EntityId; readonly by: EntityId | null }
   | { readonly type: "fortCaptured"; readonly fort: EntityId; readonly by: EntityId; readonly gold: number; readonly from: Faction }
   | { readonly type: "assaultFailed"; readonly fort: EntityId; readonly by: EntityId; readonly lost: number }
-  | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" }
+  | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" | "contract" }
   | { readonly type: "tradeRefused"; readonly port: number; readonly reason: "hostile" | "far" | "gold" }
   | { readonly type: "collision"; readonly a: EntityId; readonly b: EntityId; readonly at: Vec3; readonly speed: number; readonly ram: boolean }
   | { readonly type: "grounded"; readonly ship: EntityId; readonly at: Vec3; readonly speed: number }
   | { readonly type: "weatherChanged"; readonly kind: string }
+  | { readonly type: "contractAccepted"; readonly kind: ContractKind; readonly target: EntityId }
+  | { readonly type: "contractDone"; readonly kind: ContractKind; readonly reward: number }
+  | { readonly type: "contractFailed"; readonly kind: ContractKind }
   /** The player's standing with a nation crossed the line of war (either way). */
   | { readonly type: "standingChanged"; readonly faction: Faction; readonly hostile: boolean };
 

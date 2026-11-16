@@ -5,7 +5,7 @@ import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
 import { type SimSnapshot } from "@broadside/sim";
-import { presentPort } from "./presenters/port-presenter";
+import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
@@ -63,6 +63,10 @@ const intents: UiIntents = {
     trade: (service, qty, ammo) => {
       const p = useHud.getState().port;
       if (p) session.trade(p.index, service, qty, ammo as AmmoId | undefined);
+    },
+    takeContract: () => {
+      const p = useHud.getState().port;
+      if (p) session.takeContract(p.index);
     },
     refit: (upgrade) => {
       const p = useHud.getState().port;
@@ -155,6 +159,7 @@ const frame = (now: number) => {
     combat: me ? presentCombat(me, session.sim.forts(), session.sim.ships()) : null,
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
+    job: me?.body ? presentJob(session.sim, me) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

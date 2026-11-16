@@ -62,7 +62,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] zasłona dymna (garnki za rufą, linia wzroku AI i fortów), HUD broni specjalnych (ogień grecki, rakiety), sprzedaż w porcie (16.11)
 - [x] reputacja wobec nacji (Observer zdarzeń): ostrzał, zatopienie, abordaż, zdobycie fortu; wróg mojego wroga; wojna = patrole, forty i porty wrogie, łowcy floty (16.11)
 - [x] stosunki z nacjami w panelu portu (16.11)
-- [ ] zlecenia, konwoje z eskortą
+- [x] zlecenia z portów: nagroda za pirata, eskorta kupca do innego portu, napad (porty pirackie); oferta z ziarna co 5 min, jedno naraz, termin, zapłata i dobra wola nadawcy, HUD (16.11)
+- [ ] konwoje z eskortą w ruchu reżysera
 - [x] stocznia: zakup statku z rozliczeniem starego (połowa ceny × stan), pirackie stocznie tylko małe kadłuby (16.11)
 - [x] przeróbki w stoczni: poszycie miedzią (opór ×0,9), wzmocnienia kadłuba (obrażenia ×0,8), zamki skałkowe (rozrzut ×0,6, przeładowanie ×0,9) (16.11)
 - [x] panel portu w zakładkach: port, amunicja, stocznia (16.11)

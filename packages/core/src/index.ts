@@ -21,4 +21,5 @@ export * from "./data/forts";
 export * from "./data/population";
 export * from "./data/reputation";
 export * from "./data/upgrades";
+export * from "./data/contracts";
 export * from "./economy/port-trade";

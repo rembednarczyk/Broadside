@@ -56,7 +56,7 @@ export const directPopulation = (ctx: SimContext): void => {
   let fighting = false;
   for (const e of sortedById(ctx.world.with("captain", "ship", "body"))) {
     const d = dist(e, px, pz);
-    if (d > DIRECTOR.keep && !e.ship.sinking) {
+    if (d > DIRECTOR.keep && !e.ship.sinking && e.id !== ctx.jobs.active?.target) {
       ctx.world.remove(e);
       continue;
     }

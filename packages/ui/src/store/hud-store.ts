@@ -95,12 +95,30 @@ export interface PortHud {
   readonly yard: readonly { readonly classId: string; readonly cost: number; readonly crew: number; readonly guns: number }[];
   /** Refits for the current hull: price and whether already fitted. */
   readonly refits: readonly { readonly id: string; readonly cost: number; readonly fitted: boolean }[];
+  /** The harbour master's contract (null: none, or one already taken). */
+  readonly offer: JobHud | null;
+}
+
+/** A contract: kind, the ship it is about, the pay, and where to go. */
+export interface JobHud {
+  readonly kind: string;
+  readonly classId: string;
+  readonly faction: string;
+  readonly reward: number;
+  /** Port an escort must reach. */
+  readonly dest: string | null;
+  readonly minutes: number;
+  /** Active contract only: distance and compass bearing to the ship (m, degrees). */
+  readonly distance?: number;
+  readonly bearing?: number;
 }
 
 export interface HudState {
   readonly gold: number;
   readonly provisions: number;
   readonly port: PortHud | null;
+  /** The contract the player has taken. */
+  readonly job: JobHud | null;
   readonly graphics: GraphicsHud;
   readonly settingsOpen: boolean;
   readonly hudHidden: boolean;
@@ -115,6 +133,6 @@ export interface HudState {
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

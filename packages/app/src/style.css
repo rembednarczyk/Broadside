@@ -66,3 +66,6 @@ button:disabled { opacity: 0.35; }
 .port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .port-yard small { display: block; font-size: 10px; opacity: 0.8; }
 .port-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0 6px; }
+.port-tabs { grid-template-columns: repeat(4, 1fr); }
+.job { left: max(12px, env(safe-area-inset-left)); top: 286px; width: 220px; font-size: 12px; }
+.offer button { width: 100%; margin-top: 6px; }

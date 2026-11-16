@@ -21,3 +21,4 @@ export * from "./save/snapshot";
 export * from "./combat/boarding";
 export * from "./combat/smoke";
 export * from "./economy/shipyard";
+export * from "./economy/contracts";

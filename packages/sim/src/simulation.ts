@@ -1,5 +1,7 @@
-import { portSites, type PortSite, type FortSite, type Archipelago, type WeatherKind, EventQueue, type DomainEvent, type GameCommand, type Relations, createRelations, createRng } from "@broadside/core";
+import { portSites, type PortSite, type FortSite, type Archipelago, type WeatherKind, EventQueue, type ContractOffer, type DomainEvent, type GameCommand, type Relations, createRelations, createRng } from "@broadside/core";
 import { watchReputation } from "./economy/reputation";
+import { type Jobs, offerAt } from "./economy/contracts";
+import { portOwner } from "./economy/trade";
 import { type Environment, createEnvironment, stepEnvironment } from "./environment/environment";
 import { type SimContext, type System } from "./systems/context";
 import { createSystems } from "./systems/registry";
@@ -41,6 +43,8 @@ export class Simulation {
   readonly purse: Purse = createPurse();
   /** The player's standing with each faction (moved by deeds, see economy/reputation). */
   readonly relations: Relations = createRelations();
+  /** The contract the player has taken. */
+  readonly jobs: Jobs = { active: null };
   readonly ports: readonly PortSite[];
   private pending: GameCommand[] = [];
   steps = 0;
@@ -48,7 +52,7 @@ export class Simulation {
   constructor(opts: SimulationOptions) {
     this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null);
     this.ports = opts.archipelago ? portSites(opts.archipelago) : [];
-    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations };
+    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations, jobs: this.jobs };
     watchReputation(this.world, this.events, this.relations);
   }
 
@@ -82,6 +86,12 @@ export class Simulation {
 
   forts(): Entity[] {
     return sortedById(this.world.with("fort"));
+  }
+
+  /** The contract a port offers now (it changes every contract epoch). */
+  contractOffer(port: number): ContractOffer | null {
+    const site = this.ports[port];
+    return site ? offerAt(this.ctx, port, portOwner(this.world, port, site)) : null;
   }
 
   /** Queues a command for the next step. */

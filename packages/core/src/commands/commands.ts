@@ -3,7 +3,7 @@ import { type MountKind, type ShipClassId } from "../data/ship-classes";
 import { type UpgradeId } from "../data/upgrades";
 
 /** Port services (shipyard: buy a new ship, trading the old one in). */
-export type TradeService = "ammo" | "crew" | "repair" | "provisions" | "sellPlunder" | "buyShip" | "upgrade";
+export type TradeService = "ammo" | "crew" | "repair" | "provisions" | "sellPlunder" | "buyShip" | "upgrade" | "contract";
 
 /**
  * Commands (Command pattern, GoF; "Game Programming Patterns" ch. 2): the only way a player or an

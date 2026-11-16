@@ -52,6 +52,12 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return e.ram && (e.a === playerId || e.b === playerId) ? "notice.rammed" : null;
     case "standingChanged":
       return `notice.${e.hostile ? "war" : "peace"}.${e.faction}`;
+    case "contractAccepted":
+      return "notice.contractAccepted";
+    case "contractDone":
+      return "notice.contractDone";
+    case "contractFailed":
+      return "notice.contractFailed";
     case "gold":
       return "notice.gold";
     case "tradeRefused":

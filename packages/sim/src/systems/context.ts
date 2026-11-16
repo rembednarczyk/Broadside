@@ -3,6 +3,7 @@ import { type Purse } from "../economy/purse";
 import { type Environment } from "../environment/environment";
 import { type SimWorld } from "../world/world";
 import { type IdSource } from "../world/spawn";
+import { type Jobs } from "../economy/jobs";
 
 /** What every system receives (Update Method pattern, "Game Programming Patterns" ch. 10). */
 export interface SimContext {
@@ -20,6 +21,8 @@ export interface SimContext {
   readonly traffic: boolean;
   /** The player's standing with each faction. */
   readonly relations: Relations;
+  /** The player's contract, if any. */
+  readonly jobs: Jobs;
 }
 
 export type System = (ctx: SimContext, dt: number) => void;

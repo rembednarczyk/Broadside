@@ -4,6 +4,7 @@ import { HelmPad } from "./helm-pad";
 import { SailingPanel } from "./sailing-panel";
 import { CombatPanel } from "./combat-panel";
 import { TargetPanel } from "./target-panel";
+import { JobPanel } from "./job-panel";
 import { Notices } from "./notices";
 import { SettingsPanel } from "./settings-panel";
 import { PortPanel } from "./port-panel";
@@ -30,6 +31,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       <HelmPad intents={intents.helm} />
       <CombatPanel intents={intents.combat} />
       <TargetPanel />
+      <JobPanel />
       <Notices />
       <PortPanel intents={intents.port} />
       <SettingsPanel intents={intents.settings} />

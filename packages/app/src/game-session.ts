@@ -62,6 +62,11 @@ export class GameSession {
     this.send({ type: "trade", ship: this.playerId, port, service: "buyShip", qty: 1, classId });
   }
 
+  /** Takes the contract the harbour master of a port alongside offers. */
+  takeContract(port: number): void {
+    this.send({ type: "trade", ship: this.playerId, port, service: "contract", qty: 1 });
+  }
+
   /** Has the yard of a port alongside fit a refit to the current hull. */
   refit(port: number, upgrade: UpgradeId): void {
     this.send({ type: "trade", ship: this.playerId, port, service: "upgrade", qty: 1, upgrade });

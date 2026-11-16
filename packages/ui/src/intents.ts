@@ -30,6 +30,7 @@ export interface PortIntents {
   trade(service: "ammo" | "crew" | "repair" | "provisions" | "sellPlunder", qty: number, ammo?: string): void;
   buyShip(classId: string): void;
   refit(upgrade: string): void;
+  takeContract(): void;
 }
 
 export interface SettingsIntents {

@@ -2,13 +2,15 @@ import { useState } from "react";
 import { type PortHud, useHud } from "../store/hud-store";
 import { isTextKey, text, type TextKey } from "../i18n/catalog";
 import { type PortIntents } from "../intents";
+import { JobLine } from "./job-panel";
 
 const AMMO = ["round", "heavy", "chain", "grape", "hot", "shell", "greekFire", "rocket", "smoke", "mine"] as const;
-type Tab = "services" | "shot" | "yard";
+type Tab = "services" | "shot" | "yard" | "jobs";
 const TABS: readonly { readonly id: Tab; readonly label: TextKey }[] = [
   { id: "services", label: "port.tab.services" },
   { id: "shot", label: "port.ammo" },
   { id: "yard", label: "port.tab.yard" },
+  { id: "jobs", label: "port.tab.jobs" },
 ];
 
 type Lang = "en" | "pl";
@@ -85,6 +87,12 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
           </div>
           {tab === "services" && <Services p={p} lang={lang} gold={gold} intents={intents} />}
           {tab === "shot" && <Shot lang={lang} intents={intents} />}
+          {tab === "jobs" && (p.offer ? (
+            <div className="offer">
+              <JobLine j={p.offer} lang={lang} />
+              <button onPointerDown={() => intents.takeContract()} data-testid="take-contract">{text(lang, "contract.take")} <small>{p.offer.minutes} min</small></button>
+            </div>
+          ) : <div className="label">{text(lang, "contract.none")}</div>)}
           {tab === "yard" && <Yard p={p} lang={lang} gold={gold} intents={intents} />}
         </>
       )}
