@@ -43,6 +43,14 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return "notice.struck";
     case "magazineExploded":
       return "notice.magazine";
+    case "fortSilenced":
+      return "notice.fortSilenced";
+    case "fortCaptured":
+      return e.by === playerId ? "notice.fortCaptured" : null;
+    case "assaultFailed":
+      return e.by === playerId ? "notice.assaultFailed" : null;
+    case "grounded":
+      return e.ship === playerId ? "notice.grounded" : null;
     case "weatherChanged":
       return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : null;
     default:

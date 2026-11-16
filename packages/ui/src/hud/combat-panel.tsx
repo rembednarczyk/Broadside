@@ -49,6 +49,7 @@ export const CombatPanel = ({ intents }: { intents: CombatIntents }) => {
           <button className={c.braced ? "on small" : "small"} onPointerDown={() => intents.brace()}>{t("hud.brace")}</button>
           <button className="small" disabled={c.barrels === 0} onPointerDown={() => intents.drop("fireBarrel")}>{t("hud.barrel")} <small>{c.barrels}</small></button>
           <button className="small" disabled={c.mines === 0} onPointerDown={() => intents.drop("mine")}>{t("hud.mine")} <small>{c.mines}</small></button>
+          {c.canStorm && <button className="small storm" onPointerDown={() => intents.assault()} data-testid="storm">{t("hud.storm")}</button>}
         </div>
         <div className="status">
           <span>{t("hud.hull")} {Math.round(c.hull * 100)}%</span>

@@ -57,6 +57,7 @@ const intents: UiIntents = {
     loadAmmo: (ammo) => session.loadAmmo(ammo as AmmoId),
     brace: () => session.brace(),
     drop: (kind) => session.drop(kind),
+    assault: () => session.assault(),
   },
   settings: {
     setLanguage: (language) => patchHud({ language }),
@@ -80,6 +81,7 @@ addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
 let noticeId = 0;
 const pushNotice = (key: string) => {
+  if (useHud.getState().notices.some((n) => n.key === key)) return;
   const id = ++noticeId;
   patchHud({ notices: [...useHud.getState().notices.slice(-3), { id, key }] });
   setTimeout(() => patchHud({ notices: useHud.getState().notices.filter((n) => n.id !== id) }), 3500);
@@ -114,7 +116,7 @@ const frame = (now: number) => {
     frames = 0;
   }
   const me = session.sim.byId(session.playerId);
-  patchHud({ sailing: presentSailing(session.sim, session.playerId), combat: me ? presentCombat(me) : null, target: me?.body ? presentTarget(session.sim, me) : null });
+  patchHud({ sailing: presentSailing(session.sim, session.playerId), combat: me ? presentCombat(me, session.sim.forts()) : null, target: me?.body ? presentTarget(session.sim, me) : null });
   requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);

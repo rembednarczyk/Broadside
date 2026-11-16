@@ -1,5 +1,5 @@
-import { openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
-import { STEP, Simulation, aimFor } from "@broadside/sim";
+import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, clamp, wrapAngle, yawOf } from "@broadside/core";
+import { STEP, Simulation, aimFor, aimForFort, fortToStorm } from "@broadside/sim";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -33,6 +33,7 @@ export class GameSession {
     // Opening encounter: a pirate schooner hunting, a pirate sloop, a crown frigate on patrol and
     // a republic brig the crown is at war with.
     const map = this.sim.env.archipelago!;
+    for (const site of fortSites(map)) this.sim.spawnFort(site);
     const at = (x: number, z: number) => openWater(map, x, z);
     this.sim.spawnShip({ classId: "schooner", faction: "pirates", ...at(-380, 420), heading: 2.2, speed: 3, ai: true });
     this.sim.spawnShip({ classId: "sloop", faction: "pirates", ...at(520, 650), heading: 3.6, speed: 3, ai: true });
@@ -90,8 +91,20 @@ export class GameSession {
     if (!me?.body) return;
     const arc = mount === "broadside" ? (side ?? "starboard") : mount;
     const aim = aimFor(me, this.sim.ships(), arc);
-    const range = aim?.range ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
-    this.send({ type: "fire", ship: this.playerId, mount, side, range, bearing: aim?.bearing });
+    const fort = aimForFort(me, this.sim.forts(), arc);
+    // The nearer of the best ship and the best fort in the arc.
+    const useFort = fort && (!aim || fort.range < aim.range);
+    const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
+    const bearing = useFort ? fort.bearing : aim?.bearing;
+    this.send({ type: "fire", ship: this.playerId, mount, side, range, bearing, aimHeight: useFort ? fort.aimHeight : 0 });
+  }
+
+  /** Storms the nearest silenced fort within reach, if any. */
+  assault(): void {
+    const me = this.sim.byId(this.playerId);
+    if (!me?.body) return;
+    const f = fortToStorm(me, this.sim.forts());
+    if (f) this.send({ type: "assault", ship: this.playerId, fort: f.id });
   }
 
   loadAmmo(ammo: AmmoId): void {

@@ -178,6 +178,8 @@ export interface FortSite {
   readonly faction: Faction;
   /** Port the fort guards (index into portSites), or null for a lone work. */
   readonly port: number | null;
+  /** Bearing the works face (away from the island's centre, towards the sea). */
+  readonly facing?: number;
 }
 
 /** Point on an island's land at a given bearing, a little inland from the shore. */
@@ -208,12 +210,12 @@ export const fortSites = (a: Archipelago): FortSite[] => {
     const bearing = Math.atan2(p.z - is.z, p.x - is.x) + range(rng, -0.4, 0.4);
     const site = onShore(a, is, bearing);
     const classId: FortClassId = p.faction === "pirates" ? "battery" : is.radius > 220 ? "citadel" : "starFort";
-    return { ...site, classId, faction: p.faction, port: i };
+    return { ...site, classId, faction: p.faction, port: i, facing: Math.atan2(site.x - is.x, site.z - is.z) };
   });
   for (const is of a.islands.filter((i) => i.kind === "cliff")) {
     if (rng.next() < 0.45) {
       const site = onShore(a, is, rng.next() * Math.PI * 2);
-      out.push({ ...site, classId: rng.next() < 0.6 ? "watchtower" : "battery", faction: pick(rng, ["crown", "republic", "empire", "pirates"] as const), port: null });
+      out.push({ ...site, classId: rng.next() < 0.6 ? "watchtower" : "battery", faction: pick(rng, ["crown", "republic", "empire", "pirates"] as const), port: null, facing: Math.atan2(site.x - is.x, site.z - is.z) });
     }
   }
   return out;

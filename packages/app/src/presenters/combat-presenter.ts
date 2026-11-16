@@ -1,5 +1,5 @@
 import { type MountKind, canFire, AMMO_IDS, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, type ShipState, type Simulation, aimFor } from "@broadside/sim";
+import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, fortToStorm } from "@broadside/sim";
 import { type BatteryHud, type CombatHud, type TargetHud } from "@broadside/ui";
 
 /** Reads the player's guns, stores and condition, and the current target (Presenter). */
@@ -9,7 +9,7 @@ const battery = (s: ShipState, kind: MountKind, side?: "port" | "starboard"): Ba
   return { count: idx.length, ready: idx.length ? ready / idx.length : 0 };
 };
 
-export const presentCombat = (e: Entity): CombatHud | null => {
+export const presentCombat = (e: Entity, forts: readonly Entity[] = []): CombatHud | null => {
   const s = e.ship;
   if (!s) return null;
   return {
@@ -29,6 +29,7 @@ export const presentCombat = (e: Entity): CombatHud | null => {
     crewMax: s.model.def.crew,
     fires: s.sections.filter((x) => x.fire > 0).length,
     water: s.sections.reduce((a, x) => a + x.water, 0),
+    canStorm: e.body ? fortToStorm(e, forts) !== null : false,
   };
 };
 
@@ -43,11 +44,18 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
   ];
   const aims = arcs.map((a) => aimFor(me, ships, a)).filter((a) => a !== null);
   const aim = aims.sort((a, b) => a.range - b.range)[0];
+  const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
+  const fa = fortAims[0];
+  if (fa && (!aim || fa.range < aim.range)) {
+    const f = fa.fort.fort!;
+    return { kind: "fort", classId: f.def.id, faction: f.faction, range: fa.range, hull: f.hp / f.def.hp, crew: f.garrison, struck: false, side: "ahead", guns: [f.guns.filter((g) => g >= 0).length, f.def.guns], silenced: f.silenced };
+  }
   if (!aim) return null;
   const t = aim.target.ship!;
   const rel = wrapAngle(aim.bearing - yawOf(me.body!.rot));
   const side = Math.abs(rel) < 0.6 ? "ahead" : Math.abs(rel) > Math.PI - 0.6 ? "astern" : rel > 0 ? "starboard" : "port";
   return {
+    kind: "ship",
     classId: t.model.def.id,
     faction: t.faction,
     range: aim.range,

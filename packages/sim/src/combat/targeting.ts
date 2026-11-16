@@ -1,6 +1,7 @@
 import { wrapAngle, yawOf } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { hostileTo } from "../ai/captain";
+import { isHostile, startStanding } from "@broadside/core";
 
 /**
  * Target selection for a battery (aim assist for the player, the same rule an AI gun captain
@@ -41,4 +42,40 @@ export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof A
     if (!best || range < best.range) best = { target: o, range, bearing };
   }
   return best;
+};
+
+/** A fort in a battery's arc: range, bearing and the height of its walls' middle. */
+export interface FortAim {
+  readonly fort: Entity;
+  readonly range: number;
+  readonly bearing: number;
+  readonly aimHeight: number;
+}
+
+export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof typeof ARCS): FortAim | null => {
+  const a = ARCS[arc]!;
+  const b = me.body!;
+  const heading = yawOf(b.rot);
+  let best: FortAim | null = null;
+  for (const f of forts) {
+    const st = f.fort!;
+    if (st.silenced) continue;
+    if (st.provokedBy !== me.id && !isHostile(startStanding(me.ship!.faction, st.faction))) continue;
+    const range = Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) - st.def.radius * 0.5;
+    const bearing = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
+    if (range > a.max || Math.abs(wrapAngle(bearing - heading - a.centre)) > a.half) continue;
+    if (!best || range < best.range) best = { fort: f, range, bearing, aimHeight: st.site.y + st.def.height * 0.5 };
+  }
+  return best;
+};
+
+/** The nearest silenced fort that is not ours, within reach of a landing party. */
+export const fortToStorm = (me: Entity, forts: readonly Entity[]): Entity | null => {
+  const b = me.body!;
+  for (const f of forts) {
+    const st = f.fort!;
+    if (!st.silenced || st.faction === me.ship!.faction) continue;
+    if (Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) < st.def.radius + 200) return f;
+  }
+  return null;
 };

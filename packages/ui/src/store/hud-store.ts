@@ -48,10 +48,16 @@ export interface CombatHud {
   readonly crewMax: number;
   readonly fires: number;
   readonly water: number;
+  /** A silenced enemy fort is within reach of a landing party. */
+  readonly canStorm: boolean;
 }
 
 export interface TargetHud {
+  readonly kind: "ship" | "fort";
   readonly classId: string;
+  /** Forts: guns still in action and in all. */
+  readonly guns?: readonly [number, number];
+  readonly silenced?: boolean;
   readonly faction: string;
   readonly range: number;
   readonly hull: number;

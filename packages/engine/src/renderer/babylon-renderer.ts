@@ -11,6 +11,7 @@ import { EffectsDirector } from "../effects/effects-director";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
 import { IslandsView } from "./islands-view";
+import { FortsView } from "./forts-view";
 import { type DomainEvent, rotateInv, waterHeight, yawOf } from "@broadside/core";
 
 /**
@@ -47,6 +48,7 @@ export class BabylonRenderer {
   private readonly weather: WeatherView;
   private coast: FarCoast | null = null;
   private islands: IslandsView | null = null;
+  private readonly forts: FortsView;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -70,6 +72,7 @@ export class BabylonRenderer {
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
+    this.forts = new FortsView(this.scene, this.shadows);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
   }
 
@@ -185,7 +188,7 @@ export class BabylonRenderer {
     const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.syncShips(sim);
-    this.effects.frame(sim, dt);
+    this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
     this.weather.frame(sim, dt);
     if (this.weather.flash > 0) {
       this.ambient.intensity = 1 + this.weather.flash * 3;

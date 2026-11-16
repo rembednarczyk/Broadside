@@ -20,6 +20,7 @@ export interface CombatIntents {
   loadAmmo(ammo: string): void;
   brace(): void;
   drop(kind: "fireBarrel" | "mine"): void;
+  assault(): void;
 }
 
 export interface SettingsIntents {

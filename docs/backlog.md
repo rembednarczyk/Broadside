@@ -49,7 +49,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] generator archipelagu (Poisson disc), wyspy klifowe, piaszczyste, zalesione, mielizny, rafy; wejście na mieliznę; omijanie lądu przez AI; bezpieczny spawn (16.11)
 - [x] wyspy w grafice: teren z tej samej funkcji co fizyka, drzewa, płycizny i przybój w shaderze oceanu (16.11)
 - [ ] porty: amunicja, załoga, naprawa, zapasy, handel; zapis gry
-- [ ] forty 4 klas i przejmowanie
+- [x] forty 4 klas: ostrzał, mury, uciszanie, szturm desantu, modele proceduralne, celowanie w mury, HUD szturmu (16.11)
+- [ ] wydajność świata: scalić siatki wysp w jedną, forty w jedną siatkę na fort (dziś ok. 300 wywołań w zatoce)
+- [ ] kształty wysp: grzbiety i doliny zamiast stożków (szum grzbietowy, deformacja dziedziny)
 
 ### M4 głębia
 - [ ] pełna amunicja i bronie specjalne, abordaż, taran, zaparcie, zasłona dymna

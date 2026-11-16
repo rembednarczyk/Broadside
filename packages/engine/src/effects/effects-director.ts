@@ -99,7 +99,7 @@ export class EffectsDirector {
   }
 
   /** Continuous effects read from the simulation each frame. */
-  frame(sim: Simulation, dt: number): void {
+  frame(sim: Simulation, dt: number, burning: readonly { x: number; y: number; z: number }[] = []): void {
     this.lights.update(dt);
     this.fireClock += dt;
     const emitFires = this.fireClock > 0.08;
@@ -119,6 +119,12 @@ export class EffectsDirector {
         this.flames.emit(b.pos.x + p.x, b.pos.y + p.y, b.pos.z + p.z, w.x * 0.05, 1, w.z * 0.05, n, 2);
         this.fireSmoke.emit(b.pos.x + p.x, b.pos.y + p.y + 2, b.pos.z + p.z, w.x * 0.1, 1, w.z * 0.1, Math.ceil(n / 2), 2);
       });
+    }
+    if (emitFires) {
+      for (const p of burning) {
+        this.flames.emit(p.x, p.y, p.z, w.x * 0.05, 1, w.z * 0.05, 3, 6);
+        this.fireSmoke.emit(p.x, p.y + 3, p.z, w.x * 0.1, 1, w.z * 0.1, 2, 6);
+      }
     }
     if (emitFires) for (const e of sim.world.with("spout")) this.spray.emit(e.spout.x, 1, e.spout.z, 0, 1.4, 0, 10, e.spout.radius);
     this.bowSpray(sim, dt);
