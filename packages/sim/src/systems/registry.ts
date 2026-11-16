@@ -19,6 +19,7 @@ import { collisionSystem } from "./collisions";
 import { populationSystem } from "./population";
 import { smokeSystem } from "./smoke";
 import { contractSystem } from "./contracts";
+import { rescueSystem } from "./rescue";
 
 /**
  * The only place that orders systems (ADR-0002): an explicit array, never the iteration order of
@@ -43,6 +44,7 @@ export const createSystems = (): readonly System[] => [
   castawaySystem,
   provisionsSystem,
   contractSystem,
+  rescueSystem,
   cleanupSystem,
   populationSystem,
 ];

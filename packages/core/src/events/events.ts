@@ -39,6 +39,8 @@ export type DomainEvent =
   | { readonly type: "contractAccepted"; readonly kind: ContractKind; readonly target: EntityId }
   | { readonly type: "contractDone"; readonly kind: ContractKind; readonly reward: number }
   | { readonly type: "contractFailed"; readonly kind: ContractKind }
+  /** The player's ship sank; the captain is back at a port (-1: none would have him) in a fresh hull. */
+  | { readonly type: "playerRescued"; readonly port: number }
   /** The player's standing with a nation crossed the line of war (either way). */
   | { readonly type: "standingChanged"; readonly faction: Faction; readonly hostile: boolean };
 

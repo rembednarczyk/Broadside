@@ -74,7 +74,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] przebieg grafiki (piana, kilwater, IBL, cienie, SSAO, bloom, mgła), opcje i suwak rozdzielczości
 - [x] kompaktowy HUD na telefon w poziomie (wysokość < 500 px): bez masztów, przechyłu i pogody w panelu żeglugi, mniejsze przyciski (16.11)
 - [x] maszty osobno na telefonie: rozwijany wiersz w panelu żeglugi (16.11)
-- [ ] budżety wydajności na telefonie, wydanie v1.0.0
+- [x] ratunek kapitana (Overboard!): po zatonięciu albo utracie całej załogi gracz trafia do najbliższego przyjaznego portu na slupie, złoto zostaje, łupy przepadają (16.11)
+- [x] audyt soak piaskownicy (`soak.audit.ts`): godzina gry, liczba bytów stała (ok. 40), 1,0–1,4 ms na krok symulacji (16.11)
+- [ ] budżety wydajności na prawdziwym telefonie, wydanie v1.0.0
 
 ### M6 balans
 - [ ] audyty bitew AI kontra AI, poprawki, wydanie końcowe
