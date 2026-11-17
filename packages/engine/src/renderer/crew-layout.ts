@@ -1,6 +1,8 @@
 import { type ShipModel } from "@broadside/sim";
+import { type AloftRoute, aloftRoute } from "./crew-aloft";
 import { type CastleLayout, WHEEL_ABAFT, WHEEL_REACH } from "./castle-layout";
 import { type GunPlace } from "./gun-layout";
+import { type ShroudLadder } from "./rig-layout";
 import { type SideProfile } from "./side-profile";
 
 /**
@@ -8,11 +10,12 @@ import { type SideProfile } from "./side-profile";
  * stations of a ship's company at sea: the helmsman at the wheel on the quarterdeck and the officer of the watch beside him, a lookout in
  * the maintop, men along the taffrail (the reference's stern shots show six to eight there,
  * ref_090), hands at the foot of each mast for the halyards and clewlines, hands at the braces by
- * the sides, the crews of the upper deck's guns and the rest about the waist. Stations are listed in the order
+ * the sides, a topman at each gang of shrouds that has a top above it (he goes aloft when sail is
+ * made or taken in, crew-aloft), the crews of the upper deck's guns and the rest about the waist. Stations are listed in the order
  * they are manned, so as the crew falls the waist empties first and the wheel last. Positions are
  * a man's feet in hull space; a fixed integer sequence spreads them, no random source.
  */
-export type CrewRole = "wheel" | "officer" | "lookout" | "gun" | "halyard" | "brace" | "rail" | "waist";
+export type CrewRole = "wheel" | "officer" | "lookout" | "gun" | "halyard" | "brace" | "aloft" | "rail" | "waist";
 
 export interface CrewSpot {
   readonly at: readonly [number, number, number];
@@ -21,6 +24,8 @@ export interface CrewSpot {
   readonly role: CrewRole;
   /** The mast or the gun the station belongs to (-1: none). */
   readonly of: number;
+  /** A topman's way up the shrouds to the top (role "aloft"). */
+  readonly route?: AloftRoute;
 }
 
 /** How many figures a crew is drawn with: one for every six hands, at most forty. */
@@ -35,6 +40,8 @@ export interface CrewDecks {
   readonly guns: readonly GunPlace[];
   /** The fighting tops (rig plan): height and station of each. */
   readonly tops: readonly { readonly y: number; readonly z: number }[];
+  /** The gangs of shrouds (rig-layout), for the topmen's way aloft. */
+  readonly ladders?: readonly ShroudLadder[];
 }
 
 /** Height of the deck a man stands on at a station: the castle's deck aft of its break, else the waist. */
@@ -81,6 +88,17 @@ export const modelCrewSpots = (model: ShipModel, d: CrewDecks): CrewSpot[] => {
     if (d.castle && z < d.castle.ring[d.castle.ring.length - 1]!.z) continue;
     const x = s * (d.side.halfAt(z) - 1.1);
     if (free(x, z)) push({ at: [x, deckY(d, z), z], yaw: s > 0 ? -Math.PI / 2 : Math.PI / 2, role: "brace", of: mainIndex });
+  }
+  // A topman at each gang of shrouds under a top, on deck in board of the channel, facing out.
+  for (const l of d.ladders ?? []) {
+    const mz = model.def.masts[l.mast]!.z;
+    const t = d.tops.reduce<{ y: number; z: number } | null>((best, t) => (Math.abs(t.z - mz) < 1 && (!best || t.y < best.y) ? t : best), null);
+    if (!t) continue;
+    const foot = l.shrouds[1]!.foot;
+    const x = l.side * (Math.abs(foot[0]) - 1.3);
+    const z = (foot[2] + l.shrouds[2]!.foot[2]) / 2;
+    if (!free(x, z)) continue;
+    push({ at: [x, deckY(d, z), z], yaw: l.side > 0 ? Math.PI / 2 : -Math.PI / 2, role: "aloft", of: l.mast, route: aloftRoute(l, [x, deckY(d, z), z], t.y + 0.1, t.z) });
   }
   // Gun crews: one man inboard of each broadside gun of the upper deck, facing the port; a quarter of the men at most.
   let guns = 0;

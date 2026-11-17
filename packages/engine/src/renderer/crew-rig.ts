@@ -16,6 +16,11 @@ export interface ClipRange {
   readonly to: number;
   readonly fps: number;
   readonly frames: number;
+  readonly seconds: number;
+  /** Travel of a climbing clip (crew-aloft); 0 for the others. */
+  readonly rise: number;
+  readonly advance: number;
+  readonly reach: number;
 }
 
 export class CrewRig {
@@ -44,7 +49,7 @@ export class CrewRig {
     material.specularColor.set(0.05, 0.05, 0.05);
     // Built from glTF's right-handed numbers in Babylon's left-handed frame: mirrored, so draw both faces.
     material.backFaceCulling = false;
-    for (const c of f.clips) this.clips.set(c.name, { from: c.from, to: c.from + c.frames - 1, fps: f.fps, frames: c.frames });
+    for (const c of f.clips) this.clips.set(c.name, { from: c.from, to: c.from + c.frames - 1, fps: f.fps, frames: c.frames, seconds: c.seconds, rise: c.rise ?? 0, advance: c.advance ?? 0, reach: c.reach ?? 0 });
     this.meshes = f.figures.map((fig) => {
       const mesh = new Mesh(`crew-${fig.name}`, scene);
       const data = new VertexData();

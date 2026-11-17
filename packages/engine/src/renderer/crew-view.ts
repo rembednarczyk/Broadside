@@ -1,7 +1,8 @@
 import { type Mesh, Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
-import { type CrewActivity, type CrewClipName, crewClip } from "./crew-roles";
+import { type AloftPose, type ClimbClip, aloftPose, aloftSeconds } from "./crew-aloft";
+import { type CrewActivity, type CrewClipName, crewClip, wantAloft } from "./crew-roles";
 import { type CrewSpot } from "./crew-layout";
-import { type CrewRig } from "./crew-rig";
+import { type ClipRange, type CrewRig } from "./crew-rig";
 
 /**
  * The men on one ship's deck: the stations (crew-layout), the share of them manned (the crew left
@@ -19,6 +20,9 @@ export class CrewView {
   private shown = true;
   /** Clip of every station last frame, to rewrite the instance buffers only when it changes. */
   private playing = "";
+  /** How far up the way aloft each topman is (seconds of climbing, by station), and the time of the last frame. */
+  private readonly aloft = new Map<number, number>();
+  private time = 0;
 
   constructor(private readonly plain: Mesh, private readonly parent: TransformNode) {}
 
@@ -67,29 +71,50 @@ export class CrewView {
     }
   }
 
-  /** Sets every manned station's clip from what the ship is doing (only rewritten when it changes). */
-  animate(a: CrewActivity): void {
+  /**
+   * Sets every manned station's clip from what the ship is doing (only rewritten when it changes)
+   * and moves the topmen up and down their shrouds (crew-aloft) at simulation `time`.
+   */
+  animate(a: CrewActivity, time: number): void {
     const rig = this.rig;
+    const dt = Math.max(0, Math.min(0.25, time - this.time));
+    this.time = time;
     if (!rig || this.figures.length === 0 || !this.shown) return;
-    const clips: CrewClipName[] = this.spots.slice(0, this.manned).map((s, i) => crewClip(s.role, s.of, i, a));
-    const key = clips.join(",");
+    const climb = rig.clip("climb");
+    const mount = rig.clip("mount");
+    const men = this.spots.slice(0, this.manned).map((s, i): { place: Matrix; clip: CrewClipName; frame: number } => {
+      if (s.role !== "aloft" || !s.route || !climb || !mount) return { place: place(s), clip: crewClip(s.role, s.of, i, a), frame: -1 };
+      const c = climbClip(climb);
+      const m = climbClip(mount);
+      const u = Math.max(0, Math.min(aloftSeconds(s.route, c, m), (this.aloft.get(i) ?? 0) + (wantAloft(s.of, a) ? dt : -dt)));
+      this.aloft.set(i, u);
+      const pose = aloftPose(s.route, c, m, u);
+      return { place: posed(pose), clip: pose.clip, frame: pose.clip === "idle" ? -1 : pose.frame };
+    });
+    const key = men.map((m, i) => (this.spots[i]!.role === "aloft" ? `${m.clip}${m.frame}:${(this.aloft.get(i) ?? 0).toFixed(2)}` : m.clip)).join(",");
     if (key === this.playing) return;
     this.playing = key;
     this.figures.forEach((f, k) => {
-      const mine = clips.map((c, i) => ({ c, i })).filter(({ i }) => i % this.figures.length === k);
+      const mine = men.map((m, i) => ({ ...m, i })).filter(({ i }) => i % this.figures.length === k);
       f.isVisible = mine.length > 0;
       if (mine.length === 0) return;
-      setMatrices(f, mine.map(({ i }) => place(this.spots[i]!)));
+      setMatrices(f, mine.map((m) => m.place));
       const settings = new Float32Array(mine.length * 4);
-      mine.forEach(({ c, i }, n) => {
-        const r = rig.clip(c) ?? rig.clip("idle")!;
-        // A phase per man, so the hands at one rope do not move as one.
-        settings.set([r.from, r.to, (i * 7) % r.frames, r.fps], n * 4);
+      mine.forEach(({ clip, frame, i }, n) => {
+        const r = rig.clip(clip) ?? rig.clip("idle")!;
+        // A climber's frame follows his place on the ratlines (held still, the game moves him);
+        // the rest play their loop with a phase per man, so the hands at one rope do not move as one.
+        if (frame >= 0) settings.set([r.from + frame, r.from + frame, 0, 0], n * 4);
+        else settings.set([r.from, r.to, (i * 7) % r.frames, r.fps], n * 4);
       });
       f.thinInstanceSetBuffer("bakedVertexAnimationSettingsInstanced", settings, 4, false);
     });
   }
 }
+
+const climbClip = (r: ClipRange): ClimbClip => ({ seconds: r.seconds, frames: r.frames, rise: r.rise, advance: r.advance, reach: r.reach });
+
+const posed = (p: AloftPose): Matrix => Matrix.Compose(Vector3.One(), Quaternion.RotationYawPitchRoll(p.yaw, p.lean, 0), new Vector3(...p.at));
 
 const place = (s: CrewSpot): Matrix => Matrix.Compose(Vector3.One(), Quaternion.RotationYawPitchRoll(s.yaw, 0, 0), new Vector3(...s.at));
 

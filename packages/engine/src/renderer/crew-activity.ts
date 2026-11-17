@@ -11,6 +11,7 @@ const SWING = 0.4 * (Math.PI / 180);
 export class CrewActivityTracker {
   private readonly chords: number[][];
   private readonly lastFired = new Map<number, number>();
+  private readonly lastHandled = new Map<number, number>();
   private time = 0;
   private bracing: boolean[];
 
@@ -33,10 +34,12 @@ export class CrewActivityTracker {
     }
     const handling = s.sailSet.map((set, i) => Math.abs(set - setFactor(s.sailTarget[i]!, set > 1.01)) > 0.02);
     const now = this.time;
+    handling.forEach((h, i) => h && this.lastHandled.set(i, now));
     return {
       bracing: this.bracing,
       handling,
       sinceFired: (gun) => now - (this.lastFired.get(gun) ?? -Infinity),
+      sinceHandled: (mast) => now - (this.lastHandled.get(mast) ?? -Infinity),
       beaten: s.struck || s.sinking,
     };
   }

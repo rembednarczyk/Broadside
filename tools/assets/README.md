@@ -34,6 +34,10 @@ Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-
    rozpakowanie do `.asset-cache/quaternius/` (katalogi `... [Standard]` jak w archiwach). W bazowych postaciach brakuje
    dwóch plików, do których odwołuje się glTF: skopiować `T_Eye_Normal.png` na `T_Eye_Normal_png.png` i
    `T_Hair_1_Normal.png` na `T_Hair_1_Normal_png.png` w `Base Characters/Godot - UE/`.
-2. `node tools/assets/crew-anim.mjs packages/app/public/assets/props/crew-anim.bin [trójkąty=5000] [fps=15]`:
+2. Klipy wspinaczki (Mixamo, z Drive właściciela, w `sources.txt` jako `climb_*.fbx`): `bash tools/assets/fetch.sh`, potem
+   dla każdego `node tools/assets/fbx-anim.mjs .asset-cache/drive/climb_<n>.fbx .asset-cache/drive/climb_<n>.json`
+   (`n`: ladder, rope, wall, top; FBXLoader z three.js, bez programów binarnych). Przeniesienie na szkielet postaci robi
+   `retarget.mjs` w czasie wypieku.
+3. `node tools/assets/crew-anim.mjs packages/app/public/assets/props/crew-anim.bin [trójkąty=5000] [fps=15]`:
    postacie z kośćmi, klipy wypieczone do tekstury macierzy kości, atlas tekstur (format w komentarzu skryptu).
 

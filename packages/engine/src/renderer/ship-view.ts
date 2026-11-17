@@ -12,7 +12,7 @@ import { gunPlaces } from "./gun-layout";
 import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelDecks, buildModelRails } from "./model-rails";
-import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
+import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
 import { CrewActivityTracker } from "./crew-activity";
@@ -234,7 +234,7 @@ export class ShipView {
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
       const places = gunPlaces(model, (_, z) => side.halfAt(z));
       const castle = sternCastle(side, places);
-      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops }));
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
       if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
@@ -451,7 +451,7 @@ export class ShipView {
     }
     // What the men are doing comes from what the ship is doing.
     this.activity ??= new CrewActivityTracker(s);
-    this.detail.crew.animate(this.activity.update(s, time));
+    this.detail.crew.animate(this.activity.update(s, time), time);
     this.updateFlag(aw.x, aw.z, time);
   }
 

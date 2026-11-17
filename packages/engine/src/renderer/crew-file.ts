@@ -9,6 +9,10 @@ export interface CrewClip {
   readonly from: number;
   readonly frames: number;
   readonly seconds: number;
+  /** Travel of a climbing clip (retargeted, baked in place): rise and forward over the clip, reach of the hands. */
+  readonly rise?: number;
+  readonly advance?: number;
+  readonly reach?: number;
 }
 
 export interface CrewFigureData {

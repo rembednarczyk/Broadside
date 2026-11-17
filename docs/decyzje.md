@@ -419,3 +419,21 @@ wszędzie i silny w stronę kanału. Współczynniki dobrane zrzutem: przy nocne
 i chowały kanał. Kierunek sprawdzony pomiarem jasności lewej i prawej strony kadru dla uderzeń po obu stronach.
 Uwaga do narzędzia zrzutów: `tools/shots/shot.mjs` serwuje `packages/app/dist`, więc po zmianie kodu przed zrzutem
 trzeba `pnpm build`.
+
+**17.11, wspinaczka załogi (D2 część 3; właściciel podrzucił animacje wspinania).** Cztery klipy Mixamo („Climbing
+Ladder”, „Climbing A Rope”, „Climbing Up Wall”, „Climbing To Top”) z Drive właściciela. FBX czyta `tools/assets/fbx-anim.mjs`
+(FBXLoader i AnimationMixer z three.js w Node, `three` jako zależność narzędzi); gotowy konwerter FBX2glTF z npm odpadł,
+bo to obcy program binarny. Przeniesienie na szkielet Quaterniusa (`tools/assets/retarget.mjs`): metoda „różnicy w
+układzie świata” jak `SkeletonUtils.retarget` z three.js: obrót kości źródła względem jej pozy spoczynkowej, w układzie
+świata, nakładany na pozę spoczynkową kości celu; przedtem każda kość celu obrócona tak, by w spoczynku wskazywała
+tam, gdzie kość źródła (poza T Mixamo kontra poza postaci). Skręt kości wzdłuż jej osi nie jest dopasowywany (tu
+pełne retargetery, np. HumanIK, robią więcej); na zbliżeniu niewidoczne. Układy obu szkieletów z bioder, głowy i ud,
+klip obrócony przodem do postaci w pierwszej klatce, przesunięcie bioder w skali długości nóg. Klipy zapętlone mają
+zdjęty stały przyrost wysokości (wspinaczka w miejscu), a nagłówek pliku podaje wzniesienie na cykl (drabina 0,50 m na
+0,77 s), przesunięcie i zasięg rąk; grę porusza człowieka sama (ruch korzenia sterowany przez grę, jak animacje „in
+place” w Unrealu), a klatkę klipu bierze z tej samej pozycji, więc ręce i nogi idą w takt wznoszenia, a schodzenie to
+ten sam klip wstecz. Topman przy każdej drabince want pod marsem (do 6 na galeonie), w kolejności obsadzania po
+brasach: wchodzi, gdy na jego maszcie stawia się albo zwija żagiel, zostaje na marsie 20 s po robocie, potem schodzi;
+pochylony wzdłuż wanty, przodem do masztu, ręce na wyblinkach (zasięg rąk z klipu). Klipy liny i ściany wypieczone na
+później (wejście po linie, abordaż przez burtę). Plik postaci 3,85 → 4,45 MB. W zrzutach (`shot.mjs` przewija symulację
+bez klatek renderu) pozycje topmanów ustawiane ręcznie przez `SHOT_EVAL_FIRST`.

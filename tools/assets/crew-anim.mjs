@@ -25,7 +25,8 @@
  * right, which a man does not mind; it draws both faces.
  *
  * Usage: node tools/assets/crew-anim.mjs <out.bin> [triangles=5000] [fps=15]
- * Sources: tools/assets/itch-fetch.sh into .asset-cache/quaternius (see README).
+ * Sources: tools/assets/itch-fetch.sh into .asset-cache/quaternius; the climbing clips from the owner's
+ * Drive (tools/assets/fetch.sh) sampled by fbx-anim.mjs into .asset-cache/drive/<name>.json (see README).
  */
 import { Buffer } from "node:buffer";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -34,6 +35,8 @@ import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { MeshoptSimplifier } from "meshoptimizer";
 import sharp from "sharp";
+import { apply, invert, mul, sample, trs, worldOf } from "./skeleton.mjs";
+import { retarget } from "./retarget.mjs";
 
 const [out, triangles = "5000", fpsArg = "15"] = process.argv.slice(2);
 if (!out) {
@@ -69,66 +72,16 @@ const CLIPS = [
   { name: "rail", anim: "Idle_Rail_Loop", lib: 2 },
   { name: "call", anim: "Idle_Rail_Call", lib: 2 },
   { name: "arms", anim: "Idle_FoldArms_Loop", lib: 2 },
+  // Climbing (Mixamo, from the owner's Drive; sampled by fbx-anim.mjs, retargeted by retarget.mjs):
+  // up the ratlines of the shrouds, up a rope, up a ship's side, and over the rim into a top.
+  { name: "climb", fbx: "climb_ladder", loop: true },
+  { name: "rope", fbx: "climb_rope", loop: true },
+  { name: "wall", fbx: "climb_wall", loop: true },
+  { name: "mount", fbx: "climb_top", loop: false },
 ];
+const DRIVE = ".asset-cache/drive";
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
-
-// --- 4x4 matrices, column-major as in glTF ---
-const mul = (a, b) => {
-  const o = new Array(16).fill(0);
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k];
-  return o;
-};
-const trs = (t, q, s) => {
-  const [x, y, z, w] = q;
-  return [
-    (1 - 2 * (y * y + z * z)) * s[0], 2 * (x * y + z * w) * s[0], 2 * (x * z - y * w) * s[0], 0,
-    2 * (x * y - z * w) * s[1], (1 - 2 * (x * x + z * z)) * s[1], 2 * (y * z + x * w) * s[1], 0,
-    2 * (x * z + y * w) * s[2], 2 * (y * z - x * w) * s[2], (1 - 2 * (x * x + y * y)) * s[2], 0,
-    t[0], t[1], t[2], 1,
-  ];
-};
-const apply = (m, v, w) => [0, 1, 2].map((r) => m[r] * v[0] + m[4 + r] * v[1] + m[8 + r] * v[2] + m[12 + r] * w);
-/** Inverse of an affine matrix (rotation and scale, then translation). */
-const invert = (m) => {
-  const [a, b, c, d, e, f, g, h, i] = [m[0], m[4], m[8], m[1], m[5], m[9], m[2], m[6], m[10]];
-  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-  const r = [(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det, (f * g - d * i) / det, (a * i - c * g) / det, (c * d - a * f) / det, (d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det];
-  const t = [m[12], m[13], m[14]];
-  const it = [0, 1, 2].map((k) => -(r[k * 3] * t[0] + r[k * 3 + 1] * t[1] + r[k * 3 + 2] * t[2]));
-  return [r[0], r[3], r[6], 0, r[1], r[4], r[7], 0, r[2], r[5], r[8], 0, it[0], it[1], it[2], 1];
-};
-
-/** Sample of an animation sampler at time t (linear; quaternions normalised, on the short arc). */
-const sample = (s, t, size) => {
-  const times = s.getInput().getArray();
-  const vals = s.getOutput().getArray();
-  let i = 0;
-  while (i + 1 < times.length && times[i + 1] <= t) i++;
-  const j = Math.min(times.length - 1, i + 1);
-  const f = j === i ? 0 : Math.max(0, Math.min(1, (t - times[i]) / (times[j] - times[i])));
-  const a = [...vals.slice(i * size, i * size + size)];
-  const b = [...vals.slice(j * size, j * size + size)];
-  if (size === 4 && a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] < 0) for (let k = 0; k < 4; k++) b[k] = -b[k];
-  const v = a.map((x, k) => x + (b[k] - x) * f);
-  if (size !== 4) return v;
-  const n = Math.hypot(...v);
-  return v.map((x) => x / n);
-};
-
-/** World matrix of every node of a document, with a pose (rotation and translation by node name). */
-const worldOf = (doc, pose = { rot: new Map(), pos: new Map() }) => {
-  const byName = new Map();
-  const visit = (node, parent) => {
-    const name = node.getName();
-    const m = mul(parent, trs(pose.pos.get(name) ?? node.getTranslation(), pose.rot.get(name) ?? node.getRotation(), node.getScale()));
-    byName.set(name, m);
-    for (const child of node.listChildren()) visit(child, m);
-  };
-  const identity = trs([0, 0, 0], [0, 0, 0, 1], [1, 1, 1]);
-  for (const scene of doc.getRoot().listScenes()) for (const node of scene.listChildren()) visit(node, identity);
-  return byName;
-};
 
 // --- the atlas ---
 const CELL = 512;
@@ -227,12 +180,25 @@ const hip = canonRest.get("pelvis")[13] / ualPelvis;
 // --- clips: joint matrices per frame ---
 const frames = [];
 const clips = [];
+const pushFrame = (pose) => {
+  const world = worldOf(canonDoc, pose);
+  for (let j = 0; j < canon.length; j++) frames.push(...mul(world.get(canon[j]), restInverse[j]));
+  frames.push(...trs([0, 0, 0], [0, 0, 0, 1], [1, 1, 1]));
+};
 for (const c of CLIPS) {
+  const from = frames.length / ((canon.length + 1) * 16);
+  if (c.fbx) {
+    const r = retarget(JSON.parse(readFileSync(`${DRIVE}/${c.fbx}.json`, "utf8")), canonDoc, canonRest, c.loop);
+    r.poses.forEach(pushFrame);
+    const round = (x) => Number(x.toFixed(3));
+    clips.push({ name: c.name, from, frames: r.poses.length, seconds: r.seconds, rise: round(r.rise), advance: round(r.advance), reach: round(r.reach) });
+    continue;
+  }
   const anim = (c.lib === 2 ? animDoc2 : animDoc).getRoot().listAnimations().find((a) => a.getName() === c.anim);
   if (!anim) throw new Error(`no animation ${c.anim}`);
   const length = Math.max(...anim.listSamplers().map((s) => s.getInput().getMax([])[0]));
   const count = Math.max(2, Math.round(length * FPS));
-  clips.push({ name: c.name, from: frames.length / ((canon.length + 1) * 16), frames: count, seconds: length });
+  clips.push({ name: c.name, from, frames: count, seconds: length });
   for (let f = 0; f < count; f++) {
     const t = (f / count) * length;
     const pose = { rot: new Map(), pos: new Map() };
@@ -241,9 +207,7 @@ for (const c of CLIPS) {
       if (ch.getTargetPath() === "rotation") pose.rot.set(name, sample(ch.getSampler(), t, 4));
       if (ch.getTargetPath() === "translation" && name === "pelvis") pose.pos.set(name, sample(ch.getSampler(), t, 3).map((x) => x * hip));
     }
-    const world = worldOf(canonDoc, pose);
-    for (let j = 0; j < canon.length; j++) frames.push(...mul(world.get(canon[j]), restInverse[j]));
-    frames.push(...trs([0, 0, 0], [0, 0, 0, 1], [1, 1, 1]));
+    pushFrame(pose);
   }
 }
 
