@@ -107,6 +107,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze
 
 ### M8 dopracowanie modeli i walki (plan z 17.11, po 93afbcf)
+- [ ] mniej upraszczać (właściciel, 17.11, drugi raz): działa gracza i statków w pobliżu ze skanu działka z teksturą (bez toczonej bryły, ta zostaje na dal); wrak z Uelvesbüll w pełnej siatce skanu i teksturach 2048–4096; Älvsnabben jako drugi wrak bez cięcia do budżetu; kadłuby pełne także na presecie medium; uproszczenia tylko tam, gdzie pomiar pokaże spadek płynności
 - [x] zrzut salwy burtowej z bliska: rząd błysków i dym wzdłuż burty, salwa działa (17.11); odjazdu luf i zgodności z furtami kadłuba z modelu nie widać w rozdzielczości zrzutu, do sprawdzenia na żywo
 - [ ] jasna płaszczyzna pod rufą statku przy linii wody (widoczna na zrzutach 13:00): znaleźć źródło (kilwater, piana, pokład) i naprawić
 - [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu

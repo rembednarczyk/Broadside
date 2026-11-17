@@ -167,3 +167,9 @@ Kolor własny wody to światło rozproszone pod powierzchnią, więc skaluje si�
 wysokości słońca). Wcześniej był stały i w trybie Naturalnym morze świeciło turkusem o 23:00. Tekstury kadłubów z
 modeli (ciemne, smołowane drewno) mnożone przez 1,8: przy jednym słońcu i świetle nieba bez IBL wychodziły czarne.
 Kołysanie latarni odłożone: latarnie proceduralne są ukryte przy kadłubach z modeli, zysk mały.
+
+## 17.11, użytkownik: „nie musisz aż tak upraszczać” (powtórzone)
+Zasada: model właściciela wchodzi do gry możliwie w całości, z własnymi teksturami. Upraszczam dopiero wtedy, gdy
+pomiar (audyt trójkątów, wywołań rysowania, czasu klatki) pokaże problem, i tylko w wariancie dla dali albo dla
+presetu low. Do poprawy z tej zasady: toczona lufa zamiast skanu działka, wrak przycięty do 37 tys. trójkątów i
+tekstur 1024, pominięty Älvsnabben, wariant -lite na presecie medium.
