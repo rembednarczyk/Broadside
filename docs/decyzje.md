@@ -322,3 +322,14 @@ erozja kłębami szumu 3D, 30 kroków (44 na ultra) z ditheringiem, 4 kroki ku s
 faza Henyey-Greensteina z dwóch płatów. Włączane od `cloudOctaves` 5 (high). Wynik po czterech iteracjach nie
 dorównuje klipowi (gładkie bryły), praca trwa; iteracje na pełnym zrzucie gry trwają po 3 minuty, stąd plan strony
 testowej nieba.
+
+**17.11, chmury objętościowe, część 2 (orkiestrator, za prośbą „rób 1 aż do efektu z referencji”).** Stanowisko
+`tools/sky/sky-test.mjs` renderuje sam shader nieba w ok. 2–4 s (zamiast 2–3 min zrzutu gry). Kształt kłębów: odwrócony
+szum komórkowy (Worley 1996, baza Perlin-Worley u Schneidera 2015) w trzech skalach, szukany w 8 komórkach z punktami
+w środkowych 70% komórki (różnica wobec wzorca: 8 zamiast 27 komórek, dla kosztu), dziedzina wygięta wolnym szumem,
+żeby nie było widać siatki. Szum grzbietowy z części 1 dawał włókna zamiast kłębów i został usunięty. Światło: 4 próbki
+ku słońcu (pierwsza z detalem), jedna próbka ku górze jako zacienienie zagłębień, drugi człon Beera 0,22. Warstwa
+0,9–13 jednostek. Poświata wokół słońca mnożona przez przepuszczalność chmur (była dodawana na wierzch i zmywała niebo
+pod słońce przy wichurze). Ławice mgły od deszczu: 0,08 zamiast 0,3 natężenia deszczu, mgła zostaje przy pogodzie
+mglistej. Koszt: po dodaniu szumu komórkowego zrzut 596×480 w SwiftShader przekraczał limit, po ograniczeniu próbek
+mieści się (2 min 40 s na planszę); czasu klatki na telefonie nie zmierzono.

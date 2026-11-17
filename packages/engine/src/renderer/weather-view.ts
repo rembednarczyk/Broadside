@@ -124,7 +124,7 @@ export class WeatherView {
     const wz = Math.cos(sim.env.windDirection) * sim.env.windSpeed;
     this.rain.direction1.set(wx * 0.04, -1, wz * 0.04);
     this.rain.direction2.set(wx * 0.05, -1, wz * 0.05);
-    const fogAmount = Math.max(w?.fog ?? 0, rainAmount * 0.3);
+    const fogAmount = Math.max(w?.fog ?? 0, rainAmount * 0.08);
     // Keep a target number of banks alive (top up a few per frame) rather than a rate: the fog
     // is there as soon as the weather says so, and thins as it clears.
     const target = Math.round(fogAmount * this.fogBanks.getCapacity());

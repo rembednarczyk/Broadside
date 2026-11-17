@@ -51,7 +51,7 @@ float billow(vec2 p) {
 }
 float hg(float c, float g) { return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * c, 1.5) / 12.566; }
 
-${volumetricClouds(octaves >= 6 ? 44 : 30)}
+${volumetricClouds(octaves >= 6 ? 72 : 56)}
 void main() {
   vec3 d = normalize(vDir);
   float h = max(d.y, 0.0);
@@ -61,9 +61,12 @@ void main() {
   col += sunColor * hg(c, 0.76) * 0.5 * sunUp;
   col += sunColor * pow(max(c, 0.0), 40.0) * 1.2 * sunUp;
   col += sunColor * smoothstep(0.9993, 0.9997, c) * 8.0 * sunUp * (1.0 - cloudCover * 0.6);
+  // How much of the sky behind shows through the volumetric clouds.
+  float through = 1.0;
   if (VOLUMETRIC) {
     vec4 clouds = marchClouds(d, sunUp);
     col = col * clouds.a + clouds.rgb;
+    through = clouds.a;
   } else if (d.y > 0.0) {
     vec2 uv = d.xz / (d.y + 0.12);
     float n1 = mix(fbm(uv * 1.3 + windOffset * 0.002), billow(uv * 0.9 + windOffset * 0.0015), 0.6);
@@ -93,7 +96,7 @@ void main() {
   // reference). A projected cloud plane cannot show a base, so the banks are silhouettes in
   // azimuth and elevation: a top line from noise around the horizon circle (no seam at +-pi),
   // puffed by billow noise, over a flat base just above the haze.
-  {
+  if (!VOLUMETRIC) {
     float e = asin(clamp(d.y, -1.0, 1.0));
     vec2 ring = normalize(d.xz + 1e-5);
     for (int k = 0; k < 2; k++) {
@@ -125,7 +128,7 @@ void main() {
     col = mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
-  col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 0.55 : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
+  col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 0.55 * (0.15 + 0.85 * through) : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
