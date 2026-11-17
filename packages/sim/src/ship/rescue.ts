@@ -22,15 +22,15 @@ export const rescuePlayer = (ctx: SimContext, e: Entity): void => {
   ctx.ports.forEach((p, i) => {
     const owner = portOwner(ctx.world, i, p);
     if (isHostile(standing(owner, "player", ctx.relations))) return;
-    const d = Math.hypot(p.x - b.pos.x, p.z - b.pos.z);
+    const d = Math.hypot(p.ax - b.pos.x, p.az - b.pos.z);
     if (d < bestD) {
       bestD = d;
       best = i;
     }
   });
   const site = best >= 0 ? ctx.ports[best]! : null;
-  let x = site ? site.x : 0;
-  let z = site ? site.z : 0;
+  let x = site ? site.ax : 0;
+  let z = site ? site.az : 0;
   if (ctx.env.archipelago) ({ x, z } = openWater(ctx.env.archipelago, x, z, 60));
   const model = shipModel(RESCUE.classId);
   const ship = createShipState(model, "player", 0);

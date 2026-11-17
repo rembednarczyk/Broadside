@@ -15,7 +15,8 @@ export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
   const base = offerView(sim, c.offer)!;
   const t = sim.byId(c.target);
   const b = me.body!;
-  const at = c.offer.kind === "escort" ? sim.ports[c.offer.dest] : t?.body?.pos;
+  const port = sim.ports[c.offer.dest];
+  const at = c.offer.kind === "escort" ? (port ? { x: port.ax, z: port.az } : undefined) : t?.body?.pos;
   const minutes = Math.max(0, Math.ceil((c.deadline - sim.env.time) / 60));
   if (!at) return { ...base, minutes };
   const bearing = ((Math.atan2(at.x - b.pos.x, at.z - b.pos.z) * 180) / Math.PI + 360) % 360;
@@ -25,7 +26,7 @@ export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
 export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
   const b = me.body!;
   if (Math.hypot(b.vel.x, b.vel.z) > 2) return null;
-  const index = sim.ports.findIndex((p) => Math.hypot(p.x - b.pos.x, p.z - b.pos.z) < ALONGSIDE);
+  const index = sim.ports.findIndex((p) => Math.hypot(p.ax - b.pos.x, p.az - b.pos.z) < ALONGSIDE);
   if (index < 0) return null;
   const site = sim.ports[index]!;
   const owner = portOwner(sim.world, index, site);

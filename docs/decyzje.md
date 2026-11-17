@@ -68,3 +68,11 @@ załogi. Złoto zostaje (u agenta na lądzie), łupy w ładowni przepadają. Byt
 Oświetlenie obrazem (IBL) z sondy odbić nie wchodzi: materiały statków i lądu to StandardMaterial (drewno, płótno,
 kamień, prawie bez połysku), a odbicie nieba w oceanie liczy jego własny shader z tych samych kolorów nieba. Sonda
 odbić kosztowałaby sześć dodatkowych renderów sceny na aktualizację, co przekracza budżet telefonu przy małym zysku.
+
+## 17.11 Nawigacja i kotwicowiska (orkiestrator)
+Audyt rozgrywki na autopilocie pokazał, że AI nie dopływa do portów: porty stały przy brzegu albo na mieliźnie,
+omijanie lądu proponowało kursy w linię wiatru, a rejowce próbowały zwrotu przez sztag. Zmiany: każdy port ma
+kotwicowisko (najbliższa woda głęboka na 10 m na zewnątrz od miasta, + 40 m), na nie płyną AI, eskorty i ratunek, a
+handel liczy od niego 180 m; rejowce 74° od wiatru (biegunowa: przy 60° galeon cofa się); halsy z histerezą; zwrot przez
+rufę, gdy krótsza droga prowadzi przez linię wiatru; wyciąganie kotwicą z mielizny; eskorta ma 30 min (żegluga pod
+wiatr). Znane ograniczenie: brak planowania trasy wokół wysp (backlog).

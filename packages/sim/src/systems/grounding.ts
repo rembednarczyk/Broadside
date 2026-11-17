@@ -1,8 +1,9 @@
 import { type Vec3, rotateInv, terrainHeight, vec3 } from "@broadside/core";
 import { type System } from "./context";
-import { applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
+import { type RigidBody, applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipModel } from "../ship/ship-model";
-import { sectionIndex } from "../ship/ship-state";
+import { type ShipState, crewShare, sectionIndex } from "../ship/ship-state";
+import { type SimContext } from "./context";
 
 /**
  * Running aground. Points along the keel are checked against the seabed; a point below the bed is
@@ -29,6 +30,25 @@ const keelOf = (m: ShipModel): Vec3[] => {
   return k;
 };
 
+/**
+ * Kedging off: a ship hard aground and nearly stopped has her boats carry an anchor out to deep
+ * water and the crew heave her towards it at the capstan (period seamanship). Modelled as a small
+ * pull towards the deepest water around her, scaled by the crew left aboard.
+ */
+const KEDGE_ACCEL = 0.06;
+const kedge = (a: NonNullable<SimContext["env"]["archipelago"]>, b: RigidBody, s: ShipState): void => {
+  let best = { x: 0, z: 0, depth: Infinity };
+  for (let k = 0; k < 12; k++) {
+    const ang = (k / 12) * Math.PI * 2;
+    const x = Math.sin(ang);
+    const z = Math.cos(ang);
+    const depth = terrainHeight(a, b.pos.x + x * 60, b.pos.z + z * 60);
+    if (depth < best.depth) best = { x, z, depth };
+  }
+  const pull = b.mass * KEDGE_ACCEL * Math.min(1, crewShare(s) * 1.5);
+  applyForceAt(b, vec3(best.x * pull, 0, best.z * pull), b.pos);
+};
+
 export const groundingSystem: System = (ctx, dt) => {
   const a = ctx.env.archipelago;
   if (!a) return;
@@ -37,11 +57,13 @@ export const groundingSystem: System = (ctx, dt) => {
     const s = e.ship;
     const pts = keelOf(s.model);
     const stiffness = (b.mass * 9.81 * 3) / (s.model.def.hull.draft * KEEL_POINTS);
+    let touching = false;
     for (const [i, local] of pts.entries()) {
       const wp = bodyToWorld(b, local);
       const bed = terrainHeight(a, wp.x, wp.z);
       const depth = bed - wp.y;
       if (depth <= 0) continue;
+      touching = true;
       const v = pointVelocity(b, wp);
       const up = stiffness * depth - (b.mass / KEEL_POINTS) * 2 * Math.min(0, v.y);
       applyForceAt(b, vec3(-v.x * (b.mass / KEEL_POINTS) * FRICTION, Math.max(0, up), -v.z * (b.mass / KEEL_POINTS) * FRICTION), wp);
@@ -57,5 +79,6 @@ export const groundingSystem: System = (ctx, dt) => {
         if (Math.floor(t * 4) !== Math.floor((t - dt) * 4)) ctx.events.push({ type: "grounded", ship: e.id, at: wp, speed });
       }
     }
+    if (touching && !s.sinking && Math.hypot(b.vel.x, b.vel.z) < 0.4) kedge(a, b, s);
   }
 };

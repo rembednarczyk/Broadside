@@ -76,7 +76,7 @@ describe("standing orders", () => {
     run(sim, 1);
     const c = m.captain!;
     expect(c.dest).toBeGreaterThanOrEqual(0);
-    expect(c.wx).toBe(sim.ports[c.dest]!.x);
+    expect(c.wx).toBe(sim.ports[c.dest]!.ax);
   });
 
   it("merchants run from pirates instead of fighting", () => {

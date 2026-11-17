@@ -42,11 +42,11 @@ export const acceptContract = (e: ShipEntity, port: number, owner: Faction, ctx:
     faction: offer.faction,
     x,
     z,
-    heading: dest ? Math.atan2(dest.x - x, dest.z - z) : ctx.rng.next() * Math.PI * 2,
+    heading: dest ? Math.atan2(dest.ax - x, dest.az - z) : ctx.rng.next() * Math.PI * 2,
     speed: 2,
     ai: true,
     role: offer.kind === "bounty" ? "patrol" : "trade",
-    ...(dest ? { wx: dest.x, wz: dest.z } : {}),
+    ...(dest ? { wx: dest.ax, wz: dest.az } : {}),
   });
   if (dest && t.captain) t.captain.dest = offer.dest;
   ctx.jobs.active = { offer, port, giver: owner, target: t.id, deadline: ctx.env.time + offer.time };
@@ -74,7 +74,7 @@ export const judgeContract = (ctx: SimContext): void => {
   if (c.offer.kind === "escort") {
     if (t.ship.sinking || t.ship.struck) return settle(ctx, c, false);
     const d = ctx.ports[c.offer.dest]!;
-    if (Math.hypot(t.body.pos.x - d.x, t.body.pos.z - d.z) < ARRIVED) return settle(ctx, c, true);
+    if (Math.hypot(t.body.pos.x - d.ax, t.body.pos.z - d.az) < ARRIVED) return settle(ctx, c, true);
   } else if (t.ship.sinking || t.ship.struck) return settle(ctx, c, true);
   if (ctx.env.time > c.deadline) settle(ctx, c, false);
 };

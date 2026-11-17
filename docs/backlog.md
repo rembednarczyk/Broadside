@@ -83,6 +83,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 
 ### M6 balans
 - [x] progi balansu i wydajności w ADR-0005, audyty jako bramki (`pnpm run audit`) (17.11)
+- [x] nawigacja AI: rejowce 74° od wiatru, halsy z histerezą, zwrot przez rufę, wyciąganie kotwicą z mielizny, omijanie lądu tylko kursami do żeglugi, kotwicowiska portów (17.11)
+- [x] audyt rozgrywki na autopilocie (`playtest.audit.ts`): port, zlecenie, zapłata (17.11)
+- [ ] AI bez planowania trasy wokół wysp: port za wyspą pod wiatr bywa nieosiągalny (seed 3); planer trasy (A* na siatce głębokości) 
 - [ ] wydanie końcowe po sprawdzeniu na telefonie
 - [x] fregata smuklejsza (szer. 11,4 m, zanurzenie 4,4 m, ostrzejszy dziób): 90° 9,3 kn i 135° 9,9 kn wobec galeonu 8,2 i 9,2 (16.11)
 

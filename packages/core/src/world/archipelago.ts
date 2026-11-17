@@ -133,6 +133,9 @@ export const terrainHeight = (a: Archipelago, x: number, z: number): number => {
   return h;
 };
 
+/** Depth at an anchorage (m): a liner draws about 6.5 m, plus room to swing. */
+const ANCHORAGE_DEPTH = -10;
+
 /** Port of an island (the biggest islands get one), with its owner. */
 export interface PortSite {
   readonly island: number;
@@ -140,6 +143,12 @@ export interface PortSite {
   readonly z: number;
   readonly faction: Faction;
   readonly name: string;
+  /**
+   * Anchorage: where ships lie off the port, in water deep enough for the largest hull, straight
+   * out from the landing. Ships sail for it, trade alongside it, and escorts end there.
+   */
+  readonly ax: number;
+  readonly az: number;
 }
 
 const PORT_NAMES = ["Port Saint-Ange", "Fort Royal", "Puerto Viejo", "Cala Negra", "Tortue", "Kingsbay", "San Lázaro", "Isla Brava", "Redwater", "Mercy Harbour", "Haven of Thieves", "Santa Clara"];
@@ -153,7 +162,13 @@ export const portSites = (a: Archipelago): PortSite[] => {
     .map((is, i) => {
       const ang = rng.next() * Math.PI * 2;
       const r = is.radius + is.shoal * 0.4;
-      return { island: is.id, x: is.x + Math.cos(ang) * r, z: is.z + Math.sin(ang) * r, faction: owners[i % owners.length]!, name: PORT_NAMES[i % PORT_NAMES.length]! };
+      const x = is.x + Math.cos(ang) * r;
+      const z = is.z + Math.sin(ang) * r;
+      // Walk out from the landing until the bed is deep enough for a ship of the line, then a margin.
+      let d = 0;
+      while (d < 700 && terrainHeight(a, x + Math.cos(ang) * d, z + Math.sin(ang) * d) > ANCHORAGE_DEPTH) d += 20;
+      d += 40;
+      return { island: is.id, x, z, faction: owners[i % owners.length]!, name: PORT_NAMES[i % PORT_NAMES.length]!, ax: x + Math.cos(ang) * d, az: z + Math.sin(ang) * d };
     });
 };
 

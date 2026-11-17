@@ -27,7 +27,7 @@ export const CONTRACT_EPOCH = 300;
 
 const KINDS: Readonly<Record<ContractKind, { readonly classes: readonly ShipClassId[]; readonly rewardPerCrew: number; readonly time: number }>> = {
   bounty: { classes: ["sloop", "schooner", "brig", "frigate"], rewardPerCrew: 22, time: 900 },
-  escort: { classes: ["sloop", "schooner", "brig", "galleon"], rewardPerCrew: 14, time: 1200 },
+  escort: { classes: ["sloop", "schooner", "brig", "galleon"], rewardPerCrew: 14, time: 1800 },
   raid: { classes: ["sloop", "schooner", "brig", "galleon"], rewardPerCrew: 12, time: 900 },
 };
 

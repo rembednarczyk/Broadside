@@ -16,7 +16,7 @@ const friendly = ports.findIndex((p) => p.faction !== "pirates");
 
 const alongside = (sim: Simulation, port: number) => {
   const p = ports[port]!;
-  const e = sim.spawnShip({ classId: "brig", faction: "player", x: p.x, z: p.z, heading: 0, player: true });
+  const e = sim.spawnShip({ classId: "brig", faction: "player", x: p.ax, z: p.az, heading: 0, player: true });
   sim.command({ type: "sails", ship: e.id, mast: "all", level: 0 });
   return e;
 };
@@ -38,7 +38,7 @@ describe("ports", () => {
   it("refuses a ship far from the quay", () => {
     const sim = new Simulation({ seed: 2, windDirection: 0, windSpeed: 0, archipelago });
     const p = ports[friendly]!;
-    const e = sim.spawnShip({ classId: "brig", faction: "player", x: p.x + 600, z: p.z, heading: 0, player: true });
+    const e = sim.spawnShip({ classId: "brig", faction: "player", x: p.ax + 600, z: p.az, heading: 0, player: true });
     sim.command({ type: "trade", ship: e.id, port: friendly, service: "crew", qty: 5 });
     expect(run(sim, 0.1).some((x) => x.type === "tradeRefused")).toBe(true);
   });

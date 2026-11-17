@@ -9,7 +9,7 @@ const moored = (pirateHaven = false) => {
   const sim = new Simulation({ seed: 5, windDirection: 0, windSpeed: 6, archipelago: map });
   const index = sim.ports.findIndex((p, i) => (portOwner(sim.world, i, p) === "pirates") === pirateHaven);
   const site = sim.ports[index]!;
-  const me = sim.spawnShip({ classId: "frigate", faction: "player", x: site.x, z: site.z, heading: 0, player: true });
+  const me = sim.spawnShip({ classId: "frigate", faction: "player", x: site.ax, z: site.az, heading: 0, player: true });
   return { sim, me, index, owner: portOwner(sim.world, index, site) };
 };
 const take = (sim: Simulation, ship: number, port: number) => {

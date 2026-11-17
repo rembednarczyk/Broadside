@@ -29,7 +29,7 @@ export const trade = (e: ShipEntity, cmd: Trade, ctx: SimContext): void => {
   const purse = ctx.purse;
   if (!site || !purse) return;
   const b = e.body;
-  if (Math.hypot(b.pos.x - site.x, b.pos.z - site.z) > ALONGSIDE || Math.hypot(b.vel.x, b.vel.z) > MAX_SPEED) return refuse(ctx, cmd.port, "far");
+  if (Math.hypot(b.pos.x - site.ax, b.pos.z - site.az) > ALONGSIDE || Math.hypot(b.vel.x, b.vel.z) > MAX_SPEED) return refuse(ctx, cmd.port, "far");
   const owner = portOwner(ctx.world, cmd.port, site);
   const factor = owner === e.ship.faction ? 0.7 : priceFactor(owner, e.ship.faction, ctx.relations);
   if (factor === null) return refuse(ctx, cmd.port, "hostile");

@@ -8,7 +8,7 @@ const moored = () => {
   const sim = new Simulation({ seed: 5, windDirection: 0, windSpeed: 0, archipelago: map });
   const index = sim.ports.findIndex((p, i) => portOwner(sim.world, i, p) !== "pirates");
   const site = sim.ports[index]!;
-  const me = sim.spawnShip({ classId: "brig", faction: "player", x: site.x, z: site.z, heading: 0, player: true });
+  const me = sim.spawnShip({ classId: "brig", faction: "player", x: site.ax, z: site.az, heading: 0, player: true });
   return { sim, me, index };
 };
 
