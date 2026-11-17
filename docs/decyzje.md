@@ -494,3 +494,10 @@ JDK 21 z systemu. Maven Central nie oddaje Gradle'owi części plików z tej sie
 `-I tools/android/maven-mirror.gradle` (bez zmian w globalnej konfiguracji Gradle). Numer wersji 1000 + liczba
 commitów w obu miejscach (CI miało numer przebiegu Actions): APK z sesji i z CI instalują się jeden na drugim jako
 aktualizacje, kolejność wyznacza historia gałęzi.
+
+**17.11, galeria rufowa (C4).** Pawęż kasztelu dostała rząd okien galerii co 1,05 m (wcześniej dwa okna co 2,4 m jak
+na burtach), pilastry między nimi z listwą nad oknami i otwartą galerię: podłoga na poziomie podłogi kasztelu,
+wysunięta 0,75 m za pawęż, balustrada 0,85 m z tych samych tralek co na pokładzie kasztelu (wzór rufy okrętu z XVII
+i XVIII w., Chapman, „Architectura Navalis Mercatoria”, 1768). Galeria, pilastry i listwa scalone w jedną siatkę,
+tralki dopisane do instancji kasztelu: +2 wywołania rysowania na statek z modelu. Plansza `stern-castle` pokazuje,
+że pawęż referencji jest szersza i wyższa niż nasza (kadłub modelu zwęża się ku linii wody): osobna pozycja.
