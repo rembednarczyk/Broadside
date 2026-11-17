@@ -1,5 +1,6 @@
 import { type ShipModel } from "@broadside/sim";
 import { beamAt, deckAt } from "./hull-stations";
+import { type RigPlan } from "./rig-plan";
 import { type SideProfile } from "./side-profile";
 
 /**
@@ -58,4 +59,57 @@ export const shroudLadders = (model: ShipModel, side: SideProfile | null = null)
     }
   });
   return ladders;
+};
+
+/** A corner of a sail on its grid: the foot (clews) or the head (yardarms), at the first or last column. */
+export interface SailCorner {
+  readonly plan: number;
+  readonly row: "foot" | "head";
+  readonly col: "first" | "last";
+}
+
+/**
+ * A line of the running rigging: from a corner of a sail to another sail's corner, or to a point
+ * of the hull (for which `aside` says how far off the centre line it is made fast, on the side
+ * the corner is on at the moment: yards are braced round, so the side is not fixed).
+ */
+export interface RunningLine {
+  readonly kind: "sheet" | "brace";
+  readonly from: SailCorner;
+  readonly to: SailCorner | { readonly aside: number; readonly y: number; readonly z: number };
+}
+
+/**
+ * Sheets and braces as a square rigger leads them: the clews of a course are sheeted to the ship's
+ * side abaft the sail, those of a topsail or topgallant to the yardarms below; every yard has a
+ * brace from each arm, led aft to the next mast (from the aftermost mast, to the quarters). A gaff
+ * sail has its sheet from the boom end to the stern, a jib from its clew to the deck by the mast.
+ */
+export const runningRigging = (plan: RigPlan, hull: { length: number; beam: number; freeboard: number }): RunningLine[] => {
+  const lines: RunningLine[] = [];
+  const rail = hull.freeboard + 0.9;
+  const groups = new Map<string, number[]>();
+  plan.sails.forEach((s, i) => {
+    if (s.shape === "square") groups.set(`${s.mast}:${s.nodeZ}`, [...(groups.get(`${s.mast}:${s.nodeZ}`) ?? []), i]);
+  });
+  const mastZs = plan.mastTops.map((t) => t.z);
+  for (const tiers of groups.values()) {
+    tiers.sort((p, q) => plan.sails[p]!.foot - plan.sails[q]!.foot);
+    tiers.forEach((i, j) => {
+      const s = plan.sails[i]!;
+      const yardY = s.foot + s.height;
+      // The mast next abaft this sail takes its braces.
+      const abaft = mastZs.filter((z) => z < s.nodeZ - 1).sort((p, q) => q - p)[0];
+      for (const col of ["first", "last"] as const) {
+        const below = tiers[j - 1];
+        lines.push({ kind: "sheet", from: { plan: i, row: "foot", col }, to: below === undefined ? { aside: hull.beam * 0.44, y: rail, z: s.nodeZ - Math.min(3, hull.length * 0.08) } : { plan: below, row: "head", col } });
+        lines.push({ kind: "brace", from: { plan: i, row: "head", col }, to: abaft === undefined ? { aside: hull.beam * 0.42, y: rail, z: -hull.length * 0.44 } : { aside: 0, y: yardY * 0.86, z: abaft } });
+      }
+    });
+  }
+  plan.sails.forEach((s, i) => {
+    if (s.shape === "gaff") lines.push({ kind: "sheet", from: { plan: i, row: "foot", col: "last" }, to: { aside: 0, y: rail, z: Math.min(s.nodeZ - s.width * 0.8, -hull.length * 0.4) } });
+    if (s.shape === "jib") lines.push({ kind: "sheet", from: { plan: i, row: "foot", col: "last" }, to: { aside: hull.beam * 0.3, y: rail, z: mastZs[s.mast]! - 1 } });
+  });
+  return lines;
 };

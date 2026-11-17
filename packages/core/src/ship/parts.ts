@@ -4,11 +4,12 @@
  * place ("yard:1:2" is the third yard of the second mast, "shroud:0:port:3" the fourth port shroud
  * of the foremast), an anchor point in hull space and the part that carries it. With that a ship
  * can be checked by rule instead of by eye (`auditParts`): nothing hangs in the air, every shroud
- * has its channel, every gun its carriage, every mast is stayed on both sides.
+ * has its channel, every gun its carriage, every mast is stayed on both sides, every sail has
+ * its sheet and every yard its braces.
  *
  * The structure is a tree by `on` (Composite, GoF: parts carried by parts down to the hull).
  */
-export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag"] as const;
+export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag", "sheet", "brace"] as const;
 export type PartKind = (typeof PART_KINDS)[number];
 
 export interface ShipPart {
@@ -39,9 +40,11 @@ export const CARRIERS: Readonly<Record<PartKind, readonly PartKind[]>> = {
   gun: ["carriage", "rail"],
   carriage: ["deck"],
   flag: ["mast"],
+  sheet: ["sail"],
+  brace: ["yard"],
 };
 
-export type PartFaultKind = "duplicate" | "orphan" | "wrongCarrier" | "outside" | "unstayed" | "noShrouds" | "noHull";
+export type PartFaultKind = "duplicate" | "orphan" | "wrongCarrier" | "outside" | "unstayed" | "noShrouds" | "noHull" | "noSheet" | "noBraces";
 
 export interface PartFault {
   readonly fault: PartFaultKind;
@@ -65,7 +68,8 @@ export interface PartBounds {
  * - wrongCarrier: the carrier is of a kind that cannot carry this part;
  * - outside: the anchor lies outside the ship (beyond the bowsprit's reach, off the beam, under
  *   the keel, above the mastheads);
- * - unstayed: a mast with no stay; noShrouds: a mast without shrouds on both sides.
+ * - unstayed: a mast with no stay; noShrouds: a mast without shrouds on both sides;
+ * - noSheet: a sail with no sheet to trim it; noBraces: a yard without a brace to each arm.
  */
 export const auditParts = (parts: readonly ShipPart[], b: PartBounds): PartFault[] => {
   const faults: PartFault[] = [];
@@ -92,5 +96,7 @@ export const auditParts = (parts: readonly ShipPart[], b: PartBounds): PartFault
     const rigged = [...sides].filter((s) => parts.some((p) => p.kind === "shroud" && p.on === partId("channel", m.id.split(":")[1]!, s)));
     if (rigged.length < 2) faults.push({ fault: "noShrouds", part: m.id });
   }
+  for (const s of parts.filter((p) => p.kind === "sail")) if (!parts.some((p) => p.kind === "sheet" && p.on === s.id)) faults.push({ fault: "noSheet", part: s.id });
+  for (const y of parts.filter((p) => p.kind === "yard")) if (parts.filter((p) => p.kind === "brace" && p.on === y.id).length < 2 && !y.id.startsWith("yard:gaff")) faults.push({ fault: "noBraces", part: y.id });
   return faults;
 };

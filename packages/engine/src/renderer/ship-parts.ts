@@ -2,7 +2,7 @@ import { type PartBounds, type ShipPart, partId } from "@broadside/core";
 import { type ShipModel } from "@broadside/sim";
 import { deckAt } from "./hull-stations";
 import { type RigPlan } from "./rig-plan";
-import { shroudLadders, stayEnds } from "./rig-layout";
+import { runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { type SideProfile } from "./side-profile";
 
 /**
@@ -29,10 +29,18 @@ export const listShipParts = (model: ShipModel, plan: RigPlan, side: SideProfile
   plan.sails.forEach((s, i) => {
     const mast = partId("mast", s.mast);
     // A square tier hangs from its own yard; fore-and-aft canvas is bent to its mast, a jib runs on the bowsprit.
-    if (s.yard) parts.push({ id: partId("yard", i), kind: "yard", at: [0, s.foot + s.height, s.nodeZ], on: mast });
-    parts.push({ id: partId("sail", i), kind: "sail", at: [0, s.foot + s.height / 2, s.nodeZ], on: s.yard ? partId("yard", i) : s.shape === "jib" ? "bowsprit" : mast });
+    // (A gaff is named apart: it is peaked by halyards, not braced.)
+    const yard = s.shape === "gaff" ? partId("yard", "gaff", i) : partId("yard", i);
+    if (s.yard) parts.push({ id: yard, kind: "yard", at: [0, s.foot + s.height, s.nodeZ], on: mast });
+    parts.push({ id: partId("sail", i), kind: "sail", at: [0, s.foot + s.height / 2, s.nodeZ], on: s.yard ? yard : s.shape === "jib" ? "bowsprit" : mast });
   });
   stayEnds(plan.mastTops, plan.bowspritEnd, h).forEach((e, i) => parts.push({ id: partId("stay", i), kind: "stay", at: e.a, on: partId("mast", e.from) }));
+  runningRigging(plan, h).forEach((l, i) => {
+    const s = plan.sails[l.from.plan]!;
+    // Anchored where the line is made fast (a hull point), or at the sail it comes from.
+    const at: [number, number, number] = "plan" in l.to ? [0, s.foot + (l.from.row === "head" ? s.height : 0), s.nodeZ] : [l.to.aside, l.to.y, l.to.z];
+    parts.push({ id: partId(l.kind, i), kind: l.kind, at, on: l.kind === "sheet" ? partId("sail", l.from.plan) : partId("yard", l.from.plan) });
+  });
   for (const l of shroudLadders(model, side)) {
     const channel = partId("channel", l.mast, sideName(l.side));
     const mid = l.shrouds[0]!.foot;

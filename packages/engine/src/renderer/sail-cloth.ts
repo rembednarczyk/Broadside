@@ -49,6 +49,9 @@ export class SailCloth {
   /** Cloth simulation per plan, made when the ship first comes close (sail-sim). */
   private readonly sims: (SailSim | null)[];
   private simulated = false;
+  /** Where each plan's vertices lie (group and offset), and whether it was drawn last frame. */
+  private readonly where: { group: Group; offset: number }[] = [];
+  private shown: boolean[] = [];
   /** Holes shown per plan (quantised damage), to rebuild indices only when it changes. */
   private readonly torn: number[];
 
@@ -80,7 +83,9 @@ export class SailCloth {
       mesh.parent = parent;
       mesh.alwaysSelectAsActiveMesh = true;
       shadows?.addShadowCaster(mesh);
-      this.groups.push({ mesh, plans: idx.map((i) => plans[i]!), indexOf: idx, positions, normals: new Float32Array(positions.length), indices });
+      const group: Group = { mesh, plans: idx.map((i) => plans[i]!), indexOf: idx, positions, normals: new Float32Array(positions.length), indices };
+      this.groups.push(group);
+      idx.forEach((planIndex, k) => (this.where[planIndex] = { group, offset: k * VERTS * 3 }));
     }
     this.yards = MeshBuilder.CreateCylinder(`${name}-yards`, { height: 1, diameter: 1, tessellation: 6 }, scene);
     this.yards.material = wood;
@@ -131,12 +136,24 @@ export class SailCloth {
   }
 
   /**
+   * A corner of a sail as it was last drawn, in hull space: a clew (foot) or a yardarm (head), at
+   * the first or last column of its grid. Null while the sail is not spread.
+   */
+  corner(plan: number, row: "foot" | "head", col: "first" | "last"): [number, number, number] | null {
+    const w = this.where[plan];
+    if (!w || !this.shown[plan]) return null;
+    const i = w.offset + ((row === "head" ? SAIL_ROWS : 0) * (SAIL_COLS + 1) + (col === "last" ? SAIL_COLS : 0)) * 3;
+    return [w.group.positions[i]!, w.group.positions[i + 1]!, w.group.positions[i + 2]!];
+  }
+
+  /**
    * `states[i]` belongs to `plans[i]` of the constructor; `bends[mast]` carries the canvas with its mast.
    * `cloth`: simulate the canvas as fabric (close ships) with the frame's `dt` and the apparent
    * `wind` speed; otherwise the sail takes its analytic shape (distant ships).
    */
   update(states: readonly SailState[], bends: readonly MastBend[] = [], time = 0, cloth: { dt: number; wind: number } | null = null): void {
     // Coming close, the cloth starts from the flat sail and fills within a second.
+    this.shown = states.map((s) => s.visible);
     const starting = cloth !== null && !this.simulated;
     this.simulated = cloth !== null;
     for (const g of this.groups) {

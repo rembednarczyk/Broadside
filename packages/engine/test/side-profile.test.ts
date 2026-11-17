@@ -30,4 +30,17 @@ describe("side profile of a modelled hull", () => {
     expect(posts.some((q) => Math.abs(q.z - p.zOf(5)) < 1e-9)).toBe(false);
     expect(p.railRuns(-1).runs[0]![0]![0]).toBeLessThan(0);
   });
+
+  it("decks over the castles the cut left open, and nothing else", () => {
+    // Cut at 12: the castles (top 12) were sliced, the waist (8) was not.
+    const cut = new SideProfile({ half, top, cut: 12 }, fit);
+    const caps = cut.deckCaps();
+    expect(caps).toHaveLength(2);
+    expect(caps[0]![0]!.z).toBeCloseTo(cut.zOf(0));
+    // A bulwark's height below the top of the side (12 * 0.5 - 2 = 4), just inside the planking.
+    expect(caps[0]![0]!.y).toBeCloseTo(4 - 0.95);
+    expect(caps[0]![0]!.half).toBeCloseTo(3 * 0.97);
+    expect(caps.flat().every((s) => Math.abs(s.z) > 3)).toBe(true);
+    expect(p.deckCaps()).toHaveLength(0);
+  });
 });

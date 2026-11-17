@@ -8,6 +8,8 @@
 export interface SideProfileData {
   readonly half: readonly number[];
   readonly top: readonly number[];
+  /** Height at which the model was cut (model units): a side that reaches it was sliced through. */
+  readonly cut?: number;
 }
 
 /** The fit of the model to the physics hull (HullModels.instantiate): scales and the keel's depth. */
@@ -31,11 +33,13 @@ export class SideProfile {
   private readonly top: number[];
   /** The bulwark's top as measured, before smoothing (hull space, metres). */
   private readonly rawTop: number[];
+  private readonly cutTop: number;
 
   constructor(data: SideProfileData, private readonly fit: HullFit) {
     this.half = data.half.map((_, k) => median(data.half, k, 3) * fit.kx);
     this.top = data.top.map((_, k) => median(data.top, k, 2) * fit.ky - fit.draft);
     this.rawTop = data.top.map((y) => y * fit.ky - fit.draft);
+    this.cutTop = data.cut === undefined ? Infinity : data.cut * fit.ky - fit.draft;
   }
 
   get stations(): number {
@@ -59,6 +63,26 @@ export class SideProfile {
   /** Height of the bulwark's top at z (hull space, metres above the waterline). */
   topAt(z: number): number {
     return this.top[this.station(z)]!;
+  }
+
+  /**
+   * Decks the model lost to the cut: where the side stands right up to the height the model was
+   * cut at, the cut went through a castle and left it open from above. Each run of such stations
+   * is closed with a deck a bulwark's height below the top: strips of [half-breadth, y, z].
+   */
+  deckCaps(bulwark = 0.95): { half: number; y: number; z: number }[][] {
+    const caps: { half: number; y: number; z: number }[][] = [];
+    let run: { half: number; y: number; z: number }[] = [];
+    for (let k = 0; k < this.stations; k++) {
+      // Within a twentieth of the hull's height of the cut (the measured tops are ragged).
+      const sliced = this.half[k]! > 0.3 && this.top[k]! >= this.cutTop - 0.06 * (this.cutTop + this.fit.draft);
+      if (sliced) run.push({ half: this.half[k]! * 0.97, y: this.top[k]! - bulwark, z: this.zOf(k) });
+      if ((!sliced || k === this.stations - 1) && run.length > 0) {
+        if (run.length > 1) caps.push(run);
+        run = [];
+      }
+    }
+    return caps;
   }
 
   /**

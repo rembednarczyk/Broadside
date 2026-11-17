@@ -323,7 +323,7 @@ for (const c of config.filter((x) => !only || x.class === only)) {
   const pct = (v, q) => (v.length ? v.sort((a, b) => a - b)[Math.min(v.length - 1, Math.floor(v.length * q))] : 0);
   const halfAt = xs.map((v) => +pct(v, 0.85).toFixed(3));
   const topAt = pts.map((v, k) => +pct(v.filter(([x]) => x >= halfAt[k] * 0.85).map(([, y]) => y), 0.98).toFixed(3));
-  const metrics = { beam: +(hullMax[0] - hullMin[0]).toFixed(3), length: +L0.toFixed(3), gunwale: +gunwale.toFixed(3), ...(c.gain ? { gain: c.gain } : {}), profile: { half: halfAt, top: topAt } };
+  const metrics = { beam: +(hullMax[0] - hullMin[0]).toFixed(3), length: +L0.toFixed(3), gunwale: +gunwale.toFixed(3), ...(c.gain ? { gain: c.gain } : {}), height: +hullMax[1].toFixed(3), profile: { half: halfAt, top: topAt } };
   writeFileSync(join(outDir, `${c.class}.json`), JSON.stringify(metrics) + "\n");
   const L = hullMax[2] - hullMin[2];
   console.log(`${c.class} <- ${c.source}: length ${L.toFixed(2)}, beam ${(hullMax[0] - hullMin[0]).toFixed(2)}, height ${(hullMax[1] - hullMin[1]).toFixed(2)}, gunwale ${gunwale.toFixed(2)}, bow at ${bowAtMin ? "min" : "max"} (ends ${lowBack.toFixed(2)}/${lowFront.toFixed(2)}); rigging remnants removed: ${remnantParts} parts, ${remnants} triangles`);

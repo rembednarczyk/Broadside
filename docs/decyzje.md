@@ -260,3 +260,11 @@ rei i rogi szotowe; gaflowy do masztu, gafla i bomu; kliwer do sztagu i szotu. K
 wzdłuż. Przeszycia: sztywność zginania wzdłuż szwu, na refbantach i obszyciu 1,5e-5 m/N wobec 6e-3 dla gładkiego
 płótna, masa większa o 25%. Pominięte względem publikacji: kolizje własne i z osprzętem. Symulowane tylko statki
 bliżej niż 220 m, dalsze mają kształt analityczny.
+
+## 17.11 Pokład kasztelu i liny ruchome (uwaga właściciela i kolejka)
+Kasztel: `hull-cut` zapisuje wysokość cięcia; `SideProfile.deckCaps` uznaje przekrój za przecięty, gdy burta sięga
+cięcia z tolerancją 6% wysokości kadłuba, i daje pas pokładu 0,95 m poniżej góry burty (`buildModelDecks`). To łata
+na otwartą skorupę; pełny kasztel jak w referencji jest osobną pozycją. Liny ruchome: układ w `runningRigging`
+(42 liny na galeonie), końce brane z rogów siatki żagla po symulacji (`SailCloth.corner`), punkt na kadłubie po tej
+stronie, po której jest róg (reje się brasuje), zwis 0,6–5,6% rozpiętości z wypełnienia żagla. Gafel nazywany
+`yard:gaff:i`, bez brasów (trzymają go fały).

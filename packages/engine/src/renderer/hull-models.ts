@@ -21,6 +21,8 @@ interface HullMetrics {
   readonly gain?: number;
   /** The side in stations along the length (side-profile); older metrics have none. */
   readonly profile?: SideProfileData;
+  /** Height of the cut hull (model units). */
+  readonly height?: number;
 }
 
 /** Brightness of the hull textures: the models' timber is far darker than the generated hulls. */
@@ -86,7 +88,7 @@ export class HullModels {
   profile(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }): SideProfile | null {
     const m = this.loaded.get(id);
     if (!m?.metrics.profile) return null;
-    return new SideProfile(m.metrics.profile, { ...fitOf(m.metrics, hull), draft: hull.draft, length: m.metrics.length });
+    return new SideProfile({ ...m.metrics.profile, cut: m.metrics.height }, { ...fitOf(m.metrics, hull), draft: hull.draft, length: m.metrics.length });
   }
 
   /**

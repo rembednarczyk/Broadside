@@ -6,8 +6,8 @@ import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
-import { buildModelRails } from "./model-rails";
-import { stayEnds } from "./rig-layout";
+import { buildModelDecks, buildModelRails } from "./model-rails";
+import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
@@ -180,9 +180,11 @@ export class ShipView {
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
     this.clothNear = d < CLOTH_SIM;
+    this.running.tubes.mesh.setEnabled(d < FINE_DETAIL);
   }
   private shownCrew = -1;
   private clothNear = false;
+  private running!: { lines: RunningLine[]; tubes: RopeTubes };
   private springs!: MastSprings;
   private stays!: { mesh: LinesMesh; tubes: RopeTubes; ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] };
   private flagMast = 0;
@@ -208,7 +210,10 @@ export class ShipView {
     // The measured side of a modelled hull: shrouds, channels and the rail are fitted to it.
     const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
-    if (side) buildModelRails(scene, hullSpace, side, mats.wood, shadows);
+    if (side) {
+      buildModelRails(scene, hullSpace, side, mats.wood, shadows);
+      buildModelDecks(scene, hullSpace, side, mats.deck);
+    }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
     this.modelled = hullMeshes !== null;
@@ -305,6 +310,9 @@ export class ShipView {
     this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem, mats.sailSize), mats.wood, shadows);
     this.springs = new MastSprings(plan.mastTops.map((t, i) => ({ base: t.y - model.def.masts[i]!.height, height: model.def.masts[i]!.height })));
     this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model);
+    // Sheets and braces: thin laid rope from the sails' corners (close ships only).
+    const lines = runningRigging(plan, model.def.hull);
+    this.running = { lines, tubes: new RopeTubes(scene, parent, `running-ropes-${this.entityId}`, lines.length, 6, 0.02) };
   }
 
   /** Fore-and-aft stays between mast heads and to the bowsprit, and backstays to the rail. */
@@ -344,6 +352,23 @@ export class ShipView {
   gunFired(at: { readonly x: number; readonly y: number; readonly z: number }): void {
     const local = Vector3.TransformCoordinates(new Vector3(at.x, at.y, at.z), this.root.computeWorldMatrix(true).clone().invert());
     this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z);
+  }
+
+  /**
+   * Sheets and braces follow the corners of the sails they belong to; a line sags when its sail
+   * hardly draws and comes taut as the sail fills. A sail that is not spread draws its lines in.
+   */
+  private updateRunning(fill: (plan: number) => number): void {
+    const paths = this.running.lines.map((l) => {
+      const a = this.cloth.corner(l.from.plan, l.from.row, l.from.col);
+      const end = "plan" in l.to ? this.cloth.corner(l.to.plan, l.to.row, l.to.col) : null;
+      // A hull point lies on the side its corner is on now (yards are braced round).
+      const b: [number, number, number] | null = "plan" in l.to ? end : [(a && a[0] < 0 ? -1 : 1) * l.to.aside, l.to.y, l.to.z];
+      if (!a || !b) return sagLine(b ?? a ?? [0, 0, 0], b ?? a ?? [0, 0, 0], 0, 5);
+      const span = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      return sagLine(a, b, span * (0.006 + 0.05 * (1 - Math.min(1, fill(l.from.plan)))), 5);
+    });
+    this.running.tubes.update(paths);
   }
 
   private buildFlag(scene: Scene, mat: StandardMaterial): { mesh: Mesh; positions: Float32Array } {
@@ -388,6 +413,7 @@ export class ShipView {
     this.guns.update(dt);
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
+    this.updateRunning((plan) => s.sailFill[this.plans[plan]!.mast]![this.plans[plan]!.sail]!);
     this.masts.forEach((m, i) => {
       m.mesh.setEnabled(s.mastHp[i]! > 0);
       const bend = bends[i];
