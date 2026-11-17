@@ -94,25 +94,24 @@ export class HullModels {
   }
 
   /**
-   * The model's own planking as a tiling texture for walls the game builds on the hull: `u` repeats
-   * every `across` metres of wall and `v` spans `up` metres (the wall's UVs), mirrored at the joins.
+   * The model's own planking as a tiling texture (mirrored at the joins) with the size in metres of
+   * one repeat on the fitted hull, for walls the game builds on the hull strake by strake.
    */
-  planks(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }, across: number, up: number): Texture | null {
+  planks(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }): { texture: Texture; w: number; h: number } | null {
     const m = this.loaded.get(id);
     const patch = m?.metrics.patches?.planks;
     if (!m || !patch) return null;
-    const cached = this.plankTextures.get(id);
-    if (cached) return cached;
     const { kx, ky } = fitOf(m.metrics, hull);
-    const t = new Texture(assetUrl(`${this.baseUrl}${id}-planks.jpg`), this.scene);
-    t.uScale = across / (patch.w * kx);
-    t.vScale = up / (patch.h * ky);
-    t.wrapU = Texture.MIRROR_ADDRESSMODE;
-    t.wrapV = Texture.MIRROR_ADDRESSMODE;
-    // The baked patch is already lit by its own texture; a flat wall in full sun needs far less lift than the hull.
-    t.level = Math.min(1.4, (m.metrics.gain ?? HULL_GAIN) * 0.35);
-    this.plankTextures.set(id, t);
-    return t;
+    let t = this.plankTextures.get(id);
+    if (!t) {
+      t = new Texture(assetUrl(`${this.baseUrl}${id}-planks.jpg`), this.scene);
+      t.wrapU = Texture.MIRROR_ADDRESSMODE;
+      t.wrapV = Texture.MIRROR_ADDRESSMODE;
+      // A wall in the open takes the light full on; the hull's own gain would wash it out.
+      t.level = Math.min(1, (m.metrics.gain ?? HULL_GAIN) * 0.22);
+      this.plankTextures.set(id, t);
+    }
+    return { texture: t, w: patch.w * kx, h: patch.h * ky };
   }
 
   /** The side of the class's model fitted to the physics hull, for the game's own fittings; null without one. */

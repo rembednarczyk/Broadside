@@ -6,7 +6,7 @@ import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
-import { CASTLE_WALL, sternCastle } from "./castle-layout";
+import { sternCastle } from "./castle-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelDecks, buildModelRails } from "./model-rails";
 import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
@@ -154,6 +154,7 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
     if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 3 * k;
     // Lanterns are lit at dusk: by day the glass only catches a little light.
     if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * k), 1.1 * (0.18 + 0.82 * k), 0.55 * (0.18 + 0.82 * k));
+    if (m.name === "castle-glass") m.emissiveColor.set(1.1 * k, 0.72 * k, 0.32 * k);
     if ((m.name.startsWith("castle")) && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * k;
   }
 };
@@ -219,7 +220,7 @@ export class ShipView {
       buildModelDecks(scene, hullSpace, side, mats.deck);
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
       const castle = sternCastle(side);
-      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull, 5, CASTLE_WALL) ?? null, model.def.id);
+      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;

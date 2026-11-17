@@ -290,3 +290,10 @@ Stare kłęby brały się z emitera plusków (duże, rosnące cząstki). Nowy em
 lekko ku rufie, tempo min(90, 1,1·v²) kropel na sekundę i punkt, razy do 7 przy uderzeniu dziobu w falę. Shader
 oceanu dostaje długość kadłuba rysowanego (model dopasowany do klasy), a obniżenie morza pod kadłubem wynosi 3,2 m w
 szerszym obrysie, żeby grzbiet fali nie wchodził do wnętrza.
+
+## 17.11 Kasztel z klepek (uwaga właściciela: nie rozciągać jednej tekstury)
+Ściana kasztelu to osobne klepki: liczba pasów = wysokość / 0,3 m, dół pasa wysunięty 3,5 cm po normalnej ściany
+(zakładka, linia cienia). UV każdego pasa: skala fizyczna wycinka poszycia modelu (szerokość i wysokość z metryk),
+przesunięcie w poziomie i pas w pionie z funkcji mieszającej numer pasa i ściany, więc pasy się nie powtarzają.
+Okna jako geometria (rama z 4 belek, szprosy w krzyż, szyba `castle-glass` z emisją sterowaną porą dnia), listwy jako
+rurki. Poziom tekstury 0,22 jasności kadłuba, barwa (0,95, 0,72, 0,52).
