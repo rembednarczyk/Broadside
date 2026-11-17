@@ -33,6 +33,6 @@ for (const f of FILES) cpSync(join(pub, f), join(out, f));
 for (const f of MODELS) writeFileSync(join(out, `${f}.json`), JSON.stringify({ base64: readFileSync(join(pub, f)).toString("base64") }));
 cpSync(join(app, "dist-viewer/viewer.js"), join(out, "viewer.js"));
 const css = readFileSync(join(app, "dist-viewer/viewer.css"), "utf8");
-writeFileSync(join(out, "index.html"), readFileSync(join(here, "page.html"), "utf8").replace("/*VIEWER_CSS*/", () => css));
+writeFileSync(join(out, "index.html"), readFileSync(join(here, "page.html"), "utf8").replace("/*VIEWER_CSS*/", () => css).replace("/*MODELS*/[]", () => JSON.stringify(MODELS)));
 writeFileSync(join(out, "files.json"), JSON.stringify(["viewer.js", ...MODELS.map((f) => `${f}.json`), ...FILES]));
 console.log(`packed ${out}: index.html, viewer.js, ${MODELS.length} models, ${FILES.length} files`);
