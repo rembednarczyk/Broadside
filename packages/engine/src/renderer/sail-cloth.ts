@@ -1,4 +1,4 @@
-import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
+import { Color3, Matrix, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
 import { SAIL_COLS, SAIL_ROWS, YARD_CLEAR, foreSide, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
 import { type SailPlan } from "./rig-plan";
 import { type MastBend, bendShare, flutterOffset } from "./rig-motion";
@@ -29,7 +29,16 @@ export interface SailState {
   readonly visible: boolean;
   /** 0..1 how hard the canvas shakes (luffing, see rig-motion). */
   readonly flutter: number;
+  /** 0..1 how much of the canvas is furled on its yard (0 when the yard is gone with its mast). */
+  readonly furled?: number;
 }
+
+/**
+ * Diameter of a square sail's furled bundle on its yard: canvas rolled up and stopped with
+ * gaskets on top of the yard, a bundle growing with the share furled and the cloth's area (a
+ * course of about 110 m² makes a roll of some 0.55 m).
+ */
+export const furlDiameter = (p: SailPlan, furled: number): number => (furled <= 0.02 ? 0 : furled * Math.min(0.7, 0.12 + Math.sqrt(p.width * p.height) * 0.04));
 
 interface Group {
   readonly mesh: Mesh;
@@ -46,6 +55,9 @@ export class SailCloth {
   private readonly yardPlans: { plan: SailPlan; index: number; length: number }[] = [];
   private readonly local = new Float32Array(VERTS * 3);
   private readonly yardBuf: Float32Array;
+  /** Furled canvas on the square yards (thin instances, one per yard). */
+  private readonly furls: Mesh;
+  private readonly furlBuf: Float32Array;
   /** Cloth simulation per plan, made when the ship first comes close (sail-sim). */
   private readonly sims: (SailSim | null)[];
   private simulated = false;
@@ -95,6 +107,12 @@ export class SailCloth {
       if (p.yard) this.yardPlans.push({ plan: p, index: i, length: p.shape === "square" ? p.width * 1.18 : p.width });
     });
     this.yardBuf = new Float32Array(this.yardPlans.length * 16);
+    this.furls = MeshBuilder.CreateCapsule(`${name}-furls`, { height: 1, radius: 0.5, tessellation: 8, subdivisions: 1 }, scene);
+    this.furls.material = furledCanvas(scene);
+    this.furls.parent = parent;
+    this.furls.alwaysSelectAsActiveMesh = true;
+    shadows?.addShadowCaster(this.furls);
+    this.furlBuf = new Float32Array(this.yardPlans.length * 16);
     this.torn = plans.map(() => 0);
     this.sims = plans.map(() => null);
   }
@@ -211,7 +229,23 @@ export class SailCloth {
       }
       const d = st.visible || p.shape === "square" ? 0.12 + p.width * 0.012 : 0;
       Matrix.Compose(new Vector3(d, y.length, d), rot, pos).copyToArray(this.yardBuf, k * 16);
+      // The furled canvas sits on top of the yard, a little short of its arms.
+      const f = p.shape === "square" ? furlDiameter(p, st.furled ?? 0) : 0;
+      Matrix.Compose(new Vector3(f, p.width * 0.94, f), rot, pos.add(new Vector3(0, (d + f) * 0.45, 0))).copyToArray(this.furlBuf, k * 16);
     });
-    if (this.yardPlans.length) this.yards.thinInstanceSetBuffer("matrix", this.yardBuf, 16, false);
+    if (this.yardPlans.length) {
+      this.yards.thinInstanceSetBuffer("matrix", this.yardBuf, 16, false);
+      this.furls.thinInstanceSetBuffer("matrix", this.furlBuf, 16, false);
+    }
   }
 }
+
+/** Weathered canvas, plain (a furled roll shows no cloths or emblem), shared by every ship. */
+const furledCanvas = (scene: Scene): StandardMaterial => {
+  const cached = scene.getMaterialByName("furled-canvas");
+  if (cached) return cached as StandardMaterial;
+  const m = new StandardMaterial("furled-canvas", scene);
+  m.diffuseColor = new Color3(0.42, 0.38, 0.31);
+  m.specularColor = new Color3(0.03, 0.03, 0.03);
+  return m;
+};

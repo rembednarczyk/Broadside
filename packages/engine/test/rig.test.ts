@@ -1,3 +1,4 @@
+import { furlDiameter } from "../src/renderer/sail-cloth";
 import { describe, expect, it } from "vitest";
 import { SHIP_CLASSES, SHIP_CLASS_IDS } from "@broadside/core";
 import { rigPlan } from "../src/renderer/rig-plan";
@@ -59,5 +60,17 @@ describe("sail texture", () => {
     for (const [, y] of cuts) expect(y!).toBeGreaterThan(512 * 0.85);
     // Some tears run well up from the edge.
     expect(Math.min(...cuts.map((c) => c[1]!))).toBeLessThan(512 * 0.95);
+  });
+});
+
+describe("furled canvas", () => {
+  it("rolls up on the yard in a bundle that grows with the share furled and the sail's size", () => {
+    const course = { width: 14, height: 8 } as Parameters<typeof furlDiameter>[0];
+    const topgallant = { width: 7, height: 3.5 } as Parameters<typeof furlDiameter>[0];
+    expect(furlDiameter(course, 0)).toBe(0);
+    expect(furlDiameter(course, 1)).toBeGreaterThan(0.45);
+    expect(furlDiameter(course, 1)).toBeLessThanOrEqual(0.7);
+    expect(furlDiameter(course, 0.5)).toBeLessThan(furlDiameter(course, 1));
+    expect(furlDiameter(topgallant, 1)).toBeLessThan(furlDiameter(course, 1));
   });
 });

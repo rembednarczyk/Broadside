@@ -458,3 +458,9 @@ rodzaje `lift` i `clewline`, reguła audytu `noLifts`. Płótno: lik dolny wyci�
 wysokości i trzy rozdarcia 5–13% wysokości, dwa przy rogach szotowych), z ziarnem tkaniny; materiał żagla przechodzi
 na test alfa, więc cień ma ten sam kształt. Postrzępienie jest jednakowe na wszystkich statkach (zużycie płótna);
 dziury po kulach dalej zależą od uszkodzeń masztu.
+
+**17.11, zwinięte żagle (C4).** Płótno zwiniętego żagla rejowego znikało i reje były gołe. Teraz leży na rei jako
+wałek (instancje jednej kapsuły na statek, jedno wywołanie rysowania): średnica rośnie z zwiniętą częścią i z
+pierwiastkiem powierzchni żagla (ok. 0,55 m dla grota 14 × 8 m, najwyżej 0,7 m), długość 0,94 szerokości żagla,
+na wierzchu rei; materiał gładkiego płótna bez szwów i godła. Częściowo postawiony żagiel ma wałek z części zwiniętej.
+Żagle skośne i sztaksle bez wałka (gafel i bom zwijane do masztu, sztaksle opuszczane na sztag: do zrobienia).

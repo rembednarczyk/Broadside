@@ -428,7 +428,7 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter };
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0 };
     });
     const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
