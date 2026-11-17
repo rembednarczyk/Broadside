@@ -96,17 +96,27 @@ describe("sailcloth simulation", () => {
   it("is cheap enough for a ship's suit of sails every frame", () => {
     const s = new SailSim(square);
     for (let i = 0; i < 120; i++) s.advance(1 / 60, 1, 1, 10, 0);
-    // Ten seconds of one sail, timed as the best of ten batches: the minimum is the measure that
-    // the load of the machine does not move (the mean failed on a shared CI runner busy with the
-    // other test files, at 0.86 ms; the best batch here is about 0.15 ms). Under a millisecond a frame leaves room
-    // for a dozen sails.
-    let best = Infinity;
-    for (let batch = 0; batch < 10; batch++) {
-      const t0 = performance.now();
+    // Cost of a step in units of a fixed piece of arithmetic timed on the same machine, each as the
+    // best of ten batches: a budget in milliseconds measures the machine (a shared CI runner took
+    // 0.83 ms where the development container took 0.15), a ratio measures the algorithm.
+    const bestOf = (work: () => void): number => {
+      let best = Infinity;
+      for (let batch = 0; batch < 10; batch++) {
+        const t0 = performance.now();
+        work();
+        best = Math.min(best, performance.now() - t0);
+      }
+      return best;
+    };
+    const scratch = new Float32Array(4096);
+    const unit = bestOf(() => {
+      for (let pass = 0; pass < 100; pass++) for (let i = 0; i < scratch.length; i++) scratch[i] = Math.sqrt(scratch[i]! * 0.5 + i);
+    });
+    const step = bestOf(() => {
       for (let i = 0; i < 60; i++) s.advance(1 / 60, 1, 1, 10, 0.2);
-      best = Math.min(best, (performance.now() - t0) / 60);
-    }
-    expect(best).toBeLessThan(0.8);
+    }) / 60;
+    // About 0.19 where it was written; the limit catches a step that has grown two and a half times.
+    expect(step / unit).toBeLessThan(0.5);
   });
 
   it("stands for the fore-and-aft shapes too", () => {

@@ -4,7 +4,9 @@ export default defineConfig({
   test: {
     include: ["packages/*/test/**/*.test.{ts,tsx}", "tools/*/test/**/*.test.ts"],
     environment: "node",
-    testTimeout: 20_000,
+    // Whole voyages and fights are simulated; a shared CI runner takes three to five times the
+    // development container's time for them (7 s here was over 20 s there).
+    testTimeout: 60_000,
     coverage: {
       provider: "v8",
       include: ["packages/*/src/**/*.{ts,tsx}"],
