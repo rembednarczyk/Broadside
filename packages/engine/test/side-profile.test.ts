@@ -50,8 +50,11 @@ describe("side profile of a modelled hull", () => {
     const castle = sternCastle(cut)!;
     // From the transom (half a station abaft station 0) forward to the break, inside the planking.
     expect(castle.ring[0]!.z).toBeCloseTo(cut.zOf(0) - 0.625);
-    expect(castle.ring.every((r) => r.z < 0 && r.half < 3)).toBe(true);
-    expect(castle.top - castle.base).toBeCloseTo(2.5);
+    expect(castle.ring.every((r) => r.z < 0 && r.half > 3 && r.half < 3.1)).toBe(true);
+    // A quarter of the length (20 m): from the transom to about 5 m abaft midships.
+    expect(castle.ring[castle.ring.length - 1]!.z).toBeLessThan(-4);
+    expect(castle.ring[castle.ring.length - 1]!.z).toBeGreaterThan(-6.5);
+    expect(castle.top - castle.base).toBeCloseTo(2.2);
     expect(castle.base).toBeCloseTo(4 - 0.95);
     expect(castle.lanterns).toHaveLength(3);
     expect(castle.lanterns.every((l) => l[1] > castle.top + 1 && l[2] === castle.ring[0]!.z)).toBe(true);

@@ -1,4 +1,4 @@
-import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, type StandardMaterial, type TransformNode, Vector3, VertexData } from "../babylon";
+import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, StandardMaterial, type TransformNode, Vector3, VertexData } from "../babylon";
 import { BALUSTRADE, type CastleLayout } from "./castle-layout";
 
 /**
@@ -18,7 +18,12 @@ export interface CastleMaterials {
 const openCastle = (scene: Scene, castle: StandardMaterial): StandardMaterial => {
   const cached = scene.getMaterialByName("castle-open");
   if (cached) return cached as StandardMaterial;
-  const m = castle.clone("castle-open");
+  // A new material on the same textures (cloning would copy the painted textures as blanks).
+  const m = new StandardMaterial("castle-open", scene);
+  m.diffuseTexture = castle.diffuseTexture;
+  m.emissiveTexture = castle.emissiveTexture;
+  m.emissiveColor = castle.emissiveColor.clone();
+  m.specularColor = castle.specularColor.clone();
   m.backFaceCulling = false;
   m.twoSidedLighting = true;
   return m;
