@@ -105,3 +105,10 @@ Tylko widok (symulacja trzyma maszty sztywne, determinizm bez zmian). Ugięcie: 
 w sile), rysowane jako odchylenie wokół stopy masztu, ok. 2,5° przy obciążeniu 1. Łopot: fala biegnąca od liku
 przedniego do tylnego, gdy wypełnienie żagla < 0,35, oraz drganie liku powyżej 9 m/s wiatru. Sztagi: parabola jako
 przybliżenie łańcuchowej, zwis 2,6% rozpiętości luźnej liny, 0,4% pod pełnym obciążeniem.
+
+## 17.11 Doktryny i taktyki (orkiestrator)
+Doktryny narodowe jako tabela (`core/data/doctrines.ts`): Korona = szkoła brytyjska (0,75 zasięgu, kadłub, nawietrzna,
+ostrzał wzdłuż), Republika = francuska (olinowanie łańcuchową do okaleczenia, potem kadłub), Cesarstwo = hiszpańska
+(abordaż przy przewadze 1,25), piraci (bliska walka, abordaż przy 1,1). Ostrzał wzdłuż kadłuba: obrażenia kadłuba
++50%, straty w załodze 2,5 raza. Poza skutecznym zasięgiem pościg dziobem z działami pościgowymi. Bramka ADR-0005 dla
+równych kadłubów zmieniona: wynik 3:0 dozwolony, walkower nie (zwycięzca traci co najmniej 15% załogi albo 10% kadłuba).

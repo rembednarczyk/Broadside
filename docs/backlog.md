@@ -94,7 +94,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] kadłuby z modeli: fregata (Baron Anders von Höpken 1759), bryg (Dutch ship) (17.11)
 - [ ] okręt liniowy (szkielet 1700 ma dziury w poszyciu: sprawdzić albo trójpokładowiec 1660); armaty i działka z modeli; wraki na mieliznach
 - [ ] tekstury z tych samych źródeł co podrcr albo z modeli
-- [ ] taktyki z epoki w AI: linia bojowa, przejęcie nawietrznej (weather gauge), ostrzał przez rufę (raking: crossing the T), strzelanie na przechyle w kadłub albo w olinowanie (szkoła brytyjska kontra francuska), abordaż po uciszeniu
+- [x] taktyki z epoki w AI (doktryny jako dane): nawietrzna, ostrzał wzdłuż kadłuba (obrażenia +50%, straty w załodze x2,5), pościg dziobem z działami pościgowymi, szkoła brytyjska (kadłub z bliska) i francuska (olinowanie łańcuchową, potem kadłub), abordaż według doktryny (17.11); audyt: 16 z 18 bitew rozstrzygniętych; do zrobienia: linia bojowa grup
 - [x] fizyka strzału: odrzut z realnego pędu armaty przechyla statek o 1,5–2,5° na przeciwną burtę (test), dym prochowy większy i dryfuje z wiatrem (17.11); do zrobienia: odjazd lawet przy strzale
 - [x] ruchome elementy: ugięcie masztów (tłumiony oscylator od obciążenia masztu, żagle, reje, flaga i sztagi idą z masztem), łopot żagli bez wiatru i drganie liku w silnym wietrze, sztagi zwisają luźne i prostują się pod obciążeniem (17.11); do zrobienia: wanty i ratliny za masztem, kołysanie latarni
 - [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze

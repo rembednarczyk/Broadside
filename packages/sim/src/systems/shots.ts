@@ -1,4 +1,4 @@
-import { AMMO, stepShot, terrainHeight, vec3, waterHeight } from "@broadside/core";
+import { AMMO, rotate, stepShot, terrainHeight, vec3, waterHeight } from "@broadside/core";
 import { type System } from "./context";
 import { type Entity } from "../world/components";
 import { segmentHit, rigBox, type RigBox } from "../combat/hit-test";
@@ -42,7 +42,14 @@ const tryShips = (ctx: Parameters<System>[0], shot: Entity, ships: Entity[]): bo
   const speed = Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz);
   const blast = AMMO[sh.ammo].blast;
   if (blast > 0) applyBlast(ctx.world, ctx.events, at, blast, sh.ammo, sh.owner, ctx.rng);
-  else applyImpact(ctx.world, ctx.events, best.e, { ammo: sh.ammo, mass: sh.mass, speed, by: sh.owner, local: best.local, world: at, where: best.where }, ctx.rng);
+  else {
+    // How nearly the ball ran along the target's keel line (1: straight through stern or bow).
+    const fwd = rotate(best.e.body!.rot, vec3(0, 0, 1));
+    const horiz = Math.hypot(sh.s.vx, sh.s.vz) || 1;
+    const along = Math.abs((sh.s.vx * fwd.x + sh.s.vz * fwd.z) / horiz);
+    const raking = Math.max(0, Math.min(1, (along - 0.75) / 0.25));
+    applyImpact(ctx.world, ctx.events, best.e, { ammo: sh.ammo, mass: sh.mass, speed, by: sh.owner, local: best.local, world: at, where: best.where, raking }, ctx.rng);
+  }
   return true;
 };
 

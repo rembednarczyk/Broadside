@@ -19,6 +19,8 @@ export interface Impact {
   readonly local: Vec3;
   readonly world: Vec3;
   readonly where: "hull" | "rig";
+  /** 0..1 how nearly along the target's length the ball travelled (raking fire through bow or stern). */
+  readonly raking?: number;
 }
 
 const zoneOf = (s: ShipState, z: number): 0 | 1 | 2 => {
@@ -76,11 +78,19 @@ const rigHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQ
   return a.sails >= a.rigging ? "sails" : "rigging";
 };
 
+/** Extra hull damage and extra casualties (share of those of an ordinary hit) of a full rake. */
+const RAKE_HULL = 0.5;
+const RAKE_CREW = 1.5;
+
 export const applyImpact = (world: SimWorld, events: EventQueue, e: Entity, imp: Impact, rng: Rng): void => {
   const s = e.ship!;
-  const dmg = impactEnergy(imp.mass, imp.speed) * DAMAGE_PER_JOULE * (s.braced > 0 ? 0.8 : 1);
+  // Raking fire: a ball through the stern or bow runs the length of the gun deck (the most feared
+  // shot of the age of sail), so a hull hit along the length does more harm, most of it to the crew.
+  const rake = imp.where === "hull" ? (imp.raking ?? 0) : 0;
+  const dmg = impactEnergy(imp.mass, imp.speed) * DAMAGE_PER_JOULE * (s.braced > 0 ? 0.8 : 1) * (1 + RAKE_HULL * rake);
   const crewBefore = s.crew;
   const part = imp.where === "hull" ? hullHit(s, imp, dmg, rng, events, e.id) : rigHit(s, imp, dmg, rng, events, e.id);
+  if (rake > 0) s.crew = Math.max(0, s.crew - Math.floor((crewBefore - s.crew) * RAKE_CREW * rake));
   s.lastHitBy = imp.by;
   events.push({ type: "hit", ship: e.id, by: imp.by, at: imp.world, part, damage: dmg });
   // A heavy hit throws men into the sea (Overboard!): some of the casualties are swimmers.

@@ -30,6 +30,7 @@ it("AI battles by class (report, gated by ADR-0005)", () => {
     const rows: string[] = [];
     let winsA = 0;
     let winsB = 0;
+    const costs: number[] = [];
     for (const seed of SEEDS) {
       const sim = new Simulation({ seed, windDirection: 1.2, windSpeed: 8 });
       const A = sim.spawnShip({ classId: a, faction: "crown", x: -350, z: 0, heading: 0.3, speed: 3, ai: true });
@@ -58,6 +59,11 @@ it("AI battles by class (report, gated by ADR-0005)", () => {
       if (w === b && out(A)) winsB++;
       fought++;
       if (w !== "draw") decided++;
+      if (w !== "draw") {
+        const win = w === a && out(B) ? A : B;
+        const crewLoss = 1 - win.ship!.crew / win.ship!.model.def.crew;
+        costs.push(Math.max(crewLoss, (1 - hull(win)) * 1.5));
+      }
       rows.push(`seed ${seed}: ${w.padEnd(8)} ${(t / 60).toFixed(1)} min, hull ${a} ${(hull(A) * 100).toFixed(0)}% ${b} ${(hull(B) * 100).toFixed(0)}%, crew ${A.ship!.crew}/${B.ship!.crew}, shots ${shots}, hits ${hits} (${JSON.stringify(parts)}), dmg/hit ${(dmg / Math.max(1, hits)).toFixed(0)}, closest ${minGap.toFixed(0)} m`);
     }
     console.log(`${a} vs ${b}: ${winsA}-${winsB}\n  ${rows.join("\n  ")}`);
@@ -66,7 +72,8 @@ it("AI battles by class (report, gated by ADR-0005)", () => {
     const side = stronger[`${a}:${b}`];
     if (side === "a") expect(winsB, `${a} lost to ${b}`).toBe(0);
     if (side === "b") expect(winsA, `${b} lost to ${a}`).toBe(0);
-    if (a === b && winsA + winsB === SEEDS.length) expect(Math.max(winsA, winsB), `${a} vs ${a} swept`).toBeLessThan(SEEDS.length);
+    // Equal hulls under different doctrines: a sweep is allowed, a walkover is not (ADR-0005, 17.11).
+    if (a === b) for (const c of costs) expect(c, `${a} vs ${a}: winner barely touched`).toBeGreaterThanOrEqual(0.15);
   }
   expect(decided / fought, "share of battles decided (ADR-0005)").toBeGreaterThanOrEqual(0.5);
 });

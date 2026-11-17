@@ -1,9 +1,10 @@
-import { type AmmoId, type GameCommand, type Relations, type SailLevel, angleOffWind, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
+import { DOCTRINES, type AmmoId, type GameCommand, type Relations, type SailLevel, angleOffWind, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
+import { aimHeightFor, firesAtRigging, tacticalHeading } from "./tactics";
 import { type Screen, smokeBetween } from "../combat/smoke";
 
 /**
@@ -115,17 +116,22 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   // preferred range (a proportional bias, clamped).
   // With a loaded side in range the captain bears up to fire (no bias); while reloading he
   // works towards his range.
-  // Hold fire until within effective range (well inside the guns' reach): close first.
-  const effective = Math.min(BROADSIDE_MAX, c.range * 1.6);
+  // Hold fire until within effective range (well inside the guns' reach): close first. The
+  // doctrine of the flag sets the range, the target (hull or rigging) and the manoeuvres.
+  const d = DOCTRINES[s.faction];
+  const prefer = c.range * d.rangeFactor;
+  const effective = Math.min(BROADSIDE_MAX, prefer * 1.6);
   const loadedInRange = range < effective && sideLoaded(s, c.side) > 0;
-  const closeBias = range > effective * 0.9 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - c.range) / c.range)) * 0.8;
-  const desired = brg - abeam + (c.side === "starboard" ? closeBias : -closeBias);
+  const closeBias = range > effective * 0.9 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - prefer) / prefer)) * 0.8;
+  // Out of effective range: a stern chase, bow on to the lead point, so the chase guns bear.
+  const basic = range > effective * 1.05 ? brg : brg - abeam + (c.side === "starboard" ? closeBias : -closeBias);
+  const desired = tacticalHeading(me, t, d, w.windDirection, range, effective, loadedInRange) ?? basic;
   const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s, yawOf(me.body!.rot)), w) }];
-  const level: SailLevel = range > c.range * 1.4 ? 3 : 2;
+  const level: SailLevel = range > prefer * 1.4 ? 3 : 2;
   if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
-  const want = chooseAmmo(s, t.ship!, range);
+  const want: AmmoId = firesAtRigging(d, t) && range > 100 && range < 360 && (s.stores.chain ?? 0) > 0 ? "chain" : chooseAmmo(s, t.ship!, range);
   if (s.ammoLoad.broadside !== want && sideLoaded(s, c.side) === 0) cmds.push({ type: "loadAmmo", ship: me.id, mount: "broadside", ammo: want });
-  if (range < effective && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range: aimRange, bearing: brg });
+  if (range < effective && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range: aimRange, bearing: brg, aimHeight: aimHeightFor(d, t) });
   // Special loads, as the player has them: Greek fire from the bow chaser at close quarters,
   // rockets from the swivels into the rigging at middle range.
   // With some hysteresis: a change of load costs a full reload.
@@ -140,7 +146,7 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
   if (range < (s.ammoLoad.swivel === "rocket" ? 200 : 120)) cmds.push({ type: "fire", ship: me.id, mount: "swivel", side: rel >= 0 ? "starboard" : "port", range });
   // Close aboard with a stronger crew: grapple and board (pirates love it).
-  const boarders = s.faction === "pirates" ? 1.1 : 1.6;
+  const boarders = d.boardRatio;
   if (canBoard(me, t) && s.crew > t.ship!.crew * boarders) cmds.push({ type: "board", ship: me.id, target: t.id });
   if (range < 110 && Math.abs(wrapAngle(rel - Math.PI)) < 0.4 && w.rng() < 0.05) cmds.push({ type: "drop", ship: me.id, ammo: w.rng() < 0.5 ? "fireBarrel" : "mine" });
   return cmds;
