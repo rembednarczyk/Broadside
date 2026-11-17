@@ -1,0 +1,12 @@
+// Init script for local builds (tools/android/apk.sh passes it with -I; CI does without): Google's
+// mirror of Maven Central ahead of the other repositories, since Maven Central refuses some of
+// Gradle's requests from this network (the files "could not be found" while curl gets them).
+def mirror = { repos -> repos.maven { url "https://maven-central.storage-download.googleapis.com/maven2/" } }
+settingsEvaluated { s ->
+  mirror(s.pluginManagement.repositories)
+  mirror(s.dependencyResolutionManagement.repositories)
+}
+allprojects {
+  mirror(buildscript.repositories)
+  mirror(repositories)
+}

@@ -486,3 +486,11 @@ kadłuby z modeli mają już wznoszącą się burtę dziobu, a dobudowana skrzyn
 wznosi się łagodnie i kończy galionem) i kosztowała 50 wywołań rysowania na scenę (trzy statki z modeli: 219 → 269,
 +23%). Commit 3c82831 cofnięty w całości (`git revert`); wpis o nim wyżej zostaje jako historia. Jeśli dziób ma
 zyskać sylwetkę z referencji, to przez galion i lekkie podniesienie burty w siatce, bez osobnej skrzyni.
+
+**17.11, APK budowany w sesji (właściciel: „buduj mi tutaj podpisane apk”).** `pnpm apk` (`tools/android/apk.sh`):
+web build, `cap sync`, Gradle `assembleRelease`, podpis kluczem z repozytorium (ten sam co w CI), plik `Broadside.apk`
+wysyłany właścicielowi po zmianach widocznych w grze. Android SDK w `/root/android-sdk` (platforma 36, build-tools 36),
+JDK 21 z systemu. Maven Central nie oddaje Gradle'owi części plików z tej sieci, więc lustro Google podawane przez
+`-I tools/android/maven-mirror.gradle` (bez zmian w globalnej konfiguracji Gradle). Numer wersji 1000 + liczba
+commitów w obu miejscach (CI miało numer przebiegu Actions): APK z sesji i z CI instalują się jeden na drugim jako
+aktualizacje, kolejność wyznacza historia gałęzi.
