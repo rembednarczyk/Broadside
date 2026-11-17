@@ -8,8 +8,8 @@ uproszczenie siatki, zmniejszenie tekstur, odcięcie masztów i olinowania, prze
 |---|---|---|---|---|
 | GA Free_251 Weathered 18th Century Galleon | Galaxy Abundant | https://sketchfab.com/3d-models/ga-free-251-weathered-18th-century-galleon-b097e67c207540628828ebb55afce914 | CC BY 4.0 | kadłub galeonu |
 | Ship of the line, c. 1700 | Swedish National Maritime and Transport Museums | https://sketchfab.com/3d-models/ship-of-the-line-c-1700-linjeskepp-ca-1700-3afea352a40045b0a638c9900f669ed4 | CC BY 4.0 | planowany: okręt liniowy |
-| Baron Anders von Höpken (1759) | Swedish National Maritime and Transport Museums | https://sketchfab.com/3d-models/baron-anders-von-hopken-1759-2ceabad6370844d198e4f503435d0b5f | CC BY 4.0 | planowany: fregata |
-| Dutch ship | m23ldx0191 | https://sketchfab.com/3d-models/dutch-ship-6e1a27f4db4c48e6adc53f6a3528ac9d | CC BY 4.0 | planowany: bryg |
+| Baron Anders von Höpken (1759) | Swedish National Maritime and Transport Museums | https://sketchfab.com/3d-models/baron-anders-von-hopken-1759-2ceabad6370844d198e4f503435d0b5f | CC BY 4.0 | kadłub fregaty |
+| Dutch ship | m23ldx0191 | https://sketchfab.com/3d-models/dutch-ship-6e1a27f4db4c48e6adc53f6a3528ac9d | CC BY 4.0 | kadłub brygu |
 | Carrack / Holk | Swedish National Maritime and Transport Museums | https://sketchfab.com/3d-models/carrack-holk-65d4a28ca8ab40fd8c693aca1447fd56 | CC BY 4.0 | planowany |
 | Three-decker (c. 1660) | Swedish National Maritime and Transport Museums | https://sketchfab.com/3d-models/three-decker-c-1660-b584d0bf6edd433193f2651b6c71a3c8 | CC BY 4.0 | planowany |
 | Cannon 17th c. Dutch warship Klein Hollandia | Stichting Maritieme Archeologie | https://sketchfab.com/3d-models/cannon-17th-c-dutch-warship-klein-hollandia-1552d62eb113493db782d2c07d6d2ddf | CC BY 4.0 | planowany: armaty |

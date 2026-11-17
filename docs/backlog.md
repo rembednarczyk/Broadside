@@ -91,7 +91,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 
 ### M7 realizm i assety (prośba właściciela 17.11)
 - [x] potok assetów (`tools/assets`): pobranie z Drive, licencje (16 x CC BY 4.0, CREDITS.md), optymalizacja meshoptimizer, cięcie kadłuba, metryki nadburcia; kadłub galeonu z modelu Galaxy Abundant z proceduralnym, ruchomym ożaglowaniem (17.11)
-- [ ] kadłuby z modeli dla fregaty (Baron von Höpken), brygu (Dutch ship), okrętu liniowego (1700); armaty i działka z modeli; wraki na mieliznach
+- [x] kadłuby z modeli: fregata (Baron Anders von Höpken 1759), bryg (Dutch ship) (17.11)
+- [ ] okręt liniowy (szkielet 1700 ma dziury w poszyciu: sprawdzić albo trójpokładowiec 1660); armaty i działka z modeli; wraki na mieliznach
 - [ ] tekstury z tych samych źródeł co podrcr albo z modeli
 - [ ] taktyki z epoki w AI: linia bojowa, przejęcie nawietrznej (weather gauge), ostrzał przez rufę (raking: crossing the T), strzelanie na przechyle w kadłub albo w olinowanie (szkoła brytyjska kontra francuska), abordaż po uciszeniu
 - [x] fizyka strzału: odrzut z realnego pędu armaty przechyla statek o 1,5–2,5° na przeciwną burtę (test), dym prochowy większy i dryfuje z wiatrem (17.11); do zrobienia: odjazd lawet przy strzale

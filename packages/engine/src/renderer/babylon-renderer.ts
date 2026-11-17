@@ -23,7 +23,7 @@ import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, yawOf } fro
  * syncs them from the simulation once per frame. The simulation is read, never written.
  */
 /** Classes drawn with a modelled hull (tools/assets/hulls.json). */
-const MODELLED_HULLS: readonly ShipClassId[] = ["galleon"];
+const MODELLED_HULLS: readonly ShipClassId[] = ["galleon", "frigate", "brig"];
 
 export interface RendererOptions {
   readonly canvas: HTMLCanvasElement;

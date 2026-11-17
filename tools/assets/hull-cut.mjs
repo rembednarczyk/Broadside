@@ -8,7 +8,8 @@
  *
  * Config: tools/assets/hulls.json, entries { "class", "source", "lengthAxis": "x"|"z",
  *   "bowAtMin": bool | null (null: the lower end is the bow), "cut": share of height above the keel,
- *   "flipY": bool, "minPiece": share of vertices below which a piece is dropped }.
+ *   "flipY": bool, "minPiece": share of vertices below which a piece is dropped,
+ *   "keepMaterials": optional list of material names that hold the hull }.
  * Usage: node tools/assets/hull-cut.mjs <in-dir> <out-dir> [class]
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -60,6 +61,12 @@ const eachPrim = (doc, fn) => {
 
 for (const c of config.filter((x) => !only || x.class === only)) {
   const doc = await io.read(join(inDir, c.source));
+  // Models that keep their hull in its own material: drop every other material's geometry first.
+  if (c.keepMaterials) {
+    for (const mesh of doc.getRoot().listMeshes()) {
+      for (const p of mesh.listPrimitives()) if (!c.keepMaterials.includes(p.getMaterial()?.getName() ?? "")) p.dispose();
+    }
+  }
   await doc.transform(flatten());
   bake(doc);
   await doc.transform(joinMeshes(), weld());
