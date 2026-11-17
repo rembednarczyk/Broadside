@@ -333,3 +333,13 @@ ku słońcu (pierwsza z detalem), jedna próbka ku górze jako zacienienie zagł
 pod słońce przy wichurze). Ławice mgły od deszczu: 0,08 zamiast 0,3 natężenia deszczu, mgła zostaje przy pogodzie
 mglistej. Koszt: po dodaniu szumu komórkowego zrzut 596×480 w SwiftShader przekraczał limit, po ograniczeniu próbek
 mieści się (2 min 40 s na planszę); czasu klatki na telefonie nie zmierzono.
+
+**17.11, chmury z tekstury szumu 3D (orkiestrator, po pytaniu właściciela o efekt 1:1 bez ograniczeń sprzętowych).**
+Presety ultra i cinematic (`cloudOctaves` 6) przy WebGL2 czytają kłęby z tekstury 3D 64³ RGBA generowanej przy starcie
+z całkowitoliczbowego hasha (`engine/src/shaders/cloud-noise.ts`): R, G, B to odwrócony szum Worleya o 4, 8 i 16
+komórkach na kafel (27 sąsiadów, zawijanie), A to kafelkowy szum wartości do wyginania dziedziny. Wzorzec: tekstura
+bazowa Perlin-Worley Schneidera 2015; różnice: kanały trzymane osobno i ważone w shaderze, część Perlina zastąpiona
+szumem wartości. Jeden odczyt daje trzy skale, więc wariant ma sześć skal, 96 kroków i 6 próbek ku słońcu. Preset high
+i WebGL1 zostają przy szumie liczonym w shaderze. Stanowisko `tools/sky/sky-test.mjs` działa na WebGL2, argument
+`octaves` 6 pokazuje wariant teksturowy. Pamięć: 1 MB tekstury. Nie zmierzono czasu generowania na telefonie ani czasu
+klatki na GPU.

@@ -1,8 +1,6 @@
-/**
- * GLSL of the volumetric clouds, spliced into the sky fragment shader (it uses that shader's
- * uniforms and its `hash`, `vnoise` and `hg`). `steps`: samples along the view ray.
- */
-export const volumetricClouds = (steps: number): string => /* glsl */ `
+/** GLSL of the clouds' shape: the noises and `cloudDensity`. `tex`: lumps read from the noise volume. */
+const cloudShape = (tex: boolean): string => /* glsl */ `
+${tex ? "precision highp sampler3D;\nuniform sampler3D cloudNoise;" : ""}
 // Volumetric clouds (high presets): a slab of cumulus marched along the view ray, in the manner of
 // Schneider's "The Real-Time Volumetric Cloudscapes of Horizon Zero Dawn" (SIGGRAPH 2015) cut down
 // to a sky dome: density from 3D value-noise fbm shaped by a height profile (flat bases, rounded
@@ -49,24 +47,48 @@ float cloudDensity(vec3 p, bool fine) {
   // The heap is carved by the inverse of the lumps (Schneider's remap): thin parts of the base
   // shape are eaten away first, so the outline breaks into rounded heads while the core stays solid.
   vec3 q = p * 0.2 + vec3(w.x, 0.0, w.y) * 2.0;
-  // Bent by a slow noise first, so the cells of the lumps do not show as a grid.
+${tex ? `  // Bent by a slow noise first, so the cells of the lumps do not show as a grid; then the lumps at
+  // three sizes in one lookup (the channels of the volume: 4, 8 and 16 cells to the tile).
+  q += (texture(cloudNoise, q * 0.21).a - 0.5) * vec3(0.4, 0.25, -0.35);
+  vec3 n = texture(cloudNoise, q * 0.25).rgb;
+  float lumps = n.r * 0.66 + n.g * 0.24 + n.b * 0.1;
+` : `  // Bent by a slow noise first, so the cells of the lumps do not show as a grid.
   q += (vnoise3(q * 0.9) - 0.5) * vec3(0.5, 0.32, -0.42);
   // Three sizes of lump, each about half the last: the great masses, the heads on them, the knobs
   // (the knobs only where the detail is asked for: the far samples of the light march do without).
   float lumps = billow(q) * 0.66 + billow(q * 2.1 + 7.0) * 0.24 + (fine ? billow(q * 4.3 + 3.0) : 0.5) * 0.1;
+`}
   // The lumps stand out towards the head; the foot of the heap is a smooth wall sunk in haze.
   float crown = smoothstep(0.1, 0.75, hgt / top);
   float carve = (1.0 - smoothstep(0.18, 0.62, lumps)) * (0.5 + 0.4 * crown);
   float shape = clamp((base - carve) / (1.0 - carve), 0.0, 1.0);
   if (shape <= 0.0) return 0.0;
-  if (fine) {
+${tex ? `  if (fine) {
+    // Knobs at three finer sizes bite into the surface, least in the solid core: the cauliflower.
+    vec3 k = texture(cloudNoise, q * 1.13 + 0.37).rgb;
+    float puffs = k.r * 0.5 + k.g * 0.32 + k.b * 0.18;
+    shape -= (1.0 - smoothstep(0.2, 0.62, puffs)) * 0.7 * (1.0 - shape) * (0.65 + 0.35 * crown);
+  }
+` : `  if (fine) {
     // Small lumps bite into the surface, least in the solid core, and a wisp of plain noise
     // softens the outline.
     float puffs = billow(q * 5.0 + 4.0) * 0.5 + vnoise3(q * 11.0 + 9.0) * 0.5;
     shape -= (1.0 - smoothstep(0.15, 0.7, puffs)) * 0.5 * (1.0 - shape) * (0.65 + 0.35 * crown);
   }
+`}
   return clamp(shape * 4.0, 0.0, 1.0);
 }
+`;
+
+/**
+ * GLSL of the volumetric clouds, spliced into the sky fragment shader (it uses that shader's
+ * uniforms and its `hash`, `vnoise` and `hg`). `steps`: samples along the view ray. `tex`: read the
+ * lumps from the noise volume of `cloud-noise.ts` (sampler3D `cloudNoise`, WebGL2) instead of
+ * computing them per sample: cheaper, so that variant affords more sizes of lump and a longer
+ * light march.
+ */
+export const volumetricClouds = (steps: number, tex = false): string => /* glsl */ `
+${cloudShape(tex)}
 // rgb: light scattered to the eye; a: transmittance of what lies behind.
 vec4 marchClouds(vec3 d, float sunUp) {
   if (d.y < 0.015) return vec4(0.0, 0.0, 0.0, 1.0);
@@ -93,17 +115,17 @@ vec4 marchClouds(vec3 d, float sunUp) {
         if (dens <= 0.01) continue;
         // Optical depth towards the sun: four samples at growing steps (near detail, far bulk).
         float toSun = 0.0;
-        float reach = 0.12;
-        for (int k = 0; k < 4; k++) {
-          toSun += cloudDensity(p + sunL * reach, k < 1) * reach;
-          reach *= 2.3;
+        float reach = ${tex ? "0.09" : "0.12"};
+        for (int k = 0; k < ${tex ? 6 : 4}; k++) {
+          toSun += cloudDensity(p + sunL * reach, k < ${tex ? 3 : 1}) * reach;
+          reach *= ${tex ? "1.75" : "2.3"};
         }
         // Beer-Lambert with a second, slower term for light scattered many times inside the cloud
         // (Wrenninge's approximation): the shaded side is dark but not black.
         float beer = max(exp(-toSun * 9.0), 0.22 * exp(-toSun * 1.5));
         // Light of the sky from above, shut out in the creases between the lumps: the relief of the
         // shaded side (one sample upwards, the cheapest ambient occlusion).
-        float open = exp(-cloudDensity(p + vec3(0.0, 0.45, 0.0), false) * 1.4);
+        float open = exp(-cloudDensity(p + vec3(0.0, 0.45, 0.0), ${tex ? "true" : "false"}) * 1.4);
         float powder = 1.0 - exp(-dens * 4.0);
         float hgt = (p.y - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE);
         vec3 ambient = mix(skyHorizon * 0.4, mix(skyHorizon, skyZenith, 0.35) * 0.8, sqrt(hgt)) * (0.45 + 0.55 * sunUp) * (0.35 + 0.65 * open);

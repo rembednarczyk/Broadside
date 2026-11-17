@@ -18,9 +18,8 @@ void main() {
 }
 `;
 
-/** Sky fragment shader with the cloud noise octaves of the graphics settings. */
-/** Sky fragment shader with the cloud noise octaves of the graphics settings (5 and up: volumetric clouds). */
-export const skyFragment = (octaves: number): string => /* glsl */ `
+/** Sky fragment shader with the cloud noise octaves of the graphics settings (5 and up: volumetric clouds; `noiseVolume`: they read the 3D noise texture `cloudNoise`, WebGL2 only). */
+export const skyFragment = (octaves: number, noiseVolume = false): string => /* glsl */ `
 precision highp float;
 #define VOLUMETRIC ${octaves >= 5 ? "true" : "false"}
 uniform vec3 sunDirection;
@@ -51,7 +50,7 @@ float billow(vec2 p) {
 }
 float hg(float c, float g) { return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * c, 1.5) / 12.566; }
 
-${volumetricClouds(octaves >= 6 ? 72 : 56)}
+${volumetricClouds(noiseVolume ? 96 : octaves >= 6 ? 72 : 56, noiseVolume)}
 void main() {
   vec3 d = normalize(vDir);
   float h = max(d.y, 0.0);

@@ -17,6 +17,7 @@ export { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 export { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
 export { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 export { Texture } from "@babylonjs/core/Materials/Textures/texture";
+export { RawTexture3D } from "@babylonjs/core/Materials/Textures/rawTexture3D";
 export { Mesh } from "@babylonjs/core/Meshes/mesh";
 export { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 export { TransformNode } from "@babylonjs/core/Meshes/transformNode";

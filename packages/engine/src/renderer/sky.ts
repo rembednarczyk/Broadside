@@ -1,6 +1,10 @@
-import { Color3, Mesh, MeshBuilder, type Scene, ShaderMaterial, Vector2, Vector3 } from "../babylon";
+import { Color3, type Engine, Mesh, MeshBuilder, RawTexture3D, type Scene, ShaderMaterial, Texture, Vector2, Vector3 } from "../babylon";
+import { CLOUD_NOISE_SIZE, cloudNoiseVolume } from "../shaders/cloud-noise";
 import { SKY_VERTEX, skyFragment } from "../shaders/sky";
 import { type SceneLook } from "./look";
+
+/** Babylon's `Constants.TEXTUREFORMAT_RGBA`. */
+const RGBA_FORMAT = 5;
 
 /** Sky dome drawn behind everything (depth at the far plane), centred on the camera. */
 export class Sky {
@@ -9,10 +13,19 @@ export class Sky {
 
   constructor(scene: Scene, octaves = 5) {
     this.mesh = MeshBuilder.CreateSphere("sky", { diameter: 2000, segments: 24, sideOrientation: Mesh.BACKSIDE }, scene);
-    this.material = new ShaderMaterial("sky", scene, { vertexSource: SKY_VERTEX, fragmentSource: skyFragment(octaves) }, {
+    // Top presets read the clouds' lumps from a noise volume (3D textures need WebGL2).
+    const noiseVolume = octaves >= 6 && (scene.getEngine() as Engine).webGLVersion >= 2;
+    this.material = new ShaderMaterial("sky", scene, { vertexSource: SKY_VERTEX, fragmentSource: skyFragment(octaves, noiseVolume) }, {
       attributes: ["position"],
       uniforms: ["worldViewProjection", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "cloudCover", "time", "windOffset"],
+      samplers: noiseVolume ? ["cloudNoise"] : [],
     });
+    if (noiseVolume) {
+      const n = CLOUD_NOISE_SIZE;
+      const volume = new RawTexture3D(cloudNoiseVolume(n), n, n, n, RGBA_FORMAT, scene, false, false, Texture.BILINEAR_SAMPLINGMODE);
+      volume.wrapU = volume.wrapV = volume.wrapR = Texture.WRAP_ADDRESSMODE;
+      this.material.setTexture("cloudNoise", volume);
+    }
     this.material.backFaceCulling = false;
     this.material.disableDepthWrite = true;
     this.mesh.material = this.material;
