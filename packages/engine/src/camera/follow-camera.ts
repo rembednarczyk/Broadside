@@ -111,8 +111,8 @@ export class FollowCamera {
     if (this.mode === "deck") {
       const q = new Quaternion(p.qx, p.qy, p.qz, p.qw);
       const eye = new Vector3(...p.deck).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
-      // Looking forward and a little up (about 9 degrees), wide like a hand-held lens.
-      const ahead = new Vector3(p.deck[0] * 0.3, p.deck[1] + 5, p.deck[2] + 30).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
+      // Looking forward and a touch down along the deck, wide like a hand-held lens.
+      const ahead = new Vector3(p.deck[0] * 0.3, p.deck[1] - 1.5, p.deck[2] + 30).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
       this.camera.fov = DECK_FOV;
       this.camera.setTarget(ahead);
       this.camera.setPosition(eye);
