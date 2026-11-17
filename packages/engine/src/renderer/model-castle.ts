@@ -1,4 +1,4 @@
-import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, StandardMaterial, type TransformNode, Vector3, VertexData } from "../babylon";
+import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, StandardMaterial, type Texture, type TransformNode, Vector3, VertexData } from "../babylon";
 import { BALUSTRADE, type CastleLayout } from "./castle-layout";
 
 /**
@@ -14,13 +14,20 @@ export interface CastleMaterials {
   readonly lantern: StandardMaterial;
 }
 
-/** The castle texture on walls seen from both sides (same textures, so the night glow follows). */
-const openCastle = (scene: Scene, castle: StandardMaterial): StandardMaterial => {
-  const cached = scene.getMaterialByName("castle-open");
+/**
+ * Walls seen from both sides: the model's own planking where it was baked (`planks`), else the
+ * painted castle texture; the gallery windows glow through either (same glow map, so the night
+ * lighting follows).
+ */
+const wallMaterial = (scene: Scene, castle: StandardMaterial, planks: Texture | null, key: string): StandardMaterial => {
+  const name = planks ? `castle-open-${key}` : "castle-open";
+  const cached = scene.getMaterialByName(name);
   if (cached) return cached as StandardMaterial;
   // A new material on the same textures (cloning would copy the painted textures as blanks).
-  const m = new StandardMaterial("castle-open", scene);
-  m.diffuseTexture = castle.diffuseTexture;
+  const m = new StandardMaterial(name, scene);
+  m.diffuseTexture = planks ?? castle.diffuseTexture;
+  // In the shade of the sails the wall takes the sky's blue: warm it towards the hull's own tone.
+  if (planks) m.diffuseColor.set(1, 0.86, 0.72);
   m.emissiveTexture = castle.emissiveTexture;
   m.emissiveColor = castle.emissiveColor.clone();
   m.specularColor = castle.specularColor.clone();
@@ -49,7 +56,7 @@ const instances = (mesh: Mesh, list: Matrix[]): void => {
   mesh.alwaysSelectAsActiveMesh = true;
 };
 
-export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleLayout, mats: CastleMaterials, shadows: ShadowGenerator | null): Mesh[] => {
+export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleLayout, mats: CastleMaterials, shadows: ShadowGenerator | null, planks: Texture | null = null, key = ""): Mesh[] => {
   const ring = c.ring;
   const last = ring[ring.length - 1]!;
   const stern = ring[0]!;
@@ -70,7 +77,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
   quad([-stern.half, 0, stern.z], [stern.half, 0, stern.z], 0, (stern.half * 2) / 5);
   quad([-last.half, 0, last.z], [last.half, 0, last.z], 0, (last.half * 2) / 5);
   const walls = meshOf(scene, `castle-${parent.name}`, wp, wu, wi);
-  walls.material = openCastle(scene, mats.castle);
+  walls.material = wallMaterial(scene, mats.castle, planks, key);
   // Deck: a strip from side to side, planks fore and aft.
   const dp: number[] = [];
   const du: number[] = [];

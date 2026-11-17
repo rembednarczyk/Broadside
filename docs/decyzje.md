@@ -275,3 +275,11 @@ właściciela kończy się niskim pokładem rufowym, więc kasztel jest dobudowa
 przecięte cięciem modelu (najwyżej 30% długości od rufy), ściany 7% do wewnątrz od poszycia, wysokość 2,5 m,
 balustrada 0,95 m. Materiał ścian to tekstura kaszteli z oknami (klon dwustronny `castle-open`, żeby nocna poświata
 działała tak samo). Latarnie: emisja 18% w dzień, pełna w nocy.
+
+## 17.11 Poprawki po uwagach do przeglądarki (właściciel)
+Kasztel: klon materiału kaszteli kopiował malowane tekstury jako puste i ściany się nie rysowały; nowy materiał na
+tych samych teksturach. Ściany idą po burcie (1,01 szerokości z profilu), kasztel zajmuje 24% długości od rufy,
+wysokość 2,2 m. Tekstura ścian: `hull-patches.mjs` wypala rzut boczny poszycia śródokręcia modelu (pas 30–54%
+wysokości nadburcia, 512 x 256) i zapisuje rozmiar w metrykach; gra kafelkuje ją lustrzanie. Wypalanie pokładu z góry
+odrzucone (pokłady modeli są zastawione, wynik rozmazany), pokład zostaje z desek Poly Haven. Dźwięk: paczka
+przeglądarki dostała katalog nagrań; zapasowy szum syntezatora ma pętlę 9 s zamiast 2 s.

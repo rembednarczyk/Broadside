@@ -19,4 +19,6 @@ for f in "$raw"/*.glb; do
   QUANTIZE=1 LOCK_BORDER=1 TEX_FORMAT=jpeg node "$here/optimize.mjs" "$f" "$out/$c-lite.glb" 120000 2048 | grep triangles
   cp "$raw/$c.json" "$out/$c.json"
 done
+# Planking patches for what the game builds on the hulls itself (the sterncastle).
+node "$here/hull-patches.mjs" "$raw" "$out" ${1:-}
 ls -la "$out"

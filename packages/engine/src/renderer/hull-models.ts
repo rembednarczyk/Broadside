@@ -1,5 +1,5 @@
 import { type ShipClassId } from "@broadside/core";
-import { type AbstractMesh, type AssetContainer, Ray, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
+import { type AbstractMesh, type AssetContainer, Ray, Texture, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
 import { GLB, assetUrl } from "./asset-url";
 import { SideProfile, type SideProfileData } from "./side-profile";
 import { useStandardMaterials } from "./model-materials";
@@ -21,6 +21,8 @@ interface HullMetrics {
   readonly gain?: number;
   /** The side in stations along the length (side-profile); older metrics have none. */
   readonly profile?: SideProfileData;
+  /** Texture patches baked from the model (tools/assets/hull-patches.mjs), sizes in model units. */
+  readonly patches?: { readonly planks?: { readonly w: number; readonly h: number } };
   /** Height of the cut hull (model units). */
   readonly height?: number;
 }
@@ -35,6 +37,7 @@ const BULWARK = 0.8;
 const fitOf = (m: HullMetrics, hull: { beam: number; draft: number; freeboard: number }): { kx: number; ky: number } => ({ kx: hull.beam / m.beam, ky: (hull.draft + hull.freeboard + BULWARK) / m.gunwale });
 
 export class HullModels {
+  private readonly plankTextures = new Map<ShipClassId, Texture>();
   private readonly sideCache = new Map<ShipClassId, (number | null)[]>();
   private readonly loaded = new Map<ShipClassId, { container: AssetContainer; metrics: HullMetrics }>();
 
@@ -82,6 +85,28 @@ export class HullModels {
       meshes.push(...node.getChildMeshes(false));
     }
     return meshes;
+  }
+
+  /**
+   * The model's own planking as a tiling texture for walls the game builds on the hull: `u` repeats
+   * every `across` metres of wall and `v` spans `up` metres (the wall's UVs), mirrored at the joins.
+   */
+  planks(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }, across: number, up: number): Texture | null {
+    const m = this.loaded.get(id);
+    const patch = m?.metrics.patches?.planks;
+    if (!m || !patch) return null;
+    const cached = this.plankTextures.get(id);
+    if (cached) return cached;
+    const { kx, ky } = fitOf(m.metrics, hull);
+    const t = new Texture(assetUrl(`${this.baseUrl}${id}-planks.jpg`), this.scene);
+    t.uScale = across / (patch.w * kx);
+    t.vScale = up / (patch.h * ky);
+    t.wrapU = Texture.MIRROR_ADDRESSMODE;
+    t.wrapV = Texture.MIRROR_ADDRESSMODE;
+    // The baked patch is already lit by its own texture; a flat wall in full sun needs far less lift than the hull.
+    t.level = Math.min(1.4, (m.metrics.gain ?? HULL_GAIN) * 0.35);
+    this.plankTextures.set(id, t);
+    return t;
   }
 
   /** The side of the class's model fitted to the physics hull, for the game's own fittings; null without one. */

@@ -60,7 +60,8 @@ export class SynthAudio {
     this.master.gain.value = 0.8;
     const comp = this.ctx.createDynamicsCompressor();
     this.master.connect(comp).connect(this.ctx.destination);
-    this.noise = this.makeNoise(2);
+    // Long enough that the ear does not catch the loop (two seconds of noise repeat audibly).
+    this.noise = this.makeNoise(9);
     this.startBeds();
     if (this.clipsUrl) {
       this.scape = new Soundscape(this.ctx, this.master, this.clipsUrl);
