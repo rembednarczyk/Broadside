@@ -5,11 +5,12 @@ import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
+import { RopeTubes } from "./rope-tubes";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
-import { type SailPaint, paintSail, paintSailGlow } from "./sail-texture";
+import { type SailPaint, paintSail, paintSailGlow, paintSailRelief } from "./sail-texture";
 
 /**
  * Visual of one ship, built from its class (hull lines, rig plan) and synced each frame from
@@ -77,6 +78,7 @@ export const createShipMaterials = (scene: Scene, texturesUrl?: string, quality:
     }),
   ) as Record<FactionId, StandardMaterial>;
   const wood = material(scene, "spar", [0.22, 0.15, 0.09]);
+  const detail = createDetailMaterials(scene);
   if (texturesUrl) {
     deck.diffuseColor = new Color3(1.15, 1.05, 0.95);
     deck.diffuseTexture = tiled(scene, `${texturesUrl}weathered_planks_diff${lite}.jpg`, 3, 1);
@@ -86,11 +88,21 @@ export const createShipMaterials = (scene: Scene, texturesUrl?: string, quality:
     wood.diffuseTexture = tiled(scene, `${texturesUrl}dark_planks_diff${lite}.jpg`, 3, 1);
     wood.bumpTexture = tiled(scene, `${texturesUrl}dark_planks_nor_gl${lite}.jpg`, 3, 1);
     for (const t of [wood.diffuseTexture, wood.bumpTexture] as Texture[]) t.wAng = Math.PI / 2;
-    sail.bumpTexture = tiled(scene, `${texturesUrl}rough_linen_nor_gl${lite}.jpg`, 8, 8);
-    sail.bumpTexture.level = 0.6;
+    // Generated hulls and castles: the relief of planking over their painted colours (strakes run
+    // fore and aft: the texture's planks are turned a quarter).
+    hull.bumpTexture = tiled(scene, `${texturesUrl}weathered_planks_nor_gl${lite}.jpg`, 3, 8);
+    (hull.bumpTexture as Texture).wAng = Math.PI / 2;
+    detail.castle.bumpTexture = tiled(scene, `${texturesUrl}weathered_planks_nor_gl${lite}.jpg`, 2, 3);
+    (detail.castle.bumpTexture as Texture).wAng = Math.PI / 2;
+    // Sailcloth: the linen weave as a detail map (colour and normal) under the painted canvas and
+    // the relief of its seams (set per painted sail in sailMaterial).
+    sail.detailMap.texture = tiled(scene, `${texturesUrl}rough_linen_detail${lite}.png`, 9, 9);
+    sail.detailMap.isEnabled = true;
+    sail.detailMap.diffuseBlendLevel = 0.55;
+    sail.detailMap.bumpLevel = 0.7;
   }
   const sailSize = quality === "low" ? 512 : quality === "medium" ? 1024 : 2048;
-  return { sailSize, hull, deck, wood, sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail: createDetailMaterials(scene) };
+  return { sailSize, hull, deck, wood, sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail };
 };
 
 /** One painted canvas per faction and emblem choice, shared (Flyweight). */
@@ -104,6 +116,15 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;
+  // The sewing stands proud of the cloth: one relief map for all sails of this size.
+  const reliefKey = `sail-relief-${size}`;
+  let relief = scene.getTextureByName(reliefKey) as DynamicTexture | null;
+  if (!relief) {
+    relief = new DynamicTexture(reliefKey, { width: size / 2, height: size / 2 }, scene, true);
+    paintSailRelief(relief.getContext() as unknown as SailPaint, size / 2);
+    relief.update(true);
+  }
+  m.bumpTexture = relief;
   if (emblem) {
     const glow = new DynamicTexture(`${key}-glow`, { width: 128, height: 128 }, scene, true);
     paintSailGlow(glow.getContext() as unknown as SailPaint, 128);
@@ -151,10 +172,11 @@ export class ShipView {
   setDistance(d: number): void {
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
+    this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
   }
   private shownCrew = -1;
   private springs!: MastSprings;
-  private stays!: { mesh: LinesMesh; ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] };
+  private stays!: { mesh: LinesMesh; tubes: RopeTubes; ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] };
   private flagMast = 0;
   private flagBase = new Vector3();
   private lastTime = 0;
@@ -288,7 +310,9 @@ export class ShipView {
     rig.color = new Color3(0.08, 0.06, 0.05);
     rig.parent = parent;
     rig.isPickable = false;
-    this.stays = { mesh: rig, ends };
+    // Thick, laid rope close by; the line system carries the stays at a distance.
+    const tubes = new RopeTubes(scene, parent, `stay-ropes-${this.entityId}`, ends.length, 7, 0.045);
+    this.stays = { mesh: rig, tubes, ends };
   }
 
   /** Stays follow the mastheads and sag when the masts carry little (slack) or straighten under load. */
@@ -299,13 +323,15 @@ export class ShipView {
       const k = bendShare(bend, p[1]);
       return [p[0] + bend.dx * k, p[1], p[2] + bend.dz * k];
     };
-    const lines = this.stays.ends.map((e) => {
+    const paths = this.stays.ends.map((e) => {
       const a = at(e.from, e.a);
       const b = at(e.to, e.b);
       const span = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
       const slack = 1 - Math.min(1, loads[e.from] ?? 0);
-      return sagLine(a, b, span * (0.004 + 0.022 * slack)).map((p) => new Vector3(...p));
+      return sagLine(a, b, span * (0.004 + 0.022 * slack));
     });
+    const lines = paths.map((path) => path.map((p) => new Vector3(...p)));
+    this.stays.tubes.update(paths);
     MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
   }
 

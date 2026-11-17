@@ -213,3 +213,11 @@ Prywatny artefakt https://claude.ai/artifact/LYAkDLuLzZmuniUaP1gZCV: gra uruchom
 ten sam adres. Host artefaktów nie serwuje .glb, więc modele idą jako JSON z base64, a strona zamienia je na adresy
 obiektów (`globalThis.__broadsideAssets`, `engine/renderer/asset-url.ts`). Opcje gry bez query stringu:
 `globalThis.__broadsideQuery`. Aktualizować po zmianach widocznych na statku gracza.
+
+## 17.11 Tekstury, część 2 (orkiestrator)
+Liny: sztagi i wanty jako rurki (uogólniony walec wokół łamanej, jedna siatka na rodzaj lin i statek, przeliczana na
+CPU razem z ruchem olinowania), promień 45 i 32 mm, tekstura trójpokrętnej smołowanej liny malowana proceduralnie;
+cienkie linie zostają, bo z daleka rurka jest cieńsza niż piksel. Żagle: mapa normalnych szwów malowana z tego samego
+`SAIL_LAYOUT` co kolor (szew to podwójna warstwa płótna), a splot lnu z Poly Haven idzie jako mapa detalu
+StandardMaterial (R szarość koloru, G i A normalne), kafelkowana 9 razy. Deski: relief z `weathered_planks` na
+kadłubach generowanych i kasztelach.

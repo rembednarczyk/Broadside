@@ -24,7 +24,7 @@ execFileSync("npx", ["vite", "build", "-c", "vite.viewer.config.ts"], { cwd: app
 rmSync(out, { recursive: true, force: true });
 const pub = join(app, "public");
 const MODELS = ["assets/hulls/galleon.glb", "assets/props/gun.glb"];
-const FILES = ["assets/hulls/galleon.json", ...["dark_planks_diff", "dark_planks_nor_gl", "rough_linen_nor_gl", "weathered_planks_diff", "weathered_planks_nor_gl"].map((t) => `assets/textures/${t}.jpg`)];
+const FILES = ["assets/hulls/galleon.json", ...["dark_planks_diff", "dark_planks_nor_gl", "weathered_planks_diff", "weathered_planks_nor_gl"].map((t) => `assets/textures/${t}.jpg`), "assets/textures/rough_linen_detail.png"];
 for (const f of [...MODELS, ...FILES]) mkdirSync(dirname(join(out, f)), { recursive: true });
 for (const f of FILES) cpSync(join(pub, f), join(out, f));
 for (const f of MODELS) writeFileSync(join(out, `${f}.json`), JSON.stringify({ base64: readFileSync(join(pub, f)).toString("base64") }));

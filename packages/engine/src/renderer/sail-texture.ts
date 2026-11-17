@@ -189,6 +189,40 @@ export const paintSail = (ctx: SailPaint, size: number, faction: FactionId, with
 };
 
 /**
+ * Relief of the sewing as a tangent-space normal map (the same layout as `paintSail`): each flat
+ * seam is a doubled thickness of canvas standing proud of the cloths, so its two edges lean
+ * outwards; reef bands and the tabling likewise. Painted as strips whose colour is the leaning
+ * normal (red: across the sail, green: along it), on the flat colour of an untilted surface.
+ */
+export const paintSailRelief = (ctx: SailPaint, size: number): void => {
+  const px = size / 512;
+  const { cloths, reefBands, tabling } = SAIL_LAYOUT;
+  const lean = 62;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgb(128,128,255)";
+  ctx.fillRect(0, 0, size, size);
+  const ridgeX = (x: number, half: number): void => {
+    ctx.fillStyle = `rgb(${128 - lean},128,238)`;
+    ctx.fillRect(x - half, 0, half * 0.5, size);
+    ctx.fillStyle = `rgb(${128 + lean},128,238)`;
+    ctx.fillRect(x + half * 0.5, 0, half * 0.5, size);
+  };
+  const ridgeY = (y: number, half: number): void => {
+    ctx.fillStyle = `rgb(128,${128 + lean},238)`;
+    ctx.fillRect(0, y - half, size, half * 0.5);
+    ctx.fillStyle = `rgb(128,${128 - lean},238)`;
+    ctx.fillRect(0, y + half * 0.5, size, half * 0.5);
+  };
+  for (let i = 1; i < cloths; i++) ridgeX((i / cloths) * size, 3 * px);
+  for (const v of reefBands) ridgeY(v * size, 5 * px);
+  const t = size * tabling;
+  ridgeY(t * 0.5, t * 0.5);
+  ridgeY(size - t * 0.5, t * 0.5);
+  ridgeX(t * 0.35, t * 0.35);
+  ridgeX(size - t * 0.35, t * 0.35);
+};
+
+/**
  * Glow map of an emblem sail: lanterns hung behind the canvas light the emblem from within at
  * night (reference s. 11-13). Black everywhere but a soft warm disc behind the emblem.
  */

@@ -2,6 +2,7 @@ import { type ShipModel } from "@broadside/sim";
 import { Color3, type LinesMesh, MeshBuilder, type Scene, type TransformNode, Vector3 } from "../babylon";
 import { beamAt, deckAt } from "./hull-stations";
 import { type MastBend, bendShare } from "./rig-motion";
+import { RopeTubes } from "./rope-tubes";
 
 /**
  * Shrouds with ratlines (rungs every 0.55 m between neighbouring shrouds, a ladder net), moving with
@@ -29,6 +30,8 @@ const SEGMENTS = 6;
 export class Ratlines {
   private readonly ladders: Ladder[] = [];
   private readonly mesh: LinesMesh;
+  /** The shrouds themselves as laid rope (the rungs between them stay thin lines, as ratline stuff is). */
+  private readonly tubes: RopeTubes;
 
   constructor(scene: Scene, parent: TransformNode, model: ShipModel) {
     const h = model.def.hull;
@@ -39,6 +42,7 @@ export class Ratlines {
         this.ladders.push({ mast, side, shrouds, rungs: Math.floor((topY - deckAt(h, m.z) - 1) / 0.55) });
       }
     });
+    this.tubes = new RopeTubes(scene, parent, "shroud-ropes", this.ladders.length * 4, SEGMENTS + 1, 0.032);
     this.mesh = MeshBuilder.CreateLineSystem("ratlines", { lines: this.lines([], [], 0), updatable: true }, scene);
     this.mesh.color = new Color3(0.08, 0.06, 0.05);
     this.mesh.parent = parent;
@@ -53,6 +57,7 @@ export class Ratlines {
 
   private lines(bends: readonly MastBend[], loads: readonly number[], lee: number): Vector3[][] {
     const out: Vector3[][] = [];
+    const ropes: [number, number, number][][] = [];
     for (const l of this.ladders) {
       const bend = bends[l.mast];
       const load = Math.min(1, Math.max(0, loads[l.mast] ?? 0));
@@ -73,8 +78,10 @@ export class Ratlines {
         return pts;
       });
       out.push(...polys);
+      ropes.push(...polys.map((p) => p.map((q): [number, number, number] => [q.x, q.y, q.z])));
       for (let r = 1; r < l.rungs; r++) out.push(polys.map((p) => along(p, r / l.rungs)));
     }
+    this.tubes?.update(ropes);
     return out;
   }
 }
