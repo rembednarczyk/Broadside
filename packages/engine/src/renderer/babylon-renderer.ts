@@ -38,6 +38,11 @@ export interface RendererOptions {
   readonly propsUrl?: string;
 }
 
+const smoothstep = (a: number, b: number, x: number): number => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
 export interface FrameEnvironment {
   readonly hours: number;
   /** Fixed bearing of the sun (radians) for staged shots; omitted, the sun follows the hour. */
@@ -237,6 +242,9 @@ export class BabylonRenderer {
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
       daylight: (look.sunDir.y + 0.05) / 0.35,
+      // Under a heavy sky the sun's disc is behind the cloud and the sea has no path of light
+      // (ref_060); through a broken sky it has (ref_090).
+      glint: 1 - 0.92 * smoothstep(0.55, 0.92, look.cloudCover),
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);

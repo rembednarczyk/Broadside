@@ -142,6 +142,7 @@ uniform vec3 fogColor;
 uniform float fogDensity;
 uniform float time;
 uniform float foamAmount;
+uniform float sunGlint;
 // Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, 0); up to 8.
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
@@ -317,7 +318,7 @@ void main() {
   vec3 gn = normalize(n + gfade * (0.5 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.4 * vec3(vnoise(gp * 2.7) - 0.5, 0.0, vnoise(gp * 2.7 + 5.1) - 0.5)));
   vec2 wk = wakes(vWorld.xz);
   float glitter = pow(max(dot(gn, h), 0.0), 5000.0 - wk.y * 2500.0) * (70.0 + wk.y * 50.0) * smoothstep(-0.05, 0.25, sunDirection.y);
-  col += sunColor * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
+  col += sunColor * sunGlint * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
   float foamNoise = fbm(vWorld.xz * 0.18 + vec2(time * 0.05, -time * 0.03));

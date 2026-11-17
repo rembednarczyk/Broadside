@@ -43,6 +43,8 @@ export interface OceanLook {
   readonly fogDensity: number;
   /** Daylight 0..1 reaching the water: the sea's own colour is light scattered back from below. */
   readonly daylight: number;
+  /** 0..1 how much of the sun's disc shows through the cloud: the glint and the glitter path go with it. */
+  readonly glint: number;
 }
 
 export class Ocean {
@@ -66,7 +68,7 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
@@ -126,6 +128,7 @@ export class Ocean {
     const lit = 0.1 + 0.9 * Math.max(0, Math.min(1, look.daylight));
     this.material.setColor3("waterDeep", WATER_DEEP.scale(lit));
     this.material.setColor3("waterShallow", WATER_SHALLOW.scale(lit));
+    this.material.setFloat("sunGlint", look.glint);
     this.material.setFloat("foamAmount", Math.min(1, Math.max(0, (windSpeed - 4) / 10)));
   }
 }
