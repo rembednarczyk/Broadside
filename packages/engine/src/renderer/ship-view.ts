@@ -305,6 +305,7 @@ export class ShipView {
     this.lastTime = time;
     const awLen = Math.hypot(aw.x, aw.z) || 1;
     const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
+    this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen);
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time);
     this.masts.forEach((m, i) => {

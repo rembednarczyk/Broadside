@@ -1,5 +1,7 @@
 import { type ShipModel } from "@broadside/sim";
-import { type HullShape, createRng, deckHeight, halfBreadth, hashString, range, stationZ } from "@broadside/core";
+import { type HullShape, createRng, hashString, range, stationZ } from "@broadside/core";
+import { beamAt, deckAt } from "./hull-stations";
+import { Ratlines } from "./ratlines";
 import { Color3, DynamicTexture, Matrix, Vector4, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
@@ -80,11 +82,11 @@ const instances = (mesh: Mesh, matrices: Matrix[]): void => {
   mesh.thinInstanceSetBuffer("matrix", buf, 16, true);
 };
 
-const deckAt = (h: HullShape, z: number): number => deckHeight(h, z / h.length + 0.5);
-const beamAt = (h: HullShape, z: number): number => halfBreadth(h, z / h.length + 0.5, deckAt(h, z) - 1e-3);
 
 export class ShipDetail {
   private readonly crew: Mesh;
+  /** Shrouds and ratlines, moving with the masts (ship-view drives them). */
+  readonly ratlines: Ratlines;
   private readonly crewSpots: Matrix[];
   /** Small parts hidden at a distance (ratlines, rails, lanterns, crew): level of detail. */
   private readonly fine: ReturnType<TransformNode["getChildMeshes"]> = [];
@@ -104,7 +106,7 @@ export class ShipDetail {
     for (const m of castleMeshes) shadows?.addShadowCaster(m);
     this.body.push(...castleMeshes);
     const before = new Set(parent.getChildMeshes(true));
-    this.ratlines(scene, parent, model);
+    this.ratlines = new Ratlines(scene, parent, model);
     const afterRatlines = new Set(parent.getChildMeshes(true));
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);
@@ -150,28 +152,6 @@ export class ShipDetail {
     box.parent = parent;
     box.receiveShadows = true;
     return box;
-  }
-
-  /** Shrouds with ratlines: rungs every 0.55 m between neighbouring shrouds (a ladder net). */
-  private ratlines(scene: Scene, parent: TransformNode, model: ShipModel): void {
-    const h = model.def.hull;
-    const lines: Vector3[][] = [];
-    for (const m of model.def.masts) {
-      const topY = h.freeboard + m.height * 0.58;
-      for (const side of [-1, 1]) {
-        const shrouds = [-1.6, -0.55, 0.55, 1.6].map((dz) => ({ foot: new Vector3(side * (beamAt(h, m.z) + 0.35), deckAt(h, m.z) + 0.9, m.z + dz), head: new Vector3(side * 0.45, topY, m.z + dz * 0.25) }));
-        for (const s of shrouds) lines.push([s.foot, s.head]);
-        const rungs = Math.floor((topY - deckAt(h, m.z) - 1) / 0.55);
-        for (let r = 1; r < rungs; r++) {
-          const t = r / rungs;
-          lines.push(shrouds.map((s) => Vector3.Lerp(s.foot, s.head, t)));
-        }
-      }
-    }
-    const mesh = MeshBuilder.CreateLineSystem("ratlines", { lines }, scene);
-    mesh.color = new Color3(0.08, 0.06, 0.05);
-    mesh.parent = parent;
-    mesh.isPickable = false;
   }
 
   private rails(scene: Scene, parent: TransformNode, h: HullShape, mats: DetailMaterials, c: { quarter: number }): void {
