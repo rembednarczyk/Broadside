@@ -67,8 +67,15 @@ void main() {
     float thick = mix(fbm(uv * 1.3 + toSun + windOffset * 0.002), billow(uv * 0.9 + toSun + windOffset * 0.0015), 0.6);
     float lightAmt = exp(-3.0 * max(0.0, thick - 0.35)) * sunUp;
     vec3 lit = mix(vec3(1.0, 0.97, 0.9), sunColor, 0.5) * (0.35 + 1.6 * lightAmt * pow(max(c, 0.0), 3.0) + 0.4 * lightAmt);
-    vec3 shade = mix(skyHorizon * 0.3, vec3(0.06, 0.06, 0.065), cloudCover);
-    vec3 cloud = mix(shade, lit, clamp(lightAmt * (1.0 - n2 * 0.8) * (0.4 + 0.9 * pow(max(c, 0.0), 2.0)), 0.0, 1.0));
+    // A storm sky is not a black lid: the cloud base is lit from all round by the day (a mid grey
+    // of the horizon's tone), and its heaps shade one another: billows at a finer scale darken
+    // the hollows and leave the swells lighter, which gives the deck its body.
+    vec3 shade = mix(skyHorizon * 0.42, skyHorizon * 0.34 + vec3(0.02), cloudCover) * (0.55 + 0.4 * sunUp);
+    float body = billow(uv * 4.3 + windOffset * 0.004 + 3.0);
+    shade *= 0.62 + 0.75 * body;
+    // Thin places let the sun through anywhere in the sky, most towards the sun.
+    float glow = lightAmt * (1.0 - n2 * 0.8) * (0.55 + 0.9 * pow(max(c, 0.0), 2.0));
+    vec3 cloud = mix(shade, lit, clamp(glow, 0.0, 1.0));
     col = mix(col, cloud, density * smoothstep(0.0, 0.12, d.y));
     // Low scud near the horizon: fast, dark, torn.
     float scud = smoothstep(0.55, 0.8, fbm(vec2(d.x / (d.y + 0.05) * 0.6, d.z / (d.y + 0.05) * 0.6) + windOffset * 0.006));

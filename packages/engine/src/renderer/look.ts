@@ -51,12 +51,13 @@ const MOON_INTENSITY = 0.55;
  * @param hours time of day 0..24
  * @param overcast cloud cover 0 (clear) .. 1 (storm)
  * @param fog extra fog 0..1
+ * @param azimuth fixed bearing of the sun (radians, 0 = +x towards +z); omitted, it follows the hour
  */
-export const sceneLook = (hours: number, overcast: number, fog: number): SceneLook => {
+export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?: number): SceneLook => {
   const dayAngle = ((hours - 6) / 24) * Math.PI * 2;
   const elevation = Math.sin(dayAngle) * 1.15;
   const sunY = Math.max(-0.3, Math.min(1, elevation));
-  const az = dayAngle * 0.9 + 0.6;
+  const az = azimuth ?? dayAngle * 0.9 + 0.6;
   const horiz = Math.sqrt(Math.max(0, 1 - sunY * sunY));
   const sunDir = { x: Math.cos(az) * horiz, y: sunY, z: Math.sin(az) * horiz };
   const day = clamp01((sunY + 0.05) / 0.35);

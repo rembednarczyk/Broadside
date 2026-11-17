@@ -169,6 +169,8 @@ const parseHours = (v: string | null): number => {
 };
 const startHours = parseHours(params.get("hours"));
 const clockRuns = params.get("clock") !== "stop";
+// `sun=<degrees>`: a fixed bearing of the sun (0 = east, 90 = north, the +z a ship starts along), for staged shots.
+const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 180 : undefined;
 const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -190,7 +192,7 @@ const frame = (now: number) => {
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
   const focus = combatFocus(session.sim, session.playerId);
   renderer.focus = focus;
-  renderer.frame(session.sim, { hours: hoursNow(), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
+  renderer.frame(session.sim, { hours: hoursNow(), ...(sunAzimuth === undefined ? {} : { sunAzimuth }), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
   frames++;
   if (fpsAcc > 0.5) {

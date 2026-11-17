@@ -135,12 +135,12 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 
 ### M9 grafika do poziomu klatek referencyjnych i kolizje części statku (właściciel, 17.11)
-- [ ] A. plansze porównawcze: ujęcia w `tools/shots/views.json` odpowiadające scenom klipu i `tools/shots/reference-sheet.mjs` (zrzut gry obok klatki), stan w `docs/reference/README.md`
+- [x] A. plansze porównawcze (17.11): siedem scen klipu w `tools/shots/reference-scenes.json`, `node tools/shots/reference-sheet.mjs <katalog> [scena]` składa zrzut gry obok klatki; parametr `sun=<stopnie>` ustawia azymut słońca do ujęć pod światło; do zrobienia: przegląd wszystkich siedmiu scen i tabela stanu w `docs/reference/README.md`
 - [ ] B1. bryły części w katalogu i reguła audytu „przenikanie” (działo i ściana kasztelu, maszt i pokład kasztelu, wanta i kasztel, latarnia i balustrada)
 - [ ] B2. naprawy z audytu: otwór na maszt i furty w kasztelu, stopy want i sztagi omijające kasztel, działa przy furtach modelu
 - [ ] B3. kolizja tkaniny żagli z masztem, rejami i sztagami (żagiel wstecz opiera się o maszt), szoty i brasy poza płótnem
 - [ ] C1. światło i kolor: sepia z prześwietlonym niebem i czarnymi cieniami, bloom wokół słońca, promienie przez omasztowanie
-- [ ] C2. niebo i mgła: kłębiaste chmury burzowe, ławice mgły zakrywające statek, klify we mgle
+- [ ] C2 (zaczęte 17.11: pokrywa chmur ma bryłę i odcień horyzontu zamiast czarnej płyty, cienkie miejsca przepuszczają słońce). niebo i mgła: kłębiaste chmury burzowe, ławice mgły zakrywające statek, klify we mgle
 - [ ] C3. woda: krótka, ostra, ciemna fala, szeroka ścieżka iskier, piana z teksturą, linia wody na obiektywie
 - [ ] C4. statek: kasztel dziobowy, pawęż i galeria, okrągłe furty, drzwi, załoga na rufie, postrzępione żagle, gęstsze olinowanie
 - [ ] C5. kamera filmowa tuż nad wodą, zanurzenie obiektywu, krople, rozmycie ruchu

@@ -307,3 +307,10 @@ na długości 25·v zamiast 12·v. Bryzga spod rufy tym samym emiterem `fx-mist`
 Cel serii M9: każde ujęcie klipu ma w grze odpowiednik zestawiany z klatką (plansze porównawcze jako bramka zmian
 graficznych). „Kolizje na statku” rozumiem jako przenikanie części w widoku (żagle, liny, działa, kasztel, maszty);
 kolizje fizyczne między statkami dopiszę po tej serii, jeśli to o nie chodziło.
+
+## 17.11 Plansze porównawcze i pierwsze wnioski (M9)
+Zestawienie zza rufy i z boku z klatkami `ref_090` i `ref_060` pokazało, że największą różnicę robi kierunek
+światła i niebo: klip jest kręcony pod słońce na jasne, kłębiaste chmury, a w grze azymut słońca zależy tylko od
+godziny. Dodany parametr `sun=<stopnie>` (stały azymut) dla ujęć; chmury: podstawa w odcieniu horyzontu (0,34–0,42)
+z własnym cieniowaniem kłębów zamiast stałej czerni 0,06. Następne różnice z plansz: żagle w klipie są ciemne,
+mniejsze i częściowo zwinięte; statek jest niższy i dłuższy; horyzont tonie we mgle; kadr z większej odległości.

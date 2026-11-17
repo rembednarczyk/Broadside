@@ -40,6 +40,8 @@ export interface RendererOptions {
 
 export interface FrameEnvironment {
   readonly hours: number;
+  /** Fixed bearing of the sun (radians) for staged shots; omitted, the sun follows the hour. */
+  readonly sunAzimuth?: number;
   /** Fallbacks when the simulation has no dynamic weather. */
   readonly overcast: number;
   readonly fog: number;
@@ -193,7 +195,7 @@ export class BabylonRenderer {
 
   frame(sim: Simulation, env: FrameEnvironment, dt: number): void {
     const w = sim.env.weather;
-    const look = sceneLook(env.hours, w ? w.overcast : env.overcast, w ? w.fog : env.fog);
+    const look = sceneLook(env.hours, w ? w.overcast : env.overcast, w ? w.fog : env.fog, env.sunAzimuth);
     const player = sim.player();
     if (player?.body) {
       const p = player.body.pos;
