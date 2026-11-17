@@ -51,7 +51,7 @@ float hullWater(vec2 p) {
     float w = across / halfBeam;
     // Inside the waterline outline (an ellipse narrowing to the bow): keep the sea under the hull.
     float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
-    h -= 2.5 * (1.0 - smoothstep(0.45, 0.7, outline));
+    h -= 3.2 * (1.0 - smoothstep(0.62, 0.9, outline));
     float sq = min(speed * speed, 49.0);
     // Bow wave: a crest just ahead of the stem, spreading to the sides.
     float bow = exp(-pow((along - halfLen - 0.8) / (halfLen * 0.18 + 1.0), 2.0)) * exp(-pow(across / (halfBeam * 1.6), 2.0));

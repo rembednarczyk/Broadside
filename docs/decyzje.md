@@ -283,3 +283,10 @@ wysokość 2,2 m. Tekstura ścian: `hull-patches.mjs` wypala rzut boczny poszyci
 wysokości nadburcia, 512 x 256) i zapisuje rozmiar w metrykach; gra kafelkuje ją lustrzanie. Wypalanie pokładu z góry
 odrzucone (pokłady modeli są zastawione, wynik rozmazany), pokład zostaje z desek Poly Haven. Dźwięk: paczka
 przeglądarki dostała katalog nagrań; zapasowy szum syntezatora ma pętlę 9 s zamiast 2 s.
+
+## 17.11 Bryzga dziobowa i woda cięta przez kadłub (uwaga właściciela)
+Stare kłęby brały się z emitera plusków (duże, rosnące cząstki). Nowy emiter `fx-mist`: krople 0,22–0,6 m, życie
+0,45–1,1 s, krycie do 0,34, opór powietrza; emisja z czterech punktów wzdłuż dziobu po obu burtach, na zewnątrz i
+lekko ku rufie, tempo min(90, 1,1·v²) kropel na sekundę i punkt, razy do 7 przy uderzeniu dziobu w falę. Shader
+oceanu dostaje długość kadłuba rysowanego (model dopasowany do klasy), a obniżenie morza pod kadłubem wynosi 3,2 m w
+szerszym obrysie, żeby grzbiet fali nie wchodził do wnętrza.

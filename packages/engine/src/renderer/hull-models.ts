@@ -87,6 +87,12 @@ export class HullModels {
     return meshes;
   }
 
+  /** Length and beam of the class's model as fitted to the physics hull (the hull the eye sees), or null without one. */
+  fitted(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }): { length: number; beam: number } | null {
+    const m = this.loaded.get(id);
+    return m ? { length: m.metrics.length * fitOf(m.metrics, hull).kx, beam: hull.beam } : null;
+  }
+
   /**
    * The model's own planking as a tiling texture for walls the game builds on the hull: `u` repeats
    * every `across` metres of wall and `v` spans `up` metres (the wall's UVs), mirrored at the joins.

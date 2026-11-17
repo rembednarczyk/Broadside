@@ -17,7 +17,7 @@ import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
 import { GunScan } from "./ship-guns";
-import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
+import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -90,6 +90,8 @@ export class BabylonRenderer {
     this.sky = new Sky(this.scene, g.cloudOctaves);
     this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
     this.effects = new EffectsDirector(this.scene, g.particles);
+    // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
+    this.effects.hullLength = (id, physical) => this.hulls?.fitted(id as ShipClassId, SHIP_CLASSES[id as ShipClassId].hull)?.length ?? physical;
     this.salvo = new SalvoMarks(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
     this.instrumentation = new SceneInstrumentation(this.scene);
@@ -235,7 +237,7 @@ export class BabylonRenderer {
     const ws = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
     this.updateScreen(sim, look, dt);
-    const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
+    const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.syncShips(sim);
     this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));

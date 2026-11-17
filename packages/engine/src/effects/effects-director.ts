@@ -15,6 +15,10 @@ export class EffectsDirector {
   private readonly smoke: BurstEmitter;
   private readonly flash: BurstEmitter;
   private readonly spray: BurstEmitter;
+  /** Fine spray torn off the bow wave (many small, short-lived droplets; the big puffs are for shot splashes). */
+  private readonly mist: BurstEmitter;
+  /** Visual length of a ship's hull (a modelled hull is longer than the physics hull); set by the renderer. */
+  hullLength: (classId: string, physical: number) => number = (_id, physical) => physical;
   private readonly splinters: BurstEmitter;
   private readonly flames: BurstEmitter;
   private readonly fireSmoke: BurstEmitter;
@@ -33,7 +37,8 @@ export class EffectsDirector {
     this.smoke = new BurstEmitter("fx-smoke", scene, { texture: this.sprites.puff, capacity: cap(2500), color1: rgba(0.62, 0.61, 0.58, 0.5), color2: rgba(0.5, 0.5, 0.48, 0.42), colorDead: rgba(0.55, 0.55, 0.55, 0), minSize: 2.5, maxSize: 4.5, minLife: 6, maxLife: 11, minPower: 1, maxPower: 6, gravity: new Vector3(0, 0.25, 0), additive: false, spread: 0.35, growth: 5, drag: 0.08 });
     this.flash = new BurstEmitter("fx-flash", scene, { texture: this.sprites.flare, capacity: cap(600), color1: rgba(1, 0.85, 0.5, 1), color2: rgba(1, 0.55, 0.15, 1), colorDead: rgba(0.4, 0.1, 0, 0), minSize: 1, maxSize: 1, minLife: 0.08, maxLife: 0.2, minPower: 4, maxPower: 14, gravity: g, additive: true, spread: 0.15, growth: 1.8, drag: 0 });
     this.spray = new BurstEmitter("fx-spray", scene, { texture: this.sprites.puff, capacity: cap(3000), color1: rgba(0.95, 0.97, 1, 0.85), color2: rgba(0.8, 0.88, 0.92, 0.7), colorDead: rgba(0.9, 0.95, 1, 0), minSize: 1, maxSize: 1, minLife: 0.8, maxLife: 1.8, minPower: 4, maxPower: 12, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.3, growth: 2, drag: 0 });
-    this.splinters = new BurstEmitter("fx-splinters", scene, { texture: this.sprites.streak, capacity: cap(1500), color1: rgba(0.55, 0.4, 0.25, 1), color2: rgba(0.35, 0.25, 0.15, 1), colorDead: rgba(0.3, 0.2, 0.1, 0), minSize: 1, maxSize: 1, minLife: 0.6, maxLife: 1.4, minPower: 6, maxPower: 18, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.8, growth: 1, drag: 0 });
+this.mist = new BurstEmitter("fx-mist", scene, { texture: this.sprites.puff, capacity: cap(5000), color1: rgba(0.93, 0.96, 1, 0.34), color2: rgba(0.82, 0.9, 0.95, 0.22), colorDead: rgba(0.9, 0.95, 1, 0), minSize: 0.22, maxSize: 0.6, minLife: 0.45, maxLife: 1.1, minPower: 2.5, maxPower: 8, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.55, growth: 1.3, drag: 0.6 });
+        this.splinters = new BurstEmitter("fx-splinters", scene, { texture: this.sprites.streak, capacity: cap(1500), color1: rgba(0.55, 0.4, 0.25, 1), color2: rgba(0.35, 0.25, 0.15, 1), colorDead: rgba(0.3, 0.2, 0.1, 0), minSize: 1, maxSize: 1, minLife: 0.6, maxLife: 1.4, minPower: 6, maxPower: 18, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.8, growth: 1, drag: 0 });
     this.flames = new BurstEmitter("fx-flames", scene, { texture: this.sprites.flare, capacity: cap(2500), color1: rgba(1, 0.7, 0.25, 0.9), color2: rgba(1, 0.4, 0.08, 0.8), colorDead: rgba(0.3, 0.05, 0, 0), minSize: 1, maxSize: 1, minLife: 0.4, maxLife: 0.9, minPower: 1, maxPower: 4, gravity: new Vector3(0, 3, 0), additive: true, spread: 0.3, growth: 0.4, drag: 0 });
     this.fireSmoke = new BurstEmitter("fx-fire-smoke", scene, { texture: this.sprites.puff, capacity: cap(2500), color1: rgba(0.15, 0.13, 0.12, 0.55), color2: rgba(0.25, 0.22, 0.2, 0.45), colorDead: rgba(0.3, 0.3, 0.3, 0), minSize: 2, maxSize: 4, minLife: 3, maxLife: 6, minPower: 2, maxPower: 5, gravity: new Vector3(0, 1.5, 0), additive: false, spread: 0.25, growth: 3.5, drag: 0 });
     this.embers = new BurstEmitter("fx-embers", scene, { texture: this.sprites.flare, capacity: cap(1500), color1: rgba(1, 0.75, 0.35, 1), color2: rgba(1, 0.5, 0.15, 1), colorDead: rgba(0.4, 0.1, 0, 0), minSize: 1, maxSize: 1, minLife: 0.4, maxLife: 1.2, minPower: 8, maxPower: 22, gravity: new Vector3(0, -6, 0), additive: true, spread: 0.45, growth: 0.5, drag: 0 });
@@ -145,13 +150,15 @@ export class EffectsDirector {
     }
     this.bowSpray(sim, dt);
     this.syncInstances(sim);
-    for (const em of [this.smoke, this.flash, this.spray, this.splinters, this.flames, this.fireSmoke, this.embers, this.screen]) em.flush();
+    for (const em of [this.smoke, this.flash, this.spray, this.mist, this.splinters, this.flames, this.fireSmoke, this.embers, this.screen]) em.flush();
   }
 
   /**
-   * Spray at the bow, driven by the physics: when the stem drives down into a wave (its vertical
-   * speed relative to the water surface below a threshold) a burst flies up and out to both sides,
-   * bigger with the ship's speed; at speed a light plume streams from the cutwater all the time.
+   * Spray at the bow, driven by the physics. The stem cuts the sea and throws a sheet of water up
+   * and out along both bows (the bow wave breaking): fine droplets from several points down the
+   * forward tenth of the waterline, thrown outward and a little aft, more with speed. When the
+   * stem drives down into a wave (its vertical speed against the surface) the sheet bursts higher.
+   * Droplets are small and short-lived, so the sheet reads as spray, not as puffs of cloud.
    */
   private bowSpray(sim: Simulation, dt: number): void {
     const env = sim.env;
@@ -159,21 +166,30 @@ export class EffectsDirector {
       const b = e.body!;
       const s = e.ship!;
       const h = s.model.def.hull;
-      const stem = vec3(0, 0.3 - s.model.com.y, h.length * 0.48 - s.model.com.z);
-      const p = rotate(b.rot, stem);
-      const wx = b.pos.x + p.x;
-      const wy = b.pos.y + p.y;
-      const wz = b.pos.z + p.z;
-      const surface = waterHeight(env.waves, wx, wz, env.time);
-      if (wy - surface > 1.2) continue;
+      const length = this.hullLength(s.model.def.id, h.length);
       const fwd = Math.max(0, rotateInv(b.rot, b.vel).z);
-      const rel = pointVelocity(b, vec3(wx, wy, wz)).y - waterVerticalSpeed(env.waves, wx, wz, env.time);
+      if (fwd < 1.5) continue;
       const side = rotate(b.rot, vec3(1, 0, 0));
-      const slam = rel < -1.2 ? Math.min(40, Math.round(-rel * fwd * 2)) : 0;
-      const plume = fwd > 3 && Math.random() < dt * 20 ? Math.round(fwd - 2) : 0;
-      for (const sx of [-1, 1]) {
-        const n = slam + plume;
-        if (n > 0) this.spray.emit(wx + side.x * sx * h.beam * 0.3, surface + 0.3, wz + side.z * sx * h.beam * 0.3, side.x * sx * 0.6, 1 + slam * 0.03, side.z * sx * 0.6, n, 1.2);
+      const ahead = rotate(b.rot, vec3(0, 0, 1));
+      const stem = rotate(b.rot, vec3(0, 0.3 - s.model.com.y, length * 0.47 - s.model.com.z));
+      const sx0 = b.pos.x + stem.x;
+      const sz0 = b.pos.z + stem.z;
+      const rel = pointVelocity(b, vec3(sx0, b.pos.y + stem.y, sz0)).y - waterVerticalSpeed(env.waves, sx0, sz0, env.time);
+      const slam = rel < -1 ? Math.min(3, -rel * 0.6) : 0;
+      // Droplets per second from each point, growing with the square of the speed (wave-making).
+      const rate = Math.min(90, fwd * fwd * 1.1) * (1 + slam * 2);
+      for (let k = 0; k < 4; k++) {
+        // Points back along the bow: the hull widens as the sheet runs aft.
+        const back = length * 0.035 * k;
+        const out = h.beam * (0.06 + 0.1 * k);
+        for (const sx of [-1, 1]) {
+          const n = Math.floor(rate * dt * (1 - k * 0.18) + Math.random());
+          if (n <= 0) continue;
+          const x = sx0 - ahead.x * back + side.x * sx * out;
+          const z = sz0 - ahead.z * back + side.z * sx * out;
+          const y = waterHeight(env.waves, x, z, env.time) + 0.15;
+          this.mist.emit(x, y, z, side.x * sx * 0.75 - ahead.x * 0.25, 0.55 + slam * 0.35, side.z * sx * 0.75 - ahead.z * 0.25, n, 0.35);
+        }
       }
     }
   }
@@ -207,6 +223,6 @@ export class EffectsDirector {
   }
 
   dispose(): void {
-    for (const em of [this.smoke, this.flash, this.spray, this.splinters, this.flames, this.fireSmoke, this.embers, this.screen]) em.dispose();
+    for (const em of [this.smoke, this.flash, this.spray, this.mist, this.splinters, this.flames, this.fireSmoke, this.embers, this.screen]) em.dispose();
   }
 }
