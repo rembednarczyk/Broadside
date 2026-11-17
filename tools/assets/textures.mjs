@@ -2,7 +2,7 @@
 /**
  * Textures from Poly Haven (CC0), as podrcr takes them: downloads the 2k JPG maps of each listed
  * asset into .asset-cache/polyhaven (outside git) and writes game-sized JPGs to
- * packages/app/public/assets/textures/<id>_<map>.jpg.
+ * packages/app/public/assets/textures/<id>_<map>.jpg (and a smaller <id>_<map>-lite.jpg).
  *
  * Usage: node tools/assets/textures.mjs [id ...]
  */
@@ -16,14 +16,17 @@ const API = "https://api.polyhaven.com";
 const CACHE = ".asset-cache/polyhaven";
 const OUT = "packages/app/public/assets/textures";
 
-/** Asset id, and the side in pixels of each map (diff: colour, nor_gl: OpenGL normal map). */
+/**
+ * Asset id, and the side in pixels of each map (diff: colour, nor_gl: OpenGL normal map). Each map
+ * is also written at a quarter of the area (`-lite`, half the side, at least 512) for the low preset.
+ */
 const TEXTURES = [
   // Deck planking of the generated hulls.
-  { id: "weathered_planks", maps: { diff: 1024, nor_gl: 1024 } },
+  { id: "weathered_planks", maps: { diff: 2048, nor_gl: 2048 } },
   // Masts, yards and carriages: dark, tarred timber.
-  { id: "dark_planks", maps: { diff: 512, nor_gl: 512 } },
+  { id: "dark_planks", maps: { diff: 1024, nor_gl: 1024 } },
   // Sailcloth: only the weave, as a normal map over the painted canvas.
-  { id: "rough_linen", maps: { nor_gl: 512 } },
+  { id: "rough_linen", maps: { nor_gl: 1024 } },
 ];
 const KEY = { diff: "Diffuse", nor_gl: "nor_gl" };
 
@@ -44,7 +47,9 @@ for (const t of TEXTURES.filter((x) => only.length === 0 || only.includes(x.id))
   for (const [map, size] of Object.entries(t.maps)) {
     const raw = await download(files[KEY[map]]["2k"].jpg.url, join(CACHE, `${t.id}_${map}.jpg`));
     const out = join(OUT, `${t.id}_${map}.jpg`);
-    await sharp(raw).resize(size, size).jpeg({ quality: 85 }).toFile(out);
+    await sharp(raw).resize(size, size).jpeg({ quality: 88 }).toFile(out);
+    const lite = Math.max(512, size / 2);
+    await sharp(raw).resize(lite, lite).jpeg({ quality: 85 }).toFile(join(OUT, `${t.id}_${map}-lite.jpg`));
     console.log(out);
   }
 }

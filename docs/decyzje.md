@@ -199,3 +199,9 @@ Dźwięki własnego statku cichną z oddaleniem kamery (do 20%). Kabestan gra ty
 Żagle i olinowanie mają płynnie reagować na zastane warunki, projektowane z góry jako deterministyczne, na poziomie
 grafik referencyjnych. Przeszycia materiału żagla (szwy brytów) mają istnieć i wpływać na fizykę materiału
 (sztywniejsze pasma). Kolejność: po teksturach wysokiej jakości.
+
+## 17.11 Tekstury żagli i drewna, część 1 (pytanie właściciela)
+Żagiel malowany proceduralnie w 2048 px (preset high i wyżej; 1024 medium, 512 low): 12 brytów o różnym odcieniu,
+szwy płaskie z dwoma rzędami ściegów, dwa refbanty z refsejzingami, obszycie lików, zacieki od deszczu, łaty ze
+ściegiem. Układ (liczba brytów, refbanty, szerokość obszycia) jest w stałej `SAIL_LAYOUT`, żeby ta sama geometria
+szwów weszła później do fizyki płótna. Pokład 2048, drzewce 1024, splot lnu 1024 (kafelkowany 8 razy).

@@ -32,6 +32,8 @@ export interface ShipMaterials {
   readonly rope: StandardMaterial;
   readonly flag: Readonly<Record<FactionId, StandardMaterial>>;
   readonly detail: DetailMaterials;
+  /** Side of the painted sail textures (px), by the graphics preset. */
+  readonly sailSize: number;
 }
 
 const material = (scene: Scene, name: string, c: [number, number, number], spec = 0.05): StandardMaterial => {
@@ -54,7 +56,8 @@ const tiled = (scene: Scene, url: string, u: number, v: number): Texture => {
  * colours. Deck: weathered planks along the ship. Spars: dark timber. Sails: a linen weave as a
  * normal map over the painted canvas.
  */
-export const createShipMaterials = (scene: Scene, texturesUrl?: string): ShipMaterials => {
+export const createShipMaterials = (scene: Scene, texturesUrl?: string, quality: "low" | "medium" | "high" = "high"): ShipMaterials => {
+  const lite = quality === "low" ? "-lite" : "";
   const hull = material(scene, "hull", [1, 1, 1], 0.08);
   hull.backFaceCulling = false;
   hull.twoSidedLighting = true;
@@ -76,26 +79,27 @@ export const createShipMaterials = (scene: Scene, texturesUrl?: string): ShipMat
   const wood = material(scene, "spar", [0.22, 0.15, 0.09]);
   if (texturesUrl) {
     deck.diffuseColor = new Color3(1.15, 1.05, 0.95);
-    deck.diffuseTexture = tiled(scene, `${texturesUrl}weathered_planks_diff.jpg`, 3, 1);
-    deck.bumpTexture = tiled(scene, `${texturesUrl}weathered_planks_nor_gl.jpg`, 3, 1);
+    deck.diffuseTexture = tiled(scene, `${texturesUrl}weathered_planks_diff${lite}.jpg`, 3, 1);
+    deck.bumpTexture = tiled(scene, `${texturesUrl}weathered_planks_nor_gl${lite}.jpg`, 3, 1);
     wood.diffuseColor = new Color3(0.9, 0.75, 0.6);
     // The grain runs along the spar (the texture's planks lie across: turned a quarter).
-    wood.diffuseTexture = tiled(scene, `${texturesUrl}dark_planks_diff.jpg`, 3, 1);
-    wood.bumpTexture = tiled(scene, `${texturesUrl}dark_planks_nor_gl.jpg`, 3, 1);
+    wood.diffuseTexture = tiled(scene, `${texturesUrl}dark_planks_diff${lite}.jpg`, 3, 1);
+    wood.bumpTexture = tiled(scene, `${texturesUrl}dark_planks_nor_gl${lite}.jpg`, 3, 1);
     for (const t of [wood.diffuseTexture, wood.bumpTexture] as Texture[]) t.wAng = Math.PI / 2;
-    sail.bumpTexture = tiled(scene, `${texturesUrl}rough_linen_nor_gl.jpg`, 5, 5);
+    sail.bumpTexture = tiled(scene, `${texturesUrl}rough_linen_nor_gl${lite}.jpg`, 8, 8);
     sail.bumpTexture.level = 0.6;
   }
-  return { hull, deck, wood, sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail: createDetailMaterials(scene) };
+  const sailSize = quality === "low" ? 512 : quality === "medium" ? 1024 : 2048;
+  return { sailSize, hull, deck, wood, sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail: createDetailMaterials(scene) };
 };
 
 /** One painted canvas per faction and emblem choice, shared (Flyweight). */
-const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, emblem: boolean): StandardMaterial => {
+const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, emblem: boolean, size: number): StandardMaterial => {
   const key = `sail-${faction}-${emblem ? "e" : "p"}`;
   const cached = scene.getMaterialByName(key);
   if (cached) return cached as StandardMaterial;
-  const tex = new DynamicTexture(key, { width: 512, height: 512 }, scene, true);
-  paintSail(tex.getContext() as unknown as SailPaint, 512, faction, emblem);
+  const tex = new DynamicTexture(key, { width: size, height: size }, scene, true);
+  paintSail(tex.getContext() as unknown as SailPaint, size, faction, emblem);
   tex.update(true);
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
@@ -263,7 +267,7 @@ export class ShipView {
     });
     this.plans = [...plan.sails];
     this.fixed = this.plans.map((p) => p.shape === "square" && model.def.masts[p.mast]!.sails[p.sail]!.rig === "foreAft");
-    this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem), mats.wood, shadows);
+    this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem, mats.sailSize), mats.wood, shadows);
     this.springs = new MastSprings(plan.mastTops.map((t, i) => ({ base: t.y - model.def.masts[i]!.height, height: model.def.masts[i]!.height })));
     this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model);
   }

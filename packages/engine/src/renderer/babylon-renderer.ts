@@ -88,7 +88,7 @@ export class BabylonRenderer {
     this.shadows = g.shadowSize > 0 ? this.createShadows(g) : null;
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves);
-    this.materials = createShipMaterials(this.scene, opts.texturesUrl);
+    this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
     this.effects = new EffectsDirector(this.scene, g.particles);
     this.salvo = new SalvoMarks(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
