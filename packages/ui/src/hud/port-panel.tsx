@@ -1,0 +1,101 @@
+import { useState } from "react";
+import { type PortHud, useHud } from "../store/hud-store";
+import { isTextKey, text, type TextKey } from "../i18n/catalog";
+import { type PortIntents } from "../intents";
+import { JobLine } from "./job-panel";
+
+const AMMO = ["round", "heavy", "chain", "grape", "hot", "shell", "greekFire", "rocket", "smoke", "mine"] as const;
+type Tab = "services" | "shot" | "yard" | "jobs";
+const TABS: readonly { readonly id: Tab; readonly label: TextKey }[] = [
+  { id: "services", label: "port.tab.services" },
+  { id: "shot", label: "port.ammo" },
+  { id: "yard", label: "port.tab.yard" },
+  { id: "jobs", label: "port.tab.jobs" },
+];
+
+type Lang = "en" | "pl";
+const label = (lang: Lang, key: string, fallback: string): string => (isTextKey(key) ? text(lang, key) : fallback);
+
+const Services = ({ p, lang, gold, intents }: { p: PortHud; lang: Lang; gold: number; intents: PortIntents }) => (
+  <>
+    <div className="port-grid">
+      <button disabled={p.repairCost === 0 || p.repairCost > gold} onPointerDown={() => intents.trade("repair", 1)}>{text(lang, "port.repair")} <small>{p.repairCost}</small></button>
+      <button disabled={p.crewMissing === 0 || p.crewCost > gold} onPointerDown={() => intents.trade("crew", p.crewMissing)}>{text(lang, "port.crew")} <small>{p.crewMissing} · {p.crewCost}</small></button>
+      <button onPointerDown={() => intents.trade("provisions", 10)}>{text(lang, "port.provisions")}</button>
+      <button disabled={p.plunderValue === 0} onPointerDown={() => intents.trade("sellPlunder", 1)}>{text(lang, "port.sell")} <small>{p.plunderValue}</small></button>
+    </div>
+    <div className="label">{text(lang, "port.standing")}</div>
+    <div className="standings">
+      {p.standings.map((s) => (
+        <div key={s.faction} className={s.value <= -0.5 ? "standing war" : "standing"}>
+          <span>{label(lang, `faction.${s.faction}`, s.faction)}</span>
+          <i style={{ width: `${Math.round((s.value + 1) * 50)}%` }} />
+        </div>
+      ))}
+    </div>
+  </>
+);
+
+const Shot = ({ lang, intents }: { lang: Lang; intents: PortIntents }) => (
+  <div className="port-ammo">
+    {AMMO.map((a) => (
+      <button key={a} onPointerDown={() => intents.trade("ammo", 10, a)}>{label(lang, `ammo.${a}`, a)}</button>
+    ))}
+  </div>
+);
+
+const Yard = ({ p, lang, gold, intents }: { p: PortHud; lang: Lang; gold: number; intents: PortIntents }) => (
+  <>
+    <div className="label">{text(lang, "port.refits")}</div>
+    <div className="port-grid">
+      {p.refits.map((r) => (
+        <button key={r.id} className={r.fitted ? "on" : ""} disabled={r.fitted || r.cost > gold} onPointerDown={() => intents.refit(r.id)} data-testid={`refit-${r.id}`}>
+          {label(lang, `refit.${r.id}`, r.id)} <small>{r.fitted ? "✓" : r.cost}</small>
+        </button>
+      ))}
+    </div>
+    <div className="label">{text(lang, "port.yard")}</div>
+    <div className="port-yard">
+      {p.yard.map((y) => (
+        <button key={y.classId} disabled={y.cost > gold} onPointerDown={() => intents.buyShip(y.classId)} data-testid={`buy-${y.classId}`}>
+          {label(lang, `class.${y.classId}`, y.classId)}
+          <small>{y.cost < 0 ? `+${-y.cost}` : y.cost} · {y.guns} {text(lang, "port.guns")}</small>
+        </button>
+      ))}
+    </div>
+  </>
+);
+
+/** Harbour services while alongside, in tabs: services and standing, shot, shipyard and refits. */
+export const PortPanel = ({ intents }: { intents: PortIntents }) => {
+  const p = useHud((h) => h.port);
+  const lang = useHud((h) => h.language);
+  const gold = useHud((h) => h.gold);
+  const [tab, setTab] = useState<Tab>("services");
+  if (!p) return null;
+  return (
+    <div className="panel harbour" data-testid="port">
+      <div className="title">{p.name} · {label(lang, `faction.${p.owner}`, p.owner)}</div>
+      {p.factor === null ? (
+        <div className="alarm">{text(lang, "port.hostile")}</div>
+      ) : (
+        <>
+          <div className="port-tabs">
+            {TABS.map((t) => (
+              <button key={t.id} className={tab === t.id ? "on" : ""} onPointerDown={() => setTab(t.id)} data-testid={`port-tab-${t.id}`}>{text(lang, t.label)}</button>
+            ))}
+          </div>
+          {tab === "services" && <Services p={p} lang={lang} gold={gold} intents={intents} />}
+          {tab === "shot" && <Shot lang={lang} intents={intents} />}
+          {tab === "jobs" && (p.offer ? (
+            <div className="offer">
+              <JobLine j={p.offer} lang={lang} />
+              <button onPointerDown={() => intents.takeContract()} data-testid="take-contract">{text(lang, "contract.take")} <small>{p.offer.minutes} min</small></button>
+            </div>
+          ) : <div className="label">{text(lang, "contract.none")}</div>)}
+          {tab === "yard" && <Yard p={p} lang={lang} gold={gold} intents={intents} />}
+        </>
+      )}
+    </div>
+  );
+};

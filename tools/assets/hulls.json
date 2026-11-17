@@ -1,0 +1,46 @@
+[
+  {
+    "class": "galleon",
+    "source": "ga_free_251_weathered_18th_century_galleon.glb",
+    "lengthAxis": "x",
+    "bowAtMin": true,
+    "cut": 0.27,
+    "gain": 4,
+    "stumps": [
+      {
+        "above": 0.9,
+        "root": 0.845,
+        "area": 0.09
+      },
+      {
+        "above": 0.86,
+        "area": 0.004
+      }
+    ],
+    "flipY": false,
+    "minPiece": 0
+  },
+  {
+    "class": "frigate",
+    "source": "baron_anders_von_hopken_1759.glb",
+    "lengthAxis": "z",
+    "bowAtMin": true,
+    "cut": 0.24,
+    "flipY": false,
+    "minPiece": 0,
+    "gain": 0.75
+  },
+  {
+    "class": "brig",
+    "source": "dutch_ship.glb",
+    "lengthAxis": "z",
+    "bowAtMin": null,
+    "cut": 1.0,
+    "flipY": false,
+    "minPiece": 0,
+    "keepMaterials": [
+      "dutch_ship_medium_hull"
+    ],
+    "gain": 1.3
+  }
+]

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Broadside</string>
+    <string name="title_activity_main">Broadside</string>
+    <string name="package_name">pl.broadside.game</string>
+    <string name="custom_url_scheme">pl.broadside.game</string>
+</resources>

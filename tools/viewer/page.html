@@ -1,0 +1,48 @@
+<title>Broadside Ship Viewer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the live 3D scene fills the frame; one quiet caption sits in the lower left corner. */
+:root { --bg: #0b1218; --ink: #e9e2d2; --ink-soft: #b9b09c; --panel: rgba(11, 18, 24, 0.62); --rule: rgba(233, 226, 210, 0.22); --display: "Cormorant Garamond", Georgia, "Times New Roman", serif; --text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; color-scheme: dark; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--text); overflow: hidden; }
+.plate { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; pointer-events: none; z-index: 5; }
+.plate div { max-width: 34rem; min-width: 0; padding: 10px 14px; background: var(--panel); border-top: 1px solid var(--rule); backdrop-filter: blur(6px); }
+.plate h1 { margin: 0 0 2px; font-family: var(--display); font-weight: 600; font-size: 1.35rem; letter-spacing: 0.01em; text-wrap: balance; }
+.plate p { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--ink-soft); }
+#boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); color: var(--ink-soft); font-size: 0.9rem; z-index: 4; pointer-events: none; transition: opacity 0.6s; }
+@media (prefers-reduced-motion: reduce) { #boot { transition: none; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500&display=swap">
+<style>
+/*VIEWER_CSS*/
+</style>
+<canvas id="game" touch-action="none"></canvas>
+<div id="hud"></div>
+<div id="boot">Wczytywanie statku i morza…</div>
+<div class="plate"><div>
+  <h1>Galeon gracza, Broadside</h1>
+  <p>Przeciągnij, żeby obrócić widok. Kółko myszy albo dwa palce przybliżają i oddalają (od 6 m). Scena jest żywa: statek płynie, żagle i olinowanie pracują na wietrze. Godzina 16:40, bryza, kolory naturalne.</p>
+</div></div>
+<script>
+  globalThis.__broadsideQuery = "seed=7&camera=chase&hud=0&inspect=1&weather=breeze&hours=16:40&color=natural&quality=high";
+  // The boot note goes once the game has drawn (its global appears when the scene is running).
+  const boot = document.getElementById("boot");
+  const gone = setInterval(() => { if (globalThis.__broadside) { setTimeout(() => Object.assign(globalThis.__broadside.renderer.camera.camera, { alpha: -0.85, beta: 1.32, radius: 46 }), 1500); boot.style.opacity = "0"; clearInterval(gone); } }, 300);
+  addEventListener("error", (e) => { boot.textContent = "Nie udało się uruchomić sceny 3D: " + (e.message || "błąd skryptu"); boot.style.opacity = "1"; });
+</script>
+<script>
+  // Models travel as base64 inside JSON (the host serves no .glb files): turn them back into
+  // binary object URLs under their game paths, then start the game.
+  (async () => {
+    const assets = {};
+    await Promise.all(["assets/hulls/galleon.glb", "assets/props/gun.glb"].map(async (path) => {
+      try {
+        const { base64 } = await (await fetch(path + ".json")).json();
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        assets[path] = URL.createObjectURL(new Blob([bytes], { type: "model/gltf-binary" }));
+      } catch { /* the game falls back to its generated hull and lathed guns */ }
+    }));
+    globalThis.__broadsideAssets = assets;
+    await import("./viewer.js");
+  })().catch((e) => { boot.textContent = "Nie udało się uruchomić sceny 3D: " + e.message; });
+</script>

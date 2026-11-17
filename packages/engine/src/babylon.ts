@@ -1,0 +1,60 @@
+/**
+ * The only module that imports Babylon.js (ADR-0001). Deep imports keep the bundle tree-shakeable;
+ * the side-effect imports at the bottom register the scene components the engine uses.
+ */
+export { Engine } from "@babylonjs/core/Engines/engine";
+export { NullEngine } from "@babylonjs/core/Engines/nullEngine";
+export { Scene } from "@babylonjs/core/scene";
+export { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+export { Matrix, Vector2, Vector3, Vector4, Quaternion } from "@babylonjs/core/Maths/math.vector";
+export { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+export { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
+export { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+export { PointLight } from "@babylonjs/core/Lights/pointLight";
+export { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
+export { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
+export { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+export { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
+export { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
+export { Texture } from "@babylonjs/core/Materials/Textures/texture";
+export { RawTexture3D } from "@babylonjs/core/Materials/Textures/rawTexture3D";
+export { Mesh } from "@babylonjs/core/Meshes/mesh";
+export { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+export { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+export { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
+export type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+export { Ray } from "@babylonjs/core/Culling/ray";
+export type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
+export { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
+export { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
+export type { Particle } from "@babylonjs/core/Particles/particle";
+export { Color4 as ParticleColor } from "@babylonjs/core/Maths/math.color";
+export { SceneInstrumentation } from "@babylonjs/core/Instrumentation/sceneInstrumentation";
+export { Effect } from "@babylonjs/core/Materials/effect";
+export { PostProcess } from "@babylonjs/core/PostProcesses/postProcess";
+export { ColorCurves } from "@babylonjs/core/Materials/colorCurves";
+export { VolumetricLightScatteringPostProcess } from "@babylonjs/core/PostProcesses/volumetricLightScatteringPostProcess";
+export { MotionBlurPostProcess } from "@babylonjs/core/PostProcesses/motionBlurPostProcess";
+export { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
+export { CascadedShadowGenerator } from "@babylonjs/core/Lights/Shadows/cascadedShadowGenerator";
+export type { Camera } from "@babylonjs/core/Cameras/camera";
+export type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
+
+import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import "@babylonjs/core/Rendering/depthRendererSceneComponent";
+import "@babylonjs/core/Meshes/Builders/linesBuilder";
+import "@babylonjs/core/Meshes/Builders/cylinderBuilder";
+import "@babylonjs/core/Meshes/Builders/boxBuilder";
+import "@babylonjs/core/Meshes/Builders/sphereBuilder";
+import "@babylonjs/core/Meshes/Builders/groundBuilder";
+import "@babylonjs/core/Particles/particleSystemComponent";
+import "@babylonjs/core/Meshes/thinInstanceMesh";
+import "@babylonjs/core/Meshes/Builders/capsuleBuilder";
+import "@babylonjs/core/Meshes/Builders/planeBuilder";
+import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
+import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
+export { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+export type { AssetContainer } from "@babylonjs/core/assetContainer";
+export type { Material } from "@babylonjs/core/Materials/material";
+// glTF 2.0 loader (modelled hulls from tools/assets).
+import "@babylonjs/loaders/glTF/2.0";
