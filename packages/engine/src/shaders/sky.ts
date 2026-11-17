@@ -127,7 +127,7 @@ void main() {
     col = mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
-  col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 0.55 * (0.15 + 0.85 * through) : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
+  col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 1.5 * (0.08 + 0.92 * through) : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
