@@ -1,0 +1,10 @@
+{
+  "_comment": "Scenes of the reference clip and the game shot that answers each: frame of docs/reference/frames, game query, hour, seconds of play, inspect camera (alpha,beta,radius,height above the ship's centre). tools/shots/reference-sheet.mjs <out-dir> [scene ...].",
+  "stern-sun": { "frame": "ref_020", "query": "seed=7&camera=chase&hud=0&weather=fresh", "hours": "17:40", "seconds": 4, "inspect": "-1.57,1.5,62,6" },
+  "side-dark": { "frame": "ref_060", "query": "seed=7&camera=chase&hud=0&weather=gale", "hours": "18:20", "seconds": 4, "inspect": "-3.0,1.52,75,6" },
+  "night-bow": { "frame": "ref_075", "query": "seed=7&camera=chase&hud=0&weather=storm", "hours": "21:30", "seconds": 4, "inspect": "1.3,1.5,60,8" },
+  "stern-castle": { "frame": "ref_090", "query": "seed=7&camera=chase&hud=0&weather=fresh", "hours": "17:00", "seconds": 4, "inspect": "-1.57,1.47,48,7" },
+  "deck": { "frame": "ref_112", "query": "seed=7&camera=deck&hud=0&weather=fresh", "hours": "17:00", "seconds": 3, "inspect": "" },
+  "quarter-close": { "frame": "ref_124", "query": "seed=7&camera=chase&hud=0&weather=fresh", "hours": "17:20", "seconds": 4, "inspect": "-2.1,1.5,34,7" },
+  "horizon": { "frame": "ref_152", "query": "seed=7&camera=chase&hud=0&weather=breeze", "hours": "17:50", "seconds": 3, "inspect": "-1.57,1.55,240,4" }
+}

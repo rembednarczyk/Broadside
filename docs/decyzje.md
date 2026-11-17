@@ -302,3 +302,8 @@ rurki. Poziom tekstury 0,22 jasności kadłuba, barwa (0,95, 0,72, 0,52).
 Fala dziobowa rozbieżna: grzbiet po obu stronach dziobu wzdłuż linii |poprzecznie| = 0,7 + 0,354·odległość od dziobu
 (kąt Kelvina 19,47°), wysokość 0,03·v², zanik z odległością; piana na grzbiecie od 1,5 m/s. Piana kilwateru zanika
 na długości 25·v zamiast 12·v. Bryzga spod rufy tym samym emiterem `fx-mist` (35% tempa dziobowego).
+
+## 17.11, użytkownik: grafika całej gry do poziomu klatek referencyjnych, kolizje na statku
+Cel serii M9: każde ujęcie klipu ma w grze odpowiednik zestawiany z klatką (plansze porównawcze jako bramka zmian
+graficznych). „Kolizje na statku” rozumiem jako przenikanie części w widoku (żagle, liny, działa, kasztel, maszty);
+kolizje fizyczne między statkami dopiszę po tej serii, jeśli to o nie chodziło.
