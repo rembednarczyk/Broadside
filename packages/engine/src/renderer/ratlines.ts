@@ -1,9 +1,9 @@
 import { type ShipModel } from "@broadside/sim";
 import { Color3, type LinesMesh, Matrix, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3 } from "../babylon";
 import { type SideProfile } from "./side-profile";
-import { beamAt, deckAt } from "./hull-stations";
 import { type MastBend, bendShare } from "./rig-motion";
 import { RopeTubes } from "./rope-tubes";
+import { type ShroudLadder, shroudLadders } from "./rig-layout";
 
 /**
  * Shrouds with ratlines (rungs every 0.55 m between neighbouring shrouds, a ladder net), moving with
@@ -12,41 +12,20 @@ import { RopeTubes } from "./rope-tubes";
  * (the standing behaviour of a real rig; slack drawn as a parabola like the stays). The rungs are
  * seized to the shrouds, so they are interpolated along the bent shrouds.
  */
-interface Shroud {
-  readonly foot: readonly [number, number, number];
-  readonly head: readonly [number, number, number];
-}
-interface Ladder {
-  readonly mast: number;
-  readonly side: -1 | 1;
-  readonly shrouds: readonly Shroud[];
-  readonly rungs: number;
-}
-
 /** Bow of a slack shroud at mid-length as a share of its length (2.5%), and of a taut one. */
 const SLACK = 0.025;
 const TAUT = 0.003;
 const SEGMENTS = 6;
 
 export class Ratlines {
-  private readonly ladders: Ladder[] = [];
+  private readonly ladders: readonly ShroudLadder[];
   private readonly mesh: LinesMesh;
   /** The shrouds themselves as laid rope (the rungs between them stay thin lines, as ratline stuff is). */
   private readonly tubes: RopeTubes;
 
   /** `side`: the measured side of a modelled hull; the shrouds then come down to channels on it. */
   constructor(scene: Scene, parent: TransformNode, model: ShipModel, side: SideProfile | null = null, iron: StandardMaterial | null = null) {
-    const h = model.def.hull;
-    model.def.masts.forEach((m, mast) => {
-      const topY = h.freeboard + m.height * 0.58;
-      for (const s of [-1, 1] as const) {
-        // On a modelled hull the feet stand on a channel at the model's side, just under its rail.
-        const footX = side ? side.halfAt(m.z) + 0.3 : beamAt(h, m.z) + 0.35;
-        const footY = side ? side.topAt(m.z) - 0.25 : deckAt(h, m.z) + 0.9;
-        const shrouds = [-1.6, -0.55, 0.55, 1.6].map((dz): Shroud => ({ foot: [s * footX, footY, m.z + dz], head: [s * 0.45, topY, m.z + dz * 0.25] }));
-        this.ladders.push({ mast, side: s, shrouds, rungs: Math.floor((topY - deckAt(h, m.z) - 1) / 0.55) });
-      }
-    });
+    this.ladders = shroudLadders(model, side);
     if (side && iron) this.channels(scene, parent, iron);
     this.tubes = new RopeTubes(scene, parent, "shroud-ropes", this.ladders.length * 4, SEGMENTS + 1, 0.032);
     this.mesh = MeshBuilder.CreateLineSystem("ratlines", { lines: this.lines([], [], 0), updatable: true }, scene);

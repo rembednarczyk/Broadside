@@ -241,3 +241,12 @@ składa się z setek fragmentów i reguła robiła w nim dziury. Potok zapisuje 
 rzeźba nie liczyły się), gra czyta go przez medianę (`side-profile.ts`) i stawia na nim własne okucia: barierkę
 (`model-rails.ts`), ławy wantowe i jufersy (`ratlines.ts`). Miara nadburcia galeonu spadła z 11,0 do 9,67 (kikuty
 ją zawyżały), więc kadłub jest dopasowany do pokładu dokładniej.
+
+## 17.11 Katalog części statku (prośba właściciela)
+Każda część ma rodzaj, stały identyfikator z rodzaju i położenia (`yard:1:2`, `shroud:0:port:3`), punkt zaczepienia
+w układzie kadłuba i część nośną (drzewo po `on`: Composite). Katalog i reguły są w `core` (czyste dane), więc
+generator statków może sam ocenić wynik: `auditParts` zgłasza duplikaty, brak nośnika, zły rodzaj nośnika, część
+poza statkiem, maszt bez sztagu albo bez want z obu burt. Widok wylicza listę z tych samych układów, z których robi
+siatki (plan ożaglowania, `stayEnds`, `shroudLadders`, stanowiska dział z symulacji), i udostępnia ją jako
+`ShipView.parts`. Test `ship-parts.test.ts` sprawdza wszystkie klasy; profil burty modelu, który nie pasuje do klasy,
+daje błędy „outside” na ławach i wantach.

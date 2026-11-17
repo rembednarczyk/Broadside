@@ -1,5 +1,5 @@
 import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
-import { rotateInv, vec3, windVector } from "@broadside/core";
+import { type ShipPart, partId, rotateInv, vec3, windVector } from "@broadside/core";
 import { Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
@@ -7,6 +7,8 @@ import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
 import { buildModelRails } from "./model-rails";
+import { stayEnds } from "./rig-layout";
+import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
@@ -182,6 +184,8 @@ export class ShipView {
   private flagMast = 0;
   private flagBase = new Vector3();
   private lastTime = 0;
+  /** Every part of this ship by name and carrier (core's parts catalogue), as the view built her. */
+  readonly parts: readonly ShipPart[];
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
@@ -215,6 +219,7 @@ export class ShipView {
       this.detail.hideBody();
     }
     const plan = rigPlan(model.def);
+    this.parts = listShipParts(model, plan, side);
     const tallest = plan.mastTops.reduce((a, b) => (b.y > a.y ? b : a));
     const flag = this.buildFlag(scene, mats.flag[faction]);
     flag.mesh.parent = hullSpace;
@@ -284,6 +289,7 @@ export class ShipView {
     parts.forEach((list, i) => {
       const merged = Mesh.MergeMeshes(list, true, true)!;
       merged.name = `mast-${this.entityId}-${i}`;
+      merged.metadata = { part: partId("mast", i) };
       merged.material = mats.wood;
       merged.parent = parent;
       shadows?.addShadowCaster(merged);
@@ -299,15 +305,7 @@ export class ShipView {
 
   /** Fore-and-aft stays between mast heads and to the bowsprit, and backstays to the rail. */
   private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel): void {
-    const h = model.def.hull;
-    // Ends of each stay: which mast moves it (-1: fixed to the hull or bowsprit) and where.
-    const ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] = [];
-    const order = tops.map((t, i) => ({ t, i })).sort((p, q) => q.t.z - p.t.z);
-    order.forEach(({ t, i }, k) => {
-      const prev = order[k - 1];
-      ends.push(prev ? { from: i, a: [0, t.y * 0.97, t.z], to: prev.i, b: [0, prev.t.y * 0.6, prev.t.z] } : { from: i, a: [0, t.y * 0.97, t.z], to: -1, b: [0, bow.y, bow.z] });
-      for (const sx of [-1, 1]) ends.push({ from: i, a: [0, t.y, t.z], to: -1, b: [sx * h.beam * 0.48, h.freeboard + 1, t.z - 5] });
-    });
+    const ends = stayEnds(tops, bow, model.def.hull);
     const lines = ends.map((e) => sagLine(e.a, e.b, 0).map((p) => new Vector3(...p)));
     const rig = MeshBuilder.CreateLineSystem(`stays-${this.entityId}`, { lines, updatable: true }, scene);
     rig.color = new Color3(0.08, 0.06, 0.05);
