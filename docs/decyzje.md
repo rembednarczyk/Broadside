@@ -314,3 +314,11 @@ Zestawienie zza rufy i z boku z klatkami `ref_090` i `ref_060` pokazało, że na
 godziny. Dodany parametr `sun=<stopnie>` (stały azymut) dla ujęć; chmury: podstawa w odcieniu horyzontu (0,34–0,42)
 z własnym cieniowaniem kłębów zamiast stałej czerni 0,06. Następne różnice z plansz: żagle w klipie są ciemne,
 mniejsze i częściowo zwinięte; statek jest niższy i dłuższy; horyzont tonie we mgle; kadr z większej odległości.
+
+## 17.11 Chmury objętościowe, pierwszy krok (uwaga właściciela: „mięsiste, puszyste chmury”)
+Wzorzec: Schneider, „The Real-Time Volumetric Cloudscapes of Horizon Zero Dawn” (SIGGRAPH 2015), okrojony do kopuły
+nieba: warstwa 0,9–4,4 jednostki, mapa pokrycia 2D decyduje o komórkach i wysokości wież, profil z płaską podstawą,
+erozja kłębami szumu 3D, 30 kroków (44 na ultra) z ditheringiem, 4 kroki ku słońcu (Beer-Lambert), efekt „powder”,
+faza Henyey-Greensteina z dwóch płatów. Włączane od `cloudOctaves` 5 (high). Wynik po czterech iteracjach nie
+dorównuje klipowi (gładkie bryły), praca trwa; iteracje na pełnym zrzucie gry trwają po 3 minuty, stąd plan strony
+testowej nieba.

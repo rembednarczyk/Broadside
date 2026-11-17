@@ -140,7 +140,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] B2. naprawy z audytu: otwór na maszt i furty w kasztelu, stopy want i sztagi omijające kasztel, działa przy furtach modelu
 - [ ] B3. kolizja tkaniny żagli z masztem, rejami i sztagami (żagiel wstecz opiera się o maszt), szoty i brasy poza płótnem
 - [ ] C1. światło i kolor: sepia z prześwietlonym niebem i czarnymi cieniami, bloom wokół słońca, promienie przez omasztowanie
-- [ ] C2 (zaczęte 17.11: pokrywa chmur ma bryłę i odcień horyzontu zamiast czarnej płyty, cienkie miejsca przepuszczają słońce). niebo i mgła: kłębiaste chmury burzowe, ławice mgły zakrywające statek, klify we mgle
+- [ ] C2 (w toku, 17.11). niebo i mgła: chmury objętościowe dla presetów high i wyżej (marsz promienia przez warstwę cumulusów, światło ku słońcu, faza HG); stan: chmury są osobnymi bryłami z jasnym brzegiem, ale gładkie, bez kalafiorowej faktury z klipu, a okolica słońca jest prześwietlona; do zrobienia: strona testowa samego nieba (szybsze iteracje niż zrzut całej gry), mocniejsza erozja kłębów, wieże przy horyzoncie, ławice mgły zakrywające statek, klify we mgle
 - [ ] C3. woda: krótka, ostra, ciemna fala, szeroka ścieżka iskier, piana z teksturą, linia wody na obiektywie
 - [ ] C4. statek: kasztel dziobowy, pawęż i galeria, okrągłe furty, drzwi, załoga na rufie, postrzępione żagle, gęstsze olinowanie
 - [ ] C5. kamera filmowa tuż nad wodą, zanurzenie obiektywu, krople, rozmycie ruchu
