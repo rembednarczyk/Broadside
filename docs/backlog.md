@@ -145,6 +145,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] C4. statek: kasztel dziobowy, pawęż i galeria, okrągłe furty, drzwi, załoga na rufie, postrzępione żagle, gęstsze olinowanie
 - [ ] C5. kamera filmowa tuż nad wodą, zanurzenie obiektywu, krople, rozmycie ruchu
 - [ ] C6. piorun: rozgałęzienie, zbielenie klatki, niebieski odcień przez 0,5 s
+- [ ] D1 (właściciel 17.11, po serii C). brasowanie z czasem: reja dochodzi do kąta trymu z prędkością zależną od ludzi przy brasach (`crewShare`, stan olinowania), zwrot przez sztag i przez rufę trwa tyle, ile przebrasowanie; dziś kąt z `sailForce` jest ustawiany natychmiast (`sails.ts`). Limit 35° od położenia w poprzek (`aero.ts`, `chordMin`/`chordMax`) sprawdzić w źródłach epoki. Zmiana reguł symulacji: złoty hash ręcznie z nazwą reguły, `pnpm run audit` (bitwy AI, nawigacja)
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)
