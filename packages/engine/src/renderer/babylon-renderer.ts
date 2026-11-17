@@ -16,7 +16,7 @@ import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
-import { CrewFigures } from "./crew-figures";
+import { CrewRig } from "./crew-rig";
 import { GunScan } from "./ship-guns";
 import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
@@ -79,7 +79,7 @@ export class BabylonRenderer {
   private towns: TownsView | null = null;
   private readonly wreckUrl: string | undefined;
   private readonly gunScan: GunScan | null;
-  private readonly crewFigures: CrewFigures | null;
+  private readonly crewRig: CrewRig | null;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -109,7 +109,7 @@ export class BabylonRenderer {
     this.forts = new FortsView(this.scene, this.shadows);
     this.wreckUrl = opts.propsUrl;
     this.gunScan = opts.propsUrl && opts.graphics.preset !== "low" ? new GunScan(this.scene, `${opts.propsUrl}gun.glb`) : null;
-    this.crewFigures = opts.propsUrl && opts.graphics.preset !== "low" ? new CrewFigures(this.scene, `${opts.propsUrl}crew.glb`) : null;
+    this.crewRig = opts.propsUrl && opts.graphics.preset !== "low" ? new CrewRig(this.scene, `${opts.propsUrl}crew-anim.bin`) : null;
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
@@ -179,13 +179,15 @@ export class BabylonRenderer {
         v = undefined;
       }
       if (!v) {
-        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan, this.crewFigures);
+        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan, this.crewRig);
         this.views.set(e.id, v);
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);
       const cam = this.camera.camera.position;
       v.setDistance(Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z));
     }
+    // The crew's clips run on simulation time: the same deck on every run of a seed.
+    this.crewRig?.setTime(sim.env.time);
     for (const [id, v] of this.views) {
       if (!seen.has(id)) {
         v.dispose();

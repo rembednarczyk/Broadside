@@ -34,6 +34,6 @@ Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-
    rozpakowanie do `.asset-cache/quaternius/` (katalogi `... [Standard]` jak w archiwach). W bazowych postaciach brakuje
    dwóch plików, do których odwołuje się glTF: skopiować `T_Eye_Normal.png` na `T_Eye_Normal_png.png` i
    `T_Hair_1_Normal.png` na `T_Hair_1_Normal_png.png` w `Base Characters/Godot - UE/`.
-2. `node tools/assets/crew-figures.mjs packages/app/public/assets/props/crew.glb [trójkąty=5000]`
-   (`CREW_SPREAD=1` rozstawia postacie do podglądu `tools/assets/view.mjs`).
+2. `node tools/assets/crew-anim.mjs packages/app/public/assets/props/crew-anim.bin [trójkąty=5000] [fps=15]`:
+   postacie z kośćmi, klipy wypieczone do tekstury macierzy kości, atlas tekstur (format w komentarzu skryptu).
 

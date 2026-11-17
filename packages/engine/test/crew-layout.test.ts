@@ -2,38 +2,61 @@ import { describe, expect, it } from "vitest";
 import { shipModel } from "@broadside/sim";
 import { sternCastle } from "../src/renderer/castle-layout";
 import { crewFigures, modelCrewSpots } from "../src/renderer/crew-layout";
+import { type CrewActivity, crewClip } from "../src/renderer/crew-roles";
 import { gunPlaces } from "../src/renderer/gun-layout";
+import { rigPlan } from "../src/renderer/rig-plan";
 import { SideProfile, hullFit } from "../src/renderer/side-profile";
 import galleonMetrics from "../../app/public/assets/hulls/galleon.json";
 import brigMetrics from "../../app/public/assets/hulls/brig.json";
 
-describe("crew on a modelled hull", () => {
-  it("lines the sterncastle's rail facing aft and fills the waist clear of masts and guns", () => {
-    const model = shipModel("galleon");
-    const h = model.def.hull;
-    const side = new SideProfile({ ...galleonMetrics.profile, cut: galleonMetrics.height }, { ...hullFit(galleonMetrics, h), draft: h.draft, length: galleonMetrics.length });
-    const guns = gunPlaces(model, (_, z) => side.halfAt(z));
-    const castle = sternCastle(side, guns)!;
-    const spots = modelCrewSpots(model, side, castle, guns);
-    expect(spots).toHaveLength(crewFigures(model.def.crew));
-    const onCastle = spots.filter((s) => s.at[1] === castle.top);
-    expect(onCastle.length).toBeGreaterThanOrEqual(6);
-    for (const s of onCastle) expect(Math.cos(s.yaw)).toBeLessThan(-0.9);
-    for (const s of spots) {
-      expect(Math.abs(s.at[0]), "inside the side").toBeLessThan(side.halfAt(s.at[2]));
-      expect(guns.every((g) => Math.hypot(g.at[0] - s.at[0], g.at[2] - s.at[2]) >= 1.4 || s.at[1] === castle.top)).toBe(true);
-    }
-    // The same every time.
-    expect(modelCrewSpots(model, side, castle, guns)).toEqual(spots);
+const decks = (id: "galleon" | "brig", withCastle: boolean) => {
+  const model = shipModel(id);
+  const h = model.def.hull;
+  const m = id === "galleon" ? galleonMetrics : brigMetrics;
+  const side = new SideProfile({ ...m.profile, ...("height" in m ? { cut: m.height as number } : {}) }, { ...hullFit(m, h), draft: h.draft, length: m.length });
+  const guns = gunPlaces(model, (_, z) => side.halfAt(z));
+  return { model, side, guns, castle: withCastle ? sternCastle(side, guns) : null, tops: rigPlan(model.def).tops };
+};
+
+describe("crew stations on a modelled hull", () => {
+  it("mans the wheel and the maintop first, then the taffrail, halyards, braces, guns and waist", () => {
+    const d = decks("galleon", true);
+    const spots = modelCrewSpots(d.model, d);
+    expect(spots).toHaveLength(crewFigures(d.model.def.crew));
+    expect(spots[0]!.role).toBe("wheel");
+    expect(spots[1]!.role).toBe("lookout");
+    // The lookout stands in a top, far above the deck.
+    expect(spots[1]!.at[1]).toBeGreaterThan(spots[0]!.at[1] + 8);
+    expect(spots.filter((s) => s.role === "rail").length).toBeGreaterThanOrEqual(4);
+    const roles = new Set(spots.map((s) => s.role));
+    for (const r of ["gun", "halyard"] as const) expect(roles.has(r), r).toBe(true);
+    // Those at the taffrail look aft over it.
+    for (const s of spots.filter((x) => x.role === "rail")) expect(Math.cos(s.yaw)).toBeLessThan(-0.9);
+    // Every man stands inside the side, and no two on one spot.
+    for (const s of spots) expect(Math.abs(s.at[0]), s.role).toBeLessThan(d.side.halfAt(s.at[2]));
+    for (let i = 0; i < spots.length; i++) for (let j = i + 1; j < spots.length; j++) expect(Math.hypot(spots[i]!.at[0] - spots[j]!.at[0], spots[i]!.at[2] - spots[j]!.at[2]) + Math.abs(spots[i]!.at[1] - spots[j]!.at[1])).toBeGreaterThan(0.5);
+    expect(modelCrewSpots(d.model, d)).toEqual(spots);
   });
 
-  it("stands the whole crew in the waist of a hull without a castle", () => {
-    const model = shipModel("brig");
-    const h = model.def.hull;
-    const side = new SideProfile(brigMetrics.profile, { ...hullFit(brigMetrics, h), draft: h.draft, length: brigMetrics.length });
-    const spots = modelCrewSpots(model, side, null, gunPlaces(model, (_, z) => side.halfAt(z)));
+  it("stands the crew on a hull without a castle", () => {
+    const d = decks("brig", false);
+    const spots = modelCrewSpots(d.model, d);
     expect(spots.length).toBeGreaterThan(0);
-    expect(spots.length).toBeLessThanOrEqual(crewFigures(model.def.crew));
-    for (const s of spots) expect(s.at[1]).toBeCloseTo(side.topAt(s.at[2]) - 0.95, 6);
+    expect(spots[0]!.role).toBe("wheel");
+  });
+});
+
+describe("what the men do", () => {
+  const calm: CrewActivity = { bracing: [false, false, false], handling: [false, false, false], sinceFired: () => Infinity, beaten: false };
+  it("follows the ship: braces hauled while the yards swing, guns served after a shot, halyards when sail is set", () => {
+    expect(crewClip("brace", 1, 0, calm)).not.toBe("haul");
+    expect(crewClip("brace", 1, 0, { ...calm, bracing: [false, true, false] })).toBe("haul");
+    expect(crewClip("gun", 4, 0, { ...calm, sinceFired: (g) => (g === 4 ? 3 : Infinity) })).toBe("handle");
+    expect(crewClip("gun", 5, 0, { ...calm, sinceFired: (g) => (g === 4 ? 3 : Infinity) })).not.toBe("handle");
+    expect(crewClip("halyard", 2, 0, { ...calm, handling: [false, false, true] })).toBe("haul");
+    expect(crewClip("wheel", -1, 0, calm)).toBe("wheel");
+    expect(crewClip("lookout", 1, 0, calm)).toBe("lookout");
+    // A beaten crew stands idle, whatever the ship does.
+    expect(["idle", "talk"]).toContain(crewClip("brace", 1, 0, { ...calm, bracing: [true, true, true], beaten: true }));
   });
 });

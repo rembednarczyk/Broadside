@@ -85,20 +85,21 @@ export class ShipGuns {
     this.update(0);
   }
 
-  /** The gun nearest a hull-space point has fired. */
-  fired(x: number, y: number, z: number): void {
-    let best: Gun | null = null;
+  /** The gun nearest a hull-space point has fired; returns its index (-1: none near). */
+  fired(x: number, y: number, z: number): number {
+    let best = -1;
     let bestD = 9;
-    for (const g of this.guns) {
+    this.guns.forEach((g, i) => {
       const d = (g.at.x - x) ** 2 + (g.at.y - y) ** 2 + (g.at.z - z) ** 2;
       if (d < bestD && g.since >= RECOIL_TIME) {
-        best = g;
+        best = i;
         bestD = d;
       }
-    }
-    if (!best) return;
-    best.since = 0;
+    });
+    if (best < 0) return -1;
+    this.guns[best]!.since = 0;
     this.moving = true;
+    return best;
   }
 
   /** `shown`: guns drawn at all; `near`: close enough for the scanned barrels. */

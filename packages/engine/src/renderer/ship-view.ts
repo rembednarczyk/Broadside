@@ -15,7 +15,8 @@ import { buildModelDecks, buildModelRails } from "./model-rails";
 import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
-import { type CrewFigures } from "./crew-figures";
+import { CrewActivityTracker } from "./crew-activity";
+import { type CrewRig } from "./crew-rig";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
@@ -187,9 +188,8 @@ export class ShipView {
 
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
-    // The crew figures replace the plain ones the first time the ship comes close after they load.
-    const figures = d < FINE_DETAIL ? this.figures?.templates : null;
-    if (figures) this.detail.useFigures(figures, this.hullSpace);
+    // The animated crew replace the stand-ins the first time the ship comes close after they load.
+    if (d < FINE_DETAIL && this.rig?.templates) this.detail.crew.useRig(this.rig);
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
@@ -197,6 +197,7 @@ export class ShipView {
     this.running.tubes.mesh.setEnabled(d < FINE_DETAIL);
   }
   private shownCrew = -1;
+  private activity: CrewActivityTracker | null = null;
   /** The ship's own frame (hull space), parent of everything drawn on her. */
   private hullSpace!: TransformNode;
   private clothNear = false;
@@ -211,7 +212,7 @@ export class ShipView {
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
-  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null, private readonly figures: CrewFigures | null = null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null, private readonly rig: CrewRig | null = null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);
@@ -233,7 +234,7 @@ export class ShipView {
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
       const places = gunPlaces(model, (_, z) => side.halfAt(z));
       const castle = sternCastle(side, places);
-      this.detail.setSpots(modelCrewSpots(model, side, castle, places));
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops }));
       if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
@@ -373,7 +374,7 @@ export class ShipView {
   /** A gun fired at a world position: the nearest one recoils. */
   gunFired(at: { readonly x: number; readonly y: number; readonly z: number }): void {
     const local = Vector3.TransformCoordinates(new Vector3(at.x, at.y, at.z), this.root.computeWorldMatrix(true).clone().invert());
-    this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z);
+    this.activity?.fired(this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z));
   }
 
   /**
@@ -446,8 +447,11 @@ export class ShipView {
     if (fb) this.flag.position.set(this.flagBase.x + fb.dx, this.flagBase.y, this.flagBase.z + fb.dz);
     if (s.crew !== this.shownCrew) {
       this.shownCrew = s.crew;
-      this.detail.setCrew(s.crew, s.model.def.crew);
+      this.detail.crew.setCrew(s.crew, s.model.def.crew);
     }
+    // What the men are doing comes from what the ship is doing.
+    this.activity ??= new CrewActivityTracker(s);
+    this.detail.crew.animate(this.activity.update(s, time));
     this.updateFlag(aw.x, aw.z, time);
   }
 

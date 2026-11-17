@@ -396,3 +396,15 @@ portu, 3 i 21 o 1–2 min później, 33 i 45 nie docierały już wcześniej). Pr
 (blokady): co najmniej jedno zlecenie wzięte i żadne niezakończone; liczba opłaconych jest raportowana. Do zrobienia:
 autopilot bierze zlecenie rzadko (1 na 6 ziaren), ziarna 33 i 45 nie docierają do portu w 20 min.
 
+**17.11, żywa załoga, część 1 (właściciel: „więcej postaci, różne operacje, ruchome, zależnie od ruchu statku i decyzji
+gracza”).** Wzorzec: tekstury animacji wierzchołków (GPU Gems 3, rozdz. 2 „Animating Crowds”; w Babylonie
+`BakedVertexAnimationManager`): macierze kości każdej klatki w teksturze, klip i faza na instancję, jedno wywołanie
+rysowania na wariant postaci. Własny wypiek w `tools/assets/crew-anim.mjs` zamiast `VertexAnimationBaker` Babylona,
+bo ten odtwarza tylko animacje przypięte do szkieletu, a biblioteka Quaterniusa ma animacje węzłów glTF; układ tekstury
+ten sam co u Babylona. Szkielet biblioteki ma krótszą szyję niż postacie: brane są obroty kości i przesunięcie miednicy
+przeskalowane do wysokości bioder postaci. Gra buduje siatki sama z pliku binarnego (bez ładowarki glTF), więc postać
+jest lustrzanym odbiciem (lewa z prawą), co dla marynarza nie ma znaczenia; rysowane obie strony. Czas klipów = czas
+symulacji (ta sama scena przy tym samym ziarnie). Stanowiska obsadzane w kolejności: ster, mars, reling kasztelu,
+fały, brasy, działa pokładu górnego (najwyżej ćwierć ludzi), śródokręcie; przy stratach pustoszeje najpierw śródokręcie.
+Statyczne figurki (`crew-figures.mjs`, `crew.glb`) usunięte. Plik 3,4 MB.
+
