@@ -9,6 +9,7 @@ import { BentMast } from "./bent-mast";
 import { sternCastle } from "./castle-layout";
 import { type SideProfile } from "./side-profile";
 import { gunPlaces } from "./gun-layout";
+import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelDecks, buildModelRails } from "./model-rails";
 import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
@@ -223,7 +224,9 @@ export class ShipView {
       buildModelRails(scene, hullSpace, side, mats.wood, shadows);
       buildModelDecks(scene, hullSpace, side, mats.deck);
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
-      const castle = sternCastle(side, gunPlaces(model, (_, z) => side.halfAt(z)));
+      const places = gunPlaces(model, (_, z) => side.halfAt(z));
+      const castle = sternCastle(side, places);
+      this.detail.setSpots(modelCrewSpots(model, side, castle, places));
       if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.

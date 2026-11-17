@@ -365,3 +365,10 @@ rufie). Maszt przechodzący przez pokład kasztelu nie jest regułą audytu: mas
 Żagle rejowe wisiały w osi masztu; teraz reja wisi 0,42 m przed masztem po stronie dziobu (`foreSide`), a tkanina ma
 jeden kolider, walec masztu o promieniu 0,3 m (Müller i in. 2007, §3.4, bez tarcia). Położenie dział liczy jeden moduł
 `gun-layout.ts` dla siatek i dla listy części.
+
+**17.11, piana, kamera pokładowa, załoga (orkiestrator, „lecimy dalej”).** Piana w shaderze oceanu to koronka z szumu
+komórkowego (F2−F1, Worley 1996) w dwóch skalach, gęstniejąca do pełnej plamy; bez tekstury, bo ten sam kod liczy
+grzbiety, kilwater i przybój. Kamera pokładowa stoi na przełamaniu pokładu rufowego (4,6 m nad pokładem, 8 m za
+grotmasztem) i patrzy lekko w dół; niżej przednia część kadłuba zasłaniała pokład. Załoga na kadłubach z modeli jest
+rozmieszczana z profilu burty i kasztelu (`crew-layout.ts`): rząd przy balustradzie rufowej, reszta na śródokręciu,
+liczba jak dotąd (szósta część załogi, najwyżej 40); znikają w miarę strat jak wcześniej.

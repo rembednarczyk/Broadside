@@ -1,9 +1,10 @@
 import { type ShipModel } from "@broadside/sim";
 import { type HullShape, createRng, hashString, range, stationZ } from "@broadside/core";
 import { beamAt, deckAt } from "./hull-stations";
+import { type CrewSpot } from "./crew-layout";
 import { Ratlines } from "./ratlines";
 import { type SideProfile } from "./side-profile";
-import { Color3, DynamicTexture, Matrix, Vector4, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
+import { Color3, DynamicTexture, Matrix, Mesh, Quaternion, Vector4, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
  * Period detail that sells the silhouette (visual reference, decyzje 16.11): ratlines on the
@@ -77,6 +78,20 @@ const castles = (id: string): { quarter: number; fore: number; poop: number } =>
 
 const CASTLE_HEIGHT = 2.8;
 
+/**
+ * A standing man as one small mesh, his origin at his feet: a body (capsule) and a head (sphere),
+ * enough for the silhouettes on the rail the reference shows against the sky.
+ */
+const figure = (scene: Scene, name: string): Mesh => {
+  const body = MeshBuilder.CreateCapsule(`${name}-body`, { height: 1.42, radius: 0.22, tessellation: 6, subdivisions: 1 }, scene);
+  body.position.y = 0.71;
+  const head = MeshBuilder.CreateSphere(`${name}-head`, { diameter: 0.26, segments: 4 }, scene);
+  head.position.y = 1.58;
+  const man = Mesh.MergeMeshes([body, head], true, true)!;
+  man.name = name;
+  return man;
+};
+
 const instances = (mesh: Mesh, matrices: Matrix[]): void => {
   const buf = new Float32Array(matrices.length * 16);
   matrices.forEach((m, i) => buf.set(m.m, i * 16));
@@ -95,6 +110,8 @@ export class ShipDetail {
   /** Parts a modelled hull brings itself (castles, rails, lanterns, crew stand-ins): hidden then. */
   private readonly body: ReturnType<TransformNode["getChildMeshes"]> = [];
   private bodyHidden = false;
+  private crewShown = 1;
+  private crewMax = 1;
 
   constructor(scene: Scene, parent: TransformNode, key: string, model: ShipModel, mats: DetailMaterials, shadows: ShadowGenerator | null, side: SideProfile | null = null) {
     const h = model.def.hull;
@@ -111,7 +128,7 @@ export class ShipDetail {
     const afterRatlines = new Set(parent.getChildMeshes(true));
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);
-    this.crew = MeshBuilder.CreateCapsule(`crew-${key}`, { height: 1.7, radius: 0.24, tessellation: 6, subdivisions: 1 }, scene);
+    this.crew = figure(scene, `crew-${key}`);
     this.crew.material = mats.crew;
     this.crew.parent = parent;
     this.crew.isPickable = false;
@@ -121,10 +138,11 @@ export class ShipDetail {
       const z = range(rng, -0.45, 0.42) * h.length;
       const half = Math.max(0.3, beamAt(h, z) - 0.6);
       const raised = (c.quarter > 0 && z < -h.length / 2 + h.length * c.quarter) || (c.fore > 0 && z > h.length / 2 - h.length * c.fore);
-      this.crewSpots.push(Matrix.Translation(range(rng, -half, half), deckAt(h, z) + 0.85 + (raised ? CASTLE_HEIGHT : 0), z));
+      this.crewSpots.push(Matrix.Translation(range(rng, -half, half), deckAt(h, z) + (raised ? CASTLE_HEIGHT : 0), z));
     }
     this.fine.push(...parent.getChildMeshes(true).filter((m) => !before.has(m)));
-    this.body.push(...parent.getChildMeshes(true).filter((m) => !afterRatlines.has(m)));
+    // The crew stay aboard a modelled hull too: only their stand on the deck changes (setSpots).
+    this.body.push(...parent.getChildMeshes(true).filter((m) => !afterRatlines.has(m) && m !== this.crew));
     this.setCrew(model.def.crew, model.def.crew);
   }
 
@@ -182,8 +200,17 @@ export class ShipDetail {
     instances(lamp, lift > 0 ? [Matrix.Translation(-0.9, y, z), Matrix.Translation(0, y + 0.4, z), Matrix.Translation(0.9, y, z)] : [Matrix.Translation(0, y, z)]);
   }
 
+  /** Puts the figures where a modelled hull's decks are (crew-layout), and keeps the last crew count. */
+  setSpots(spots: readonly CrewSpot[]): void {
+    this.crewSpots.length = 0;
+    for (const s of spots) this.crewSpots.push(Matrix.Compose(Vector3.One(), Quaternion.RotationYawPitchRoll(s.yaw, 0, 0), new Vector3(...s.at)));
+    this.setCrew(this.crewShown, this.crewMax);
+  }
+
   /** Shows a share of the figures matching the crew left aboard. */
   setCrew(crew: number, max: number): void {
+    this.crewShown = crew;
+    this.crewMax = max;
     const n = Math.round((this.crewSpots.length * crew) / Math.max(1, max));
     this.crew.isVisible = n > 0;
     if (n > 0) instances(this.crew, this.crewSpots.slice(0, n));
