@@ -464,3 +464,12 @@ wałek (instancje jednej kapsuły na statek, jedno wywołanie rysowania): średn
 pierwiastkiem powierzchni żagla (ok. 0,55 m dla grota 14 × 8 m, najwyżej 0,7 m), długość 0,94 szerokości żagla,
 na wierzchu rei; materiał gładkiego płótna bez szwów i godła. Częściowo postawiony żagiel ma wałek z części zwiniętej.
 Żagle skośne i sztaksle bez wałka (gafel i bom zwijane do masztu, sztaksle opuszczane na sztag: do zrobienia).
+
+**17.11, kasztel dziobowy (C4).** Ten sam układ i ten sam budowniczy co kasztel rufowy, w odbiciu lustrzanym: profil
+burty czytany od drugiego końca (z → −z), siatka pod węzłem ze skalą z = −1 (Babylon odwraca kolejność ścian przy
+ujemnym wyznaczniku macierzy świata). Bez nowego budowniczego, więc deski, listwy, balustrada, furty i schody są te
+same. Różnice: ściany 1,7 m (rufowy 2,2 m), długość do 2,5 m przed fokmasztem (najwyżej 16% kadłuba, poniżej 6%
+kasztelu nie ma), podłoga na najniższym pokładzie pod kasztelem, a pokład 0,35 m nad najwyższą burtą dziobu (kadłub
+modelu wznosi się ku dziobowi i pierwsza wersja kasztelu schowała się w nim), bez koła, okien i latarni. Śródokręcie
+załogi kończy się 1,2 m przed jego przerwą. Kształt jest kanciasty wobec `ref_064` (tam dziób wznosi się łagodnie
+i kończy galionem): do dalszej pracy.
