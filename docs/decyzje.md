@@ -297,3 +297,8 @@ szerszym obrysie, żeby grzbiet fali nie wchodził do wnętrza.
 przesunięcie w poziomie i pas w pionie z funkcji mieszającej numer pasa i ściany, więc pasy się nie powtarzają.
 Okna jako geometria (rama z 4 belek, szprosy w krzyż, szyba `castle-glass` z emisją sterowaną porą dnia), listwy jako
 rurki. Poziom tekstury 0,22 jasności kadłuba, barwa (0,95, 0,72, 0,52).
+
+## 17.11 Woda przy kadłubie, część 2 (orkiestrator)
+Fala dziobowa rozbieżna: grzbiet po obu stronach dziobu wzdłuż linii |poprzecznie| = 0,7 + 0,354·odległość od dziobu
+(kąt Kelvina 19,47°), wysokość 0,03·v², zanik z odległością; piana na grzbiecie od 1,5 m/s. Piana kilwateru zanika
+na długości 25·v zamiast 12·v. Bryzga spod rufy tym samym emiterem `fx-mist` (35% tempa dziobowego).

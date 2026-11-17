@@ -59,6 +59,14 @@ float hullWater(vec2 p) {
     // Water piled along the sides, strongest forward.
     float side = exp(-pow((abs(across) - halfBeam - 1.0) / 1.6, 2.0)) * smoothstep(-1.1, 0.6, u) * (1.0 - smoothstep(0.9, 1.3, u));
     h += 0.012 * sq * side;
+    // Divergent bow wave: the sheet the stem turns aside runs off as a ridge on either bow, along
+    // the Kelvin angle from the stem, highest at the bow and fading aft (the hull's own hollow hides
+    // it where it would pass through the ship).
+    float fromStem = halfLen - along;
+    if (fromStem > 0.0) {
+      float ridge = abs(abs(across) - (0.7 + fromStem * 0.354));
+      h += 0.03 * sq * exp(-ridge * ridge / 1.6) * exp(-fromStem / (7.0 + speed * 5.0));
+    }
     // Stern: a trough under the counter, then the Kelvin arms (half-angle 19.47 deg) fading astern.
     float back = -(along + halfLen);
     if (back > 0.0) {
@@ -225,10 +233,17 @@ vec2 wakes(vec2 p) {
     // Bow wave: a foam collar around the forward hull.
     float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
     foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;
+    // The bow wave breaks along its crest: foam on the ridge that runs off from the stem.
+    float fromStem = halfLen - along;
+    if (fromStem > 0.0) {
+      float crest = smoothstep(1.5, 0.0, abs(across - (0.7 + fromStem * 0.354))) * exp(-fromStem / (5.0 + speed * 4.0));
+      foam += crest * clamp((speed - 1.5) / 4.0, 0.0, 1.0) * 0.8;
+    }
     // Behind the stern.
     float back = -(along + halfLen);
     if (back > 0.0) {
-      float len = speed * 12.0;
+      // The churned water astern stays white for a long way (about 25 s of sailing).
+      float len = speed * 25.0;
       float fade = exp(-back / max(len, 1.0));
       float width = b.z * 0.6 + back * 0.354;
       float centre = smoothstep(b.z * 0.5 + back * 0.04, 0.0, across) * fade;

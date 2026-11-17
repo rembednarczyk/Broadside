@@ -178,6 +178,15 @@ this.mist = new BurstEmitter("fx-mist", scene, { texture: this.sprites.puff, cap
       const slam = rel < -1 ? Math.min(3, -rel * 0.6) : 0;
       // Droplets per second from each point, growing with the square of the speed (wave-making).
       const rate = Math.min(90, fwd * fwd * 1.1) * (1 + slam * 2);
+      // The wash under the counter boils up astern: a low spray off both quarters.
+      const stern = rotate(b.rot, vec3(0, 0, -length * 0.5 - s.model.com.z));
+      for (const sx of [-1, 1]) {
+        const n = Math.floor(rate * 0.35 * dt + Math.random());
+        if (n <= 0) continue;
+        const x = b.pos.x + stern.x + side.x * sx * h.beam * 0.25;
+        const z = b.pos.z + stern.z + side.z * sx * h.beam * 0.25;
+        this.mist.emit(x, waterHeight(env.waves, x, z, env.time) + 0.1, z, side.x * sx * 0.3 - ahead.x * 0.5, 0.35, side.z * sx * 0.3 - ahead.z * 0.5, n, 0.6);
+      }
       for (let k = 0; k < 4; k++) {
         // Points back along the bow: the hull widens as the sheet runs aft.
         const back = length * 0.035 * k;
