@@ -29,7 +29,7 @@ for (const [name, s] of Object.entries(scenes)) {
   const dir = join(out, `shot-${name}`);
   const env = { ...process.env, SHOT_WAIT: "24000", ...(s.inspect ? { SHOT_INSPECT: s.inspect } : {}) };
   const query = `${s.query}&hours=${s.hours}&clock=stop&color=sepia`;
-  const r = spawnSync(process.execPath, [join(here, "shot.mjs"), dir, query, String(s.seconds), "596", "480", ""], { stdio: "ignore", env, timeout: 560000 });
+  const r = spawnSync(process.execPath, [join(here, "shot.mjs"), dir, query, String(s.seconds), "512", "412", ""], { stdio: "ignore", env, timeout: 560000 });
   if (r.status !== 0) {
     console.log(`${name}: shot failed`);
     continue;

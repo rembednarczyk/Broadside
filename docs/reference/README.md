@@ -40,7 +40,7 @@ To jest punkt odniesienia dla każdej zmiany wizualnej: zrzut przed/po zestawiam
 - ✘ ławice mgły przesuwające się przez scenę
 
 ### Niebo i atmosfera
-- ◐ chmury kłębiaste o ciemnych podstawach i jasnych krawędziach, jasne jądro słońca, dziury w chmurach
+- ✔ chmury kłębiaste o ciemnych podstawach i jasnych krawędziach, jasne jądro słońca, dziury w chmurach (objętościowe od presetu high, pełny detal z tekstury szumu 3D na ultra i cinematic; plansza `stern-castle` kontra `ref_090`, 17.11)
 - ◐ gęsty pas mgły przy horyzoncie, rozświetlony od słońca
 - ◐ wybrzeże: urwiste klify o płaskich szczytach, warstwy coraz jaśniejsze w mgle (dziś łagodne wzgórza)
 
