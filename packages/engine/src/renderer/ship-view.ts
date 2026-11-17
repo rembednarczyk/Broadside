@@ -70,7 +70,9 @@ export const createShipMaterials = (scene: Scene, texturesUrl?: string, quality:
   const hull = material(scene, "hull", [1, 1, 1], 0.08);
   hull.backFaceCulling = false;
   hull.twoSidedLighting = true;
-  const deck = material(scene, "deck", [0.5, 0.42, 0.32], 0.04);
+  // A deck at sea is wet with spray: a tight sheen that throws the low sun back (ref_112).
+  const deck = material(scene, "deck", [0.5, 0.42, 0.32], 0.32);
+  deck.specularPower = 42;
   deck.backFaceCulling = false;
   deck.twoSidedLighting = true;
   const sail = material(scene, "sail", [0.6, 0.55, 0.46], 0.02);
