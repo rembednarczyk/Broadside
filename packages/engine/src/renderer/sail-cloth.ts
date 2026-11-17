@@ -2,6 +2,7 @@ import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type StandardMateria
 import { SAIL_COLS, SAIL_ROWS, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
 import { type SailPlan } from "./rig-plan";
 import { type MastBend, bendShare, flutterOffset } from "./rig-motion";
+import { SailSim } from "./sail-sim";
 
 /**
  * All the canvas of one ship in one dynamic mesh per material, and all its yards as thin
@@ -45,6 +46,9 @@ export class SailCloth {
   private readonly yardPlans: { plan: SailPlan; index: number; length: number }[] = [];
   private readonly local = new Float32Array(VERTS * 3);
   private readonly yardBuf: Float32Array;
+  /** Cloth simulation per plan, made when the ship first comes close (sail-sim). */
+  private readonly sims: (SailSim | null)[];
+  private simulated = false;
   /** Holes shown per plan (quantised damage), to rebuild indices only when it changes. */
   private readonly torn: number[];
 
@@ -87,6 +91,7 @@ export class SailCloth {
     });
     this.yardBuf = new Float32Array(this.yardPlans.length * 16);
     this.torn = plans.map(() => 0);
+    this.sims = plans.map(() => null);
   }
 
   /**
@@ -125,8 +130,15 @@ export class SailCloth {
     }
   }
 
-  /** `states[i]` belongs to `plans[i]` of the constructor; `bends[mast]` carries the canvas with its mast. */
-  update(states: readonly SailState[], bends: readonly MastBend[] = [], time = 0): void {
+  /**
+   * `states[i]` belongs to `plans[i]` of the constructor; `bends[mast]` carries the canvas with its mast.
+   * `cloth`: simulate the canvas as fabric (close ships) with the frame's `dt` and the apparent
+   * `wind` speed; otherwise the sail takes its analytic shape (distant ships).
+   */
+  update(states: readonly SailState[], bends: readonly MastBend[] = [], time = 0, cloth: { dt: number; wind: number } | null = null): void {
+    // Coming close, the cloth starts from the flat sail and fills within a second.
+    const starting = cloth !== null && !this.simulated;
+    this.simulated = cloth !== null;
     for (const g of this.groups) {
       g.plans.forEach((p, k) => {
         const st = states[g.indexOf[k]!]!;
@@ -135,8 +147,14 @@ export class SailCloth {
           g.positions.fill(0, off, off + VERTS * 3);
           return;
         }
-        sailPositions(p, st.set, st.billow, this.local);
-        if (st.flutter > 0.01) {
+        if (cloth) {
+          const plan = g.indexOf[k]!;
+          const sim = (this.sims[plan] ??= new SailSim(p));
+          if (starting) sim.reset(st.set);
+          sim.advance(cloth.dt, st.set, st.billow, cloth.wind, st.flutter);
+          this.local.set(sim.positions);
+        } else sailPositions(p, st.set, st.billow, this.local);
+        if (!cloth && st.flutter > 0.01) {
           for (let r = 0; r <= SAIL_ROWS; r++) {
             for (let c = 0; c <= SAIL_COLS; c++) {
               const i = (r * (SAIL_COLS + 1) + c) * 3;

@@ -3,8 +3,8 @@
  * the cloth bulges along. The billow is a separable sine profile (maximum draft at mid chord and
  * mid height), the usual shape for a cambered sail; pure functions, updated each frame.
  */
-export const SAIL_COLS = 8;
-export const SAIL_ROWS = 6;
+export const SAIL_COLS = 12;
+export const SAIL_ROWS = 8;
 
 export type SailShape = "square" | "gaff" | "jib";
 

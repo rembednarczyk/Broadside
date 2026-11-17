@@ -154,6 +154,8 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
   }
 };
 
+/** Within this distance of the camera a ship's canvas is simulated as fabric (sail-sim). */
+const CLOTH_SIM = 220;
 /** Within this distance of the camera a ship shows the scanned gun barrels. */
 const SCAN_GUNS = 140;
 
@@ -177,8 +179,10 @@ export class ShipView {
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
+    this.clothNear = d < CLOTH_SIM;
   }
   private shownCrew = -1;
+  private clothNear = false;
   private springs!: MastSprings;
   private stays!: { mesh: LinesMesh; tubes: RopeTubes; ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] };
   private flagMast = 0;
@@ -383,7 +387,7 @@ export class ShipView {
     this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen);
     this.guns.update(dt);
     this.cloth.setDamage(s.sailCloth);
-    this.cloth.update(states, bends, time);
+    this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
     this.masts.forEach((m, i) => {
       m.mesh.setEnabled(s.mastHp[i]! > 0);
       const bend = bends[i];

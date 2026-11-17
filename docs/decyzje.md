@@ -250,3 +250,13 @@ poza statkiem, maszt bez sztagu albo bez want z obu burt. Widok wylicza listę z
 siatki (plan ożaglowania, `stayEnds`, `shroudLadders`, stanowiska dział z symulacji), i udostępnia ją jako
 `ShipView.parts`. Test `ship-parts.test.ts` sprawdza wszystkie klasy; profil burty modelu, który nie pasuje do klasy,
 daje błędy „outside” na ławach i wantach.
+
+## 17.11 Fizyka żagli, część 1 (prośba właściciela)
+Wzorzec: XPBD (Macklin, Müller, Chentanez 2016) na siatce żagla 12 x 8 (kolumny to bryty z `SAIL_LAYOUT`). Tylko
+widok: siły na statek dalej liczy model żagla w symulacji, a tkanina bierze z niej wypełnienie żagla (znak i siła
+ciśnienia), wiatr pozorny, postawienie żagla i łopot. Deterministycznie: stały krok 1/120 s, do 4 kroków na klatkę,
+bez losowości (łopot wzbudza fala sinusoidalna biegnąca od liku przedniego). Zamocowania: głowa żagla rejowego do
+rei i rogi szotowe; gaflowy do masztu, gafla i bomu; kliwer do sztagu i szotu. Krój z zapasem 3,2% w poprzek i 1,2%
+wzdłuż. Przeszycia: sztywność zginania wzdłuż szwu, na refbantach i obszyciu 1,5e-5 m/N wobec 6e-3 dla gładkiego
+płótna, masa większa o 25%. Pominięte względem publikacji: kolizje własne i z osprzętem. Symulowane tylko statki
+bliżej niż 220 m, dalsze mają kształt analityczny.
