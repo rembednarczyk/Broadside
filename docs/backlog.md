@@ -107,7 +107,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze
 
 ### M8 dopracowanie modeli i walki (plan z 17.11, po 93afbcf)
-- [ ] zrzut salwy burtowej z bliska: odjazd dział, błysk i dym przy lufach widocznych dział; poprawić położenie, jeśli lufy nie trafiają w furty kadłubów z modeli
+- [x] zrzut salwy burtowej z bliska: rząd błysków i dym wzdłuż burty, salwa działa (17.11); odjazdu luf i zgodności z furtami kadłuba z modelu nie widać w rozdzielczości zrzutu, do sprawdzenia na żywo
 - [ ] jasna płaszczyzna pod rufą statku przy linii wody (widoczna na zrzutach 13:00): znaleźć źródło (kilwater, piana, pokład) i naprawić
 - [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu
 - [ ] łup z wraków: postój przy wraku daje złoto albo ładunek raz na wrak, znacznik na mapie (reguła symulacji, złoty hash ręcznie)
