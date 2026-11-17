@@ -156,8 +156,16 @@ let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
 // One game hour passes in four minutes (a day in an hour and a half).
-const startHours = Number(params.get("hours") ?? 16.3);
-const hoursNow = () => (startHours + session.sim.env.time / 240) % 24;
+/** Hour of day to start at (`hours=21` or `hours=21:30`); `clock=stop` holds it (fixed light for shots). */
+const parseHours = (v: string | null): number => {
+  if (!v) return 16.3;
+  const [h, m] = v.split(":");
+  const hours = Number(h) + Number(m ?? 0) / 60;
+  return Number.isFinite(hours) ? ((hours % 24) + 24) % 24 : 16.3;
+};
+const startHours = parseHours(params.get("hours"));
+const clockRuns = params.get("clock") !== "stop";
+const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
