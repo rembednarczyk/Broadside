@@ -106,5 +106,14 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] ruchome elementy: ugięcie masztów (tłumiony oscylator od obciążenia masztu, żagle, reje, flaga i sztagi idą z masztem), łopot żagli bez wiatru i drganie liku w silnym wietrze, sztagi zwisają luźne i prostują się pod obciążeniem (17.11); wanty i ratliny idą za ugiętym masztem, zawietrzne luzują się pod obciążeniem, nawietrzne stoją proste (17.11); do zrobienia: kołysanie latarni
 - [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze
 
+### M8 dopracowanie modeli i walki (plan z 17.11, po 93afbcf)
+- [ ] zrzut salwy burtowej z bliska: odjazd dział, błysk i dym przy lufach widocznych dział; poprawić położenie, jeśli lufy nie trafiają w furty kadłubów z modeli
+- [ ] jasna płaszczyzna pod rufą statku przy linii wody (widoczna na zrzutach 13:00): znaleźć źródło (kilwater, piana, pokład) i naprawić
+- [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu
+- [ ] łup z wraków: postój przy wraku daje złoto albo ładunek raz na wrak, znacznik na mapie (reguła symulacji, złoty hash ręcznie)
+- [ ] latarnie rufowe świecące nocą na kadłubach z modeli
+- [ ] drugi model wraku (Älvsnabben) po lepszym uproszczeniu
+- [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
+
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)
