@@ -43,4 +43,21 @@ describe("sail texture", () => {
       expect(ops.length).toBeGreaterThan(20);
     }
   });
+
+  it("frays only the foot: the cut-away shapes lie in the lowest part of the cloth", () => {
+    const cuts: number[][] = [];
+    let cutting = false;
+    const ctx = new Proxy({} as SailPaint, {
+      get: (_t, k) => (k === "moveTo" || k === "lineTo" ? (x: number, y: number) => cutting && cuts.push([x, y]) : typeof k === "string" && !["fillStyle", "strokeStyle", "lineWidth", "globalAlpha", "globalCompositeOperation"].includes(k) ? () => undefined : undefined),
+      set: (_t, k, v) => {
+        if (k === "globalCompositeOperation") cutting = v === "destination-out";
+        return true;
+      },
+    });
+    paintSail(ctx, 512, "player", true);
+    expect(cuts.length).toBeGreaterThan(90);
+    for (const [, y] of cuts) expect(y!).toBeGreaterThan(512 * 0.85);
+    // Some tears run well up from the edge.
+    expect(Math.min(...cuts.map((c) => c[1]!))).toBeLessThan(512 * 0.95);
+  });
 });

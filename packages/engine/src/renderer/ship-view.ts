@@ -126,6 +126,8 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const tex = new DynamicTexture(key, { width: size, height: size }, scene, true);
   paintSail(tex.getContext() as unknown as SailPaint, size, faction, emblem);
   tex.update(true);
+  // The frayed foot is cut out of the alpha (alpha test, so shadows follow it).
+  tex.hasAlpha = true;
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;

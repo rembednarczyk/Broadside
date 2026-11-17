@@ -88,7 +88,7 @@ export interface SailCorner {
  * the corner is on at the moment: yards are braced round, so the side is not fixed).
  */
 export interface RunningLine {
-  readonly kind: "sheet" | "brace";
+  readonly kind: "sheet" | "brace" | "lift" | "clewline";
   readonly from: SailCorner;
   readonly to: SailCorner | { readonly aside: number; readonly y: number; readonly z: number };
 }
@@ -98,6 +98,11 @@ export interface RunningLine {
  * side abaft the sail, those of a topsail or topgallant to the yardarms below; every yard has a
  * brace from each arm, led aft to the next mast (from the aftermost mast, to the quarters). A gaff
  * sail has its sheet from the boom end to the stern, a jib from its clew to the deck by the mast.
+ * Each square yard hangs in lifts, from its arms to the mast above (the cap of the mast it is on,
+ * by the foot of the yard over it, or the masthead), and each clew has a clewline up the leech to
+ * the yardarm (the line that hauls the clew up when the sail is taken in; at sea it runs close
+ * along the sail's edge). A gaff has its peak halyard and a boom its topping lift to the masthead.
+ * (Lever, "The Young Sea Officer's Sheet Anchor", 1808: lifts, clewlines, peak halyards.)
  */
 export const runningRigging = (plan: RigPlan, hull: { length: number; beam: number; freeboard: number }): RunningLine[] => {
   const lines: RunningLine[] = [];
@@ -118,11 +123,19 @@ export const runningRigging = (plan: RigPlan, hull: { length: number; beam: numb
         const below = tiers[j - 1];
         lines.push({ kind: "sheet", from: { plan: i, row: "foot", col }, to: below === undefined ? { aside: hull.beam * 0.44, y: rail, z: s.nodeZ - Math.min(3, hull.length * 0.08) } : { plan: below, row: "head", col } });
         lines.push({ kind: "brace", from: { plan: i, row: "head", col }, to: abaft === undefined ? { aside: hull.beam * 0.42, y: rail, z: -hull.length * 0.44 } : { aside: 0, y: yardY * 0.86, z: abaft } });
+        const above = tiers[j + 1];
+        const capY = above === undefined ? plan.mastTops[s.mast]!.y : plan.sails[above]!.foot + 0.3;
+        lines.push({ kind: "lift", from: { plan: i, row: "head", col }, to: { aside: 0.3, y: Math.max(capY, yardY + 1), z: s.nodeZ } });
+        lines.push({ kind: "clewline", from: { plan: i, row: "foot", col }, to: { plan: i, row: "head", col } });
       }
     });
   }
   plan.sails.forEach((s, i) => {
-    if (s.shape === "gaff") lines.push({ kind: "sheet", from: { plan: i, row: "foot", col: "last" }, to: { aside: 0, y: rail, z: Math.min(s.nodeZ - s.width * 0.8, -hull.length * 0.4) } });
+    if (s.shape === "gaff") {
+      lines.push({ kind: "sheet", from: { plan: i, row: "foot", col: "last" }, to: { aside: 0, y: rail, z: Math.min(s.nodeZ - s.width * 0.8, -hull.length * 0.4) } });
+      const head = { aside: 0, y: plan.mastTops[s.mast]!.y, z: plan.mastTops[s.mast]!.z };
+      lines.push({ kind: "lift", from: { plan: i, row: "head", col: "last" }, to: head }, { kind: "lift", from: { plan: i, row: "foot", col: "last" }, to: head });
+    }
     if (s.shape === "jib") lines.push({ kind: "sheet", from: { plan: i, row: "foot", col: "last" }, to: { aside: hull.beam * 0.3, y: rail, z: mastZs[s.mast]! - 1 } });
   });
   return lines;

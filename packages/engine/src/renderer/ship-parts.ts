@@ -49,7 +49,8 @@ export const listShipParts = (model: ShipModel, plan: RigPlan, side: SideProfile
     const s = plan.sails[l.from.plan]!;
     // Anchored where the line is made fast (a hull point), or at the sail it comes from.
     const at: [number, number, number] = "plan" in l.to ? [0, s.foot + (l.from.row === "head" ? s.height : 0), s.nodeZ] : [l.to.aside, l.to.y, l.to.z];
-    parts.push({ id: partId(l.kind, i), kind: l.kind, at, on: l.kind === "sheet" ? partId("sail", l.from.plan) : partId("yard", l.from.plan) });
+    const onSail = l.kind === "sheet" || l.kind === "clewline";
+    parts.push({ id: partId(l.kind, i), kind: l.kind, at, on: onSail ? partId("sail", l.from.plan) : s.shape === "gaff" ? partId("yard", "gaff", l.from.plan) : partId("yard", l.from.plan) });
   });
   for (const l of shroudLadders(model, side)) {
     const channel = partId("channel", l.mast, sideName(l.side));

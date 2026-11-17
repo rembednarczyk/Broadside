@@ -448,3 +448,13 @@ limit 2,9. Przy okazji: w shaderze spodu fali kąt widzenia liczono względem no
 Snella nigdy się nie pokazywało (pod wodą była ciemna toń); po poprawce okno pokazuje niebo i słońce, a spód ma te
 same drobne zmarszczki co wierzch. Rozmycie ruchu przy obrocie zostaje na później (osobny przebieg postprocesu, koszt
 na telefonie).
+
+**17.11, olinowanie i płótno (C4).** Do lin ruchomych doszły topenanty (dwie na każdą reję rejową, od nok do masztu
+nad reją: do stopy rei wyższej albo do topu masztu), gejtawy (od rogu szotowego do nok rei tej samej burty: przy
+postawionym żaglu biegną wzdłuż liku) oraz fał gafla i topenanta bomu do topu masztu; wzór prowadzenia według Levera
+(„The Young Sea Officer's Sheet Anchor”, 1808). Gejtawa idzie do nok rei zamiast do ćwierci rei, bo katalog rogów
+żagla zna tylko rogi; różnica przy brasowanej rei jest mniejsza niż przy punkcie na stałe w kadłubie. Katalog części:
+rodzaje `lift` i `clewline`, reguła audytu `noLifts`. Płótno: lik dolny wycięty w alfie tekstury (ząbki 0,4–1,8%
+wysokości i trzy rozdarcia 5–13% wysokości, dwa przy rogach szotowych), z ziarnem tkaniny; materiał żagla przechodzi
+na test alfa, więc cień ma ten sam kształt. Postrzępienie jest jednakowe na wszystkich statkach (zużycie płótna);
+dziury po kulach dalej zależą od uszkodzeń masztu.
