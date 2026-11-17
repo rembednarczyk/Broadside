@@ -146,7 +146,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
     for (const y of [c.base + 0.03, c.top - 0.06]) mouldings.push(run.pts.map((p, i) => p.add(run.normal(i).scale(0.05)).add(new Vector3(0, y, 0))));
     // Windows at mid-height, about every 2.4 m, clear of the corners.
     const total = dist[dist.length - 1]!;
-    const count = c.fore ? 0 : Math.max(0, Math.floor((total - 1.2) / 2.4));
+    const count = Math.max(0, Math.floor((total - 1.2) / 2.4));
     for (let w = 0; w < count; w++) {
       const d = (total * (w + 0.5)) / count;
       const i = Math.max(0, dist.findIndex((x) => x >= d) - 1);
@@ -206,7 +206,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
   const post = MeshBuilder.CreateCylinder(`castle-lantern-posts-${parent.name}`, { height: 1, diameter: 0.06, tessellation: 5 }, scene);
   post.material = mats.wood;
   instances(post, c.lanterns.map((l) => Matrix.Compose(new Vector3(1, l[1] - 0.27 - (c.top + BALUSTRADE), 1), Quaternion.Identity(), new Vector3(l[0], (l[1] - 0.27 + c.top + BALUSTRADE) / 2, l[2]))));
-  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post, ...buildCastlePorts(scene, parent.name, c.ports, mats.wood), ...(c.fore ? [] : [shipWheel(scene, parent.name, c.top, last.z - WHEEL_ABAFT, mats.wood)])];
+  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post, ...buildCastlePorts(scene, parent.name, c.ports, mats.wood), shipWheel(scene, parent.name, c.top, last.z - WHEEL_ABAFT, mats.wood)];
   for (const m of all) {
     m.parent = parent;
     m.isPickable = false;

@@ -480,3 +480,9 @@ zwój liczony w `furl-geometry.ts` według opisu zwijania u Levera (1808): grubs
 przewężenie płótna pod nimi, łuk zwisający między sejzingami (do 0,3 średnicy) i krótsze na zewnątrz, fałdy wzdłuż
 zwoju. Faktura: środek tej samej tekstury płótna co żagle (bez godła, z dala od postrzępionego liku dolnego).
 Nadal jedna bryła instancjonowana na statek (wierzchołki 585 → ok. 700), koszt rysowania bez zmian.
+
+**17.11, kasztel dziobowy wycofany (właściciel: „chyba w naszym przypadku nie jest zupełnie potrzebny”).** Ocena:
+kadłuby z modeli mają już wznoszącą się burtę dziobu, a dobudowana skrzynia była kanciasta wobec `ref_064` (tam dziób
+wznosi się łagodnie i kończy galionem) i kosztowała 50 wywołań rysowania na scenę (trzy statki z modeli: 219 → 269,
++23%). Commit 3c82831 cofnięty w całości (`git revert`); wpis o nim wyżej zostaje jako historia. Jeśli dziób ma
+zyskać sylwetkę z referencji, to przez galion i lekkie podniesienie burty w siatce, bez osobnej skrzyni.

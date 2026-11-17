@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FORE_WALL, foreCastle, sternCastle } from "../src/renderer/castle-layout";
+import { sternCastle } from "../src/renderer/castle-layout";
 import { SideProfile } from "../src/renderer/side-profile";
 
 const fit = { kx: 0.5, ky: 0.5, draft: 2, length: 40 };
@@ -61,22 +61,5 @@ describe("side profile of a modelled hull", () => {
     // The waist deck lies below the castle's deck: the stairs have something to climb.
     expect(castle.waist).toBeLessThan(castle.top);
     expect(sternCastle(p)).toBeNull();
-  });
-
-  it("raises a lower forecastle over the bow, mirrored, ending clear of the foremast", () => {
-    const fore = foreCastle(p, 4)!;
-    expect(fore.fore).toBe(true);
-    expect(fore.lanterns).toHaveLength(0);
-    expect(fore.top - fore.base).toBeGreaterThanOrEqual(FORE_WALL - 1e-9);
-    // Its deck stands over the bulwarks of the bow under it.
-    for (const r of fore.ring.slice(1, -1)) expect(fore.top).toBeGreaterThan(p.topAt(-r.z));
-    // In the mirrored frame: from the stem (most negative z) to the break, which in the ship's
-    // frame lies at least 2.5 m before the foremast (z = 4) and towards the bow.
-    const breakZ = -fore.ring[fore.ring.length - 1]!.z;
-    expect(breakZ).toBeGreaterThanOrEqual(4 + 2.5 - 0.7);
-    expect(-fore.ring[0]!.z).toBeGreaterThan(9);
-    expect(fore.ring.every((r) => r.half > 0 && r.half < 3.1)).toBe(true);
-    // A foremast near the stem leaves no room for one.
-    expect(foreCastle(p, 8.5)).toBeNull();
   });
 });

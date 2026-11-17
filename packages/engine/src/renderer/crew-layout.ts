@@ -37,8 +37,6 @@ const spread = (i: number, salt: number): number => frac(Math.sin(i * 12.9898 + 
 export interface CrewDecks {
   readonly side: SideProfile;
   readonly castle: CastleLayout | null;
-  /** The forecastle (its layout mirrored in z, castle-layout `foreCastle`): the waist ends at its break. */
-  readonly fore?: CastleLayout | null;
   readonly guns: readonly GunPlace[];
   /** The fighting tops (rig plan): height and station of each. */
   readonly tops: readonly { readonly y: number; readonly z: number }[];
@@ -119,7 +117,7 @@ export const modelCrewSpots = (model: ShipModel, d: CrewDecks): CrewSpot[] => {
   });
   // The rest in the waist: before the castle, abaft the bow, clear of masts, guns and one another.
   const aft = d.castle ? d.castle.ring[d.castle.ring.length - 1]!.z + 1.2 : -d.side.length * 0.4;
-  const fore = d.fore ? Math.min(d.side.length * 0.36, -d.fore.ring[d.fore.ring.length - 1]!.z - 1.2) : d.side.length * 0.36;
+  const fore = d.side.length * 0.36;
   let k = 0;
   while (spots.length < total && k < total * 12) {
     const z = aft + (fore - aft) * spread(k, 3);

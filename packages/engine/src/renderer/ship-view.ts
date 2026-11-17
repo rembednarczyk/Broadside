@@ -6,7 +6,7 @@ import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
-import { foreCastle, sternCastle } from "./castle-layout";
+import { sternCastle } from "./castle-layout";
 import { type SideProfile } from "./side-profile";
 import { gunPlaces } from "./gun-layout";
 import { modelCrewSpots } from "./crew-layout";
@@ -236,18 +236,8 @@ export class ShipView {
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
       const places = gunPlaces(model, (_, z) => side.halfAt(z));
       const castle = sternCastle(side, places);
-      // And a lower forecastle over the bow (laid out and built mirrored, castle-layout).
-      const fore = foreCastle(side, Math.max(...model.def.masts.map((m) => m.z)), places);
-      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, fore, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
-      const castleMats = { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern };
-      const planks = hulls?.planks(model.def.id, model.def.hull) ?? null;
-      if (castle) buildModelCastle(scene, hullSpace, castle, castleMats, shadows, planks, model.def.id);
-      if (fore) {
-        const bow = new TransformNode(`forecastle-${model.def.id}-${entityId}`, scene);
-        bow.parent = hullSpace;
-        bow.scaling.z = -1;
-        buildModelCastle(scene, bow, fore, castleMats, shadows, planks, model.def.id);
-      }
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
+      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;

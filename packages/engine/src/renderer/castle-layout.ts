@@ -20,12 +20,7 @@ export interface CastleLayout {
   readonly lanterns: readonly (readonly [number, number, number])[];
   /** Gun ports cut in the walls for the guns that stand inside the castle. */
   readonly ports: readonly CastlePort[];
-  /** A forecastle (built mirrored, see `foreCastle`): no wheel and no gallery windows. */
-  readonly fore?: boolean;
 }
-
-/** What a castle needs of the hull's side (SideProfile, or its mirror image for the bow). */
-export type CastleSide = Pick<SideProfile, "length" | "stations" | "zOf" | "halfAt" | "topAt" | "deckCaps">;
 
 /** A gun port: the gun it serves (index in the ship's mounts), its middle on the wall and the wall's outward normal. */
 export interface CastlePort {
@@ -71,57 +66,19 @@ const portsFor = (ring: CastleLayout["ring"], base: number, top: number, guns: r
   return ports;
 };
 
-export const sternCastle = (side: CastleSide, guns: readonly GunPlace[] = []): CastleLayout | null => castleOn(side, guns, { share: SHARE, wall: CASTLE_WALL, needCaps: true });
-
-interface CastleSpec {
-  /** Share of the length it covers, its walls' height, whether it stands only where the cut opened the deck. */
-  readonly share: number;
-  readonly wall: number;
-  readonly needCaps: boolean;
-}
-
-const castleOn = (side: CastleSide, guns: readonly GunPlace[], spec: CastleSpec): CastleLayout | null => {
+export const sternCastle = (side: SideProfile, guns: readonly GunPlace[] = []): CastleLayout | null => {
   const caps = side.deckCaps().filter((run) => run[0]!.z < 0);
-  if (spec.needCaps && caps.length === 0) return null;
-  const end = -side.length * (0.5 - spec.share);
+  if (caps.length === 0) return null;
+  const end = -side.length * (0.5 - SHARE);
   const stations = Array.from({ length: side.stations }, (_, k) => side.zOf(k)).filter((z) => z <= end);
   if (stations.length < 2) return null;
   const ys = caps.flat().filter((s) => s.z <= end).map((s) => s.y).sort((a, b) => a - b);
-  // Without a cut deck to stand on, the floor is the lowest deck under the castle (the walls run
-  // down into the hull where its sheer rises).
-  const base = ys[ys.length >> 1] ?? Math.min(...stations.map((z) => side.topAt(z))) - 0.95;
+  const base = ys[ys.length >> 1] ?? side.topAt(stations[0]!) - 0.95;
   const step = stations[1]! - stations[0]!;
   // Carried half a station on at each end, to the transom and to the break of the castle.
   const ring = stations.map((z, i) => ({ z: z + (i === 0 ? -step / 2 : i === stations.length - 1 ? step / 2 : 0), half: side.halfAt(z) * 1.01 }));
-  // Over a bow whose sheer rises, the deck stands clear of the highest bulwark under it.
-  const top = Math.max(base + spec.wall, spec.needCaps ? -Infinity : Math.max(...stations.map((z) => side.topAt(z))) + 0.35);
+  const top = base + CASTLE_WALL;
   const stern = ring[0]!;
   const y = top + BALUSTRADE + LANTERN_POST;
   return { ring, base, top, waist: side.topAt(end + step * 2) - 0.95, lanterns: [[0, y + 0.25, stern.z], [-stern.half * 0.72, y, stern.z], [stern.half * 0.72, y, stern.z]], ports: portsFor(ring, base, top, guns) };
-};
-
-/** Height of the forecastle's walls (m): lower than the sterncastle's, as in the reference's side view (ref_064). */
-export const FORE_WALL = 1.7;
-
-/**
- * The forecastle: a lower, shorter castle over the bow, ending `clear` metres before the
- * foremast (its men and shrouds keep the deck there). Laid out as a sterncastle on the side seen
- * from the other end (z mirrored) and so built: the mesh goes under a node mirrored in z, and its
- * layout is returned in the mirrored frame (`fore`), with no lanterns.
- */
-export const foreCastle = (side: CastleSide, foremastZ: number, guns: readonly GunPlace[] = [], clear = 2.5): CastleLayout | null => {
-  const n = side.stations;
-  const mirror: CastleSide = {
-    length: side.length,
-    stations: n,
-    zOf: (k) => -side.zOf(n - 1 - k),
-    halfAt: (z) => side.halfAt(-z),
-    topAt: (z) => side.topAt(-z),
-    deckCaps: (b) => side.deckCaps(b).map((run) => run.map((c) => ({ ...c, z: -c.z })).reverse()),
-  };
-  const share = Math.min(0.16, 0.5 - (foremastZ + clear) / side.length);
-  if (share < 0.06) return null;
-  const mirroredGuns = guns.map((g) => ({ ...g, at: [g.at[0], g.at[1], -g.at[2]] as const, dir: [g.dir[0], g.dir[1], -g.dir[2]] as const }));
-  const c = castleOn(mirror, mirroredGuns, { share, wall: FORE_WALL, needCaps: false });
-  return c && { ...c, lanterns: [], fore: true };
 };
