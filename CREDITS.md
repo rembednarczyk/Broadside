@@ -33,3 +33,8 @@ pokład, liny, kroki po drewnie, szable, pistolet, monety, skrzynia (przycięte 
 ## Tekstury (CC0, Poly Haven)
 `weathered_planks` (pokład), `dark_planks` (maszty, reje, lawety), `rough_linen` (splot płótna żagli) z polyhaven.com.
 Pobieranie i skalowanie: `node tools/assets/textures.mjs`.
+
+## Postacie załogi (CC0, Quaternius)
+„Modular Character Outfits - Fantasy”, „Universal Base Characters” i „Universal Animation Library” (wersje Standard,
+bezpłatne) autorstwa Quaterniusa, https://quaternius.com, CC0 1.0. Stroje, głowy, fryzury i pozy złożone i wypieczone
+skryptem `tools/assets/crew-figures.mjs` do `packages/app/public/assets/props/crew.glb`.

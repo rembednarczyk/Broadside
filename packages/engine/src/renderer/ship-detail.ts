@@ -111,6 +111,8 @@ export class ShipDetail {
   private readonly body: ReturnType<TransformNode["getChildMeshes"]> = [];
   private bodyHidden = false;
   private crewShown = 1;
+  /** Copies of the crew figures, when they have loaded (useFigures). */
+  private readonly figures: Mesh[] = [];
   private crewMax = 1;
 
   constructor(scene: Scene, parent: TransformNode, key: string, model: ShipModel, mats: DetailMaterials, shadows: ShadowGenerator | null, side: SideProfile | null = null) {
@@ -200,6 +202,25 @@ export class ShipDetail {
     instances(lamp, lift > 0 ? [Matrix.Translation(-0.9, y, z), Matrix.Translation(0, y + 0.4, z), Matrix.Translation(0.9, y, z)] : [Matrix.Translation(0, y, z)]);
   }
 
+  /**
+   * Draws the men with the crew figures (CrewFigures) instead of the plain ones: a copy of each
+   * figure for this ship, the spots dealt round them in turn.
+   */
+  useFigures(templates: readonly Mesh[], parent: TransformNode): void {
+    if (this.figures.length > 0 || templates.length === 0) return;
+    for (const t of templates) {
+      const copy = t.clone(`${t.name}-${parent.name}`, parent);
+      copy.isPickable = false;
+      copy.alwaysSelectAsActiveMesh = true;
+      copy.setEnabled(this.fineShown);
+      this.figures.push(copy);
+      this.fine.push(copy);
+    }
+    this.crew.setEnabled(false);
+    this.fine.splice(this.fine.indexOf(this.crew), 1);
+    this.setCrew(this.crewShown, this.crewMax);
+  }
+
   /** Puts the figures where a modelled hull's decks are (crew-layout), and keeps the last crew count. */
   setSpots(spots: readonly CrewSpot[]): void {
     this.crewSpots.length = 0;
@@ -212,6 +233,14 @@ export class ShipDetail {
     this.crewShown = crew;
     this.crewMax = max;
     const n = Math.round((this.crewSpots.length * crew) / Math.max(1, max));
+    if (this.figures.length > 0) {
+      this.figures.forEach((f, k) => {
+        const mine = this.crewSpots.slice(0, n).filter((_, i) => i % this.figures.length === k);
+        f.isVisible = mine.length > 0;
+        if (mine.length > 0) instances(f, mine);
+      });
+      return;
+    }
     this.crew.isVisible = n > 0;
     if (n > 0) instances(this.crew, this.crewSpots.slice(0, n));
   }

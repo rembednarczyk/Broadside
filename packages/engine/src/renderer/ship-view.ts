@@ -15,6 +15,7 @@ import { buildModelDecks, buildModelRails } from "./model-rails";
 import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
+import { type CrewFigures } from "./crew-figures";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
@@ -186,6 +187,9 @@ export class ShipView {
 
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
+    // The crew figures replace the plain ones the first time the ship comes close after they load.
+    const figures = d < FINE_DETAIL ? this.figures?.templates : null;
+    if (figures) this.detail.useFigures(figures, this.hullSpace);
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
@@ -193,6 +197,8 @@ export class ShipView {
     this.running.tubes.mesh.setEnabled(d < FINE_DETAIL);
   }
   private shownCrew = -1;
+  /** The ship's own frame (hull space), parent of everything drawn on her. */
+  private hullSpace!: TransformNode;
   private clothNear = false;
   private running!: { lines: RunningLine[]; tubes: RopeTubes };
   private springs!: MastSprings;
@@ -205,10 +211,11 @@ export class ShipView {
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
-  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null, private readonly figures: CrewFigures | null = null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);
+    this.hullSpace = hullSpace;
     hullSpace.parent = this.root;
     hullSpace.position = new Vector3(-model.com.x, -model.com.y, -model.com.z);
     const hullMesh = this.buildMesh(scene, `hull-${entityId}`, hullGeometry(model.def.hull), this.liveryMaterial(scene, model, faction, mats));

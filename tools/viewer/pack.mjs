@@ -23,7 +23,7 @@ if (!out) {
 execFileSync("npx", ["vite", "build", "-c", "vite.viewer.config.ts"], { cwd: app, stdio: "inherit" });
 rmSync(out, { recursive: true, force: true });
 const pub = join(app, "public");
-const MODELS = ["assets/hulls/galleon.glb", "assets/props/gun.glb"];
+const MODELS = ["assets/hulls/galleon.glb", "assets/props/gun.glb", "assets/props/crew.glb"];
 const FILES = ["assets/hulls/galleon.json", "assets/hulls/galleon-planks.jpg", ...["dark_planks_diff", "dark_planks_nor_gl", "weathered_planks_diff", "weathered_planks_nor_gl"].map((t) => `assets/textures/${t}.jpg`), "assets/textures/rough_linen_detail.png"];
 // The recorded sounds (ambience beds, ship sounds): without them the game falls back to a plain noise synth.
 const AUDIO = readdirSync(join(pub, "assets/audio")).map((f) => `assets/audio/${f}`);

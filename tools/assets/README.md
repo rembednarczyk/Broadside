@@ -27,3 +27,13 @@ Działo ze skanu (12 tys. trójkątów, lufa wzdłuż +Z):
 `node tools/assets/upright.mjs .asset-cache/props/swivel.glb packages/app/public/assets/props/gun.glb 0 0 1 12000`.
 
 Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-NC-SA 4.0) nie jest używany.
+
+## Załoga (Quaternius, CC0)
+1. Pobranie trzech darmowych paczek (strony itch.io: `modular-character-outfits-fantasy`, `universal-base-characters`,
+   `universal-animation-library` na `quaternius.itch.io`): `tools/assets/itch-fetch.sh <adres strony> <katalog>`,
+   rozpakowanie do `.asset-cache/quaternius/` (katalogi `... [Standard]` jak w archiwach). W bazowych postaciach brakuje
+   dwóch plików, do których odwołuje się glTF: skopiować `T_Eye_Normal.png` na `T_Eye_Normal_png.png` i
+   `T_Hair_1_Normal.png` na `T_Hair_1_Normal_png.png` w `Base Characters/Godot - UE/`.
+2. `node tools/assets/crew-figures.mjs packages/app/public/assets/props/crew.glb [trójkąty=5000]`
+   (`CREW_SPREAD=1` rozstawia postacie do podglądu `tools/assets/view.mjs`).
+

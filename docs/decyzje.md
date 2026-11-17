@@ -372,3 +372,15 @@ grzbiety, kilwater i przybój. Kamera pokładowa stoi na przełamaniu pokładu r
 grotmasztem) i patrzy lekko w dół; niżej przednia część kadłuba zasłaniała pokład. Załoga na kadłubach z modeli jest
 rozmieszczana z profilu burty i kasztelu (`crew-layout.ts`): rząd przy balustradzie rufowej, reszta na śródokręciu,
 liczba jak dotąd (szósta część załogi, najwyżej 40); znikają w miarę strat jak wcześniej.
+
+**17.11, figurki załogi (właściciel: „postacie z SekiSenshi”, potem „poszukaj w sieci”, „popraw jakość”).** Modele VRM z
+folderu SekiSenshi odrzucone na prośbę właściciela (współczesne stroje, jeden na licencji niekomercyjnej). W sieci:
+rejestr Open Source Avatars (CC0) ma prawie wyłącznie kreskówkowe postacie, a zestaw piracki Quaterniusa proporcje chibi;
+wybrane darmowe paczki Quaterniusa (CC0) o realistycznych proporcjach: stroje „Peasant” i „Ranger” wyglądają jak
+ubiór marynarzy XVII–XVIII w. Postać składa skrypt (strój, głowa wycięta z postaci bazowej po kościach szyi i głowy,
+fryzura), pozuje jedną klatką animacji i wypieka skinning na CPU (glTF 2.0, liniowe mieszanie kości) do statycznej
+siatki; wszystkie tekstury w jednym atlasie, żeby gra rysowała figurki instancjami jednego materiału. 5 tys. trójkątów
+na postać (pierwsza wersja z kolorem w wierzchołkach i 1,6 tys. była zbyt zgrubna); widoczne tylko z bliska (jak drobne
+detale). Gra ładuje plik bez korzenia glTF, więc jego przeliczenie układu wpieka się w wierzchołki przy ładowaniu.
+Następny etap (D2): animacje i role ze stanu symulacji.
+
