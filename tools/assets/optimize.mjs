@@ -5,6 +5,7 @@
  * re-encodes them as WebP, and writes a game-sized GLB.
  *
  * Usage: node tools/assets/optimize.mjs <in.glb> <out.glb> [targetTriangles=60000] [textureSize=1024]
+ * SIMPLIFY_ERROR (default 0.01) lets small props go below what the default error bound allows.
  */
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
@@ -28,7 +29,7 @@ const before = count();
 await MeshoptSimplifier.ready;
 await doc.transform(dedup(), flatten(), join(), weld());
 const ratio = Math.min(1, Number(target) / Math.max(1, count()));
-await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error: 0.01 }), prune());
+await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error: Number(process.env.SIMPLIFY_ERROR ?? 0.01) }), prune());
 await doc.transform(textureCompress({ encoder: sharp, targetFormat: process.env.TEX_FORMAT ?? "webp", resize: [Number(tex), Number(tex)] }));
 await io.write(output, doc);
 console.log(`${input.split("/").pop()}: ${before} -> ${count()} triangles`);

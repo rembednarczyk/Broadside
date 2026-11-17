@@ -5,6 +5,7 @@ import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
+import { ShipGuns } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
@@ -111,10 +112,12 @@ export class ShipView {
   private readonly flag: Mesh;
   private readonly flagPositions: Float32Array;
   private readonly detail: ShipDetail;
+  private readonly guns: ShipGuns;
 
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
     this.detail.setFine(d < FINE_DETAIL);
+    this.guns.setShown(d < FINE_DETAIL * 2);
   }
   private shownCrew = -1;
   private springs!: MastSprings;
@@ -138,6 +141,7 @@ export class ShipView {
     deck.parent = hullSpace;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows);
+    this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows);
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     this.modelled = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? false;
     if (this.modelled) {
@@ -267,6 +271,12 @@ export class ShipView {
     MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
   }
 
+  /** A gun fired at a world position: the nearest one recoils. */
+  gunFired(at: { readonly x: number; readonly y: number; readonly z: number }): void {
+    const local = Vector3.TransformCoordinates(new Vector3(at.x, at.y, at.z), this.root.computeWorldMatrix(true).clone().invert());
+    this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z);
+  }
+
   private buildFlag(scene: Scene, mat: StandardMaterial): { mesh: Mesh; positions: Float32Array } {
     const cols = 6;
     const positions = new Float32Array((cols + 1) * 2 * 3);
@@ -306,6 +316,7 @@ export class ShipView {
     const awLen = Math.hypot(aw.x, aw.z) || 1;
     const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
     this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen);
+    this.guns.update(dt);
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time);
     this.masts.forEach((m, i) => {

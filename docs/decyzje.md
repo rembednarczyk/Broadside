@@ -128,3 +128,13 @@ w nocy: 0,55 przy czystym niebie (ćwierć południowego słońca), kolor zimny 
 (przesunięcie Purkinjego), chmury zabierają do 75%. Odblask na morzu idzie za światłem głównym (ścieżka księżyca).
 Adaptacja oka jak auto-ekspozycja w Unreal i HDRP: ekspozycja do 2,2 raza po zachodzie, sterowana wysokością słońca
 (burza w dzień zostaje ciemna).
+
+## 17.11 Działa na pokładach (orkiestrator)
+Modele „cannon Klein Hollandia” i „canhões do ilhéu” to skany dna morskiego z leżącą lufą, więc na pokład się nie
+nadają (pójdą do wraków). Skan działka obrotowego Queen Anne ma czystą lufę, ale jego siatka (1,8 mln trójkątów,
+tysiące wysp UV, otwarte krawędzie) nie upraszcza się do budżetu rekwizytu bez dziur. Rozwiązanie: z chmury punktów
+skanu zdejmowany jest profil bryły obrotowej (oś z PCA, okrąg dopasowany metodą najmniejszych kwadratów w 36
+przekrojach), a gra toczy z niego czystą lufę (ok. 400 trójkątów, thin instances na statek). Długość lufy z
+kalibru (1,1 + 0,32·√funty m). Odjazd: sekwencja z regulaminu epoki (skok do tyłu na linie hamującej 0,12 s,
+2,2 s ładowania, 1,6 s wytaczania), tylko widok; fizyczny odrzut statku liczy symulacja. Tekstury skanu pominięte
+(jednolity ciemny metal).

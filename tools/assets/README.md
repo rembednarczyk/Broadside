@@ -15,4 +15,7 @@ Surowe pliki trafiają do `.asset-cache/drive/` (poza gitem), wynik do `packages
 Wszystkie kadłuby naraz, w dwóch poziomach jakości (pełny 250 tys. trójkątów i 4096 px, `-lite` 80 tys. i 2048 px):
 `bash tools/assets/hulls.sh`. Silnik bierze `-lite` dla presetów low i medium.
 
+Profil lufy ze skanu działka (bryła obrotowa, którą toczy gra):
+`node tools/assets/lathe-profile.mjs .asset-cache/drive/18th_century_swivel_gun_queen_anne_nk47-11.glb packages/engine/src/renderer/barrel-profile.json 36 0 0.18 1`.
+
 Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-NC-SA 4.0) nie jest używany.
