@@ -30,12 +30,12 @@ export class EffectsDirector {
     const cap = (n: number): number => Math.max(100, Math.round(n * particles));
     this.sprites = createSprites(scene);
     const g = new Vector3(0, 0, 0);
-    this.smoke = new BurstEmitter("fx-smoke", scene, { texture: this.sprites.puff, capacity: cap(3000), color1: rgba(0.86, 0.85, 0.82, 0.55), color2: rgba(0.7, 0.7, 0.68, 0.45), colorDead: rgba(0.7, 0.7, 0.7, 0), minSize: 1, maxSize: 1, minLife: 6, maxLife: 11, minPower: 1, maxPower: 6, gravity: new Vector3(0, 0.25, 0), additive: false, spread: 0.35, growth: 5, drag: 0.08 });
+    this.smoke = new BurstEmitter("fx-smoke", scene, { texture: this.sprites.puff, capacity: cap(2500), color1: rgba(0.62, 0.61, 0.58, 0.5), color2: rgba(0.5, 0.5, 0.48, 0.42), colorDead: rgba(0.55, 0.55, 0.55, 0), minSize: 2.5, maxSize: 4.5, minLife: 6, maxLife: 11, minPower: 1, maxPower: 6, gravity: new Vector3(0, 0.25, 0), additive: false, spread: 0.35, growth: 5, drag: 0.08 });
     this.flash = new BurstEmitter("fx-flash", scene, { texture: this.sprites.flare, capacity: cap(600), color1: rgba(1, 0.85, 0.5, 1), color2: rgba(1, 0.55, 0.15, 1), colorDead: rgba(0.4, 0.1, 0, 0), minSize: 1, maxSize: 1, minLife: 0.08, maxLife: 0.2, minPower: 4, maxPower: 14, gravity: g, additive: true, spread: 0.15, growth: 1.8, drag: 0 });
     this.spray = new BurstEmitter("fx-spray", scene, { texture: this.sprites.puff, capacity: cap(3000), color1: rgba(0.95, 0.97, 1, 0.85), color2: rgba(0.8, 0.88, 0.92, 0.7), colorDead: rgba(0.9, 0.95, 1, 0), minSize: 1, maxSize: 1, minLife: 0.8, maxLife: 1.8, minPower: 4, maxPower: 12, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.3, growth: 2, drag: 0 });
     this.splinters = new BurstEmitter("fx-splinters", scene, { texture: this.sprites.streak, capacity: cap(1500), color1: rgba(0.55, 0.4, 0.25, 1), color2: rgba(0.35, 0.25, 0.15, 1), colorDead: rgba(0.3, 0.2, 0.1, 0), minSize: 1, maxSize: 1, minLife: 0.6, maxLife: 1.4, minPower: 6, maxPower: 18, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.8, growth: 1, drag: 0 });
     this.flames = new BurstEmitter("fx-flames", scene, { texture: this.sprites.flare, capacity: cap(2500), color1: rgba(1, 0.7, 0.25, 0.9), color2: rgba(1, 0.4, 0.08, 0.8), colorDead: rgba(0.3, 0.05, 0, 0), minSize: 1, maxSize: 1, minLife: 0.4, maxLife: 0.9, minPower: 1, maxPower: 4, gravity: new Vector3(0, 3, 0), additive: true, spread: 0.3, growth: 0.4, drag: 0 });
-    this.fireSmoke = new BurstEmitter("fx-fire-smoke", scene, { texture: this.sprites.puff, capacity: cap(2500), color1: rgba(0.15, 0.13, 0.12, 0.55), color2: rgba(0.25, 0.22, 0.2, 0.45), colorDead: rgba(0.3, 0.3, 0.3, 0), minSize: 1, maxSize: 1, minLife: 3, maxLife: 6, minPower: 2, maxPower: 5, gravity: new Vector3(0, 1.5, 0), additive: false, spread: 0.25, growth: 3.5, drag: 0 });
+    this.fireSmoke = new BurstEmitter("fx-fire-smoke", scene, { texture: this.sprites.puff, capacity: cap(2500), color1: rgba(0.15, 0.13, 0.12, 0.55), color2: rgba(0.25, 0.22, 0.2, 0.45), colorDead: rgba(0.3, 0.3, 0.3, 0), minSize: 2, maxSize: 4, minLife: 3, maxLife: 6, minPower: 2, maxPower: 5, gravity: new Vector3(0, 1.5, 0), additive: false, spread: 0.25, growth: 3.5, drag: 0 });
     this.embers = new BurstEmitter("fx-embers", scene, { texture: this.sprites.flare, capacity: cap(1500), color1: rgba(1, 0.75, 0.35, 1), color2: rgba(1, 0.5, 0.15, 1), colorDead: rgba(0.4, 0.1, 0, 0), minSize: 1, maxSize: 1, minLife: 0.4, maxLife: 1.2, minPower: 8, maxPower: 22, gravity: new Vector3(0, -6, 0), additive: true, spread: 0.45, growth: 0.5, drag: 0 });
     // Smoke screen: thick, slow, low-lying cloud kept topped up while the sim cloud lives.
     this.screen = new BurstEmitter("fx-screen", scene, { texture: this.sprites.puff, capacity: cap(1200), color1: rgba(0.56, 0.55, 0.53, 0.38), color2: rgba(0.46, 0.45, 0.44, 0.32), colorDead: rgba(0.5, 0.5, 0.5, 0), minSize: 14, maxSize: 26, minLife: 6, maxLife: 10, minPower: 0.3, maxPower: 1.5, gravity: new Vector3(0, 0.15, 0), additive: false, spread: 1, growth: 1.6, drag: 0.05 });
@@ -63,8 +63,8 @@ export class EffectsDirector {
           const big = Math.sqrt(e.pounder / 12);
           this.flash.emit(e.at.x, e.at.y, e.at.z, e.dir.x, e.dir.y, e.dir.z, 8, 0.3);
           // Powder smoke: a jet along the bore, then a rolling cloud that hangs and drifts.
-          this.smoke.emit(e.at.x + e.dir.x * 2, e.at.y, e.at.z + e.dir.z * 2, e.dir.x, e.dir.y + 0.1, e.dir.z, Math.round(14 * big), 1.2);
-          this.smoke.emit(e.at.x + e.dir.x * 6, e.at.y + 0.5, e.at.z + e.dir.z * 6, e.dir.x * 0.3, 0.2, e.dir.z * 0.3, Math.round(8 * big), 3);
+          this.smoke.emit(e.at.x + e.dir.x * 2, e.at.y, e.at.z + e.dir.z * 2, e.dir.x, e.dir.y + 0.1, e.dir.z, Math.round(9 * big), 1.2);
+          this.smoke.emit(e.at.x + e.dir.x * 8, e.at.y + 1, e.at.z + e.dir.z * 8, e.dir.x * 0.3, 0.2, e.dir.z * 0.3, Math.round(6 * big), 5);
           this.embers.emit(e.at.x, e.at.y, e.at.z, e.dir.x, e.dir.y + 0.15, e.dir.z, Math.round(6 * big), 0.3);
           // The blast flattens the water under the muzzle: a ring of spray.
           this.spray.emit(e.at.x + e.dir.x * 4, e.at.y - 1.5, e.at.z + e.dir.z * 4, e.dir.x * 0.5, 0.4, e.dir.z * 0.5, Math.round(5 * big), 2.5);
@@ -112,6 +112,9 @@ export class EffectsDirector {
     const emitFires = this.fireClock > 0.08;
     if (emitFires) this.fireClock = 0;
     const w = windVector(sim.env.windDirection, sim.env.windSpeed);
+    // Powder and fire smoke drift down the wind (an acceleration towards the wind's speed).
+    this.smoke.setDrift(w.x * 0.12, 0.25, w.z * 0.12);
+    this.fireSmoke.setDrift(w.x * 0.15, 1.5, w.z * 0.15);
     for (const e of sim.ships()) {
       const s = e.ship!;
       const b = e.body!;

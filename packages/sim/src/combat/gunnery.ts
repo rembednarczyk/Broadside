@@ -4,7 +4,7 @@ import { type SimWorld } from "../world/world";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type GunMount } from "../ship/ship-model";
 import { MORTAR_ELEVATION, elevationForRange, mortarSpeed, muzzleSpeed } from "./aim";
-import { bodyToWorld, applyImpulseAt } from "../physics/rigid-body";
+import { type RigidBody, addAngularImpulse, applyImpulseAt, bodyToWorld } from "../physics/rigid-body";
 
 /**
  * Gunnery: a fire order queues every loaded gun of a battery with a short ripple delay (a
@@ -14,6 +14,20 @@ import { bodyToWorld, applyImpulseAt } from "../physics/rigid-body";
 const RIPPLE = 0.07;
 /** Base dispersion of a smoothbore (radians, one deviation). */
 const BASE_SPREAD = 0.007;
+/** Muzzle speed of a period smoothbore with a full charge (m/s): sets the recoil momentum. */
+const REAL_MUZZLE_SPEED = 450;
+/** Heeling moment of recoil scaled for readability (a broadside visibly rolls the ship away). */
+const HEEL_FEEL = 3;
+
+/** Recoil as an impulse at the gun: full linear push, heeling moment times HEEL_FEEL. */
+const recoil = (b: RigidBody, impulse: Vec3, at: Vec3): void => {
+  applyImpulseAt(b, impulse, at);
+  const lever = vec3(at.x - b.pos.x, at.y - b.pos.y, at.z - b.pos.z);
+  // Extra heeling only (no extra push): the impulse's moment about the centre of mass, scaled.
+  const torque = vec3(lever.y * impulse.z - lever.z * impulse.y, lever.z * impulse.x - lever.x * impulse.z, lever.x * impulse.y - lever.y * impulse.x);
+  addAngularImpulse(b, scale(torque, HEEL_FEEL - 1));
+};
+
 /** How far a gun trains in its port either side (about 8 deg); swivels and chasers further. */
 const TRAIN_LIMIT = 0.3;
 const TRAIN_LIMIT_FREE = 0.6;
@@ -96,8 +110,11 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   const muzzle = bodyToWorld(b, add(g.pos, scale(g.dir, 1.2)));
   const mass = launchShot(world, e.id, muzzle, rotate(b.rot, local), speed, g.pounder, st.ammo, rng, b.vel, refit(s.upgrades, "spread"));
   const dirWorld = rotate(b.rot, local);
-  // Recoil: the shot's momentum plus the powder gases (about half again) push the ship.
-  applyImpulseAt(b, scale(dirWorld, -mass * ammo.pellets * speed * 1.5), muzzle);
+  // Recoil: the shot's momentum plus the powder gases (about half again) push the ship through the
+  // breeching ropes at the gun port. The momentum is the real gun's (muzzle speed of a smoothbore,
+  // about 450 m/s), not the slowed ball of the game's ballistics. Fired high on one side, it heels
+  // the ship away from the target; the heeling moment is scaled up for the eye (decyzje 17.11).
+  recoil(b, scale(dirWorld, -mass * ammo.pellets * (mortar ? speed : REAL_MUZZLE_SPEED) * 1.5), muzzle);
   events.push({ type: "gunFired", ship: e.id, at: muzzle, dir: dirWorld, pounder: g.pounder, ammo: st.ammo });
   s.stores[st.ammo] = Math.max(0, (s.stores[st.ammo] ?? 0) - 1);
   st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload");

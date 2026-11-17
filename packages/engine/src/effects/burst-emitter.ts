@@ -99,6 +99,11 @@ export class BurstEmitter {
     this.system.manualEmitCount = this.batch.length;
   }
 
+  /** Constant acceleration of the particles (wind drift, buoyancy). */
+  setDrift(x: number, y: number, z: number): void {
+    this.system.gravity.set(x, y, z);
+  }
+
   setColors(c1: Color4, c2: Color4): void {
     this.system.color1 = c1;
     this.system.color2 = c2;

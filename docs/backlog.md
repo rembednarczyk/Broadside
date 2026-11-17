@@ -89,5 +89,13 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] wydanie końcowe po sprawdzeniu na telefonie
 - [x] fregata smuklejsza (szer. 11,4 m, zanurzenie 4,4 m, ostrzejszy dziób): 90° 9,3 kn i 135° 9,9 kn wobec galeonu 8,2 i 9,2 (16.11)
 
+### M7 realizm i assety (prośba właściciela 17.11)
+- [ ] modele z Drive właściciela (galeon XVIII w., trójpokładowiec 1660, okręt liniowy 1700, karaka, statek holenderski, armaty, działko obrotowe, wraki, poszycie): pobranie, licencje, optymalizacja (gltf-transform: uproszczenie, KTX2/WebP), składanie statków bliskich referencji, wraki i armaty jako modele w grze
+- [ ] tekstury z tych samych źródeł co podrcr albo z modeli
+- [ ] taktyki z epoki w AI: linia bojowa, przejęcie nawietrznej (weather gauge), ostrzał przez rufę (raking: crossing the T), strzelanie na przechyle w kadłub albo w olinowanie (szkoła brytyjska kontra francuska), abordaż po uciszeniu
+- [x] fizyka strzału: odrzut z realnego pędu armaty przechyla statek o 1,5–2,5° na przeciwną burtę (test), dym prochowy większy i dryfuje z wiatrem (17.11); do zrobienia: odjazd lawet przy strzale
+- [ ] ruchome elementy: ugięcie masztów pod obciążeniem, łopot żagli przy złym trymie i w łopocie, napinanie i luzowanie lin (Verlet / position-based dynamics, sprężyny), kołysanie latarni i flag
+- [ ] dźwięki otoczenia: morze, wiatr w olinowaniu (zależny od prędkości wiatru), skrzypienie kadłuba, deszcz, grzmot, mewy przy lądzie, fale o burtę; źródła CC0
+
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

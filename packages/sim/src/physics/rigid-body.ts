@@ -86,6 +86,11 @@ export const applyImpulseAt = (b: RigidBody, impulse: Vec3, worldPoint: Vec3): v
   b.angVel = add(b.angVel, rotate(b.rot, mulv(local, invInertia(b))));
 };
 
+/** Angular impulse (world frame, N m s) about the centre of mass. */
+export const addAngularImpulse = (b: RigidBody, l: Vec3): void => {
+  b.angVel = add(b.angVel, rotate(b.rot, mulv(rotateInv(b.rot, l), invInertia(b))));
+};
+
 export const kineticEnergy = (b: RigidBody): number => {
   const w = rotateInv(b.rot, b.angVel);
   return 0.5 * b.mass * (b.vel.x ** 2 + b.vel.y ** 2 + b.vel.z ** 2) + 0.5 * (b.inertia.x * w.x ** 2 + b.inertia.y * w.y ** 2 + b.inertia.z * w.z ** 2);

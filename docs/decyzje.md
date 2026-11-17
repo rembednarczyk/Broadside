@@ -76,3 +76,17 @@ kotwicowisko (najbliższa woda głęboka na 10 m na zewnątrz od miasta, + 40 m)
 handel liczy od niego 180 m; rejowce 74° od wiatru (biegunowa: przy 60° galeon cofa się); halsy z histerezą; zwrot przez
 rufę, gdy krótsza droga prowadzi przez linię wiatru; wyciąganie kotwicą z mielizny; eskorta ma 30 min (żegluga pod
 wiatr). Znane ograniczenie: brak planowania trasy wokół wysp (backlog).
+
+## 17.11 Prośby właściciela (realizm i assety)
+Właściciel dodał do planu: prawdziwe taktyki bitew morskich epoki w AI; dźwięki otoczenia, pogody, wody i wiatru;
+realistyczną fizykę strzału (odrzut przechyla statek na drugą burtę, dym z dział); modele z jego folderu Drive do
+złożenia statków bliskich referencji i innych obiektów gry; ruchome elementy statku zależne od wiatru i pogody (ugięcie
+masztów, łopot żagli, napinanie lin); tekstury ze źródeł podrcr albo z modeli. Kolejność: assety (najwięcej zależy od
+nich), fizyka strzału i dym, ruchome elementy, dźwięki, taktyki. Backlog: M7.
+
+## 17.11 Odrzut i dym (orkiestrator)
+Pęd odrzutu liczony z prędkości wylotowej prawdziwej gładkolufowej armaty (ok. 450 m/s, plus połowa na gazy), a nie
+ze spowolnionej kuli balistyki gry (110 m/s). Moment przechylający wzmocniony 3 razy dla czytelności w kamerze: pełna
+salwa przechyla statek o 1,5–2,5° na burtę przeciwną do strzelającej (fizycznie byłoby ok. 0,5–1°). Dym prochowy:
+kłęby 2,5–4,5 m rosnące do ok. 20 m, szaro-białe, dryfują z wiatrem. Liczba kłębów ograniczona ze względu na
+nakładanie się przezroczystości na telefonie.
