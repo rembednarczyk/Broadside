@@ -54,7 +54,7 @@ let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra",
 const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
 const urlCamera = params.get("camera");
-let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb" });
+let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb", texturesUrl: "assets/textures/" });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
@@ -65,7 +65,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   }
   const mode = renderer.camera.mode;
   renderer.dispose();
-  renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb" });
+  renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb", texturesUrl: "assets/textures/" });
   renderer.camera.mode = mode;
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };

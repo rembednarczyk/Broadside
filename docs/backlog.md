@@ -97,7 +97,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] potok assetów (`tools/assets`): pobranie z Drive, licencje (16 x CC BY 4.0, CREDITS.md), optymalizacja meshoptimizer, cięcie kadłuba, metryki nadburcia; kadłub galeonu z modelu Galaxy Abundant z proceduralnym, ruchomym ożaglowaniem (17.11)
 - [x] kadłuby z modeli: fregata (Baron Anders von Höpken 1759), bryg (Dutch ship) (17.11)
 - [ ] okręt liniowy (szkielet 1700 ma dziury w poszyciu: sprawdzić albo trójpokładowiec 1660); armaty i działka z modeli; wraki na mieliznach
-- [x] tekstury z modeli (albedo i mapy normalnych z GLB właściciela, 4096 px w pełnym poziomie) (17.11); Poly Haven CC0 jak w podrcr do dalszych elementów (pokład, lina, płótno)
+- [x] tekstury z modeli (albedo i mapy normalnych z GLB właściciela, 4096 px w pełnym poziomie) (17.11); Poly Haven CC0 jak w podrcr: deski pokładu, ciemne drewno masztów i rej, splot płótna jako mapa normalnych (`tools/assets/textures.mjs`) (17.11)
 - [x] mniej uproszczeń: kadłuby w dwóch poziomach (pełny 250 tys. trójkątów i tekstury 4096 dla presetów high/ultra, `-lite` 80 tys. i 2048 dla low/medium) (17.11); nie sprawdzono pamięci na telefonie
 - [x] godzina zrzutów jak w SekiSenshi: `hours=HH:MM`, `clock=stop`, nazwane ujęcia `tools/shots/views.json` i `node tools/shots/view.mjs <ujęcie> [HH:MM]` (17.11)
 - [x] taktyki z epoki w AI (doktryny jako dane): nawietrzna, ostrzał wzdłuż kadłuba (obrażenia +50%, straty w załodze x2,5), pościg dziobem z działami pościgowymi, szkoła brytyjska (kadłub z bliska) i francuska (olinowanie łańcuchową, potem kadłub), abordaż według doktryny (17.11); audyt: 16 z 18 bitew rozstrzygniętych; linia bojowa eskadr zrobiona (17.11)

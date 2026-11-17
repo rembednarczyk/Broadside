@@ -24,3 +24,7 @@ Uznanie autorstwa nie jest wymagane przy CC0; podajemy je z grzeczności. Lista 
 randommind (morze, Wisła), tsorthan-grove (wiatr sztormowy, Storm Arwen 2022), sketchman3 (lekki wiatr), kresiek-the-furry
 (deszcz), wuxiascrub (deszcz z grzmotem), antumdeluge (skrzypienie drewna), rango-mango (mewy), qubodup i jasinski (fala
 przy brzegu), thimras (strzał, trafienie, plusk, taran, tonięcie).
+
+## Tekstury (CC0, Poly Haven)
+`weathered_planks` (pokład), `dark_planks` (maszty, reje, lawety), `rough_linen` (splot płótna żagli) z polyhaven.com.
+Pobieranie i skalowanie: `node tools/assets/textures.mjs`.

@@ -31,6 +31,8 @@ export interface RendererOptions {
   readonly graphics: GraphicsSettings;
   /** Where the modelled hulls lie (`<url><class>.glb`); omitted, every hull is generated. */
   readonly hullsUrl?: string;
+  /** Folder of the tiling textures (deck, spars, sailcloth); plain colours without it. */
+  readonly texturesUrl?: string;
   /** Wreck model for the shoals; none without it. */
   readonly wreckUrl?: string;
 }
@@ -84,7 +86,7 @@ export class BabylonRenderer {
     this.shadows = g.shadowSize > 0 ? this.createShadows(g) : null;
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves);
-    this.materials = createShipMaterials(this.scene);
+    this.materials = createShipMaterials(this.scene, opts.texturesUrl);
     this.effects = new EffectsDirector(this.scene, g.particles);
     this.salvo = new SalvoMarks(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);

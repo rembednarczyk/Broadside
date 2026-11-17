@@ -155,3 +155,9 @@ poniżej 80 m). Pierwsza wersja (pogoń za punktem za rufą, wzór Reynoldsa) ki
 wiatr, i szyk się rozpadał: zmierzone 26% czasu w szyku, po zmianie 59%, bez reguły 19%. Okręt, który ucieka albo się
 poddał, wypada z linii, następny dociąga. Nowy rodzaj ruchu „eskadra” (waga 0,07, patrol z 0,25 na 0,18). Złoty hash
 bez zmian (scenariusz nie zawiera eskadr), bramki ADR-0005 zielone.
+
+## 17.11 Tekstury Poly Haven (prośba właściciela: „stamtąd, skąd bierze podrcr”)
+Host Poly Haven jest dostępny z sesji. Skrypt `tools/assets/textures.mjs` (curl, bo fetch Node nie idzie przez proxy
+sesji) pobiera mapy 2k do `.asset-cache/polyhaven` i zapisuje JPG: `weathered_planks` 1024 (pokład generowanych
+kadłubów), `dark_planks` 512 (maszty, reje, lawety, słoje wzdłuż drzewca), `rough_linen` 512 jako mapa normalnych na
+malowanym płótnie żagli (siła 0,6). Razem 360 kB. Kadłuby z modeli zachowują własne tekstury.

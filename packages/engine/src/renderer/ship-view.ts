@@ -1,6 +1,6 @@
 import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
 import { rotateInv, vec3, windVector } from "@broadside/core";
-import { Color3, DynamicTexture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
+import { Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
@@ -41,7 +41,20 @@ const material = (scene: Scene, name: string, c: [number, number, number], spec 
   return m;
 };
 
-export const createShipMaterials = (scene: Scene): ShipMaterials => {
+/** A tiling texture of the Poly Haven set (tools/assets/textures.mjs). */
+const tiled = (scene: Scene, url: string, u: number, v: number): Texture => {
+  const t = new Texture(url, scene);
+  t.uScale = u;
+  t.vScale = v;
+  return t;
+};
+
+/**
+ * `texturesUrl`: folder of the Poly Haven textures (CC0); without it the materials stay plain
+ * colours. Deck: weathered planks along the ship. Spars: dark timber. Sails: a linen weave as a
+ * normal map over the painted canvas.
+ */
+export const createShipMaterials = (scene: Scene, texturesUrl?: string): ShipMaterials => {
   const hull = material(scene, "hull", [1, 1, 1], 0.08);
   hull.backFaceCulling = false;
   hull.twoSidedLighting = true;
@@ -60,7 +73,20 @@ export const createShipMaterials = (scene: Scene): ShipMaterials => {
       return [f, m];
     }),
   ) as Record<FactionId, StandardMaterial>;
-  return { hull, deck, wood: material(scene, "spar", [0.22, 0.15, 0.09]), sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail: createDetailMaterials(scene) };
+  const wood = material(scene, "spar", [0.22, 0.15, 0.09]);
+  if (texturesUrl) {
+    deck.diffuseColor = new Color3(1.15, 1.05, 0.95);
+    deck.diffuseTexture = tiled(scene, `${texturesUrl}weathered_planks_diff.jpg`, 3, 1);
+    deck.bumpTexture = tiled(scene, `${texturesUrl}weathered_planks_nor_gl.jpg`, 3, 1);
+    wood.diffuseColor = new Color3(0.9, 0.75, 0.6);
+    // The grain runs along the spar (the texture's planks lie across: turned a quarter).
+    wood.diffuseTexture = tiled(scene, `${texturesUrl}dark_planks_diff.jpg`, 3, 1);
+    wood.bumpTexture = tiled(scene, `${texturesUrl}dark_planks_nor_gl.jpg`, 3, 1);
+    for (const t of [wood.diffuseTexture, wood.bumpTexture] as Texture[]) t.wAng = Math.PI / 2;
+    sail.bumpTexture = tiled(scene, `${texturesUrl}rough_linen_nor_gl.jpg`, 5, 5);
+    sail.bumpTexture.level = 0.6;
+  }
+  return { hull, deck, wood, sail, rope: material(scene, "rope", [0.12, 0.1, 0.08]), flag, detail: createDetailMaterials(scene) };
 };
 
 /** One painted canvas per faction and emblem choice, shared (Flyweight). */
