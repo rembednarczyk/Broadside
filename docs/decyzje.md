@@ -121,3 +121,10 @@ SekiSenshi). „Mniej upraszczaj”: kadłuby z modeli w dwóch poziomach (wzorz
 250 tys. trójkątów i tekstury 4096 (high/ultra), `-lite` 80 tys. i 2048 (low/medium, domyślny na telefonie).
 Mapy normalnych z modeli przenoszone do StandardMaterial. Rozmiar `dist` 43 MB (fregata pełna 15,6 MB).
 Model liniowca 1700 usunięty z `hulls.json`: szkielet ma dziury w poszyciu.
+
+## 17.11 Noc przy księżycu (orkiestrator)
+Noc była prawie czarna. Księżyc w pełni naprzeciw słońca (fazy pominięte: gra nie ma kalendarza) jako światło główne
+w nocy: 0,55 przy czystym niebie (ćwierć południowego słońca), kolor zimny niebieski jak filmowa „noc za dnia”
+(przesunięcie Purkinjego), chmury zabierają do 75%. Odblask na morzu idzie za światłem głównym (ścieżka księżyca).
+Adaptacja oka jak auto-ekspozycja w Unreal i HDRP: ekspozycja do 2,2 raza po zachodzie, sterowana wysokością słońca
+(burza w dzień zostaje ciemna).

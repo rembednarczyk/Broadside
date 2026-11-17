@@ -123,15 +123,19 @@ export class BabylonRenderer {
       this.post.sunDisc.position.set(c.x + look.sunDir.x * 900, c.y + Math.max(0.02, look.sunDir.y) * 900, c.z + look.sunDir.z * 900);
       this.post.sunDisc.isVisible = look.sunDir.y > -0.05;
     }
-    this.sun.direction.set(-look.sunDir.x, -Math.max(0.05, look.sunDir.y), -look.sunDir.z);
+    // The key light: the sun by day, the moon by night (look.ts).
+    this.sun.direction.set(-look.keyDir.x, -Math.max(0.05, look.keyDir.y), -look.keyDir.z);
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
-    this.sun.diffuse = new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b);
-    this.sun.intensity = look.sunIntensity;
+    this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
+    this.sun.intensity = look.keyIntensity;
     // Sky light: the hemisphere carries most of the fill on an overcast sea (no GI).
     this.ambient.diffuse = new Color3(look.ambient.r * 1.9, look.ambient.g * 1.9, look.ambient.b * 1.9);
     this.ambient.groundColor = new Color3(look.ambient.r * 0.5, look.ambient.g * 0.65, look.ambient.b * 0.7);
     this.ambient.intensity = 1;
     setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
+    // Eyes adjust to the night: up to 2.2 times the exposure once the sun is down (post-stack);
+    // a storm by day stays dark, as it should.
+    this.post.adapt(1 + 1.2 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
     this.towns?.setNight(1 - Math.min(1, look.sunIntensity / 0.8));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
@@ -204,9 +208,9 @@ export class BabylonRenderer {
     }
     this.coast.follow(cam.x, cam.z);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
-      sunDirection: new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z),
-      // Glint and glitter follow the direct sun: clouds take them away.
-      sunColor: new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b).scale(Math.min(1, look.sunIntensity / 2.2)),
+      sunDirection: new Vector3(look.keyDir.x, look.keyDir.y, look.keyDir.z),
+      // Glint and glitter follow the key light (a moon path at night): clouds take them away.
+      sunColor: new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b).scale(Math.min(1, look.keyIntensity / 2.2)),
       // A lightning flash lights the sky the sea reflects (the flash of the last frame).
       skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale(1 + this.weather.flash * 4),
       skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale(1 + this.weather.flash * 3),

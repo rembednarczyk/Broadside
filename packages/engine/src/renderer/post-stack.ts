@@ -47,6 +47,8 @@ export class PostStack {
   readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0, waterline: -1 };
   readonly sunDisc: Mesh | null;
   private shaftsPass: VolumetricLightScatteringPostProcess | null = null;
+  private processing: DefaultRenderingPipeline["imageProcessing"] | null = null;
+  private baseExposure = 1;
 
   constructor(scene: Scene, engine: Engine, camera: Camera, g: GraphicsSettings, excludeFromShafts: Mesh[]) {
     if (g.ssao) {
@@ -80,6 +82,8 @@ export class PostStack {
     p.imageProcessing.toneMappingType = 1; // ACES
     const look = COLOR_LOOKS[g.colorMode];
     p.imageProcessing.exposure = look.exposure;
+    this.processing = p.imageProcessing;
+    this.baseExposure = look.exposure;
     p.imageProcessing.contrast = look.contrast;
     p.imageProcessing.vignetteEnabled = true;
     p.imageProcessing.vignetteWeight = 2.2;
@@ -118,6 +122,15 @@ export class PostStack {
   }
 
   /** Meshes that need not occlude the sun shafts (land, forts): saves a full re-render of them. */
+  /**
+   * Eye adaptation (auto exposure with a clamped range, as in Unreal's and Unity HDRP's exposure):
+   * the scene's exposure follows the light level, up to `gain` times the colour mode's own in
+   * the dark. Driven by the key light here, a cheap stand-in for a measured luminance histogram.
+   */
+  adapt(gain: number): void {
+    if (this.processing) this.processing.exposure = this.baseExposure * gain;
+  }
+
   excludeFromShafts(meshes: readonly Mesh[]): void {
     this.shaftsPass?.excludedMeshes.push(...meshes);
   }

@@ -65,6 +65,13 @@ describe("scene look", () => {
     const storm = sceneLook(12, 1, 0);
     expect(noon.sunDir.y).toBeGreaterThan(0.8);
     expect(night.sunIntensity).toBe(0);
+    // The moon keys the night: dim, cool, high, and hidden by a storm's cloud.
+    expect(night.keyIntensity).toBeGreaterThan(0.25);
+    expect(night.keyIntensity).toBeLessThanOrEqual(noon.keyIntensity / 4);
+    expect(night.keyColor.b).toBeGreaterThan(night.keyColor.r);
+    expect(night.keyDir.y).toBeGreaterThan(0.5);
+    expect(sceneLook(0, 1, 0).keyIntensity).toBeLessThan(night.keyIntensity / 3);
+    expect(noon.keyIntensity).toBe(noon.sunIntensity);
     expect(storm.sunIntensity).toBeLessThan(noon.sunIntensity);
     expect(storm.fogDensity).toBeGreaterThan(noon.fogDensity);
   });
