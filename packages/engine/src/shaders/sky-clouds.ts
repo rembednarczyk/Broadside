@@ -38,7 +38,7 @@ float cloudDensity(vec3 p, bool fine) {
   // None stand right overhead: from under its flat base a heap is a grey ceiling, and the heaps
   // of the reference are seen from the side, towering round the horizon.
   float cov = vnoise(p.xz * 0.1 + w) * 0.62 + vnoise(p.xz * 0.24 + w * 1.6 + 9.0) * 0.38;
-  float tower = smoothstep(0.55 - cloudCover * 0.55, 0.8 - cloudCover * 0.55, cov) * (1.0 - smoothstep(26.0, 40.0, length(p.xz))) * smoothstep(6.0, 11.0, length(p.xz));
+  float tower = smoothstep(0.55 - cloudCover * 0.42, 0.86 - cloudCover * 0.42, cov) * (1.0 - smoothstep(26.0, 40.0, length(p.xz))) * smoothstep(6.0, 11.0, length(p.xz));
   if (tower <= 0.0) return 0.0;
   float top = 0.2 + 0.8 * tower;
   // Flat base, rounded head.
@@ -91,7 +91,8 @@ export const volumetricClouds = (steps: number, tex = false): string => /* glsl 
 ${cloudShape(tex)}
 // rgb: light scattered to the eye; a: transmittance of what lies behind.
 vec4 marchClouds(vec3 d, float sunUp) {
-  if (d.y < 0.015) return vec4(0.0, 0.0, 0.0, 1.0);
+  float lid = 1.0 - 0.9 * smoothstep(0.35, 0.8, cloudCover);
+  if (d.y < 0.015) return vec4(skyHorizon * 0.5 * (1.0 - lid), lid);
   float t0 = CLOUD_BASE / d.y;
   float t1 = min(CLOUD_TOP / d.y, t0 + 26.0);
   const int STEPS = ${steps};
@@ -100,7 +101,7 @@ vec4 marchClouds(vec3 d, float sunUp) {
   // Interleaved gradient noise (Jimenez 2014): a dither that the eye reads as even grain, not speckle.
   float t = t0 + dt * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
   float c = dot(d, sunDirection);
-  float phase = min(mix(hg(c, 0.8), hg(c, -0.25), 0.3) * 5.0, 1.6) + 0.42;
+  float phase = min(mix(hg(c, 0.8), hg(c, -0.25), 0.3) * 5.0, 3.2) + 0.42;
   vec3 sunL = normalize(sunDirection + vec3(0.0, 0.25, 0.0));
   float T = 1.0;
   vec3 light = vec3(0.0);
@@ -122,7 +123,7 @@ vec4 marchClouds(vec3 d, float sunUp) {
         }
         // Beer-Lambert with a second, slower term for light scattered many times inside the cloud
         // (Wrenninge's approximation): the shaded side is dark but not black.
-        float beer = max(exp(-toSun * 9.0), 0.22 * exp(-toSun * 1.5));
+        float beer = max(exp(-toSun * 9.0), 0.3 * exp(-toSun * 1.1));
         // Light of the sky from above, shut out in the creases between the lumps: the relief of the
         // shaded side (one sample upwards, the cheapest ambient occlusion).
         float open = exp(-cloudDensity(p + vec3(0.0, 0.45, 0.0), ${tex ? "true" : "false"}) * 1.4);
@@ -141,7 +142,11 @@ vec4 marchClouds(vec3 d, float sunUp) {
   // Far clouds sink into the haze of the horizon.
   float far = smoothstep(0.02, 0.1, d.y);
   float rise = smoothstep(0.015, 0.07, d.y);
-  return vec4(mix(skyHorizon * 0.8 * (1.0 - T), light, far) * rise, mix(1.0, T, rise));
+  // Below the nearest bases the eye looks along the whole deck of cloud: under a heavy sky that
+  // strip is closed by the far heaps (a dim haze), not a bright gap under the lid.
+  float Tfar = mix(lid, T, rise);
+  vec3 lightFar = mix(skyHorizon * 0.5 * (1.0 - lid), mix(skyHorizon * 0.8 * (1.0 - T), light, far), rise);
+  return vec4(lightFar, Tfar);
 }
 
 `;

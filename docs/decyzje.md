@@ -343,3 +343,13 @@ szumem wartości. Jeden odczyt daje trzy skale, więc wariant ma sześć skal, 9
 i WebGL1 zostają przy szumie liczonym w shaderze. Stanowisko `tools/sky/sky-test.mjs` działa na WebGL2, argument
 `octaves` 6 pokazuje wariant teksturowy. Pamięć: 1 MB tekstury. Nie zmierzono czasu generowania na telefonie ani czasu
 klatki na GPU.
+
+**17.11, niebo przy wichurze (orkiestrator).** Plansza `side-dark` miała w grze gładkie, ciemne niebo. Przyczyny po
+kolei wykluczone zrzutami: ławice mgły i zasłony deszczu (wyłączone w żywej scenie, bez zmiany), preset (domyślny to
+high, objętościowy). Właściwa przyczyna: przy pokryciu 0,8 mapa pokrycia dawała wszędzie pełną wieżę, czyli jednolitą
+płytę grubości 12 jednostek bez przerw. Próg wież zależy teraz słabiej od pokrycia (0,42 zamiast 0,55), więc przy
+wichurze zostają cieńsze miejsca i przerwy, a przy sztormie jedna szczelina; drugi człon Beera 0,3·exp(−1,1·τ) przepuszcza
+więcej światła przez cienkie miejsca; płat fazy do przodu ograniczony do 3,2 (było 1,6). Pas przy horyzoncie pod ciężkim
+niebem zamyka przyćmiona mgiełka dalekich chmur (`lid`), bo jasna szczelina pod pokrywą nie występuje w klatkach.
+Mgiełka chmur przy horyzoncie do ok. 6° (było 11°). Skutek uboczny: przy pogodzie `fresh` (0,45) chmur jest mniej niż
+przed zmianą. Ujęcie `deck` wraca do kamery pokładowej gry; ustawienie jak w `ref_112` zostaje do zrobienia.
