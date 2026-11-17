@@ -6,6 +6,7 @@ import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
+import { buildModelRails } from "./model-rails";
 import { RopeTubes } from "./rope-tubes";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
@@ -196,7 +197,10 @@ export class ShipView {
     const deck = this.buildMesh(scene, `deck-${entityId}`, deckGeometry(model.def.hull), mats.deck);
     deck.parent = hullSpace;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows);
-    this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows);
+    // The measured side of a modelled hull: shrouds, channels and the rail are fitted to it.
+    const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
+    this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
+    if (side) buildModelRails(scene, hullSpace, side, mats.wood, shadows);
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
     this.modelled = hullMeshes !== null;

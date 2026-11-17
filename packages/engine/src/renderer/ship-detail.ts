@@ -2,6 +2,7 @@ import { type ShipModel } from "@broadside/sim";
 import { type HullShape, createRng, hashString, range, stationZ } from "@broadside/core";
 import { beamAt, deckAt } from "./hull-stations";
 import { Ratlines } from "./ratlines";
+import { type SideProfile } from "./side-profile";
 import { Color3, DynamicTexture, Matrix, Vector4, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
@@ -95,7 +96,7 @@ export class ShipDetail {
   private readonly body: ReturnType<TransformNode["getChildMeshes"]> = [];
   private bodyHidden = false;
 
-  constructor(scene: Scene, parent: TransformNode, key: string, model: ShipModel, mats: DetailMaterials, shadows: ShadowGenerator | null) {
+  constructor(scene: Scene, parent: TransformNode, key: string, model: ShipModel, mats: DetailMaterials, shadows: ShadowGenerator | null, side: SideProfile | null = null) {
     const h = model.def.hull;
     const rng = createRng(hashString(key));
     const c = castles(model.def.id);
@@ -106,7 +107,7 @@ export class ShipDetail {
     for (const m of castleMeshes) shadows?.addShadowCaster(m);
     this.body.push(...castleMeshes);
     const before = new Set(parent.getChildMeshes(true));
-    this.ratlines = new Ratlines(scene, parent, model);
+    this.ratlines = new Ratlines(scene, parent, model, side, mats.dark);
     const afterRatlines = new Set(parent.getChildMeshes(true));
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);

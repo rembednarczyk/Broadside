@@ -1,5 +1,6 @@
 import { type ShipModel } from "@broadside/sim";
-import { Color3, type LinesMesh, MeshBuilder, type Scene, type TransformNode, Vector3 } from "../babylon";
+import { Color3, type LinesMesh, Matrix, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3 } from "../babylon";
+import { type SideProfile } from "./side-profile";
 import { beamAt, deckAt } from "./hull-stations";
 import { type MastBend, bendShare } from "./rig-motion";
 import { RopeTubes } from "./rope-tubes";
@@ -33,20 +34,55 @@ export class Ratlines {
   /** The shrouds themselves as laid rope (the rungs between them stay thin lines, as ratline stuff is). */
   private readonly tubes: RopeTubes;
 
-  constructor(scene: Scene, parent: TransformNode, model: ShipModel) {
+  /** `side`: the measured side of a modelled hull; the shrouds then come down to channels on it. */
+  constructor(scene: Scene, parent: TransformNode, model: ShipModel, side: SideProfile | null = null, iron: StandardMaterial | null = null) {
     const h = model.def.hull;
     model.def.masts.forEach((m, mast) => {
       const topY = h.freeboard + m.height * 0.58;
-      for (const side of [-1, 1] as const) {
-        const shrouds = [-1.6, -0.55, 0.55, 1.6].map((dz): Shroud => ({ foot: [side * (beamAt(h, m.z) + 0.35), deckAt(h, m.z) + 0.9, m.z + dz], head: [side * 0.45, topY, m.z + dz * 0.25] }));
-        this.ladders.push({ mast, side, shrouds, rungs: Math.floor((topY - deckAt(h, m.z) - 1) / 0.55) });
+      for (const s of [-1, 1] as const) {
+        // On a modelled hull the feet stand on a channel at the model's side, just under its rail.
+        const footX = side ? side.halfAt(m.z) + 0.3 : beamAt(h, m.z) + 0.35;
+        const footY = side ? side.topAt(m.z) - 0.25 : deckAt(h, m.z) + 0.9;
+        const shrouds = [-1.6, -0.55, 0.55, 1.6].map((dz): Shroud => ({ foot: [s * footX, footY, m.z + dz], head: [s * 0.45, topY, m.z + dz * 0.25] }));
+        this.ladders.push({ mast, side: s, shrouds, rungs: Math.floor((topY - deckAt(h, m.z) - 1) / 0.55) });
       }
     });
+    if (side && iron) this.channels(scene, parent, iron);
     this.tubes = new RopeTubes(scene, parent, "shroud-ropes", this.ladders.length * 4, SEGMENTS + 1, 0.032);
     this.mesh = MeshBuilder.CreateLineSystem("ratlines", { lines: this.lines([], [], 0), updatable: true }, scene);
     this.mesh.color = new Color3(0.08, 0.06, 0.05);
     this.mesh.parent = parent;
     this.mesh.isPickable = false;
+  }
+
+  /**
+   * Channels and deadeyes: the plank that holds the shrouds off the side, and under each shroud the
+   * pair of deadeyes it is set up with (thin instances of one box and one disc: Flyweight).
+   */
+  private channels(scene: Scene, parent: TransformNode, iron: StandardMaterial): void {
+    const plank = MeshBuilder.CreateBox("channels", { width: 0.5, height: 0.09, depth: 4 }, scene);
+    const eye = MeshBuilder.CreateCylinder("deadeyes", { height: 0.1, diameter: 0.3, tessellation: 10 }, scene);
+    const planks: Matrix[] = [];
+    const eyes: Matrix[] = [];
+    // A deadeye faces outboard: its axis (the cylinder's Y) lies across the ship.
+    const turn = Quaternion.RotationAxis(Vector3.Forward(), Math.PI / 2);
+    for (const l of this.ladders) {
+      const f = l.shrouds[0]!.foot;
+      const z = (l.shrouds[0]!.foot[2] + l.shrouds[l.shrouds.length - 1]!.foot[2]) / 2;
+      planks.push(Matrix.Translation(f[0] - l.side * 0.12, f[1] - 0.05, z));
+      for (const s of l.shrouds) {
+        for (const up of [0.18, 0.62]) eyes.push(Matrix.Compose(Vector3.One(), turn, new Vector3(s.foot[0] + (s.head[0] - s.foot[0]) * (up / 20), s.foot[1] + up, s.foot[2])));
+      }
+    }
+    for (const [mesh, list] of [[plank, planks], [eye, eyes]] as const) {
+      const buf = new Float32Array(list.length * 16);
+      list.forEach((m, i) => m.copyToArray(buf, i * 16));
+      mesh.thinInstanceSetBuffer("matrix", buf, 16, true);
+      mesh.material = iron;
+      mesh.parent = parent;
+      mesh.isPickable = false;
+      mesh.alwaysSelectAsActiveMesh = true;
+    }
   }
 
   /** `lee`: -1..1 side the sails push to (starboard +), as given to the mast springs. */

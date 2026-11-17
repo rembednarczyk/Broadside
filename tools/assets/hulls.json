@@ -6,6 +6,7 @@
     "bowAtMin": true,
     "cut": 0.27,
     "gain": 4,
+    "stumps": [{ "above": 0.9, "root": 0.845, "area": 0.09 }, { "above": 0.86, "area": 0.004 }],
     "flipY": false,
     "minPiece": 0
   },

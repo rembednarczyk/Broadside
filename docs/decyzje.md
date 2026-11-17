@@ -231,3 +231,13 @@ jako krzywa belki wspornikowej Eulera-Bernoulliego w(s) = s²(3 − s)/2, siatka
 galeon 4): StandardMaterial obcina własny mnożnik koloru do 1, więc jasność idzie przez `texture.level`.
 Użytkownik: braki modelu (kikuty want, urwane barierki) mam wykryć i dorobić sam; części statku mają dostać stałe
 oznaczenia, żeby generator sam oceniał kompletność (obie pozycje w backlogu M8).
+
+## 17.11 Braki modeli: kikuty olinowania, barierki, ławy wantowe (prośba właściciela)
+Galeon jest jedną zrośniętą siatką, więc olinowania nie da się zdjąć jako osobnych części. `hull-cut` szuka wysp
+siatki ponad linią nadburcia (union-find po trójkątach leżących w całości nad linią): wyspa o małym obrysie to kikut
+(wanta, sztag), szeroka to nadburcie kasztelu. Reguły w `hulls.json` (`stumps`: linia, korzeń, obrys), dwie dla
+galeonu. Usuwanie osobnych części przecinających cięcie (`remnantShare`) jest wyłączone domyślnie: skan fregaty
+składa się z setek fragmentów i reguła robiła w nim dziury. Potok zapisuje profil burty (percentyle, żeby lufa czy
+rzeźba nie liczyły się), gra czyta go przez medianę (`side-profile.ts`) i stawia na nim własne okucia: barierkę
+(`model-rails.ts`), ławy wantowe i jufersy (`ratlines.ts`). Miara nadburcia galeonu spadła z 11,0 do 9,67 (kikuty
+ją zawyżały), więc kadłub jest dopasowany do pokładu dokładniej.
