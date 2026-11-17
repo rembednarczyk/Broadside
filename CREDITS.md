@@ -15,7 +15,7 @@ uproszczenie siatki, zmniejszenie tekstur, odcięcie masztów i olinowania, prze
 | Cannon 17th c. Dutch warship Klein Hollandia | Stichting Maritieme Archeologie | https://sketchfab.com/3d-models/cannon-17th-c-dutch-warship-klein-hollandia-1552d62eb113493db782d2c07d6d2ddf | CC BY 4.0 | planowany: armaty |
 | 18th century swivel gun (Queen Anne NK47-11) | Stichting Archeos Fryslan | https://sketchfab.com/3d-models/18th-century-swivel-gun-queen-anne-nk47-11-ed970af0c0324f2a9b05dae36bce0aa4 | CC BY 4.0 | profil lufy dział (bryła obrotowa) |
 | Canhões do Ilhéu | Vila 3D - Património Cultural | https://sketchfab.com/3d-models/canhoes-do-ilheu-d3efa7fbcf95459c90fe8b757ff5af98 | CC BY 4.0 | nieużywany (skan dna) |
-| Älvsnabbenvraket, Uelvesbüll wreck, Wooden shipwreck covered by railway rails | Swedish National Maritime and Transport Museums; Stichting Archeos Fryslan; Stichting Maritieme Archeologie | Sketchfab (linki w `tools/assets/sources.txt`) | CC BY 4.0 | planowane: wraki na mieliznach |
+| Älvsnabbenvraket, Uelvesbüll wreck, Wooden shipwreck covered by railway rails | Swedish National Maritime and Transport Museums; Stichting Archeos Fryslan; Stichting Maritieme Archeologie | Sketchfab (linki w `tools/assets/sources.txt`) | CC BY 4.0 | wrak z Uelvesbüll na mieliznach; pozostałe planowane |
 
 Nieużywany: Thunderhawk Wreckage 15572 (BOEM Archaeology, CC BY-NC-SA 4.0), współczesny wrak spoza epoki.
 

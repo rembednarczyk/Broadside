@@ -4,7 +4,7 @@ import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
-import { aimHeightFor, firesAtRigging, tacticalHeading } from "./tactics";
+import { aimHeightFor, firesAtRigging, lineStation, tacticalHeading } from "./tactics";
 import { type Screen, smokeBetween } from "../combat/smoke";
 
 /**
@@ -125,9 +125,11 @@ const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand
   const closeBias = range > effective * 0.9 && !loadedInRange ? 1.2 : loadedInRange ? 0 : Math.max(-0.5, Math.min(0.5, (range - prefer) / prefer)) * 0.8;
   // Out of effective range: a stern chase, bow on to the lead point, so the chase guns bear.
   const basic = range > effective * 1.05 ? brg : brg - abeam + (c.side === "starboard" ? closeBias : -closeBias);
-  const desired = tacticalHeading(me, t, d, w.windDirection, range, effective, loadedInRange) ?? basic;
+  // In her leader's line of battle a ship keeps her station and fires as her guns bear.
+  const station = lineStation(me, w.ships);
+  const desired = station ? station.course : (tacticalHeading(me, t, d, w.windDirection, range, effective, loadedInRange) ?? basic);
   const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s, yawOf(me.body!.rot)), w) }];
-  const level: SailLevel = range > prefer * 1.4 ? 3 : 2;
+  const level: SailLevel = station ? station.level : range > prefer * 1.4 ? 3 : 2;
   if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
   const want: AmmoId = firesAtRigging(d, t) && range > 100 && range < 360 && (s.stores.chain ?? 0) > 0 ? "chain" : chooseAmmo(s, t.ship!, range);
   if (s.ammoLoad.broadside !== want && sideLoaded(s, c.side) === 0) cmds.push({ type: "loadAmmo", ship: me.id, mount: "broadside", ammo: want });
@@ -283,7 +285,13 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     c.mode = "flee";
     return flee(me, target, w);
   }
-  const t = target ?? nearestHostile(me, w.ships, w.fog, w.relations, w.screens) ?? (c.role === "hunt" ? quarry(me, w.ships, w.relations) : null);
+  // A ship of a squadron with no enemy of her own in sight takes her leader's (the line engages together).
+  const leaderTarget = (): Entity | null => {
+    const lead = c.leader >= 0 && c.role === "patrol" ? w.ships.find((x) => x.id === c.leader) : undefined;
+    const id = lead?.captain?.mode === "engage" ? lead.captain.target : null;
+    return id === null || id === undefined ? null : (w.ships.find((x) => x.id === id && !x.ship!.sinking && !x.ship!.struck) ?? null);
+  };
+  const t = target ?? nearestHostile(me, w.ships, w.fog, w.relations, w.screens) ?? (c.role === "hunt" ? quarry(me, w.ships, w.relations) : null) ?? leaderTarget();
   c.target = t?.id ?? null;
   if (t && c.role === "trade") {
     const d = Math.hypot(t.body!.pos.x - me.body!.pos.x, t.body!.pos.z - me.body!.pos.z);

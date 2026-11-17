@@ -145,3 +145,13 @@ Wrak to sceneria: mielizna i tak zatrzymuje statek, więc symulacja i złoty has
 się dopiąć łup z wraku. Model: skan wraku z Uelvesbüll (CC BY 4.0), obrócony do osi głównych (PCA), podłoga skanu
 odcięta (30% wysokości), długość 28–42 m, 8% wysokości w piasku. Skan Älvsnabben (769 tys. trójkątów po
 uproszczeniu) i „wrak pod szynami” (płat dna) na razie pominięte.
+
+## 17.11 Linia bojowa (orkiestrator)
+Szyk torowy z Fighting Instructions (od 1653): okręty wojenne eskadry (rola patrol, z prowadzącym) idą w kilwaterze
+poprzednika, gdy prowadzący walczy; każdy strzela, gdy jego burta ma cel w polu, a bez własnego celu bierze cel
+prowadzącego. Sterowanie: line-of-sight guidance (Fossen 2011): kurs poprzednika plus poprawka z odchyłki bocznej
+od linii kilwateru (wyprzedzenie 150 m), odstęp 120 m trzymany żaglami (wszystkie żagle powyżej 170 m, zrefowane
+poniżej 80 m). Pierwsza wersja (pogoń za punktem za rufą, wzór Reynoldsa) kierowała okręt w poprzek linii, często pod
+wiatr, i szyk się rozpadał: zmierzone 26% czasu w szyku, po zmianie 59%, bez reguły 19%. Okręt, który ucieka albo się
+poddał, wypada z linii, następny dociąga. Nowy rodzaj ruchu „eskadra” (waga 0,07, patrol z 0,25 na 0,18). Złoty hash
+bez zmian (scenariusz nie zawiera eskadr), bramki ADR-0005 zielone.
