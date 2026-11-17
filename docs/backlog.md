@@ -97,7 +97,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] taktyki z epoki w AI: linia bojowa, przejęcie nawietrznej (weather gauge), ostrzał przez rufę (raking: crossing the T), strzelanie na przechyle w kadłub albo w olinowanie (szkoła brytyjska kontra francuska), abordaż po uciszeniu
 - [x] fizyka strzału: odrzut z realnego pędu armaty przechyla statek o 1,5–2,5° na przeciwną burtę (test), dym prochowy większy i dryfuje z wiatrem (17.11); do zrobienia: odjazd lawet przy strzale
 - [x] ruchome elementy: ugięcie masztów (tłumiony oscylator od obciążenia masztu, żagle, reje, flaga i sztagi idą z masztem), łopot żagli bez wiatru i drganie liku w silnym wietrze, sztagi zwisają luźne i prostują się pod obciążeniem (17.11); do zrobienia: wanty i ratliny za masztem, kołysanie latarni
-- [ ] dźwięki otoczenia: morze, wiatr w olinowaniu (zależny od prędkości wiatru), skrzypienie kadłuba, deszcz, grzmot, mewy przy lądzie, fale o burtę; źródła CC0
+- [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

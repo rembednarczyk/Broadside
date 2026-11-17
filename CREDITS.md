@@ -18,3 +18,9 @@ uproszczenie siatki, zmniejszenie tekstur, odcięcie masztów i olinowania, prze
 | Älvsnabbenvraket, Uelvesbüll wreck, Wooden shipwreck covered by railway rails | Swedish National Maritime and Transport Museums; Stichting Archeos Fryslan; Stichting Maritieme Archeologie | Sketchfab (linki w `tools/assets/sources.txt`) | CC BY 4.0 | planowane: wraki na mieliznach |
 
 Nieużywany: Thunderhawk Wreckage 15572 (BOEM Archaeology, CC BY-NC-SA 4.0), współczesny wrak spoza epoki.
+
+## Dźwięki (CC0, OpenGameArt)
+Uznanie autorstwa nie jest wymagane przy CC0; podajemy je z grzeczności. Lista plików i stron: `tools/assets/audio-sources.txt`.
+randommind (morze, Wisła), tsorthan-grove (wiatr sztormowy, Storm Arwen 2022), sketchman3 (lekki wiatr), kresiek-the-furry
+(deszcz), wuxiascrub (deszcz z grzmotem), antumdeluge (skrzypienie drewna), rango-mango (mewy), qubodup i jasinski (fala
+przy brzegu), thimras (strzał, trafienie, plusk, taran, tonięcie).

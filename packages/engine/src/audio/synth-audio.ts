@@ -1,5 +1,8 @@
+import { type Ambience, Soundscape } from "./soundscape";
+
 /**
- * Synthesised sound (as SpinalTap ADR-0009: no downloaded samples). Subtractive synthesis on the
+ * Game sound. Recorded CC0 clips when they are loaded (Soundscape: ambience beds and placed
+ * one-shots), synthesis otherwise and for what has no clip. Subtractive synthesis on the
  * Web Audio API: filtered noise bursts and enveloped sine thumps for guns, splashes, wood and
  * explosions, a looping noise bed for wind and sea shaped by the weather. Sounds are placed by a
  * distance law (inverse distance, Web Audio's model) and stereo panning from the bearing.
@@ -26,6 +29,11 @@ const REF_DISTANCE = 40;
 
 export class SynthAudio {
   private ctx: AudioContext | null = null;
+  private scape: Soundscape | null = null;
+
+  /** `clipsUrl`: where the recorded clips lie (`<url><name>.mp3`); omitted, everything is synthesised. */
+  constructor(private readonly clipsUrl?: string) {}
+
   private master: GainNode | null = null;
   private noise: AudioBuffer | null = null;
   private windGain: GainNode | null = null;
@@ -47,6 +55,10 @@ export class SynthAudio {
     this.master.connect(comp).connect(this.ctx.destination);
     this.noise = this.makeNoise(2);
     this.startBeds();
+    if (this.clipsUrl) {
+      this.scape = new Soundscape(this.ctx, this.master, this.clipsUrl);
+      void this.scape.load();
+    }
   }
 
   private makeNoise(seconds: number): AudioBuffer {
@@ -85,7 +97,17 @@ export class SynthAudio {
     this.seaGain = this.loop("lowpass", 380, 0.5).gain;
   }
 
-  /** Weather bed: wind in m/s, a gust factor 0..1. */
+  /** Weather at the listener: recorded beds when loaded, the noise beds otherwise. */
+  setAmbience(a: Ambience): void {
+    if (this.scape?.ready) {
+      this.scape.update(a);
+      this.setWeather(0, 0);
+      return;
+    }
+    this.setWeather(a.windSpeed, 0.5);
+  }
+
+  /** Noise bed: wind in m/s, a gust factor 0..1. */
   setWeather(windSpeed: number, gust: number): void {
     if (!this.ctx || !this.windGain || !this.seaGain || !this.windFilter) return;
     const t = this.ctx.currentTime;
@@ -141,6 +163,7 @@ export class SynthAudio {
     if (cue.kind === "clash") return this.clash();
     const at = this.place(cue.x, cue.z, l);
     if (at.gain < 0.03) return;
+    if (this.playRecorded(cue, at)) return;
     if (cue.kind === "gun") this.burst(at, "lowpass", 900 + 600 / cue.size, 1.1 + cue.size * 0.5, 0.9, 0.9 * cue.size);
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
@@ -171,6 +194,18 @@ export class SynthAudio {
       const at = { ...near, delay: i * 0.17, pan: i % 2 ? 0.3 : -0.3 };
       this.burst(at, "bandpass", 3200 - i * 300, 0.22, 0.35, 0);
     }
+  }
+
+  /** Recorded version of a placed cue, if its clip is loaded (pitch varied per shot, lower for bigger guns). */
+  private playRecorded(cue: Cue, at: { gain: number; pan: number; delay: number }): boolean {
+    const s = this.scape;
+    if (!s || !("size" in cue)) return false;
+    const jitter = 0.94 + Math.random() * 0.12;
+    if (cue.kind === "gun" && s.has("gun")) s.oneShot("gun", at.gain * Math.min(1.2, 0.5 + cue.size * 0.5), at.pan, jitter / Math.pow(Math.max(0.3, cue.size), 0.25), at.delay);
+    else if (cue.kind === "splash" && s.has("splash")) s.oneShot("splash", at.gain * Math.min(1, 0.3 + cue.size * 0.3), at.pan, jitter, at.delay);
+    else if (cue.kind === "wood" && s.has("hit")) s.oneShot(cue.size > 1.5 ? "ram" : "hit", at.gain * Math.min(1, 0.4 + cue.size * 0.3), at.pan, jitter, at.delay);
+    else return false;
+    return true;
   }
 
   private bell(): void {

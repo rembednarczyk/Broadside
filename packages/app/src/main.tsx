@@ -8,6 +8,7 @@ import { type SimSnapshot } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
+import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
@@ -134,7 +135,7 @@ const intents: UiIntents = {
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
 bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
 addEventListener("resize", () => renderer.resize());
-const audio = new SynthAudio();
+const audio = new SynthAudio("assets/audio/");
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
 // Autosave every minute and when the app goes to the background (phones kill background apps).
@@ -170,7 +171,7 @@ const frame = (now: number) => {
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);
   }
-  audio.setWeather(session.sim.env.windSpeed, 0.5);
+  audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
   const focus = combatFocus(session.sim, session.playerId);
@@ -197,4 +198,4 @@ const frame = (now: number) => {
   requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);
-Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer }) });
+Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer, audio }) });

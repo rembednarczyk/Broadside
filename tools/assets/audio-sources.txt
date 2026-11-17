@@ -1,0 +1,10 @@
+# Sound sources (all CC0, OpenGameArt), downloaded to .asset-cache/audio, built by tools/assets/audio.sh.
+https://opengameart.org/content/sea-and-river-wave-sounds  randommind   Vistula.zip -> sea
+https://opengameart.org/content/storm-arwen-2022            tsorthan-grove storm_arwen_2022.flac -> wind_storm
+https://opengameart.org/content/wind-whoosh-loop            sketchman3   wind woosh loop.ogg -> wind_light
+https://opengameart.org/content/amb-rain-loop-1             kresiek-the-furry amb_rain_loop_1.ogg -> rain
+https://opengameart.org/content/rain-long-thunder           wuxiascrub   rain-thunder.ogg -> storm
+https://opengameart.org/content/tree-creaking               antumdeluge  tree_creak.flac -> creak
+https://opengameart.org/content/solo-seagull-sound-effects  rango-mango  Seagull Ambient 1.wav -> gulls
+https://opengameart.org/content/beach-ocean-waves           qubodup (from jasinski, freesound 18363) wave_01 -> shore
+https://opengameart.org/content/battle-at-sea               thimras      cannon_fire_1, cannon_hit_ship_short, cannon_miss_1, ship_ram_ship_shortened, ship_destroyed_short -> gun, hit, splash, ram, sinking
