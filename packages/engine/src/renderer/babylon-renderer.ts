@@ -225,6 +225,7 @@ export class BabylonRenderer {
       skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale(1 + this.weather.flash * 3),
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
+      daylight: (look.sunDir.y + 0.05) / 0.35,
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);

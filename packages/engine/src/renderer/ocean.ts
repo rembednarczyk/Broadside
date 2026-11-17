@@ -31,6 +31,9 @@ export const buildOceanGrid = (cells = 220): { positions: number[]; indices: num
   return { positions, indices };
 };
 
+const WATER_DEEP = new Color3(0.008, 0.03, 0.045);
+const WATER_SHALLOW = new Color3(0.04, 0.16, 0.18);
+
 export interface OceanLook {
   readonly sunDirection: Vector3;
   readonly sunColor: Color3;
@@ -38,6 +41,8 @@ export interface OceanLook {
   readonly skyHorizon: Color3;
   readonly fogColor: Color3;
   readonly fogDensity: number;
+  /** Daylight 0..1 reaching the water: the sea's own colour is light scattered back from below. */
+  readonly daylight: number;
 }
 
 export class Ocean {
@@ -65,8 +70,6 @@ export class Ocean {
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
-    this.material.setColor3("waterDeep", new Color3(0.008, 0.03, 0.045));
-    this.material.setColor3("waterShallow", new Color3(0.04, 0.16, 0.18));
     this.mesh.material = this.material;
   }
 
@@ -119,6 +122,10 @@ export class Ocean {
     this.material.setColor3("skyHorizon", look.skyHorizon);
     this.material.setColor3("fogColor", look.fogColor);
     this.material.setFloat("fogDensity", look.fogDensity);
+    // The body colour is sunlight scattered in the water: it fades with the day (a floor for moonlight).
+    const lit = 0.1 + 0.9 * Math.max(0, Math.min(1, look.daylight));
+    this.material.setColor3("waterDeep", WATER_DEEP.scale(lit));
+    this.material.setColor3("waterShallow", WATER_SHALLOW.scale(lit));
     this.material.setFloat("foamAmount", Math.min(1, Math.max(0, (windSpeed - 4) / 10)));
   }
 }

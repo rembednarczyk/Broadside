@@ -17,6 +17,9 @@ interface HullMetrics {
   readonly gunwale: number;
 }
 
+/** Brightness of the hull textures: the models' timber is far darker than the generated hulls. */
+const HULL_GAIN = 1.8;
+
 /** Height of the bulwark above the deck the physics hull is built to (m). */
 const BULWARK = 0.8;
 
@@ -32,7 +35,7 @@ export class HullModels {
       classes.map(async (id) => {
         try {
           const container = await LoadAssetContainerAsync(`${this.baseUrl}${id}${this.tier}.glb`, this.scene);
-          useStandardMaterials(container, this.scene, `hull-${id}`);
+          useStandardMaterials(container, this.scene, `hull-${id}`, HULL_GAIN);
           const res = await fetch(`${this.baseUrl}${id}.json`);
           const metrics = (await res.json()) as HullMetrics;
           this.loaded.set(id, { container, metrics });

@@ -161,3 +161,9 @@ Host Poly Haven jest dostępny z sesji. Skrypt `tools/assets/textures.mjs` (curl
 sesji) pobiera mapy 2k do `.asset-cache/polyhaven` i zapisuje JPG: `weathered_planks` 1024 (pokład generowanych
 kadłubów), `dark_planks` 512 (maszty, reje, lawety, słoje wzdłuż drzewca), `rough_linen` 512 jako mapa normalnych na
 malowanym płótnie żagli (siła 0,6). Razem 360 kB. Kadłuby z modeli zachowują własne tekstury.
+
+## 17.11 Woda nocą i jasność kadłubów z modeli (orkiestrator)
+Kolor własny wody to światło rozproszone pod powierzchnią, więc skaluje się z dniem (0,1 w nocy do 1 w dzień, od
+wysokości słońca). Wcześniej był stały i w trybie Naturalnym morze świeciło turkusem o 23:00. Tekstury kadłubów z
+modeli (ciemne, smołowane drewno) mnożone przez 1,8: przy jednym słońcu i świetle nieba bez IBL wychodziły czarne.
+Kołysanie latarni odłożone: latarnie proceduralne są ukryte przy kadłubach z modeli, zysk mały.

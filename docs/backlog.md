@@ -90,6 +90,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] fregata smuklejsza (szer. 11,4 m, zanurzenie 4,4 m, ostrzejszy dziób): 90° 9,3 kn i 135° 9,9 kn wobec galeonu 8,2 i 9,2 (16.11)
 
 ### M7 realizm i assety (prośba właściciela 17.11)
+- [x] noc w trybie Naturalnym: kolor wody gaśnie z dniem (morze nie świeci turkusem w nocy); kadłuby z modeli rozjaśnione 1,8 raza (17.11); APK po pełnych kadłubach 39 MB, CI zielone
 - [x] linia bojowa: okręty wojenne eskadry idą w kilwaterze poprzednika (odstęp 120 m), gdy prowadzący walczy, i strzelają, gdy działa mają cel w polu; nowy ruch „eskadra” (fregata albo liniowiec + fregata i bryg); test: szyk trzymany przez 59% czasu walki wobec 19% bez reguły (17.11)
 - [x] wraki na mieliznach: skan wraku z Uelvesbüll (37 tys. trójkątów, 1,6 MB) wyprostowany przez PCA (`tools/assets/wreck.mjs`), rozstawiony z ziarna świata przy ok. 40% wysp (`core/world/wrecks.ts`), przechylony na obło, z dala od portów; tylko sceneria (17.11); do zrobienia: drugi model (Älvsnabben), łup z wraku
 - [x] działa na pokładach w miejscach, z których strzela symulacja: lufa toczona z profilu skanu działka obrotowego Queen Anne (`tools/assets/lathe-profile.mjs`), lawety, moździerze, działka na relingu; odjazd po strzale i wytoczenie (17.11); oba modele „armat” z Drive to skany dna z leżącą lufą, zostają na wraki
