@@ -64,7 +64,8 @@ if (process.env.SHOT_CLICK) {
   await page.waitForTimeout(500);
   for (const id of process.env.SHOT_CLICK.split(",")) await page.locator(`[data-testid="${id}"]`).dispatchEvent("pointerdown");
 }
-await page.waitForTimeout(3000);
+// SHOT_WAIT: extra milliseconds before the shot (large models arrive after the first frames).
+await page.waitForTimeout(3000 + Number(process.env.SHOT_WAIT ?? 0));
 // Optional action right before the shot (short-lived effects): SHOT_BEFORE is a function body (b) => {...}.
 if (process.env.SHOT_BEFORE) {
   await page.evaluate(new Function("((b) => { " + process.env.SHOT_BEFORE + " })(globalThis.__broadside)"));

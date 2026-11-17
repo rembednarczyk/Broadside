@@ -16,10 +16,12 @@ interface HullMetrics {
   readonly beam: number;
   readonly length: number;
   readonly gunwale: number;
+  /** Brightness of the model's colour texture (default HULL_GAIN): scans and art models differ widely. */
+  readonly gain?: number;
 }
 
 /** Brightness of the hull textures: the models' timber is far darker than the generated hulls. */
-const HULL_GAIN = 1.8;
+const HULL_GAIN = 1.6;
 
 /** Height of the bulwark above the deck the physics hull is built to (m). */
 const BULWARK = 0.8;
@@ -36,10 +38,11 @@ export class HullModels {
     await Promise.all(
       classes.map(async (id) => {
         try {
-          const container = await LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}${this.tier}.glb`), this.scene, GLB);
-          useStandardMaterials(container, this.scene, `hull-${id}`, HULL_GAIN);
-          const res = await fetch(`${this.baseUrl}${id}.json`);
-          const metrics = (await res.json()) as HullMetrics;
+          const [container, metrics] = await Promise.all([
+            LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}${this.tier}.glb`), this.scene, GLB),
+            fetch(`${this.baseUrl}${id}.json`).then((res) => res.json() as Promise<HullMetrics>),
+          ]);
+          useStandardMaterials(container, this.scene, `hull-${id}`, metrics.gain ?? HULL_GAIN);
           this.loaded.set(id, { container, metrics });
         } catch {
           // No model for this class (or offline): the ship keeps its generated hull.

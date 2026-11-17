@@ -9,7 +9,8 @@
  * Config: tools/assets/hulls.json, entries { "class", "source", "lengthAxis": "x"|"z",
  *   "bowAtMin": bool | null (null: the lower end is the bow), "cut": share of height above the keel,
  *   "flipY": bool, "minPiece": share of vertices below which a piece is dropped,
- *   "keepMaterials": optional list of material names that hold the hull }.
+ *   "keepMaterials": optional list of material names that hold the hull,
+ *   "gain": optional brightness of the colour texture in the game (dark, tarred models need more) }.
  * Usage: node tools/assets/hull-cut.mjs <in-dir> <out-dir> [class]
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -185,7 +186,7 @@ for (const c of config.filter((x) => !only || x.class === only)) {
   });
   sideY.sort((a, b) => a - b);
   const gunwale = sideY[Math.floor(sideY.length * (c.gunwalePercentile ?? 0.85))] ?? hullMax[1];
-  writeFileSync(join(outDir, `${c.class}.json`), JSON.stringify({ beam: +(hullMax[0] - hullMin[0]).toFixed(3), length: +(hullMax[2] - hullMin[2]).toFixed(3), gunwale: +gunwale.toFixed(3) }) + "\n");
+  writeFileSync(join(outDir, `${c.class}.json`), JSON.stringify({ beam: +(hullMax[0] - hullMin[0]).toFixed(3), length: +(hullMax[2] - hullMin[2]).toFixed(3), gunwale: +gunwale.toFixed(3), ...(c.gain ? { gain: c.gain } : {}) }) + "\n");
   const L = hullMax[2] - hullMin[2];
   console.log(`${c.class} <- ${c.source}: length ${L.toFixed(2)}, beam ${(hullMax[0] - hullMin[0]).toFixed(2)}, height ${(hullMax[1] - hullMin[1]).toFixed(2)}, gunwale ${gunwale.toFixed(2)}, bow at ${bowAtMin ? "min" : "max"} (ends ${lowBack.toFixed(2)}/${lowFront.toFixed(2)})`);
 }

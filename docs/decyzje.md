@@ -221,3 +221,13 @@ cienkie linie zostają, bo z daleka rurka jest cieńsza niż piksel. Żagle: map
 `SAIL_LAYOUT` co kolor (szew to podwójna warstwa płótna), a splot lnu z Poly Haven idzie jako mapa detalu
 StandardMaterial (R szarość koloru, G i A normalne), kafelkowana 9 razy. Deski: relief z `weathered_planks` na
 kadłubach generowanych i kasztelach.
+
+## 17.11 Poprawki po obejrzeniu statku w artefakcie (uwagi właściciela)
+Kadłub galeonu był zamontowany rufą do przodu: automat w `hull-cut` porównuje wysokość końców, a tu były równe;
+`bowAtMin` ustawione jawnie. Pełny poziom kadłubów nie jest już upraszczany (simplify bez blokady krawędzi rozrywał
+poszycie na szwach UV); wariant low upraszczany z `LOCK_BORDER=1`; pliki z kwantyzacją atrybutów. Maszty: ugięcie
+jako krzywa belki wspornikowej Eulera-Bernoulliego w(s) = s²(3 − s)/2, siatka masztu deformowana wierzchołkami
+(`bent-mast.ts`), drzewce z podziałem co 1,5 m. Jasność tekstury kadłuba to parametr modelu (`gain` w `hulls.json`,
+galeon 4): StandardMaterial obcina własny mnożnik koloru do 1, więc jasność idzie przez `texture.level`.
+Użytkownik: braki modelu (kikuty want, urwane barierki) mam wykryć i dorobić sam; części statku mają dostać stałe
+oznaczenia, żeby generator sam oceniał kompletność (obie pozycje w backlogu M8).

@@ -5,6 +5,7 @@ import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
+import { BentMast } from "./bent-mast";
 import { RopeTubes } from "./rope-tubes";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
@@ -162,7 +163,7 @@ export class ShipView {
   private plans: SailPlan[] = [];
   /** Per plan: the physics sail is fore-and-aft while this canvas is square (spritsail). */
   private fixed: boolean[] = [];
-  private readonly masts: Mesh[] = [];
+  private readonly masts: BentMast[] = [];
   private readonly flag: Mesh;
   private readonly flagPositions: Float32Array;
   private readonly detail: ShipDetail;
@@ -255,7 +256,7 @@ export class ShipView {
     plan.spars.forEach((sp, i) => {
       const from = new Vector3(sp.x0, sp.y0, sp.z0);
       const to = new Vector3(sp.x1, sp.y1, sp.z1);
-      const m = MeshBuilder.CreateCylinder(`spar-${this.entityId}-${i}`, { height: Vector3.Distance(from, to), diameterBottom: sp.diameter, diameterTop: sp.diameter * 0.75, tessellation: 8 }, scene);
+      const m = MeshBuilder.CreateCylinder(`spar-${this.entityId}-${i}`, { height: Vector3.Distance(from, to), diameterBottom: sp.diameter, diameterTop: sp.diameter * 0.75, tessellation: 8, subdivisions: Math.max(1, Math.ceil(Vector3.Distance(from, to) / 1.5)) }, scene);
       m.position = from.add(to).scale(0.5);
       m.rotationQuaternion = Quaternion.FromUnitVectorsToRef(Vector3.Up(), to.subtract(from).normalize(), new Quaternion());
       const mi = model.def.masts.findIndex((ms) => sp.x0 === sp.x1 && Math.abs(ms.z - sp.z0) < 1e-6 && sp.z0 === sp.z1);
@@ -279,13 +280,11 @@ export class ShipView {
     parts.forEach((list, i) => {
       const merged = Mesh.MergeMeshes(list, true, true)!;
       merged.name = `mast-${this.entityId}-${i}`;
-      // The mast bends about its step on the deck (rig-motion).
-      const top = plan.mastTops[i]!;
-      merged.setPivotPoint(new Vector3(0, top.y - model.def.masts[i]!.height, top.z));
       merged.material = mats.wood;
       merged.parent = parent;
       shadows?.addShadowCaster(merged);
-      this.masts.push(merged);
+      // The mast bows along its length under load (bent-mast).
+      this.masts.push(new BentMast(merged));
     });
     this.plans = [...plan.sails];
     this.fixed = this.plans.map((p) => p.shape === "square" && model.def.masts[p.mast]!.sails[p.sail]!.rig === "foreAft");
@@ -384,9 +383,9 @@ export class ShipView {
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time);
     this.masts.forEach((m, i) => {
-      m.setEnabled(s.mastHp[i]! > 0);
+      m.mesh.setEnabled(s.mastHp[i]! > 0);
       const bend = bends[i];
-      if (bend) m.rotation.set(bend.dz / bend.height, 0, -bend.dx / bend.height);
+      if (bend) m.apply(bend);
     });
     this.updateStays(bends, s.mastLoad);
     const fb = bends[this.flagMast];

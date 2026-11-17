@@ -3,8 +3,9 @@
     "class": "galleon",
     "source": "ga_free_251_weathered_18th_century_galleon.glb",
     "lengthAxis": "x",
-    "bowAtMin": null,
+    "bowAtMin": true,
     "cut": 0.27,
+    "gain": 4,
     "flipY": false,
     "minPiece": 0
   },

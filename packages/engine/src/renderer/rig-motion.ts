@@ -4,9 +4,9 @@
  * - Mast spring: each mast's head deflection is a damped harmonic oscillator (mass-spring-damper,
  *   integrated semi-implicitly) driven towards a static deflection proportional to the mast's load
  *   from the simulation (the cantilever: deflection grows linearly with the sail force for small
- *   loads). Gusts change the load and the mast whips and settles. The deflection is drawn as a tilt
- *   about the step of the mast, so everything carried on it (yards, sails, tops, flag) moves with
- *   the height above the step.
+ *   loads). Gusts change the load and the mast whips and settles. The deflection is drawn along
+ *   the mast as the bending curve of a cantilever (`bendShare`), so the spar bows smoothly and
+ *   everything carried on it (yards, sails, tops, flag, shrouds, stays) moves with its height.
  * - Luffing: a sail starved of wind (fill low while set) shakes; a travelling wave runs from the luff
  *   to the leech, its amplitude growing towards the free edge, and a light flutter of the leech in a
  *   strong breeze (the standing behaviour of real canvas).
@@ -63,8 +63,17 @@ export class MastSprings {
   }
 }
 
-/** Share of a mast's head deflection at a height y (hull space): linear from the step (a tilt). */
-export const bendShare = (bend: MastBend, y: number): number => Math.max(0, (y - bend.base) / bend.height);
+/**
+ * Share of a mast's head deflection at a height y (hull space): the deflection curve of a cantilever
+ * loaded at its end, w(s) = s^2 (3 - s) / 2 for s = height above the step / length (Euler-Bernoulli
+ * beam theory): no deflection and no slope at the step, where the mast is held by the partners and
+ * the keelson, and a smooth bow to the head. Above the head the curve is carried on along its
+ * end slope (flags, trucks).
+ */
+export const bendShare = (bend: MastBend, y: number): number => {
+  const s = Math.max(0, (y - bend.base) / bend.height);
+  return s <= 1 ? (s * s * (3 - s)) / 2 : 1 + 1.5 * (s - 1);
+};
 
 /**
  * Luffing offset across a sail (along its local billow axis), for a point at u (luff 0 .. leech 1)

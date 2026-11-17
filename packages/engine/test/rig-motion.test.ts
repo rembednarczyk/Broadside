@@ -22,6 +22,20 @@ describe("rig motion", () => {
     expect(bendShare(b, 4)).toBe(0);
     expect(bendShare(b, 44)).toBeCloseTo(1);
     expect(bendShare(b, 0)).toBe(0);
+    // A cantilever's curve: held upright at the step (hardly any movement low down), most of the
+    // bow in the upper half, and no kink anywhere (the steps between equal heights keep growing).
+    expect(bendShare(b, 8)).toBeLessThan(0.02);
+    expect(bendShare(b, 24)).toBeCloseTo(0.3125, 4);
+    let prev = 0;
+    let prevStep = 0;
+    for (let y = 5; y <= 44; y++) {
+      const k = bendShare(b, y);
+      expect(k - prev).toBeGreaterThanOrEqual(prevStep - 1e-9);
+      prevStep = k - prev;
+      prev = k;
+    }
+    // Above the head the line carries on at the end slope.
+    expect(bendShare(b, 48)).toBeCloseTo(1.15, 4);
   });
 
   it("sags a stay between fixed ends", () => {

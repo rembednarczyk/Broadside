@@ -9,7 +9,7 @@
  */
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
-import { dedup, flatten, join, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
+import { dedup, flatten, join, prune, quantize, simplify, textureCompress, weld } from "@gltf-transform/functions";
 import { MeshoptSimplifier } from "meshoptimizer";
 import sharp from "sharp";
 
@@ -29,7 +29,13 @@ const before = count();
 await MeshoptSimplifier.ready;
 await doc.transform(dedup(), flatten(), join(), weld());
 const ratio = Math.min(1, Number(target) / Math.max(1, count()));
-await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error: Number(process.env.SIMPLIFY_ERROR ?? 0.01) }), prune());
+// A budget at or above the mesh keeps every triangle (no simplifier pass at all). When simplifying,
+// LOCK_BORDER=1 keeps the open edges and the seams between UV islands where they are: without it
+// the two sides of a seam are collapsed separately and the surface opens along it.
+if (ratio < 1) await doc.transform(simplify({ simplifier: MeshoptSimplifier, ratio, error: Number(process.env.SIMPLIFY_ERROR ?? 0.01), lockBorder: process.env.LOCK_BORDER === "1" }));
+await doc.transform(prune());
 await doc.transform(textureCompress({ encoder: sharp, targetFormat: process.env.TEX_FORMAT ?? "webp", resize: [Number(tex), Number(tex)] }));
+// QUANTIZE=1: 16-bit positions and compact normals/UVs (KHR_mesh_quantization), about half the file.
+if (process.env.QUANTIZE === "1") await doc.transform(quantize({ quantizePosition: 16, quantizeNormal: 10, quantizeTexcoord: 14 }));
 await io.write(output, doc);
 console.log(`${input.split("/").pop()}: ${before} -> ${count()} triangles`);

@@ -28,8 +28,9 @@ export const useStandardMaterials = (container: AssetContainer, scene: Scene, pr
     std.backFaceCulling = m.backFaceCulling;
     // A double-sided model (thin planking seen from both sides) is lit on both sides.
     std.twoSidedLighting = !m.backFaceCulling;
-    // Scans of dark, tarred timber read as black under one sun and a sky light: lift them.
-    std.diffuseColor.set(gain, gain, gain);
+    // Scans of dark, tarred timber read as black under one sun and a sky light: lift them. The
+    // gain goes on the texture's level: the material clamps its own colour factor to 1.
+    if (std.diffuseTexture) std.diffuseTexture.level = gain;
     // Keep the model's normal map (planking, ports, carvings) with the loader's handedness flags.
     if (pbr.bumpTexture) {
       std.bumpTexture = pbr.bumpTexture;
