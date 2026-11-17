@@ -8,6 +8,10 @@
  * Usage: node tools/sky/sky-test.mjs <out.png> [octaves=5] [cover=0.5] [sunElevationDeg=24] [yawDeg=0] [pitchDeg=14] [time=0]
  *   yaw 0 looks towards the sun's bearing. Octaves 6: the clouds of the top presets, read from the
  *   noise volume of cloud-noise.ts (Node strips the types of that file on import).
+ * SKY_HOURS=<h>: take the sun, its colour and the sky's colours from the game's own look
+ *   (renderer/look.ts) at that hour for the cover given, instead of the fixed day colours; at night
+ *   the sun is below the horizon and sunElevationDeg is ignored. SKY_EXPOSURE=<k>: exposure before the
+ *   tone map (the game's eye adaptation reaches 2.2 at night).
  */
 import { Buffer } from "node:buffer";
 import { readFileSync } from "node:fs";
@@ -29,13 +33,14 @@ const at = frag.lastIndexOf("void main() {");
 const shader = `#version 300 es\n${frag.slice(0, at).replace("varying vec3 vDir;", "in vec3 vDir;\nout vec4 fragColor;")}void skyMain() {${frag.slice(at + "void main() {".length)}
 void main() {
   skyMain();
-  vec3 c = gl_FragColor.rgb * 1.0;
+  vec3 c = gl_FragColor.rgb * ${Number(process.env.SKY_EXPOSURE ?? 1).toFixed(3)};
   c = clamp((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14), 0.0, 1.0);
   float l = dot(c, vec3(0.3, 0.59, 0.11));
   l = clamp((l - 0.5) * 1.35 + 0.5, 0.0, 1.0);
   gl_FragColor = vec4(mix(c, l * vec3(1.0, 0.9, 0.72), 0.85), 1.0);
 }`.replaceAll("gl_FragColor", "fragColor");
 const rad = Math.PI / 180;
+const look = process.env.SKY_HOURS ? (await import(join(dir, "../renderer/look.ts"))).sceneLook(Number(process.env.SKY_HOURS), Number(cover), 0, 0) : null;
 const el = Number(sunEl) * rad;
 const page = `<canvas id="c" width="800" height="450"></canvas><script>
 const gl = document.getElementById("c").getContext("webgl2", { preserveDrawingBuffer: true });
@@ -51,11 +56,23 @@ const f = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Mat
 const r = [Math.cos(yaw), 0, -Math.sin(yaw)];
 const up = [f[1]*r[2]-f[2]*r[1], f[2]*r[0]-f[0]*r[2], f[0]*r[1]-f[1]*r[0]];
 gl.uniform3fv(u("fwd"), f); gl.uniform3fv(u("right"), r); gl.uniform3fv(u("up"), up);
-gl.uniform3f(u("sunDirection"), 0, ${Math.sin(el)}, ${Math.cos(el)});
-gl.uniform3f(u("sunColor"), 1.0, 0.88, 0.68);
+const look = ${JSON.stringify(look)};
+if (look) {
+  const h = Math.hypot(look.sunDir.x, look.sunDir.z);
+  gl.uniform3f(u("sunDirection"), 0, look.sunDir.y, h);
+  gl.uniform3f(u("sunColor"), look.sunColor.r, look.sunColor.g, look.sunColor.b);
+} else {
+  gl.uniform3f(u("sunDirection"), 0, ${Math.sin(el)}, ${Math.cos(el)});
+  gl.uniform3f(u("sunColor"), 1.0, 0.88, 0.68);
+}
 const k = ${Number(cover)};
-gl.uniform3f(u("skyZenith"), 0.16 + 0.1 * k, 0.33 - 0.03 * k, 0.62 - 0.3 * k);
-gl.uniform3f(u("skyHorizon"), 0.66 - 0.2 * k, 0.72 - 0.25 * k, 0.8 - 0.32 * k);
+if (look) {
+  gl.uniform3f(u("skyZenith"), look.skyZenith.r, look.skyZenith.g, look.skyZenith.b);
+  gl.uniform3f(u("skyHorizon"), look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b);
+} else {
+  gl.uniform3f(u("skyZenith"), 0.16 + 0.1 * k, 0.33 - 0.03 * k, 0.62 - 0.3 * k);
+  gl.uniform3f(u("skyHorizon"), 0.66 - 0.2 * k, 0.72 - 0.25 * k, 0.8 - 0.32 * k);
+}
 gl.uniform1f(u("cloudCover"), k); gl.uniform1f(u("time"), ${Number(time)}); gl.uniform2f(u("windOffset"), ${Number(time)} * 8.0, ${Number(time)} * 3.0);
 const noise = ${JSON.stringify(noise)};
 if (noise) {

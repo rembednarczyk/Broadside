@@ -232,13 +232,15 @@ export class BabylonRenderer {
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);
+    const underside = 1 - 0.55 * smoothstep(0.4, 0.95, look.cloudCover);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.keyDir.x, look.keyDir.y, look.keyDir.z),
       // Glint and glitter follow the key light (a moon path at night): clouds take them away.
       sunColor: new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b).scale(Math.min(1, look.keyIntensity / 2.2)),
-      // A lightning flash lights the sky the sea reflects (the flash of the last frame).
-      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale(1 + this.weather.flash * 4),
-      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale(1 + this.weather.flash * 3),
+      // The sea reflects the sky over it: under a heavy sky that is the dark underside of the cloud,
+      // not the clear sky's colours (ref_060). A lightning flash lights it (the flash of the last frame).
+      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale((1 + this.weather.flash * 4) * underside),
+      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale((1 + this.weather.flash * 3) * underside),
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
       daylight: (look.sunDir.y + 0.05) / 0.35,

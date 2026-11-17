@@ -130,6 +130,9 @@ vec4 marchClouds(vec3 d, float sunUp) {
         float powder = 1.0 - exp(-dens * 4.0);
         float hgt = (p.y - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE);
         vec3 ambient = mix(skyHorizon * 0.4, mix(skyHorizon, skyZenith, 0.35) * 0.8, sqrt(hgt)) * (0.45 + 0.55 * sunUp) * (0.35 + 0.65 * open);
+        // At night there is no key light in the march: the overcast is lit evenly by the moon above
+        // it and glows a dull grey, the sky's own colour, a little lighter where it is thin (ref_075).
+        ambient = mix(ambient, mix(skyHorizon, skyZenith, 0.4) * (0.75 + 0.45 * open), 1.0 - sunUp);
         vec3 lit = ambient + sunColor * beer * mix(powder, 1.0, 0.45) * phase * 2.0 * sunUp;
         float a = 1.0 - exp(-dens * ds * 4.5);
         light += T * a * lit;
