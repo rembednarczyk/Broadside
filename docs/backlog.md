@@ -90,6 +90,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] fregata smuklejsza (szer. 11,4 m, zanurzenie 4,4 m, ostrzejszy dziób): 90° 9,3 kn i 135° 9,9 kn wobec galeonu 8,2 i 9,2 (16.11)
 
 ### M7 realizm i assety (prośba właściciela 17.11)
+- [x] wraki na mieliznach: skan wraku z Uelvesbüll (37 tys. trójkątów, 1,6 MB) wyprostowany przez PCA (`tools/assets/wreck.mjs`), rozstawiony z ziarna świata przy ok. 40% wysp (`core/world/wrecks.ts`), przechylony na obło, z dala od portów; tylko sceneria (17.11); do zrobienia: drugi model (Älvsnabben), łup z wraku
 - [x] działa na pokładach w miejscach, z których strzela symulacja: lufa toczona z profilu skanu działka obrotowego Queen Anne (`tools/assets/lathe-profile.mjs`), lawety, moździerze, działka na relingu; odjazd po strzale i wytoczenie (17.11); oba modele „armat” z Drive to skany dna z leżącą lufą, zostają na wraki
 - [x] noc: księżyc jako światło główne (zimne, przyćmione, zasłaniane chmurami), odblask księżyca na morzu, adaptacja oka (ekspozycja do 2,2 raza po zachodzie), jaśniejsze nocne niebo (17.11)
 - [x] potok assetów (`tools/assets`): pobranie z Drive, licencje (16 x CC BY 4.0, CREDITS.md), optymalizacja meshoptimizer, cięcie kadłuba, metryki nadburcia; kadłub galeonu z modelu Galaxy Abundant z proceduralnym, ruchomym ożaglowaniem (17.11)

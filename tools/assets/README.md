@@ -18,4 +18,7 @@ Wszystkie kadłuby naraz, w dwóch poziomach jakości (pełny 250 tys. trójkąt
 Profil lufy ze skanu działka (bryła obrotowa, którą toczy gra):
 `node tools/assets/lathe-profile.mjs .asset-cache/drive/18th_century_swivel_gun_queen_anne_nk47-11.glb packages/engine/src/renderer/barrel-profile.json 36 0 0.18 1`.
 
+Wrak na mielizny: `TEX_FORMAT=jpeg node tools/assets/optimize.mjs .asset-cache/drive/uelvesbull_wreck_husum_germany.glb .asset-cache/props/uelv.glb 30000 1024`,
+potem `node tools/assets/wreck.mjs .asset-cache/props/uelv.glb packages/app/public/assets/props/wreck.glb 0 0.3`.
+
 Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-NC-SA 4.0) nie jest używany.

@@ -1,5 +1,6 @@
 import { type ShipClassId } from "@broadside/core";
-import { type AssetContainer, type Scene, type TransformNode, LoadAssetContainerAsync, StandardMaterial, type Texture, Vector3 } from "../babylon";
+import { type AssetContainer, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
+import { useStandardMaterials } from "./model-materials";
 
 /**
  * Modelled hulls (Prototype, GoF: one loaded container per class, instanced per ship). The GLBs come
@@ -31,21 +32,7 @@ export class HullModels {
       classes.map(async (id) => {
         try {
           const container = await LoadAssetContainerAsync(`${this.baseUrl}${id}${this.tier}.glb`, this.scene);
-          // Iterate over a copy: the converted materials are added to the same list.
-          for (const m of [...container.materials]) {
-            const pbr = m as unknown as { albedoTexture?: Texture | null; bumpTexture?: Texture | null; invertNormalMapX?: boolean; invertNormalMapY?: boolean };
-            const std = new StandardMaterial(`hull-${id}-${m.name}`, this.scene);
-            std.diffuseTexture = pbr.albedoTexture ?? null;
-            // Keep the model's normal map (planking, ports, carvings) with the loader's handedness flags.
-            if (pbr.bumpTexture) {
-              std.bumpTexture = pbr.bumpTexture;
-              std.invertNormalMapX = pbr.invertNormalMapX ?? false;
-              std.invertNormalMapY = pbr.invertNormalMapY ?? false;
-            }
-            std.specularColor.set(0.06, 0.05, 0.04);
-            for (const mesh of container.meshes) if (mesh.material === m) mesh.material = std;
-            container.materials.push(std);
-          }
+          useStandardMaterials(container, this.scene, `hull-${id}`);
           const res = await fetch(`${this.baseUrl}${id}.json`);
           const metrics = (await res.json()) as HullMetrics;
           this.loaded.set(id, { container, metrics });

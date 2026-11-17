@@ -12,7 +12,7 @@ import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER } from "@broadside/core";
+import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import "./style.css";
 
@@ -54,7 +54,7 @@ let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra",
 const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
 const urlCamera = params.get("camera");
-let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL });
+let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb" });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
@@ -65,7 +65,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   }
   const mode = renderer.camera.mode;
   renderer.dispose();
-  renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL });
+  renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, wreckUrl: "assets/props/wreck.glb" });
   renderer.camera.mode = mode;
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
@@ -206,4 +206,4 @@ const frame = (now: number) => {
   requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);
-Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer, audio }) });
+Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer, audio, wrecks: () => (session.sim.env.archipelago ? wreckSites(session.sim.env.archipelago) : []) }) });

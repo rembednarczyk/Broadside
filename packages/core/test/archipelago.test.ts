@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEEP_SEA, fortSites, generateArchipelago, islandHeight, openWater, portSites, terrainHeight } from "../src/world/archipelago";
+import { wreckSites } from "../src/world/wrecks";
 import { FORT_CLASSES } from "../src/data/forts";
 
 describe("archipelago", () => {
@@ -53,5 +54,24 @@ describe("forts", () => {
       expect(FORT_CLASSES[f.classId].guns).toBeGreaterThan(0);
     }
     expect(fortSites(a)).toEqual(forts);
+  });
+});
+
+describe("wrecks", () => {
+  it("lie on the shoals, clear of the ports, the same for a seed", () => {
+    let total = 0;
+    for (const seed of [7, 1797, 42]) {
+      const a = generateArchipelago(seed);
+      const wrecks = wreckSites(a);
+      total += wrecks.length;
+      for (const w of wrecks) {
+        expect(w.seabed).toBeLessThanOrEqual(-0.9);
+        expect(w.seabed).toBeGreaterThan(-2.1);
+        expect(terrainHeight(a, w.x, w.z)).toBe(w.seabed);
+        for (const p of portSites(a)) expect(Math.hypot(p.x - w.x, p.z - w.z)).toBeGreaterThanOrEqual(260);
+      }
+      expect(wreckSites(a)).toEqual(wrecks);
+    }
+    expect(total).toBeGreaterThan(3);
   });
 });

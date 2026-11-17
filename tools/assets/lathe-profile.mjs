@@ -16,7 +16,7 @@ import { writeFileSync } from "node:fs";
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { flatten, weld } from "@gltf-transform/functions";
-import { bake, eachPrim } from "./lib.mjs";
+import { bake, eachPrim, principalAxes } from "./lib.mjs";
 
 const [input, output, slices = "40", flipZ = "0", from = "0", to = "1"] = process.argv.slice(2);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -25,31 +25,8 @@ await doc.transform(flatten());
 bake(doc);
 await doc.transform(weld());
 
-// Principal axis of all vertices.
-let n = 0;
-const mean = [0, 0, 0];
-eachPrim(doc, (p) => {
-  const a = p.getAttribute("POSITION").getArray();
-  for (let i = 0; i < a.length; i += 3) {
-    for (let k = 0; k < 3; k++) mean[k] += a[i + k];
-    n++;
-  }
-});
-for (let k = 0; k < 3; k++) mean[k] /= n;
-const cov = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-eachPrim(doc, (p) => {
-  const a = p.getAttribute("POSITION").getArray();
-  for (let i = 0; i < a.length; i += 3) {
-    const d = [a[i] - mean[0], a[i + 1] - mean[1], a[i + 2] - mean[2]];
-    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) cov[r * 3 + c] += d[r] * d[c];
-  }
-});
-let w = [1, 0.3, 0.2];
-for (let it = 0; it < 60; it++) {
-  const v = [0, 1, 2].map((r) => cov[r * 3] * w[0] + cov[r * 3 + 1] * w[1] + cov[r * 3 + 2] * w[2]);
-  const l = Math.hypot(...v);
-  w = v.map((x) => x / l);
-}
+const { mean, axes } = principalAxes(doc);
+let w = axes[0];
 if (flipZ === "1") w = w.map((x) => -x);
 const dotY = w[1];
 let u = [-dotY * w[0], 1 - dotY * w[1], -dotY * w[2]];

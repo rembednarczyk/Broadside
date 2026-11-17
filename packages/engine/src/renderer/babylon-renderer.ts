@@ -15,7 +15,8 @@ import { FarCoast } from "./far-coast";
 import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
-import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, yawOf } from "@broadside/core";
+import { WrecksView } from "./wrecks-view";
+import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -30,6 +31,8 @@ export interface RendererOptions {
   readonly graphics: GraphicsSettings;
   /** Where the modelled hulls lie (`<url><class>.glb`); omitted, every hull is generated. */
   readonly hullsUrl?: string;
+  /** Wreck model for the shoals; none without it. */
+  readonly wreckUrl?: string;
 }
 
 export interface FrameEnvironment {
@@ -63,6 +66,7 @@ export class BabylonRenderer {
   private islands: IslandsView | null = null;
   private readonly forts: FortsView;
   private towns: TownsView | null = null;
+  private readonly wreckUrl: string | undefined;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -88,6 +92,7 @@ export class BabylonRenderer {
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
     this.forts = new FortsView(this.scene, this.shadows);
+    this.wreckUrl = opts.wreckUrl;
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" || opts.graphics.preset === "medium" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
@@ -205,6 +210,7 @@ export class BabylonRenderer {
       this.post.excludeFromShafts(this.islands.meshes);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
       this.post.excludeFromShafts(this.towns.meshes);
+      if (this.wreckUrl) void new WrecksView(this.scene, this.wreckUrl).place(wreckSites(sim.env.archipelago));
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);

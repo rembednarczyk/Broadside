@@ -138,3 +138,10 @@ przekrojach), a gra toczy z niego czystą lufę (ok. 400 trójkątów, thin inst
 kalibru (1,1 + 0,32·√funty m). Odjazd: sekwencja z regulaminu epoki (skok do tyłu na linie hamującej 0,12 s,
 2,2 s ładowania, 1,6 s wytaczania), tylko widok; fizyczny odrzut statku liczy symulacja. Tekstury skanu pominięte
 (jednolity ciemny metal).
+
+## 17.11 Wraki na mieliznach (orkiestrator)
+Wrak to sceneria: mielizna i tak zatrzymuje statek, więc symulacja i złoty hash bez zmian. Miejsca liczy `core`
+(`wreckSites`, z ziarna świata, ok. 40% wysp, głębokość 0,9–2,1 m, 260 m od portów i kotwicowisk), żeby później dało
+się dopiąć łup z wraku. Model: skan wraku z Uelvesbüll (CC BY 4.0), obrócony do osi głównych (PCA), podłoga skanu
+odcięta (30% wysokości), długość 28–42 m, 8% wysokości w piasku. Skan Älvsnabben (769 tys. trójkątów po
+uproszczeniu) i „wrak pod szynami” (płat dna) na razie pominięte.
