@@ -207,10 +207,12 @@ export class BabylonRenderer {
         const r = player.body.rot;
         const h = player.ship!.model.def.hull;
         const c = player.ship!.model.com;
-        // Eye in the waist, off the centreline between main and mizzen, a man's height above the
-        // deck (the reference's deck shot looks up the mainmast through the shrouds).
-        const deckY = h.freeboard + 1.8 - c.y;
-        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [h.beam * 0.3, deckY, -h.length * 0.16 - c.z], length: h.length, focus: this.focus }, dt);
+        // Eye a few paces abaft the mainmast, just off the centreline, a little above a man's height
+        // (the reference's deck shot, ref_112: the mainmast close before the eye, the shrouds to
+        // either side, the deck and the forecastle's rail below, the sails against the sky).
+        const main = player.ship!.model.def.masts.reduce((a, m) => (m.height > a.height ? m : a));
+        const deckY = h.freeboard + 3.2 - c.y;
+        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [0.5, deckY, main.z - 5 - c.z], length: h.length, focus: this.focus }, dt);
       }
     }
     this.applyLook(look);

@@ -7,6 +7,9 @@ import { ArcRotateCamera, Quaternion, type Scene, Vector3 } from "../babylon";
  */
 export type CameraMode = "isometric" | "chase" | "cinematic" | "deck";
 export const CAMERA_MODES: readonly CameraMode[] = ["isometric", "chase", "cinematic", "deck"];
+/** Vertical field of view (radians): the following cameras, and the wider deck camera. */
+const FOV = 0.9;
+const DECK_FOV = 1.2;
 
 /** True isometric elevation: atan(1 / sqrt 2) = 35.26 deg above the horizon. */
 const ISO_BETA = Math.PI / 2 - Math.atan(1 / Math.SQRT2);
@@ -58,7 +61,7 @@ export class FollowCamera {
     this.camera.pinchDeltaPercentage = 0.004;
     this.camera.minZ = 0.5;
     this.camera.maxZ = 6000;
-    this.camera.fov = 0.9;
+    this.camera.fov = FOV;
     this.camera.panningSensibility = 0;
     if (canvas) this.camera.attachControl(canvas, true);
   }
@@ -108,11 +111,14 @@ export class FollowCamera {
     if (this.mode === "deck") {
       const q = new Quaternion(p.qx, p.qy, p.qz, p.qw);
       const eye = new Vector3(...p.deck).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
-      const ahead = new Vector3(p.deck[0] * 0.3, p.deck[1] + 14, p.deck[2] + 30).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
+      // Looking forward and a little up (about 9 degrees), wide like a hand-held lens.
+      const ahead = new Vector3(p.deck[0] * 0.3, p.deck[1] + 5, p.deck[2] + 30).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
+      this.camera.fov = DECK_FOV;
       this.camera.setTarget(ahead);
       this.camera.setPosition(eye);
       return;
     }
+    this.camera.fov = FOV;
     if (this.mode === "cinematic") {
       this.drift += dt * 0.05;
       this.camera.alpha += dt * 0.05;
