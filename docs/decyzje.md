@@ -98,3 +98,10 @@ z wiatrem, refować, łopotać i dziurawić. Kadłub dopasowany do fizyki: szero
 nadburcie na śródokręciu wypadło na pokładzie fizycznym + 0,8 m, długość proporcjonalnie do szerokości. Materiały
 PBR z modeli zamienione na StandardMaterial z tą samą teksturą (spójność ze sceną, bez IBL). Uznanie autorstwa
 (CC BY 4.0): CREDITS.md i karta „Jak grać”. Model Thunderhawk (CC BY-NC-SA, współczesny) pominięty.
+
+## 17.11 Ruchome ożaglowanie (orkiestrator)
+Tylko widok (symulacja trzyma maszty sztywne, determinizm bez zmian). Ugięcie: tłumiony oscylator (0,6 Hz, tłumienie
+0,25) dąży do ugięcia statycznego proporcjonalnego do obciążenia masztu z symulacji (belka wspornikowa: ugięcie liniowe
+w sile), rysowane jako odchylenie wokół stopy masztu, ok. 2,5° przy obciążeniu 1. Łopot: fala biegnąca od liku
+przedniego do tylnego, gdy wypełnienie żagla < 0,35, oraz drganie liku powyżej 9 m/s wiatru. Sztagi: parabola jako
+przybliżenie łańcuchowej, zwis 2,6% rozpiętości luźnej liny, 0,4% pod pełnym obciążeniem.

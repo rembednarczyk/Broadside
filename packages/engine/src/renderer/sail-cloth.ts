@@ -1,6 +1,7 @@
 import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
 import { SAIL_COLS, SAIL_ROWS, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
 import { type SailPlan } from "./rig-plan";
+import { type MastBend, bendShare, flutterOffset } from "./rig-motion";
 
 /**
  * All the canvas of one ship in one dynamic mesh per material, and all its yards as thin
@@ -25,6 +26,8 @@ export interface SailState {
   /** Signed billow. */
   readonly billow: number;
   readonly visible: boolean;
+  /** 0..1 how hard the canvas shakes (luffing, see rig-motion). */
+  readonly flutter: number;
 }
 
 interface Group {
@@ -122,8 +125,8 @@ export class SailCloth {
     }
   }
 
-  /** `states[i]` belongs to `plans[i]` of the constructor. */
-  update(states: readonly SailState[]): void {
+  /** `states[i]` belongs to `plans[i]` of the constructor; `bends[mast]` carries the canvas with its mast. */
+  update(states: readonly SailState[], bends: readonly MastBend[] = [], time = 0): void {
     for (const g of this.groups) {
       g.plans.forEach((p, k) => {
         const st = states[g.indexOf[k]!]!;
@@ -133,15 +136,25 @@ export class SailCloth {
           return;
         }
         sailPositions(p, st.set, st.billow, this.local);
+        if (st.flutter > 0.01) {
+          for (let r = 0; r <= SAIL_ROWS; r++) {
+            for (let c = 0; c <= SAIL_COLS; c++) {
+              const i = (r * (SAIL_COLS + 1) + c) * 3;
+              this.local[i] = this.local[i]! + flutterOffset(st.flutter, p.width, c / SAIL_COLS, r / SAIL_ROWS, time);
+            }
+          }
+        }
+        const bend = bends[p.mast];
         const c = Math.cos(st.angle);
         const s = Math.sin(st.angle);
         for (let v = 0; v < VERTS; v++) {
           const x = this.local[v * 3]!;
           const y = this.local[v * 3 + 1]!;
           const z = this.local[v * 3 + 2]!;
-          g.positions[off + v * 3] = x * c + z * s;
+          const k = bend ? bendShare(bend, y + p.nodeY) : 0;
+          g.positions[off + v * 3] = x * c + z * s + (bend ? bend.dx * k : 0);
           g.positions[off + v * 3 + 1] = y + p.nodeY;
-          g.positions[off + v * 3 + 2] = -x * s + z * c + p.nodeZ;
+          g.positions[off + v * 3 + 2] = -x * s + z * c + p.nodeZ + (bend ? bend.dz * k : 0);
         }
       });
       VertexData.ComputeNormals(g.positions, g.indices, g.normals);
@@ -154,6 +167,11 @@ export class SailCloth {
       const local = p.shape === "square" ? new Vector3(0, p.foot + p.height, 0) : new Vector3(0, p.foot, -p.width / 2);
       const rot = Quaternion.RotationYawPitchRoll(st.angle, Math.PI / 2, 0);
       const pos = Vector3.TransformCoordinates(local, Matrix.RotationY(st.angle)).add(new Vector3(0, p.nodeY, p.nodeZ));
+      const bend = bends[p.mast];
+      if (bend) {
+        const k = bendShare(bend, pos.y);
+        pos.addInPlaceFromFloats(bend.dx * k, 0, bend.dz * k);
+      }
       const d = st.visible || p.shape === "square" ? 0.12 + p.width * 0.012 : 0;
       Matrix.Compose(new Vector3(d, y.length, d), rot, pos).copyToArray(this.yardBuf, k * 16);
     });

@@ -1,10 +1,11 @@
 import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
 import { rotateInv, vec3, windVector } from "@broadside/core";
-import { Color3, DynamicTexture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
+import { Color3, DynamicTexture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
+import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
 import { type SailPaint, paintSail, paintSailGlow } from "./sail-texture";
@@ -116,6 +117,11 @@ export class ShipView {
     this.detail.setFine(d < FINE_DETAIL);
   }
   private shownCrew = -1;
+  private springs!: MastSprings;
+  private stays!: { mesh: LinesMesh; ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] };
+  private flagMast = 0;
+  private flagBase = new Vector3();
+  private lastTime = 0;
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
@@ -144,6 +150,8 @@ export class ShipView {
     const flag = this.buildFlag(scene, mats.flag[faction]);
     flag.mesh.parent = hullSpace;
     flag.mesh.position = new Vector3(0, tallest.y + 0.2, tallest.z);
+    this.flagBase = flag.mesh.position.clone();
+    this.flagMast = plan.mastTops.indexOf(tallest);
     this.flag = flag.mesh;
     this.flagPositions = flag.positions;
   }
@@ -207,6 +215,9 @@ export class ShipView {
     parts.forEach((list, i) => {
       const merged = Mesh.MergeMeshes(list, true, true)!;
       merged.name = `mast-${this.entityId}-${i}`;
+      // The mast bends about its step on the deck (rig-motion).
+      const top = plan.mastTops[i]!;
+      merged.setPivotPoint(new Vector3(0, top.y - model.def.masts[i]!.height, top.z));
       merged.material = mats.wood;
       merged.parent = parent;
       shadows?.addShadowCaster(merged);
@@ -215,23 +226,45 @@ export class ShipView {
     this.plans = [...plan.sails];
     this.fixed = this.plans.map((p) => p.shape === "square" && model.def.masts[p.mast]!.sails[p.sail]!.rig === "foreAft");
     this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem), mats.wood, shadows);
+    this.springs = new MastSprings(plan.mastTops.map((t, i) => ({ base: t.y - model.def.masts[i]!.height, height: model.def.masts[i]!.height })));
     this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model);
   }
 
   /** Fore-and-aft stays between mast heads and to the bowsprit, and backstays to the rail. */
   private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel): void {
     const h = model.def.hull;
-    const lines: Vector3[][] = [];
-    const sorted = [...tops].sort((a, b) => b.z - a.z);
-    sorted.forEach((t, i) => {
-      const fwd = i === 0 ? new Vector3(0, bow.y, bow.z) : new Vector3(0, sorted[i - 1]!.y * 0.6, sorted[i - 1]!.z);
-      lines.push([new Vector3(0, t.y * 0.97, t.z), fwd]);
-      for (const sx of [-1, 1]) lines.push([new Vector3(0, t.y, t.z), new Vector3(sx * h.beam * 0.48, h.freeboard + 1, t.z - 5)]);
+    // Ends of each stay: which mast moves it (-1: fixed to the hull or bowsprit) and where.
+    const ends: { from: number; a: [number, number, number]; to: number; b: [number, number, number] }[] = [];
+    const order = tops.map((t, i) => ({ t, i })).sort((p, q) => q.t.z - p.t.z);
+    order.forEach(({ t, i }, k) => {
+      const prev = order[k - 1];
+      ends.push(prev ? { from: i, a: [0, t.y * 0.97, t.z], to: prev.i, b: [0, prev.t.y * 0.6, prev.t.z] } : { from: i, a: [0, t.y * 0.97, t.z], to: -1, b: [0, bow.y, bow.z] });
+      for (const sx of [-1, 1]) ends.push({ from: i, a: [0, t.y, t.z], to: -1, b: [sx * h.beam * 0.48, h.freeboard + 1, t.z - 5] });
     });
-    const rig = MeshBuilder.CreateLineSystem(`stays-${this.entityId}`, { lines }, scene);
+    const lines = ends.map((e) => sagLine(e.a, e.b, 0).map((p) => new Vector3(...p)));
+    const rig = MeshBuilder.CreateLineSystem(`stays-${this.entityId}`, { lines, updatable: true }, scene);
     rig.color = new Color3(0.08, 0.06, 0.05);
     rig.parent = parent;
     rig.isPickable = false;
+    this.stays = { mesh: rig, ends };
+  }
+
+  /** Stays follow the mastheads and sag when the masts carry little (slack) or straighten under load. */
+  private updateStays(bends: readonly MastBend[], loads: readonly number[]): void {
+    const at = (mast: number, p: [number, number, number]): [number, number, number] => {
+      const bend = bends[mast];
+      if (mast < 0 || !bend) return p;
+      const k = bendShare(bend, p[1]);
+      return [p[0] + bend.dx * k, p[1], p[2] + bend.dz * k];
+    };
+    const lines = this.stays.ends.map((e) => {
+      const a = at(e.from, e.a);
+      const b = at(e.to, e.b);
+      const span = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      const slack = 1 - Math.min(1, loads[e.from] ?? 0);
+      return sagLine(a, b, span * (0.004 + 0.022 * slack)).map((p) => new Vector3(...p));
+    });
+    MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
   }
 
   private buildFlag(scene: Scene, mat: StandardMaterial): { mesh: Mesh; positions: Float32Array } {
@@ -264,11 +297,24 @@ export class ShipView {
       const share = alive ? s.sailSet[p.mast]! / setFactor(3, false) : 0;
       const set = Math.max(0, Math.min(1, (share - p.setFrom) / p.setSpan));
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03 };
+      // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
+      const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter };
     });
+    const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
+    this.lastTime = time;
+    const awLen = Math.hypot(aw.x, aw.z) || 1;
+    const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
     this.cloth.setDamage(s.sailCloth);
-    this.cloth.update(states);
-    this.masts.forEach((m, i) => m.setEnabled(s.mastHp[i]! > 0));
+    this.cloth.update(states, bends, time);
+    this.masts.forEach((m, i) => {
+      m.setEnabled(s.mastHp[i]! > 0);
+      const bend = bends[i];
+      if (bend) m.rotation.set(bend.dz / bend.height, 0, -bend.dx / bend.height);
+    });
+    this.updateStays(bends, s.mastLoad);
+    const fb = bends[this.flagMast];
+    if (fb) this.flag.position.set(this.flagBase.x + fb.dx, this.flagBase.y, this.flagBase.z + fb.dz);
     if (s.crew !== this.shownCrew) {
       this.shownCrew = s.crew;
       this.detail.setCrew(s.crew, s.model.def.crew);

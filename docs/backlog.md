@@ -96,7 +96,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] tekstury z tych samych źródeł co podrcr albo z modeli
 - [ ] taktyki z epoki w AI: linia bojowa, przejęcie nawietrznej (weather gauge), ostrzał przez rufę (raking: crossing the T), strzelanie na przechyle w kadłub albo w olinowanie (szkoła brytyjska kontra francuska), abordaż po uciszeniu
 - [x] fizyka strzału: odrzut z realnego pędu armaty przechyla statek o 1,5–2,5° na przeciwną burtę (test), dym prochowy większy i dryfuje z wiatrem (17.11); do zrobienia: odjazd lawet przy strzale
-- [ ] ruchome elementy: ugięcie masztów pod obciążeniem, łopot żagli przy złym trymie i w łopocie, napinanie i luzowanie lin (Verlet / position-based dynamics, sprężyny), kołysanie latarni i flag
+- [x] ruchome elementy: ugięcie masztów (tłumiony oscylator od obciążenia masztu, żagle, reje, flaga i sztagi idą z masztem), łopot żagli bez wiatru i drganie liku w silnym wietrze, sztagi zwisają luźne i prostują się pod obciążeniem (17.11); do zrobienia: wanty i ratliny za masztem, kołysanie latarni
 - [ ] dźwięki otoczenia: morze, wiatr w olinowaniu (zależny od prędkości wiatru), skrzypienie kadłuba, deszcz, grzmot, mewy przy lądzie, fale o burtę; źródła CC0
 
 ## Dług i pomysły
