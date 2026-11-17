@@ -70,6 +70,19 @@ if (process.env.SHOT_BEFORE) {
   await page.evaluate(new Function("((b) => { " + process.env.SHOT_BEFORE + " })(globalThis.__broadside)"));
   await page.waitForTimeout(120);
 }
+// Optional inspection view: SHOT_INSPECT = "alpha,beta,radius,height". The game's own chase camera
+// (with its post-processing), aimed `height` above the centre of the player's ship and let closer
+// than the game allows (the chase camera aims high and keeps 18 m off).
+if (process.env.SHOT_INSPECT) {
+  await page.evaluate((spec) => {
+    const [alpha, beta, radius, height = 2] = spec.split(",").map(Number);
+    const follow = globalThis.__broadside.renderer.camera;
+    follow.lift = height;
+    Object.defineProperty(follow.camera, "lowerRadiusLimit", { get: () => 0.5, set: () => {} });
+    Object.assign(follow.camera, { alpha, beta, radius });
+  }, process.env.SHOT_INSPECT);
+  await page.waitForTimeout(1500);
+}
 if (process.env.SHOT_EVAL_FIRST) console.log("eval0:", JSON.stringify(await page.evaluate(new Function("return ((b) => { " + process.env.SHOT_EVAL_FIRST + " })(globalThis.__broadside)"))));
 await page.screenshot({ path: join(outDir, "scene.png"), timeout: 90000 });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));

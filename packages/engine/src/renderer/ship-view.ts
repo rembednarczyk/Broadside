@@ -5,7 +5,7 @@ import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
 import { type HullModels } from "./hull-models";
-import { ShipGuns } from "./ship-guns";
+import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
@@ -125,6 +125,9 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
   }
 };
 
+/** Within this distance of the camera a ship shows the scanned gun barrels. */
+const SCAN_GUNS = 140;
+
 /** Beyond this distance a ship drops its ratlines, rails, lanterns and crew. */
 const FINE_DETAIL = 320;
 
@@ -143,7 +146,7 @@ export class ShipView {
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
     this.detail.setFine(d < FINE_DETAIL);
-    this.guns.setShown(d < FINE_DETAIL * 2);
+    this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
   }
   private shownCrew = -1;
   private springs!: MastSprings;
@@ -154,7 +157,7 @@ export class ShipView {
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
-  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);
@@ -167,9 +170,14 @@ export class ShipView {
     deck.parent = hullSpace;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows);
-    this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows);
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
-    this.modelled = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? false;
+    const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
+    this.modelled = hullMeshes !== null;
+    // Guns stand at the side the hull really has: the model's, where there is one.
+    const sides = hullMeshes && hulls
+      ? hulls.sides(model.def.id, hullMeshes, hullSpace, model.guns.map((g) => ({ y: g.pos.y + model.com.y + gunHeight(g.kind), z: g.pos.z + model.com.z, sign: Math.sign(g.dir.x) || 1 })), model.def.hull.beam)
+      : null;
+    this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows, gunScan, sides);
     if (this.modelled) {
       hullMesh.setEnabled(false);
       deck.setEnabled(false);

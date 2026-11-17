@@ -18,7 +18,12 @@ Wszystkie kadłuby naraz, w dwóch poziomach jakości (pełny 250 tys. trójkąt
 Profil lufy ze skanu działka (bryła obrotowa, którą toczy gra):
 `node tools/assets/lathe-profile.mjs .asset-cache/drive/18th_century_swivel_gun_queen_anne_nk47-11.glb packages/engine/src/renderer/barrel-profile.json 36 0 0.18 1`.
 
-Wrak na mielizny: `TEX_FORMAT=jpeg node tools/assets/optimize.mjs .asset-cache/drive/uelvesbull_wreck_husum_germany.glb .asset-cache/props/uelv.glb 30000 1024`,
-potem `node tools/assets/wreck.mjs .asset-cache/props/uelv.glb packages/app/public/assets/props/wreck.glb 0 0.3`.
+Wraki na mielizny (pełna siatka skanu, tekstury 2048), potem wyprostowanie przez `upright.mjs` (PCA, odcięcie podłoża):
+`TEX_FORMAT=jpeg node tools/assets/optimize.mjs .asset-cache/drive/uelvesbull_wreck_husum_germany.glb .asset-cache/props/uelv-full.glb 500000 2048`,
+`node tools/assets/upright.mjs .asset-cache/props/uelv-full.glb packages/app/public/assets/props/wreck.glb 0 0.3`;
+`SIMPLIFY_ERROR=0.03 TEX_FORMAT=jpeg node tools/assets/optimize.mjs .asset-cache/drive/alvsnabbenvraket.glb .asset-cache/props/alvs-full.glb 400000 2048`,
+`node tools/assets/upright.mjs .asset-cache/props/alvs-full.glb packages/app/public/assets/props/wreck2.glb 0 0.1`.
+Działo ze skanu (12 tys. trójkątów, lufa wzdłuż +Z):
+`node tools/assets/upright.mjs .asset-cache/props/swivel.glb packages/app/public/assets/props/gun.glb 0 0 1 12000`.
 
 Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-NC-SA 4.0) nie jest używany.

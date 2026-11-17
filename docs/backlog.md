@@ -92,7 +92,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M7 realizm i assety (prośba właściciela 17.11)
 - [x] noc w trybie Naturalnym: kolor wody gaśnie z dniem (morze nie świeci turkusem w nocy); kadłuby z modeli rozjaśnione 1,8 raza (17.11); APK po pełnych kadłubach 39 MB, CI zielone
 - [x] linia bojowa: okręty wojenne eskadry idą w kilwaterze poprzednika (odstęp 120 m), gdy prowadzący walczy, i strzelają, gdy działa mają cel w polu; nowy ruch „eskadra” (fregata albo liniowiec + fregata i bryg); test: szyk trzymany przez 59% czasu walki wobec 19% bez reguły (17.11)
-- [x] wraki na mieliznach: skan wraku z Uelvesbüll (37 tys. trójkątów, 1,6 MB) wyprostowany przez PCA (`tools/assets/wreck.mjs`), rozstawiony z ziarna świata przy ok. 40% wysp (`core/world/wrecks.ts`), przechylony na obło, z dala od portów; tylko sceneria (17.11); do zrobienia: drugi model (Älvsnabben), łup z wraku
+- [x] wraki na mieliznach: skan wraku z Uelvesbüll (37 tys. trójkątów, 1,6 MB) wyprostowany przez PCA (`tools/assets/upright.mjs`), rozstawiony z ziarna świata przy ok. 40% wysp (`core/world/wrecks.ts`), przechylony na obło, z dala od portów; tylko sceneria (17.11); do zrobienia: drugi model (Älvsnabben), łup z wraku
 - [x] działa na pokładach w miejscach, z których strzela symulacja: lufa toczona z profilu skanu działka obrotowego Queen Anne (`tools/assets/lathe-profile.mjs`), lawety, moździerze, działka na relingu; odjazd po strzale i wytoczenie (17.11); oba modele „armat” z Drive to skany dna z leżącą lufą, zostają na wraki
 - [x] noc: księżyc jako światło główne (zimne, przyćmione, zasłaniane chmurami), odblask księżyca na morzu, adaptacja oka (ekspozycja do 2,2 raza po zachodzie), jaśniejsze nocne niebo (17.11)
 - [x] potok assetów (`tools/assets`): pobranie z Drive, licencje (16 x CC BY 4.0, CREDITS.md), optymalizacja meshoptimizer, cięcie kadłuba, metryki nadburcia; kadłub galeonu z modelu Galaxy Abundant z proceduralnym, ruchomym ożaglowaniem (17.11)
@@ -107,13 +107,13 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] dźwięki otoczenia z nagrań CC0 (OpenGameArt): morze, lekki i sztormowy wiatr, deszcz, burza z grzmotem, skrzypienie kadłuba (częstsze na przechyle), mewy i fale przy lądzie; strzał, trafienie, plusk, taran, tonięcie z nagrań, synteza jako zapas (17.11); nieodsłuchane w kontenerze
 
 ### M8 dopracowanie modeli i walki (plan z 17.11, po 93afbcf)
-- [ ] mniej upraszczać (właściciel, 17.11, drugi raz): działa gracza i statków w pobliżu ze skanu działka z teksturą (bez toczonej bryły, ta zostaje na dal); wrak z Uelvesbüll w pełnej siatce skanu i teksturach 2048–4096; Älvsnabben jako drugi wrak bez cięcia do budżetu; kadłuby pełne także na presecie medium; uproszczenia tylko tam, gdzie pomiar pokaże spadek płynności
+- [x] mniej upraszczać (właściciel, 17.11, drugi raz): wrak z Uelvesbüll w siatce 362 tys. trójkątów i teksturach 2048, Älvsnabben jako drugi wrak (761 tys., 30 MB), skan działka z teksturą (12 tys. trójkątów na lufę) na statkach do 140 m od kamery, pełne kadłuby także na medium; działa stoją przy rzeczywistej burcie modelu (promień w siatkę); naprawione rysowanie wnętrza kadłuba zamiast poszycia i brak normalnych w modelach (17.11); zbudowana gra 77 MB
+- [ ] udźwiękowienie statku (właściciel, 17.11): liny i olinowanie pod obciążeniem, bloki, łopot i trzask żagli, skrzyp masztów i rej, dzwon, kroki i komendy załogi, ster, pompa, woda o burtę i pod dziobem, kotwica, działa (wytaczanie, lont), wiatr w olinowaniu; audyt mapy zdarzeń na dźwięki
 - [x] zrzut salwy burtowej z bliska: rząd błysków i dym wzdłuż burty, salwa działa (17.11); odjazdu luf i zgodności z furtami kadłuba z modelu nie widać w rozdzielczości zrzutu, do sprawdzenia na żywo
-- [ ] jasna płaszczyzna pod rufą statku przy linii wody (widoczna na zrzutach 13:00): znaleźć źródło (kilwater, piana, pokład) i naprawić
+- [x] jasna płaszczyzna pod rufą: to było morze widziane przez niewyrysowane poszycie kadłuba z modelu (zgubiona orientacja ścian przy zamianie materiałów), naprawione (17.11)
 - [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu
 - [ ] łup z wraków: postój przy wraku daje złoto albo ładunek raz na wrak, znacznik na mapie (reguła symulacji, złoty hash ręcznie)
 - [ ] latarnie rufowe świecące nocą na kadłubach z modeli
-- [ ] drugi model wraku (Älvsnabben) po lepszym uproszczeniu
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 
 ## Dług i pomysły

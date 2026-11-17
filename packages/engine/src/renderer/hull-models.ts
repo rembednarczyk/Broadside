@@ -1,5 +1,5 @@
 import { type ShipClassId } from "@broadside/core";
-import { type AssetContainer, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
+import { type AbstractMesh, type AssetContainer, Ray, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
 import { useStandardMaterials } from "./model-materials";
 
 /**
@@ -24,9 +24,10 @@ const HULL_GAIN = 1.8;
 const BULWARK = 0.8;
 
 export class HullModels {
+  private readonly sideCache = new Map<ShipClassId, (number | null)[]>();
   private readonly loaded = new Map<ShipClassId, { container: AssetContainer; metrics: HullMetrics }>();
 
-  /** `tier`: "" for the full models (high and above), "-lite" for phones (low and medium presets). */
+  /** `tier`: "" for the full models (high and above), "-lite" for the low preset only. */
   constructor(private readonly scene: Scene, private readonly baseUrl: string, private readonly tier: "" | "-lite" = "") {}
 
   /** Loads the classes that have a model; failures leave the procedural hull in place. */
@@ -53,20 +54,47 @@ export class HullModels {
   /**
    * A copy of the class's hull under `parent`, fitted to the physics hull: the beam to its beam, the
    * gunwale amidships to its deck plus a bulwark (models are often longer and flatter than the
-   * stubby physics hulls), the length in proportion to the beam. False without a model.
+   * stubby physics hulls), the length in proportion to the beam. Returns its meshes, or null without a model.
    */
-  instantiate(id: ShipClassId, parent: TransformNode, hull: { beam: number; draft: number; freeboard: number }): boolean {
+  instantiate(id: ShipClassId, parent: TransformNode, hull: { beam: number; draft: number; freeboard: number }): AbstractMesh[] | null {
     const m = this.loaded.get(id);
-    if (!m) return false;
+    if (!m) return null;
     const inst = m.container.instantiateModelsToScene((n) => `${n}-${parent.name}`, false, { doNotInstantiate: true });
     const kx = hull.beam / m.metrics.beam;
     const ky = (hull.draft + hull.freeboard + BULWARK) / m.metrics.gunwale;
+    const meshes: AbstractMesh[] = [];
     for (const root of inst.rootNodes) {
       root.parent = parent;
       const node = root as TransformNode;
       node.scaling = node.scaling.multiplyByFloats(kx, ky, kx);
       node.position = new Vector3(0, -hull.draft, 0);
+      meshes.push(...node.getChildMeshes(false));
     }
-    return true;
+    return meshes;
+  }
+
+  /**
+   * Where the model's side really is: half-breadths at points (y, z) of hull space on the side
+   * `sign`, found by casting a ray inboard at the instantiated meshes (ray casting against the
+   * mesh, once per class and cached: every ship of a class has the same hull). `parent` must
+   * still stand at the origin, as a new ship's hull node does.
+   */
+  sides(id: ShipClassId, meshes: readonly AbstractMesh[], parent: TransformNode, points: readonly { y: number; z: number; sign: number }[], reach: number): (number | null)[] {
+    const cached = this.sideCache.get(id);
+    if (cached) return cached;
+    parent.computeWorldMatrix(true);
+    for (const m of meshes) m.computeWorldMatrix(true);
+    const off = parent.getAbsolutePosition();
+    const out = points.map((p) => {
+      const ray = new Ray(new Vector3(off.x + p.sign * reach, off.y + p.y, off.z + p.z), new Vector3(-p.sign, 0, 0), reach);
+      let best: number | null = null;
+      for (const m of meshes) {
+        const hit = ray.intersectsMesh(m, false);
+        if (hit.hit && hit.pickedPoint) best = Math.max(best ?? 0, Math.abs(hit.pickedPoint.x - off.x));
+      }
+      return best;
+    });
+    this.sideCache.set(id, out);
+    return out;
   }
 }

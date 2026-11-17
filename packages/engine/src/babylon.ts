@@ -22,6 +22,7 @@ export { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 export { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 export { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 export type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+export { Ray } from "@babylonjs/core/Culling/ray";
 export type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 export { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 export { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";

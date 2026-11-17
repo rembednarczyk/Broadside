@@ -16,6 +16,7 @@ import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
+import { GunScan } from "./ship-guns";
 import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
 /**
@@ -33,8 +34,8 @@ export interface RendererOptions {
   readonly hullsUrl?: string;
   /** Folder of the tiling textures (deck, spars, sailcloth); plain colours without it. */
   readonly texturesUrl?: string;
-  /** Wreck model for the shoals; none without it. */
-  readonly wreckUrl?: string;
+  /** Folder of the prop models (wrecks for the shoals, the scanned gun); none without it. */
+  readonly propsUrl?: string;
 }
 
 export interface FrameEnvironment {
@@ -69,6 +70,7 @@ export class BabylonRenderer {
   private readonly forts: FortsView;
   private towns: TownsView | null = null;
   private readonly wreckUrl: string | undefined;
+  private readonly gunScan: GunScan | null;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -94,8 +96,9 @@ export class BabylonRenderer {
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
     this.forts = new FortsView(this.scene, this.shadows);
-    this.wreckUrl = opts.wreckUrl;
-    this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" || opts.graphics.preset === "medium" ? "-lite" : "") : null;
+    this.wreckUrl = opts.propsUrl;
+    this.gunScan = opts.propsUrl && opts.graphics.preset !== "low" ? new GunScan(this.scene, `${opts.propsUrl}gun.glb`) : null;
+    this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
     this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);
@@ -137,7 +140,9 @@ export class BabylonRenderer {
     this.sun.intensity = look.keyIntensity;
     // Sky light: the hemisphere carries most of the fill on an overcast sea (no GI).
     this.ambient.diffuse = new Color3(look.ambient.r * 1.9, look.ambient.g * 1.9, look.ambient.b * 1.9);
-    this.ambient.groundColor = new Color3(look.ambient.r * 0.5, look.ambient.g * 0.65, look.ambient.b * 0.7);
+    // Light from below: the sea throws back the sky (a ship's sides stand in it), stronger than a
+    // dark ground would.
+    this.ambient.groundColor = new Color3(look.ambient.r * 0.8, look.ambient.g * 0.95, look.ambient.b * 1.05);
     this.ambient.intensity = 1;
     setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
     // Eyes adjust to the night: up to 2.2 times the exposure once the sun is down (post-stack);
@@ -162,7 +167,7 @@ export class BabylonRenderer {
         v = undefined;
       }
       if (!v) {
-        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls);
+        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan);
         this.views.set(e.id, v);
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);

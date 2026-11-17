@@ -173,3 +173,15 @@ Zasada: model właściciela wchodzi do gry możliwie w całości, z własnymi te
 pomiar (audyt trójkątów, wywołań rysowania, czasu klatki) pokaże problem, i tylko w wariancie dla dali albo dla
 presetu low. Do poprawy z tej zasady: toczona lufa zamiast skanu działka, wrak przycięty do 37 tys. trójkątów i
 tekstur 1024, pominięty Älvsnabben, wariant -lite na presecie medium.
+
+## 17.11 Pełniejsze modele i dwa błędy kadłubów z modeli (orkiestrator)
+Wraki: Uelvesbüll 362 tys. trójkątów, tekstury 2048 (5,5 MB); Älvsnabben 761 tys. (30 MB), oba z kwantyzacją
+atrybutów (KHR_mesh_quantization). Działa: skan działka z teksturą 12 tys. trójkątów na lufę (upraszczanie
+meshoptimizer w trybie Permissive, przechodzi przez szwy UV), pokazywany do 140 m od kamery; dalej toczona lufa.
+Pierwsza próba (80 tys. na lufę, 3,2 mln na statek) wieszała render programowy, stąd wariant pośredni. Pełne kadłuby
+także na presecie medium. Działa stoją przy burcie modelu: promień rzucany w siatkę kadłuba, raz na klasę.
+Błędy znalezione przy zbliżeniach: (1) zamiana materiałów PBR na StandardMaterial gubiła orientację ścian z loadera
+glTF, więc rysowane było wnętrze kadłuba, a przez poszycie prześwitywało morze (jasna plama pod rufą); (2) siatki po
+cięciu nie miały normalnych. Oba naprawione w `model-materials.ts`. Kadłub galeonu pozostaje ciemny, bo taki jest w
+teksturze modelu (czarne poszycie). Narzędzie zrzutów: `SHOT_INSPECT="alpha,beta,promień,wysokość"` do zbliżeń.
+Rozmiar zbudowanej gry 77 MB (z tego wrak Älvsnabben 30 MB).
