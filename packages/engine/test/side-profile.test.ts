@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { sternCastle } from "../src/renderer/castle-layout";
 import { SideProfile } from "../src/renderer/side-profile";
 
 const fit = { kx: 0.5, ky: 0.5, draft: 2, length: 40 };
@@ -42,5 +43,20 @@ describe("side profile of a modelled hull", () => {
     expect(caps[0]![0]!.half).toBeCloseTo(3 * 0.97);
     expect(caps.flat().every((s) => Math.abs(s.z) > 3)).toBe(true);
     expect(p.deckCaps()).toHaveLength(0);
+  });
+
+  it("raises a sterncastle on the sliced stations aft, with lanterns on its taffrail", () => {
+    const cut = new SideProfile({ half, top, cut: 12 }, fit);
+    const castle = sternCastle(cut)!;
+    // From the transom (half a station abaft station 0) forward to the break, inside the planking.
+    expect(castle.ring[0]!.z).toBeCloseTo(cut.zOf(0) - 0.625);
+    expect(castle.ring.every((r) => r.z < 0 && r.half < 3)).toBe(true);
+    expect(castle.top - castle.base).toBeCloseTo(2.5);
+    expect(castle.base).toBeCloseTo(4 - 0.95);
+    expect(castle.lanterns).toHaveLength(3);
+    expect(castle.lanterns.every((l) => l[1] > castle.top + 1 && l[2] === castle.ring[0]!.z)).toBe(true);
+    // The waist deck lies below the castle's deck: the stairs have something to climb.
+    expect(castle.waist).toBeLessThan(castle.top);
+    expect(sternCastle(p)).toBeNull();
   });
 });

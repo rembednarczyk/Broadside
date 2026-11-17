@@ -1,5 +1,6 @@
 import { type PartBounds, type ShipPart, partId } from "@broadside/core";
 import { type ShipModel } from "@broadside/sim";
+import { sternCastle } from "./castle-layout";
 import { deckAt } from "./hull-stations";
 import { type RigPlan } from "./rig-plan";
 import { runningRigging, shroudLadders, stayEnds } from "./rig-layout";
@@ -56,6 +57,11 @@ export const listShipParts = (model: ShipModel, plan: RigPlan, side: SideProfile
       parts.push({ id: partId("gun", i), kind: "gun", at, on: partId("carriage", i) });
     }
   });
+  const castle = side ? sternCastle(side) : null;
+  if (castle) {
+    parts.push({ id: partId("castle", "stern"), kind: "castle", at: [0, castle.base, castle.ring[0]!.z], on: "hull" });
+    castle.lanterns.forEach((l, i) => parts.push({ id: partId("lantern", i), kind: "lantern", at: l, on: partId("castle", "stern") }));
+  }
   const tallest = plan.mastTops.reduce((best, t, i) => (t.y > plan.mastTops[best]!.y ? i : best), 0);
   parts.push({ id: "flag", kind: "flag", at: [0, plan.mastTops[tallest]!.y + 0.2, plan.mastTops[tallest]!.z], on: partId("mast", tallest) });
   return parts;

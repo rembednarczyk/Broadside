@@ -9,7 +9,7 @@
  *
  * The structure is a tree by `on` (Composite, GoF: parts carried by parts down to the hull).
  */
-export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag", "sheet", "brace"] as const;
+export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag", "sheet", "brace", "castle", "lantern"] as const;
 export type PartKind = (typeof PART_KINDS)[number];
 
 export interface ShipPart {
@@ -42,6 +42,8 @@ export const CARRIERS: Readonly<Record<PartKind, readonly PartKind[]>> = {
   flag: ["mast"],
   sheet: ["sail"],
   brace: ["yard"],
+  castle: ["hull"],
+  lantern: ["castle", "rail"],
 };
 
 export type PartFaultKind = "duplicate" | "orphan" | "wrongCarrier" | "outside" | "unstayed" | "noShrouds" | "noHull" | "noSheet" | "noBraces";

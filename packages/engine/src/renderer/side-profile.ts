@@ -46,6 +46,11 @@ export class SideProfile {
     return this.half.length;
   }
 
+  /** Length of the fitted model (hull space, metres). */
+  get length(): number {
+    return this.fit.length * this.fit.kx;
+  }
+
   /** Hull-space z of the middle of station k. */
   zOf(k: number): number {
     return ((k + 0.5) / this.stations - 0.5) * this.fit.length * this.fit.kx;

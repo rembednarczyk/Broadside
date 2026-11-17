@@ -268,3 +268,10 @@ na otwartą skorupę; pełny kasztel jak w referencji jest osobną pozycją. Lin
 (42 liny na galeonie), końce brane z rogów siatki żagla po symulacji (`SailCloth.corner`), punkt na kadłubie po tej
 stronie, po której jest róg (reje się brasuje), zwis 0,6–5,6% rozpiętości z wypełnienia żagla. Gafel nazywany
 `yard:gaff:i`, bez brasów (trzymają go fały).
+
+## 17.11 Kasztel rufowy na kadłubie z modelu (prośba właściciela: porównać z referencją)
+Referencja (klatki `ref_060`, `ref_090`): wysoka, płaska rufa z tralkową balustradą, postaciami i latarniami. Model
+właściciela kończy się niskim pokładem rufowym, więc kasztel jest dobudowany: `sternCastle` bierze przekroje rufy
+przecięte cięciem modelu (najwyżej 30% długości od rufy), ściany 7% do wewnątrz od poszycia, wysokość 2,5 m,
+balustrada 0,95 m. Materiał ścian to tekstura kaszteli z oknami (klon dwustronny `castle-open`, żeby nocna poświata
+działała tak samo). Latarnie: emisja 18% w dzień, pełna w nocy.
