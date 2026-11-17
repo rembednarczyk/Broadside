@@ -8,3 +8,5 @@ https://opengameart.org/content/tree-creaking               antumdeluge  tree_cr
 https://opengameart.org/content/solo-seagull-sound-effects  rango-mango  Seagull Ambient 1.wav -> gulls
 https://opengameart.org/content/beach-ocean-waves           qubodup (from jasinski, freesound 18363) wave_01 -> shore
 https://opengameart.org/content/battle-at-sea               thimras      cannon_fire_1, cannon_hit_ship_short, cannon_miss_1, ship_ram_ship_shortened, ship_destroyed_short -> gun, hit, splash, ram, sinking
+https://opengameart.org/content/jc-sounds-pirate-pack-vol-1 jc-sounds (CC BY 4.0) pirate_pack_vol_1.7z -> deck, rope1-3, step1-3, run1-2, sword1-3, pistol, coins, chest
+https://opengameart.org/content/chain-winch-sounds          (CC0)        winch.zip -> winch1, winch2

@@ -1,4 +1,6 @@
 import { type Ambience, Soundscape } from "./soundscape";
+import { ShipSounds } from "./ship-sounds";
+import { type ShipAudioState } from "./ship-sound-plan";
 
 /**
  * Game sound. Recorded CC0 clips when they are loaded (Soundscape: ambience beds and placed
@@ -23,13 +25,18 @@ export type Cue =
   /** Coins counted into the chest (prize money, pay, sales). */
   | { readonly kind: "coins" }
   /** Steel on steel: a boarding fight. */
-  | { readonly kind: "clash" };
+  | { readonly kind: "clash" }
+  /** The capstan turning: kedging off a shoal, weighing anchor. */
+  | { readonly kind: "capstan" }
+  /** A sea chest opened: a bargain struck ashore. */
+  | { readonly kind: "chest" };
 
 const REF_DISTANCE = 40;
 
 export class SynthAudio {
   private ctx: AudioContext | null = null;
   private scape: Soundscape | null = null;
+  private ship: ShipSounds | null = null;
 
   /** `clipsUrl`: where the recorded clips lie (`<url><name>.mp3`); omitted, everything is synthesised. */
   constructor(private readonly clipsUrl?: string) {}
@@ -107,6 +114,13 @@ export class SynthAudio {
     this.setWeather(a.windSpeed, 0.5);
   }
 
+  /** The player's ship as heard aboard (ropes, deck, canvas, bell, water along the side): needs the clips. */
+  setShip(state: ShipAudioState): void {
+    if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
+    this.ship ??= new ShipSounds(this.ctx, this.master, this.scape, this.noise);
+    this.ship.update(state);
+  }
+
   /** Noise bed: wind in m/s, a gust factor 0..1. */
   setWeather(windSpeed: number, gust: number): void {
     if (!this.ctx || !this.windGain || !this.seaGain || !this.windFilter) return;
@@ -159,8 +173,7 @@ export class SynthAudio {
   play(cue: Cue, l: Listener): void {
     if (!this.ctx || this.ctx.state !== "running") return;
     if (cue.kind === "bell") return this.bell();
-    if (cue.kind === "coins") return this.coins();
-    if (cue.kind === "clash") return this.clash();
+    if (cue.kind === "coins" || cue.kind === "clash" || cue.kind === "capstan" || cue.kind === "chest") return this.playNear(cue.kind);
     const at = this.place(cue.x, cue.z, l);
     if (at.gain < 0.03) return;
     if (this.playRecorded(cue, at)) return;
@@ -168,6 +181,27 @@ export class SynthAudio {
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
     else this.burst(at, "lowpass", 600, 2.2 * cue.size, 1, 1.2);
+  }
+
+  /** Sounds heard at the listener's own ship: recorded when the clips are loaded, synthesised otherwise. */
+  private playNear(kind: "coins" | "clash" | "capstan" | "chest"): void {
+    const s = this.scape;
+    const rate = (): number => 0.92 + Math.random() * 0.16;
+    if (kind === "coins") return s?.has("coins") ? s.oneShot("coins", 0.7, 0, rate()) : this.coins();
+    if (kind === "clash") {
+      if (!s?.has("sword1")) return this.clash();
+      // A boarding fight: blades from both sides, then pistols.
+      (["sword1", "sword2", "sword3", "sword1", "sword2"] as const).forEach((c, i) => s.oneShot(c, 0.6, i % 2 ? 0.4 : -0.4, rate(), i * 0.28));
+      s.oneShot("pistol", 0.7, -0.3, rate(), 0.5);
+      s.oneShot("pistol", 0.55, 0.5, rate(), 1.25);
+      return;
+    }
+    if (kind === "capstan") {
+      s?.oneShot("winch1", 0.6, 0, rate());
+      s?.oneShot("winch1", 0.6, 0, rate(), 3.4);
+      return;
+    }
+    s?.oneShot("chest", 0.6, 0, rate());
   }
 
   /** A few bright pings with a short decay, staggered (coins dropping onto a pile). */

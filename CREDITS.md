@@ -25,6 +25,11 @@ randommind (morze, Wisła), tsorthan-grove (wiatr sztormowy, Storm Arwen 2022), 
 (deszcz), wuxiascrub (deszcz z grzmotem), antumdeluge (skrzypienie drewna), rango-mango (mewy), qubodup i jasinski (fala
 przy brzegu), thimras (strzał, trafienie, plusk, taran, tonięcie).
 
+## Dźwięki statku (CC BY 4.0 i CC0, OpenGameArt)
+„Pirate Pack Vol 1”, JC Sounds, https://opengameart.org/content/jc-sounds-pirate-pack-vol-1, CC BY 4.0: skrzypiący
+pokład, liny, kroki po drewnie, szable, pistolet, monety, skrzynia (przycięte i znormalizowane przez `tools/assets/audio.sh`).
+„Chain winch sounds”, https://opengameart.org/content/chain-winch-sounds, CC0: kabestan i pompa.
+
 ## Tekstury (CC0, Poly Haven)
 `weathered_planks` (pokład), `dark_planks` (maszty, reje, lawety), `rough_linen` (splot płótna żagli) z polyhaven.com.
 Pobieranie i skalowanie: `node tools/assets/textures.mjs`.

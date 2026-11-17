@@ -6,6 +6,7 @@ import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
 import { type SimSnapshot } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
+import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
 import { presentAmbience } from "./presenters/ambience-presenter";
@@ -174,12 +175,14 @@ const frame = (now: number) => {
   renderer.onEvents(events);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
-    const cue = cueFor(e);
+    const cue = cueFor(e, session.playerId);
     if (cue) audio.play(cue, listener);
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);
   }
   audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
+  const aboard = presentShipAudio(session.sim, session.playerId, renderer.camera.camera.radius, hoursNow());
+  if (aboard) audio.setShip(aboard);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
   const focus = combatFocus(session.sim, session.playerId);

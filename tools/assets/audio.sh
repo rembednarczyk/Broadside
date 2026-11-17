@@ -25,7 +25,11 @@ loop() {
 }
 # shot <input> <start s> <length s> <name> [gain dB]
 shot() {
-  ffmpeg -v error -y -ss "$2" -t "$3" -i "$1" -af "volume=${5:-0}dB,afade=t=out:st=$(echo "$3 - 0.15" | bc):d=0.15" "${enc[@]}" "$out/$4.mp3"
+  # Fade out over the last 0.15 s, or the last quarter of a very short clip.
+  local fade st
+  fade="$(awk -v l="$3" 'BEGIN { f = l / 4; if (f > 0.15) f = 0.15; printf "%.3f", f }')"
+  st="$(awk -v l="$3" -v f="$fade" 'BEGIN { printf "%.3f", l - f }')"
+  ffmpeg -v error -y -ss "$2" -t "$3" -i "$1" -af "volume=${5:-0}dB,afade=t=out:st=$st:d=$fade" "${enc[@]}" "$out/$4.mp3"
 }
 
 loop "$src/vistula/Vistula.mp3" 600 50 3 sea
@@ -41,4 +45,18 @@ shot "$src/cannon_hit_ship_short.ogg" 0 3.3 hit
 shot "$src/cannon_miss_1.ogg" 0 1.6 splash
 shot "$src/ship_ram_ship_shortened.ogg" 0 5.1 ram
 shot "$src/ship_destroyed_short.ogg" 0 11 sinking
+# Shipboard sounds: JC Sounds "Pirate Pack Vol 1" (CC BY 4.0) and "Chain winch sounds" (CC0).
+pp="$src/pirate/Pirate Pack Vol 1"
+loop "$pp/Ambiences (Loops)/amb_deck_creaks.wav" 0 15 2 deck 10
+shot "$pp/Misc Sfx/sfx_rope_pull_01.wav" 0 3.7 rope1 12
+shot "$pp/Misc Sfx/sfx_rope_pull_02.wav" 0 2.7 rope2 16
+shot "$pp/Misc Sfx/sfx_rope_pull_03.wav" 0 1.1 rope3 15
+for i in 1 2 3; do shot "$pp/Footsteps/steps_wood_slow_0$i.wav" 0 0.45 "step$i" 4; done
+for i in 1 2; do shot "$pp/Footsteps/steps_wood_fast_0$i.wav" 0 0.23 "run$i" 3; done
+for i in 1 2 3; do shot "$pp/Misc Sfx/sfx_sword_swing_0$i.wav" 0 0.46 "sword$i"; done
+shot "$pp/Misc Sfx/sfx_pistol_01.wav" 0 1.8 pistol
+shot "$pp/Misc Sfx/sfx_coin_spill_01.wav" 0 0.7 coins 3
+shot "$pp/Misc Sfx/sfx_chest_open.wav" 0 1.3 chest 2
+shot "$src/winch/winch - Marker 2.wav" 0 3.6 winch1 6
+shot "$src/winch/winch - Marker #8.wav" 0 3.5 winch2 8
 for f in "$out"/*.mp3; do printf "%s " "$(basename "$f")"; ffmpeg -hide_banner -i "$f" -af volumedetect -f null - 2>&1 | grep -oE "mean_volume: [-0-9.]+ dB" ; done

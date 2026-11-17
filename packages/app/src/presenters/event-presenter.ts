@@ -3,9 +3,9 @@ import { type Cue } from "@broadside/engine";
 
 /**
  * Routes domain events to the views (Observer): sound cues and player notices. Pure mapping, so
- * it is tested without audio or DOM; the app hands the results to SynthAudio and the HUD.
+ * it is tested without audio or DOM (`playerId`: sounds of her own ship play only for the player's); the app hands the results to SynthAudio and the HUD.
  */
-export const cueFor = (e: DomainEvent): Cue | null => {
+export const cueFor = (e: DomainEvent, playerId = -1): Cue | null => {
   switch (e.type) {
     case "gunFired":
       return { kind: "gun", x: e.at.x, z: e.at.z, size: Math.sqrt(e.pounder / 12) };
@@ -30,6 +30,11 @@ export const cueFor = (e: DomainEvent): Cue | null => {
     case "contractDone":
     case "playerRescued":
       return { kind: "bell" };
+    case "grounded":
+      // Her own crew man the capstan to haul her off.
+      return e.ship === playerId ? { kind: "capstan" } : null;
+    case "contractAccepted":
+      return { kind: "chest" };
     default:
       return null;
   }

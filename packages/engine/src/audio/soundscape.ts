@@ -6,7 +6,11 @@
  * placed like the synthesised cues (distance law, stereo pan, delay by the speed of sound) and play
  * at a pitch varied per shot so a broadside does not sound like one gun repeated.
  */
-export const CLIPS = ["sea", "wind_light", "wind_storm", "rain", "storm", "creak", "gulls", "shore", "gun", "hit", "splash", "ram", "sinking"] as const;
+export const CLIPS = [
+  "sea", "wind_light", "wind_storm", "rain", "storm", "creak", "gulls", "shore", "gun", "hit", "splash", "ram", "sinking",
+  // Shipboard (JC Sounds' Pirate Pack, CC BY 4.0; winch, CC0): deck bed, ropes, feet, boarding, the purse, the capstan.
+  "deck", "rope1", "rope2", "rope3", "step1", "step2", "step3", "run1", "run2", "sword1", "sword2", "sword3", "pistol", "coins", "chest", "winch1", "winch2",
+] as const;
 export type ClipName = (typeof CLIPS)[number];
 
 const LOOPS = ["sea", "wind_light", "wind_storm", "rain", "storm"] as const;
@@ -59,6 +63,20 @@ export class Soundscape {
       src.start(0, (LOOPS.indexOf(name) * 7.3) % buf.duration);
       this.loopGains.set(name, g);
     }
+  }
+
+  /** A further looping bed (silent until its gain is raised), or null without its clip. */
+  startLoop(name: ClipName): GainNode | null {
+    const buf = this.buffers.get(name);
+    if (!buf) return null;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const g = this.ctx.createGain();
+    g.gain.value = 0;
+    src.connect(g).connect(this.out);
+    src.start();
+    return g;
   }
 
   get ready(): boolean {

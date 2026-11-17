@@ -185,3 +185,12 @@ glTF, więc rysowane było wnętrze kadłuba, a przez poszycie prześwitywało m
 cięciu nie miały normalnych. Oba naprawione w `model-materials.ts`. Kadłub galeonu pozostaje ciemny, bo taki jest w
 teksturze modelu (czarne poszycie). Narzędzie zrzutów: `SHOT_INSPECT="alpha,beta,promień,wysokość"` do zbliżeń.
 Rozmiar zbudowanej gry 77 MB (z tego wrak Älvsnabben 30 MB).
+
+## 17.11 Udźwiękowienie statku (prośba właściciela; pakiet zaakceptowany: „brzmi idealnie”)
+Wzorzec: warstwowe audio gry (stałe podkłady o głośności ze stanu gry plus pojedyncze dźwięki odpalane regułami z
+własnymi licznikami). Decyzje podejmuje czysta funkcja `planShipSounds` (stan statku, pamięć liczników, dt, losowość
+jako parametr), odtwarza `ShipSounds`. Stan czyta prezenter `presentShipAudio`. Nagrania: JC Sounds „Pirate Pack
+Vol 1” (CC BY 4.0, uznanie w CREDITS.md) i „Chain winch sounds” (CC0). Synteza tam, gdzie nagrania brak: woda wzdłuż
+burty, wiatr w olinowaniu (dwa wąskie pasma szumu na częstotliwości 0,2·wiatr/średnica liny 12 mm i jej oktawie),
+łopot i strzał płótna, turkot lawety, dzwon. Dzwon bije według wacht: co pół godziny gry od 1 do 8 uderzeń parami.
+Dźwięki własnego statku cichną z oddaleniem kamery (do 20%). Kabestan gra tylko przy mieliźnie gracza.
