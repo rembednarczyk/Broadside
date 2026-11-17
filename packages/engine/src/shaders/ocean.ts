@@ -162,6 +162,31 @@ float vnoise(vec2 p) {
   vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
+// Foam is lace, not a blot: a network of bubble walls between rounded open cells, closing up to a
+// solid sheet where it is thick. The walls are where the two nearest feature points of cellular
+// noise are nearly equally near (F2 - F1 small, Worley 1996); \`cover\` 0..1 thickens them.
+vec2 cells(vec2 p) {
+  vec2 c = floor(p);
+  float f1 = 9.0;
+  float f2 = 9.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 o = c + vec2(float(i), float(j));
+      vec2 r = o + vec2(hash(o), hash(o + 17.3)) - p;
+      float d = dot(r, r);
+      if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+    }
+  }
+  return sqrt(vec2(f1, f2));
+}
+float lace(vec2 p, float cover) {
+  if (cover <= 0.01) return 0.0;
+  float a = cells(p).y - cells(p).x;
+  float b = cells(p * 2.7 + 5.1).y - cells(p * 2.7 + 5.1).x;
+  float wall = min(a, b * 0.8);
+  float w = 0.03 + cover * 0.55;
+  return smoothstep(w, w - 0.06, wall) * smoothstep(0.0, 0.25, cover);
+}
 float fbm(vec2 p) {
   float s = 0.0; float a = 0.5;
   for (int i = 0; i < 4; i++) { s += a * vnoise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
@@ -322,14 +347,16 @@ void main() {
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
   float foamNoise = fbm(vWorld.xz * 0.18 + vec2(time * 0.05, -time * 0.03));
-  float foam = clamp(fold * foamAmount * 0.6 * smoothstep(0.5, 0.85, foamNoise + fold * 0.3), 0.0, 1.0);
-  float wakeFoam = wk.x * smoothstep(0.45, 0.75, fbm(vWorld.xz * 0.6 + vec2(time * 0.2, 0.0)) + wk.x * 0.2);
-  foam = max(foam, wakeFoam * 0.5);
+  float caps = fold * foamAmount * smoothstep(0.45, 0.8, foamNoise + fold * 0.3);
+  // The wake's and the crests' foam drawn as lace that drifts and opens as it ages.
+  vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
+  float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
+  foam = max(foam, lace(fp * 1.15 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)) * (0.35 + 0.4 * wk.x));
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
-  float surfFoam = sh.y * smoothstep(0.35, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3);
+  float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
   col = mix(col, vec3(0.9, 0.92, 0.92) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
