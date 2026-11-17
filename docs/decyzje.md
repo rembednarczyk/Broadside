@@ -194,3 +194,8 @@ Vol 1” (CC BY 4.0, uznanie w CREDITS.md) i „Chain winch sounds” (CC0). Syn
 burty, wiatr w olinowaniu (dwa wąskie pasma szumu na częstotliwości 0,2·wiatr/średnica liny 12 mm i jej oktawie),
 łopot i strzał płótna, turkot lawety, dzwon. Dzwon bije według wacht: co pół godziny gry od 1 do 8 uderzeń parami.
 Dźwięki własnego statku cichną z oddaleniem kamery (do 20%). Kabestan gra tylko przy mieliźnie gracza.
+
+## 17.11, użytkownik: fizyka żagli i ożaglowania (później w kolejce)
+Żagle i olinowanie mają płynnie reagować na zastane warunki, projektowane z góry jako deterministyczne, na poziomie
+grafik referencyjnych. Przeszycia materiału żagla (szwy brytów) mają istnieć i wpływać na fizykę materiału
+(sztywniejsze pasma). Kolejność: po teksturach wysokiej jakości.
