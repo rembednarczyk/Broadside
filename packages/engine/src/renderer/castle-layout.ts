@@ -29,6 +29,13 @@ export interface CastlePort {
   readonly n: readonly [number, number, number];
 }
 
+/**
+ * The ship's wheel stands on the castle's deck this far abaft its break (m); the helmsman stands
+ * WHEEL_REACH abaft the wheel, facing it and the bow.
+ */
+export const WHEEL_ABAFT = 1.0;
+export const WHEEL_REACH = 0.6;
+
 /** Height of the castle's walls, of its balustrade and of a lantern on its post (m). */
 export const CASTLE_WALL = 2.2;
 export const BALUSTRADE = 0.95;

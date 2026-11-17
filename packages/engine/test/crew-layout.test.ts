@@ -24,9 +24,10 @@ describe("crew stations on a modelled hull", () => {
     const spots = modelCrewSpots(d.model, d);
     expect(spots).toHaveLength(crewFigures(d.model.def.crew));
     expect(spots[0]!.role).toBe("wheel");
-    expect(spots[1]!.role).toBe("lookout");
+    expect(spots[1]!.role).toBe("officer");
+    expect(spots[2]!.role).toBe("lookout");
     // The lookout stands in a top, far above the deck.
-    expect(spots[1]!.at[1]).toBeGreaterThan(spots[0]!.at[1] + 8);
+    expect(spots[2]!.at[1]).toBeGreaterThan(spots[0]!.at[1] + 8);
     expect(spots.filter((s) => s.role === "rail").length).toBeGreaterThanOrEqual(4);
     const roles = new Set(spots.map((s) => s.role));
     for (const r of ["gun", "halyard"] as const) expect(roles.has(r), r).toBe(true);
@@ -56,6 +57,8 @@ describe("what the men do", () => {
     expect(crewClip("halyard", 2, 0, { ...calm, handling: [false, false, true] })).toBe("haul");
     expect(crewClip("wheel", -1, 0, calm)).toBe("wheel");
     expect(crewClip("lookout", 1, 0, calm)).toBe("lookout");
+    expect(crewClip("officer", -1, 0, calm)).toBe("arms");
+    expect(["rail", "call"]).toContain(crewClip("rail", -1, 2, calm));
     // A beaten crew stands idle, whatever the ship does.
     expect(["idle", "talk"]).toContain(crewClip("brace", 1, 0, { ...calm, bracing: [true, true, true], beaten: true }));
   });

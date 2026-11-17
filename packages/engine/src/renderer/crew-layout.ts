@@ -1,18 +1,18 @@
 import { type ShipModel } from "@broadside/sim";
-import { type CastleLayout } from "./castle-layout";
+import { type CastleLayout, WHEEL_ABAFT, WHEEL_REACH } from "./castle-layout";
 import { type GunPlace } from "./gun-layout";
 import { type SideProfile } from "./side-profile";
 
 /**
  * Where the crew stand on a modelled hull and what each man is there for (pure layout, tested). The
- * stations of a ship's company at sea: the helmsman at the wheel on the quarterdeck, a lookout in
+ * stations of a ship's company at sea: the helmsman at the wheel on the quarterdeck and the officer of the watch beside him, a lookout in
  * the maintop, men along the taffrail (the reference's stern shots show six to eight there,
  * ref_090), hands at the foot of each mast for the halyards and clewlines, hands at the braces by
  * the sides, the crews of the upper deck's guns and the rest about the waist. Stations are listed in the order
  * they are manned, so as the crew falls the waist empties first and the wheel last. Positions are
  * a man's feet in hull space; a fixed integer sequence spreads them, no random source.
  */
-export type CrewRole = "wheel" | "lookout" | "gun" | "halyard" | "brace" | "rail" | "waist";
+export type CrewRole = "wheel" | "officer" | "lookout" | "gun" | "halyard" | "brace" | "rail" | "waist";
 
 export interface CrewSpot {
   readonly at: readonly [number, number, number];
@@ -51,8 +51,10 @@ export const modelCrewSpots = (model: ShipModel, d: CrewDecks): CrewSpot[] => {
   const mainIndex = model.def.masts.reduce((best, m, i, all) => (m.height > all[best]!.height ? i : best), 0);
   const main = masts[mainIndex]!;
   // The helmsman: on the castle's deck just abaft its break, or in the waist abaft the mizzen.
-  const wheelZ = d.castle ? d.castle.ring[d.castle.ring.length - 1]!.z - 1.6 : Math.min(...masts) - 3;
+  const wheelZ = d.castle ? d.castle.ring[d.castle.ring.length - 1]!.z - WHEEL_ABAFT - WHEEL_REACH : Math.min(...masts) - 3;
   push({ at: [0, deckY(d, wheelZ), wheelZ], yaw: 0, role: "wheel", of: -1 });
+  // The officer of the watch beside him, arms folded, looking forward.
+  push({ at: [1.3, deckY(d, wheelZ - 0.6), wheelZ - 0.6], yaw: -0.25, role: "officer", of: -1 });
   // A lookout in the maintop.
   const top = d.tops.reduce<{ y: number; z: number } | null>((best, t) => (Math.abs(t.z - main) < 1 && (!best || t.y < best.y) ? t : best), null);
   if (top) push({ at: [0.4, top.y + 0.1, top.z - 0.4], yaw: 0, role: "lookout", of: mainIndex });
@@ -62,7 +64,7 @@ export const modelCrewSpots = (model: ShipModel, d: CrewDecks): CrewSpot[] => {
     const row = Math.min(6, Math.max(0, Math.floor((stern.half * 1.6) / 0.8)));
     for (let i = 0; i < row; i++) {
       const x = row === 1 ? 0 : -stern.half * 0.8 + (stern.half * 1.6 * i) / (row - 1);
-      push({ at: [x, d.castle.top, stern.z + 0.7 + 0.2 * spread(i, 1)], yaw: Math.PI + (spread(i, 2) - 0.5) * 0.6, role: "rail", of: -1 });
+      push({ at: [x, d.castle.top, stern.z + 0.55 + 0.1 * spread(i, 1)], yaw: Math.PI + (spread(i, 2) - 0.5) * 0.3, role: "rail", of: -1 });
     }
   }
   // Two hands at the foot of each mast, at its halyards, facing it.

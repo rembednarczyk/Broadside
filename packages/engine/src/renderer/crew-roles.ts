@@ -6,7 +6,7 @@ import { type CrewRole } from "./crew-layout";
  * kept between frames except the activity itself, which ship-view measures from the simulation:
  * the yards swinging (bracing, D1), canvas being set or taken in, guns fired and reloading.
  */
-export type CrewClipName = "idle" | "talk" | "haul" | "wheel" | "work" | "handle" | "lookout";
+export type CrewClipName = "idle" | "talk" | "haul" | "wheel" | "work" | "handle" | "lookout" | "rail" | "call" | "arms";
 
 export interface CrewActivity {
   /** The yards of this mast are being braced round (index of mast; empty: none). */
@@ -31,6 +31,11 @@ export const crewClip = (role: CrewRole, of: number, i: number, a: CrewActivity)
       return "wheel";
     case "lookout":
       return "lookout";
+    case "officer":
+      return "arms";
+    case "rail":
+      // Leaning on the taffrail; now and then one hails a ship astern.
+      return i % 4 === 0 ? "call" : "rail";
     case "gun":
       return a.sinceFired(of) < RELOAD_WORK ? "handle" : rest;
     case "halyard":

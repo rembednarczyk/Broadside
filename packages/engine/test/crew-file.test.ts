@@ -12,7 +12,7 @@ describe("animated crew file", () => {
   it("holds skinned figures, the clips the deck needs and one row of joint matrices per frame", () => {
     const crew = parseCrewFile(file());
     expect(crew.joints).toBe(65);
-    expect(crew.clips.map((c) => c.name)).toEqual(expect.arrayContaining(["idle", "talk", "haul", "wheel", "work", "handle", "lookout"]));
+    expect(crew.clips.map((c) => c.name)).toEqual(expect.arrayContaining(["idle", "talk", "haul", "wheel", "work", "handle", "lookout", "rail", "call", "arms"]));
     const frames = crew.clips.reduce((n, c) => n + c.frames, 0);
     expect(crew.vat.length).toBe(frames * (crew.joints + 1) * 16);
     for (const c of crew.clips) expect(c.frames).toBeGreaterThan(1);

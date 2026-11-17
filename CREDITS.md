@@ -35,6 +35,6 @@ pokład, liny, kroki po drewnie, szable, pistolet, monety, skrzynia (przycięte 
 Pobieranie i skalowanie: `node tools/assets/textures.mjs`.
 
 ## Postacie załogi (CC0, Quaternius)
-„Modular Character Outfits - Fantasy”, „Universal Base Characters” i „Universal Animation Library” (wersje Standard,
+„Modular Character Outfits - Fantasy”, „Universal Base Characters” i „Universal Animation Library” 1 i 2 (wersje Standard,
 bezpłatne) autorstwa Quaterniusa, https://quaternius.com, CC0 1.0. Stroje, głowy, fryzury i animacje złożone i wypieczone
 skryptem `tools/assets/crew-anim.mjs` do `packages/app/public/assets/props/crew-anim.bin`.

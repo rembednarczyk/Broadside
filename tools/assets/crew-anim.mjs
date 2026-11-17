@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Animated crew for the decks (scripted, deterministic): Quaternius's CC0 characters (Modular
- * Character Outfits - Fantasy, Universal Base Characters, Universal Animation Library; one rig for
- * all three) put together as skinned figures, with the library's animations baked into one texture
+ * Character Outfits - Fantasy, Universal Base Characters, Universal Animation Library 1 and 2; one
+ * rig for all of them) put together as skinned figures, with the library's animations baked into one texture
  * of joint matrices (a vertex animation texture, the layout of Babylon's VertexAnimationBaker:
  * per frame a row of (joints + 1) matrices, the last the identity). The game draws every man of a
  * figure as a thin instance that plays its own clip from that texture
@@ -47,6 +47,7 @@ const PEASANT_TEX = `${Q}/Modular Character Outfits - Fantasy[Standard]/Textures
 const BASE = `${Q}/Universal Base Characters[Standard]/Base Characters/Godot - UE`;
 const HAIR = `${Q}/Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)`;
 const ANIMS = `${Q}/Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb`;
+const ANIMS2 = `${Q}/Universal Animation Library 2[Standard]/Unreal-Godot/UAL2_Standard.glb`;
 
 /** The figures: outfit, hair and the outfit's texture variant. */
 const FIGURES = [
@@ -56,7 +57,7 @@ const FIGURES = [
   { name: "topman", outfit: "Male_Peasant", hair: ["Hair_Long"], tint: "T_Peasant_2_BaseColor" },
   { name: "officer", outfit: "Male_Ranger", hair: ["Hair_SimpleParted", "Hair_Beard"] },
 ];
-/** The clips the game plays (its names, from the library's animations). */
+/** The clips the game plays (its names, from the libraries' animations; `lib: 2` the second library). */
 const CLIPS = [
   { name: "idle", anim: "Idle_Loop" },
   { name: "talk", anim: "Idle_Talking_Loop" },
@@ -65,6 +66,9 @@ const CLIPS = [
   { name: "work", anim: "Fixing_Kneeling" },
   { name: "handle", anim: "Interact" },
   { name: "lookout", anim: "Idle_Torch_Loop" },
+  { name: "rail", anim: "Idle_Rail_Loop", lib: 2 },
+  { name: "call", anim: "Idle_Rail_Call", lib: 2 },
+  { name: "arms", anim: "Idle_FoldArms_Loop", lib: 2 },
 ];
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -215,6 +219,7 @@ const canon = canonDoc.getRoot().listSkins()[0].listJoints().map((j) => j.getNam
 const canonRest = worldOf(canonDoc);
 const restInverse = canon.map((name) => invert(canonRest.get(name)));
 const animDoc = await io.read(ANIMS);
+const animDoc2 = await io.read(ANIMS2);
 // The library's mannequin stands on shorter legs: its hip translation is scaled to the outfit's.
 const ualPelvis = worldOf(animDoc).get("pelvis")[13];
 const hip = canonRest.get("pelvis")[13] / ualPelvis;
@@ -223,7 +228,7 @@ const hip = canonRest.get("pelvis")[13] / ualPelvis;
 const frames = [];
 const clips = [];
 for (const c of CLIPS) {
-  const anim = animDoc.getRoot().listAnimations().find((a) => a.getName() === c.anim);
+  const anim = (c.lib === 2 ? animDoc2 : animDoc).getRoot().listAnimations().find((a) => a.getName() === c.anim);
   if (!anim) throw new Error(`no animation ${c.anim}`);
   const length = Math.max(...anim.listSamplers().map((s) => s.getInput().getMax([])[0]));
   const count = Math.max(2, Math.round(length * FPS));
