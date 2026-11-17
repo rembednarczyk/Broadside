@@ -473,3 +473,10 @@ kasztelu nie ma), podłoga na najniższym pokładzie pod kasztelem, a pokład 0,
 modelu wznosi się ku dziobowi i pierwsza wersja kasztelu schowała się w nim), bez koła, okien i latarni. Śródokręcie
 załogi kończy się 1,2 m przed jego przerwą. Kształt jest kanciasty wobec `ref_064` (tam dziób wznosi się łagodnie
 i kończy galionem): do dalszej pracy.
+
+**17.11, zwinięte żagle, poprawka (właściciel: „te cygara nie wyglądają najlepiej”).** Gładką kapsułę zastąpił
+zwój liczony w `furl-geometry.ts` według opisu zwijania u Levera (1808): grubszy środek (płótno zebrane w środku
+żagla), zwężenie ku nokom, dwa sejzingi po bokach (po dwa zwoje liny, w ciemnym obszyciu górnego liku tekstury),
+przewężenie płótna pod nimi, łuk zwisający między sejzingami (do 0,3 średnicy) i krótsze na zewnątrz, fałdy wzdłuż
+zwoju. Faktura: środek tej samej tekstury płótna co żagle (bez godła, z dala od postrzępionego liku dolnego).
+Nadal jedna bryła instancjonowana na statek (wierzchołki 585 → ok. 700), koszt rysowania bez zmian.

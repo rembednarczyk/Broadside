@@ -1,8 +1,9 @@
-import { Color3, Matrix, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
+import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
 import { SAIL_COLS, SAIL_ROWS, YARD_CLEAR, foreSide, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
 import { type SailPlan } from "./rig-plan";
 import { type MastBend, bendShare, flutterOffset } from "./rig-motion";
 import { SailSim } from "./sail-sim";
+import { furlGeometry } from "./furl-geometry";
 
 /**
  * All the canvas of one ship in one dynamic mesh per material, and all its yards as thin
@@ -107,8 +108,16 @@ export class SailCloth {
       if (p.yard) this.yardPlans.push({ plan: p, index: i, length: p.shape === "square" ? p.width * 1.18 : p.width });
     });
     this.yardBuf = new Float32Array(this.yardPlans.length * 16);
-    this.furls = MeshBuilder.CreateCapsule(`${name}-furls`, { height: 1, radius: 0.5, tessellation: 8, subdivisions: 1 }, scene);
-    this.furls.material = furledCanvas(scene);
+    // Furled canvas: the roll of furl-geometry, in the ship's plain canvas (no emblem on a furled sail).
+    this.furls = new Mesh(`${name}-furls`, scene);
+    const furl = furlGeometry();
+    const fd = new VertexData();
+    fd.positions = furl.positions;
+    fd.normals = furl.normals;
+    fd.uvs = furl.uvs;
+    fd.indices = furl.indices;
+    fd.applyToMesh(this.furls);
+    this.furls.material = plans[0] ? materialFor({ ...plans[0], emblem: false }) : null;
     this.furls.parent = parent;
     this.furls.alwaysSelectAsActiveMesh = true;
     shadows?.addShadowCaster(this.furls);
@@ -239,13 +248,3 @@ export class SailCloth {
     }
   }
 }
-
-/** Weathered canvas, plain (a furled roll shows no cloths or emblem), shared by every ship. */
-const furledCanvas = (scene: Scene): StandardMaterial => {
-  const cached = scene.getMaterialByName("furled-canvas");
-  if (cached) return cached as StandardMaterial;
-  const m = new StandardMaterial("furled-canvas", scene);
-  m.diffuseColor = new Color3(0.42, 0.38, 0.31);
-  m.specularColor = new Color3(0.03, 0.03, 0.03);
-  return m;
-};
