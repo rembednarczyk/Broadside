@@ -139,7 +139,7 @@ vec4 marchClouds(vec3 d, float sunUp) {
     t += dt;
   }
   // Far clouds sink into the haze of the horizon.
-  float far = smoothstep(0.02, 0.2, d.y);
+  float far = smoothstep(0.02, 0.1, d.y);
   float rise = smoothstep(0.015, 0.07, d.y);
   return vec4(mix(skyHorizon * 0.8 * (1.0 - T), light, far) * rise, mix(1.0, T, rise));
 }
