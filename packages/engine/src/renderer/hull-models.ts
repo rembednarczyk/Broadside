@@ -1,7 +1,7 @@
 import { type ShipClassId } from "@broadside/core";
 import { type AbstractMesh, type AssetContainer, Ray, Texture, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
 import { GLB, assetUrl } from "./asset-url";
-import { SideProfile, type SideProfileData } from "./side-profile";
+import { SideProfile, type SideProfileData, hullFit } from "./side-profile";
 import { useStandardMaterials } from "./model-materials";
 
 /**
@@ -29,12 +29,6 @@ interface HullMetrics {
 
 /** Brightness of the hull textures: the models' timber is far darker than the generated hulls. */
 const HULL_GAIN = 1.6;
-
-/** Height of the bulwark above the deck the physics hull is built to (m). */
-const BULWARK = 0.8;
-
-/** Scales that fit a model to a physics hull: the beam to its beam, the gunwale to its deck plus a bulwark. */
-const fitOf = (m: HullMetrics, hull: { beam: number; draft: number; freeboard: number }): { kx: number; ky: number } => ({ kx: hull.beam / m.beam, ky: (hull.draft + hull.freeboard + BULWARK) / m.gunwale });
 
 export class HullModels {
   private readonly plankTextures = new Map<ShipClassId, Texture>();
@@ -75,7 +69,7 @@ export class HullModels {
     const m = this.loaded.get(id);
     if (!m) return null;
     const inst = m.container.instantiateModelsToScene((n) => `${n}-${parent.name}`, false, { doNotInstantiate: true });
-    const { kx, ky } = fitOf(m.metrics, hull);
+    const { kx, ky } = hullFit(m.metrics, hull);
     const meshes: AbstractMesh[] = [];
     for (const root of inst.rootNodes) {
       root.parent = parent;
@@ -90,7 +84,7 @@ export class HullModels {
   /** Length and beam of the class's model as fitted to the physics hull (the hull the eye sees), or null without one. */
   fitted(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }): { length: number; beam: number } | null {
     const m = this.loaded.get(id);
-    return m ? { length: m.metrics.length * fitOf(m.metrics, hull).kx, beam: hull.beam } : null;
+    return m ? { length: m.metrics.length * hullFit(m.metrics, hull).kx, beam: hull.beam } : null;
   }
 
   /**
@@ -101,7 +95,7 @@ export class HullModels {
     const m = this.loaded.get(id);
     const patch = m?.metrics.patches?.planks;
     if (!m || !patch) return null;
-    const { kx, ky } = fitOf(m.metrics, hull);
+    const { kx, ky } = hullFit(m.metrics, hull);
     let t = this.plankTextures.get(id);
     if (!t) {
       t = new Texture(assetUrl(`${this.baseUrl}${id}-planks.jpg`), this.scene);
@@ -118,7 +112,7 @@ export class HullModels {
   profile(id: ShipClassId, hull: { beam: number; draft: number; freeboard: number }): SideProfile | null {
     const m = this.loaded.get(id);
     if (!m?.metrics.profile) return null;
-    return new SideProfile({ ...m.metrics.profile, cut: m.metrics.height }, { ...fitOf(m.metrics, hull), draft: hull.draft, length: m.metrics.length });
+    return new SideProfile({ ...m.metrics.profile, cut: m.metrics.height }, { ...hullFit(m.metrics, hull), draft: hull.draft, length: m.metrics.length });
   }
 
   /**

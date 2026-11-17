@@ -1,5 +1,5 @@
 import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type StandardMaterial, type TransformNode, Vector3, VertexData, type ShadowGenerator } from "../babylon";
-import { SAIL_COLS, SAIL_ROWS, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
+import { SAIL_COLS, SAIL_ROWS, YARD_CLEAR, foreSide, sailIndices, sailPositions, sailUvs } from "./sail-geometry";
 import { type SailPlan } from "./rig-plan";
 import { type MastBend, bendShare, flutterOffset } from "./rig-motion";
 import { SailSim } from "./sail-sim";
@@ -168,7 +168,7 @@ export class SailCloth {
           const plan = g.indexOf[k]!;
           const sim = (this.sims[plan] ??= new SailSim(p));
           if (starting) sim.reset(st.set);
-          sim.advance(cloth.dt, st.set, st.billow, cloth.wind, st.flutter);
+          sim.advance(cloth.dt, st.set, st.billow, cloth.wind, st.flutter, p.shape === "square" ? -foreSide(st.angle) * YARD_CLEAR : null);
           this.local.set(sim.positions);
         } else sailPositions(p, st.set, st.billow, this.local);
         if (!cloth && st.flutter > 0.01) {
@@ -182,8 +182,10 @@ export class SailCloth {
         const bend = bends[p.mast];
         const c = Math.cos(st.angle);
         const s = Math.sin(st.angle);
+        // A square sail hangs from its yard before the mast.
+        const fore = p.shape === "square" ? foreSide(st.angle) * YARD_CLEAR : 0;
         for (let v = 0; v < VERTS; v++) {
-          const x = this.local[v * 3]!;
+          const x = this.local[v * 3]! + fore;
           const y = this.local[v * 3 + 1]!;
           const z = this.local[v * 3 + 2]!;
           const k = bend ? bendShare(bend, y + p.nodeY) : 0;
@@ -199,7 +201,7 @@ export class SailCloth {
     this.yardPlans.forEach((y, k) => {
       const st = states[y.index]!;
       const p = y.plan;
-      const local = p.shape === "square" ? new Vector3(0, p.foot + p.height, 0) : new Vector3(0, p.foot, -p.width / 2);
+      const local = p.shape === "square" ? new Vector3(foreSide(st.angle) * YARD_CLEAR, p.foot + p.height, 0) : new Vector3(0, p.foot, -p.width / 2);
       const rot = Quaternion.RotationYawPitchRoll(st.angle, Math.PI / 2, 0);
       const pos = Vector3.TransformCoordinates(local, Matrix.RotationY(st.angle)).add(new Vector3(0, p.nodeY, p.nodeZ));
       const bend = bends[p.mast];

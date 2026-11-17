@@ -353,3 +353,15 @@ więcej światła przez cienkie miejsca; płat fazy do przodu ograniczony do 3,2
 niebem zamyka przyćmiona mgiełka dalekich chmur (`lid`), bo jasna szczelina pod pokrywą nie występuje w klatkach.
 Mgiełka chmur przy horyzoncie do ok. 6° (było 11°). Skutek uboczny: przy pogodzie `fresh` (0,45) chmur jest mniej niż
 przed zmianą. Ujęcie `deck` wraca do kamery pokładowej gry; ustawienie jak w `ref_112` zostaje do zrobienia.
+
+**17.11, przenikanie części statku (orkiestrator, „Bierz”).** Części w katalogu mają bryły (kapsuła dla drzewc, dział
+i lin, prostopadłościan w układzie kadłuba dla zabudowy; Ericson, „Real-Time Collision Detection”, rozdz. 4–5), a
+`auditClashes` zgłasza pary, które nie mogą się przecinać. Różnica wobec wzorca: kapsuła–prostopadłościan liczona w 17
+punktach osi kapsuły zamiast dokładnie. Audyt na kadłubach z modeli (z prawdziwymi profilami burt) wykrył cztery wanty
+bezanmasztu galeonu w kasztelu; stopy want są teraz przesuwane przed kasztel. Działo w kasztelu jest dozwolone tylko
+z furtą (`port:<nr działa>`), bo działa w kajutach rufowych strzelały przez furty; furta to ciemny otwór z ramą i
+podniesioną klapą. Baksztagi schodzą do burty modelu (były do burty kadłuba fizycznego, ponad metr poza modelem na
+rufie). Maszt przechodzący przez pokład kasztelu nie jest regułą audytu: maszty przechodzą przez pokłady.
+Żagle rejowe wisiały w osi masztu; teraz reja wisi 0,42 m przed masztem po stronie dziobu (`foreSide`), a tkanina ma
+jeden kolider, walec masztu o promieniu 0,3 m (Müller i in. 2007, §3.4, bez tarcia). Położenie dział liczy jeden moduł
+`gun-layout.ts` dla siatek i dla listy części.

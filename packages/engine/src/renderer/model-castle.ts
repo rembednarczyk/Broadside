@@ -1,5 +1,6 @@
 import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, StandardMaterial, type Texture, type TransformNode, Vector3, VertexData } from "../babylon";
 import { BALUSTRADE, type CastleLayout } from "./castle-layout";
+import { buildCastlePorts } from "./castle-ports";
 
 /**
  * The sterncastle of a modelled hull as meshes (layout: castle-layout): walls laid strake by
@@ -150,7 +151,9 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       const d = (total * (w + 0.5)) / count;
       const i = Math.max(0, dist.findIndex((x) => x >= d) - 1);
       const t = (d - dist[i]!) / Math.max(1e-6, dist[i + 1]! - dist[i]!);
-      windows.push({ at: Vector3.Lerp(run.pts[i]!, run.pts[i + 1]!, t).add(new Vector3(0, c.base + (c.top - c.base) * 0.55, 0)), n: run.normal(i) });
+      const at = Vector3.Lerp(run.pts[i]!, run.pts[i + 1]!, t).add(new Vector3(0, c.base + (c.top - c.base) * 0.55, 0));
+      // No window where a gun port is cut.
+      if (!c.ports.some((port) => Math.hypot(port.at[0] - at.x, port.at[2] - at.z) < 1.1)) windows.push({ at, n: run.normal(i) });
     }
   });
   const walls = meshOf(scene, `castle-${parent.name}`, wp, wu, wi);
@@ -203,7 +206,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
   const post = MeshBuilder.CreateCylinder(`castle-lantern-posts-${parent.name}`, { height: 1, diameter: 0.06, tessellation: 5 }, scene);
   post.material = mats.wood;
   instances(post, c.lanterns.map((l) => Matrix.Compose(new Vector3(1, l[1] - 0.27 - (c.top + BALUSTRADE), 1), Quaternion.Identity(), new Vector3(l[0], (l[1] - 0.27 + c.top + BALUSTRADE) / 2, l[2]))));
-  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post];
+  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post, ...buildCastlePorts(scene, parent.name, c.ports, mats.wood)];
   for (const m of all) {
     m.parent = parent;
     m.isPickable = false;

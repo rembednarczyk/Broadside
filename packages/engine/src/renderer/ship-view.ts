@@ -7,6 +7,8 @@ import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
 import { sternCastle } from "./castle-layout";
+import { type SideProfile } from "./side-profile";
+import { gunPlaces } from "./gun-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelDecks, buildModelRails } from "./model-rails";
 import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
@@ -211,15 +213,15 @@ export class ShipView {
     shadows?.addShadowCaster(hullMesh);
     const deck = this.buildMesh(scene, `deck-${entityId}`, deckGeometry(model.def.hull), mats.deck);
     deck.parent = hullSpace;
-    this.buildRig(scene, hullSpace, model, faction, mats, shadows);
-    // The measured side of a modelled hull: shrouds, channels and the rail are fitted to it.
+    // The measured side of a modelled hull: stays, shrouds, channels and the rail are fitted to it.
     const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
+    this.buildRig(scene, hullSpace, model, faction, mats, shadows, side);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
     if (side) {
       buildModelRails(scene, hullSpace, side, mats.wood, shadows);
       buildModelDecks(scene, hullSpace, side, mats.deck);
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
-      const castle = sternCastle(side);
+      const castle = sternCastle(side, gunPlaces(model, (_, z) => side.halfAt(z)));
       if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
@@ -275,7 +277,7 @@ export class ShipView {
     return m;
   }
 
-  private buildRig(scene: Scene, parent: TransformNode, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null): void {
+  private buildRig(scene: Scene, parent: TransformNode, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, side: SideProfile | null): void {
     const plan = rigPlan(model.def);
     // Masts: one merged mesh per mast (so a fallen mast can be hidden), bowsprit and tops with the first.
     const parts: Mesh[][] = model.def.masts.map(() => []);
@@ -317,15 +319,15 @@ export class ShipView {
     this.fixed = this.plans.map((p) => p.shape === "square" && model.def.masts[p.mast]!.sails[p.sail]!.rig === "foreAft");
     this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem, mats.sailSize), mats.wood, shadows);
     this.springs = new MastSprings(plan.mastTops.map((t, i) => ({ base: t.y - model.def.masts[i]!.height, height: model.def.masts[i]!.height })));
-    this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model);
+    this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model, side);
     // Sheets and braces: thin laid rope from the sails' corners (close ships only).
     const lines = runningRigging(plan, model.def.hull);
     this.running = { lines, tubes: new RopeTubes(scene, parent, `running-ropes-${this.entityId}`, lines.length, 6, 0.02) };
   }
 
   /** Fore-and-aft stays between mast heads and to the bowsprit, and backstays to the rail. */
-  private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel): void {
-    const ends = stayEnds(tops, bow, model.def.hull);
+  private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel, side: SideProfile | null): void {
+    const ends = stayEnds(tops, bow, model.def.hull, side);
     const lines = ends.map((e) => sagLine(e.a, e.b, 0).map((p) => new Vector3(...p)));
     const rig = MeshBuilder.CreateLineSystem(`stays-${this.entityId}`, { lines, updatable: true }, scene);
     rig.color = new Color3(0.08, 0.06, 0.05);

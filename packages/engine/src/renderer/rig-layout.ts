@@ -1,6 +1,7 @@
 import { type ShipModel } from "@broadside/sim";
 import { beamAt, deckAt } from "./hull-stations";
 import { type RigPlan } from "./rig-plan";
+import { CASTLE_WALL, sternCastle } from "./castle-layout";
 import { type SideProfile } from "./side-profile";
 
 /**
@@ -18,13 +19,15 @@ export interface StayEnds {
 }
 
 /** Fore-and-aft stays from each masthead to the mast ahead (or the bowsprit), and a pair of backstays to the rail. */
-export const stayEnds = (tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, hull: { beam: number; freeboard: number }): StayEnds[] => {
+export const stayEnds = (tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, hull: { beam: number; freeboard: number }, side: SideProfile | null = null): StayEnds[] => {
   const ends: StayEnds[] = [];
   const order = tops.map((t, i) => ({ t, i })).sort((p, q) => q.t.z - p.t.z);
   order.forEach(({ t, i }, k) => {
     const prev = order[k - 1];
     ends.push(prev ? { from: i, a: [0, t.y * 0.97, t.z], to: prev.i, b: [0, prev.t.y * 0.6, prev.t.z] } : { from: i, a: [0, t.y * 0.97, t.z], to: -1, b: [0, bow.y, bow.z] });
-    for (const sx of [-1, 1]) ends.push({ from: i, a: [0, t.y, t.z], to: -1, b: [sx * hull.beam * 0.48, hull.freeboard + 1, t.z - 5] });
+    // The backstays come down to the rail abaft the mast: on a modelled hull, to the model's own side.
+    const z = t.z - 5;
+    for (const sx of [-1, 1]) ends.push({ from: i, a: [0, t.y, t.z], to: -1, b: side ? [sx * (side.halfAt(z) + 0.12), side.topAt(z) - 0.2, z] : [sx * hull.beam * 0.48, hull.freeboard + 1, z] });
   });
   return ends;
 };
@@ -49,12 +52,23 @@ export interface ShroudLadder {
 export const shroudLadders = (model: ShipModel, side: SideProfile | null = null): ShroudLadder[] => {
   const h = model.def.hull;
   const ladders: ShroudLadder[] = [];
+  // The sterncastle a modelled hull carries: no shroud may pass through it.
+  const castle = side ? sternCastle(side) : null;
+  const breakZ = castle ? castle.ring[castle.ring.length - 1]!.z : -Infinity;
   model.def.masts.forEach((m, mast) => {
     const topY = h.freeboard + m.height * 0.58;
+    const spread = [-1.6, -0.55, 0.55, 1.6];
+    // A mast before the break of the castle has its gang shifted forward clear of it; a mast that
+    // stands in the castle has its channels on the castle's side at the height of its deck.
+    const inCastle = m.z < breakZ - 0.5;
+    const shift = inCastle ? 0 : Math.max(0, breakZ + 0.35 - (m.z + spread[0]!));
     for (const s of [-1, 1] as const) {
-      const footX = side ? side.halfAt(m.z) + 0.3 : beamAt(h, m.z) + 0.35;
-      const footY = side ? side.topAt(m.z) - 0.25 : deckAt(h, m.z) + 0.9;
-      const shrouds = [-1.6, -0.55, 0.55, 1.6].map((dz): Shroud => ({ foot: [s * footX, footY, m.z + dz], head: [s * 0.45, topY, m.z + dz * 0.25] }));
+      const shrouds = spread.map((dz): Shroud => {
+        const z = m.z + dz + shift;
+        const footX = side ? side.halfAt(z) + 0.3 : beamAt(h, z) + 0.35;
+        const footY = side ? Math.max(side.topAt(z) - 0.25, inCastle && castle ? castle.base + CASTLE_WALL + 0.06 : -Infinity) : deckAt(h, z) + 0.9;
+        return { foot: [s * footX, footY, z], head: [s * 0.45, topY, m.z + dz * 0.25] };
+      });
       ladders.push({ mast, side: s, shrouds, rungs: Math.floor((topY - deckAt(h, m.z) - 1) / 0.55) });
     }
   });

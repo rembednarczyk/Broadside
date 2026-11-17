@@ -2,7 +2,7 @@ import { type ShipModel } from "@broadside/sim";
 import { type AssetContainer, LoadAssetContainerAsync, Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, type StandardMaterial, type TransformNode, Vector3 } from "../babylon";
 import { GLB, assetUrl } from "./asset-url";
 import { useStandardMaterials } from "./model-materials";
-import { beamAt } from "./hull-stations";
+import { gunPlaces } from "./gun-layout";
 import { RECOIL_TIME, recoilShare } from "./gun-recoil";
 import barrel from "./barrel-profile.json";
 
@@ -47,12 +47,7 @@ interface Gun {
   since: number;
 }
 
-/** Barrel length (m) for a calibre: about 1.4 m for a 4-pounder, 2.9 m for a 32-pounder. */
-const barrelLength = (pounder: number): number => 1.1 + 0.32 * Math.sqrt(pounder);
-/** Height of a gun's bore above its mount point: on a carriage, and a swivel on its rail stanchion. */
-export const gunHeight = (kind: string): number => (kind === "swivel" ? 0.75 : 0.45);
-/** How far the muzzle stands out of the side when run out, and the recoil travel (m). */
-const PROUD = 0.45;
+/** The recoil travel (m). */
 const TRAVEL = 1.1;
 
 export class ShipGuns {
@@ -68,17 +63,10 @@ export class ShipGuns {
   private shown = true;
 
   constructor(scene: Scene, private readonly parent: TransformNode, private readonly model: ShipModel, metal: StandardMaterial, wood: StandardMaterial, shadows: ShadowGenerator | null, private readonly scan: GunScan | null = null, sides: readonly (number | null)[] | null = null) {
-    const h = model.def.hull;
+    const places = gunPlaces(model, sides ? (gi) => sides[gi] ?? null : null);
     model.guns.forEach((m, gi) => {
-      const p = new Vector3(m.pos.x + model.com.x, m.pos.y + model.com.y, m.pos.z + model.com.z);
-      const length = m.kind === "mortar" ? 1.1 : m.kind === "swivel" ? 0.95 : barrelLength(m.pounder);
-      let dir = new Vector3(m.dir.x, m.dir.y, m.dir.z);
-      if (m.kind === "mortar") dir = new Vector3(0, 0.75, 0.66).normalize();
-      // Broadside guns and swivels sit at the ship's side where the hull really is at their station.
-      // On a modelled hull the side is where the model has it (HullModels.sides), else the generated hull's.
-      if (m.side !== "centre") p.x = Math.sign(m.dir.x) * (Math.max(0.4, sides?.[gi] ?? beamAt(h, p.z)) + PROUD - length / 2);
-      p.y += gunHeight(m.kind);
-      this.guns.push({ at: p, dir, length, thick: m.kind === "mortar" ? 2.6 : 1, carriage: m.kind !== "swivel", since: RECOIL_TIME });
+      const place = places[gi]!;
+      this.guns.push({ at: new Vector3(...place.at), dir: new Vector3(...place.dir), length: place.length, thick: m.kind === "mortar" ? 2.6 : 1, carriage: m.kind !== "swivel", since: RECOIL_TIME });
     });
     // Lathe about Y: the profile's z runs along the barrel, centred on its middle.
     const shape = [new Vector3(0, -0.5, 0), ...barrel.profile.map(([z, r]) => new Vector3(r!, z! - 0.5, 0)), new Vector3(0.022, 0.5, 0)];
@@ -172,3 +160,5 @@ export class ShipGuns {
     for (const m of this.scanMeshes) m.mesh.thinInstanceSetBuffer("matrix", m.buf, 16, false);
   }
 }
+
+export { gunHeight } from "./gun-layout";
