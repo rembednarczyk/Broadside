@@ -12,4 +12,7 @@ Surowe pliki trafiają do `.asset-cache/drive/` (poza gitem), wynik do `packages
 5. Skopiować `.asset-cache/hulls/<klasa>.glb` do `packages/app/public/assets/hulls/` i dopisać klasę do
    `MODELLED_HULLS` w `packages/engine/src/renderer/babylon-renderer.ts`.
 
+Wszystkie kadłuby naraz, w dwóch poziomach jakości (pełny 250 tys. trójkątów i 4096 px, `-lite` 80 tys. i 2048 px):
+`bash tools/assets/hulls.sh`. Silnik bierze `-lite` dla presetów low i medium.
+
 Licencje i autorzy: `CREDITS.md` w katalogu głównym. Model Thunderhawk (CC BY-NC-SA 4.0) nie jest używany.

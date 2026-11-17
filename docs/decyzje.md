@@ -112,3 +112,12 @@ ostrzał wzdłuż), Republika = francuska (olinowanie łańcuchową do okaleczen
 (abordaż przy przewadze 1,25), piraci (bliska walka, abordaż przy 1,1). Ostrzał wzdłuż kadłuba: obrażenia kadłuba
 +50%, straty w załodze 2,5 raza. Poza skutecznym zasięgiem pościg dziobem z działami pościgowymi. Bramka ADR-0005 dla
 równych kadłubów zmieniona: wynik 3:0 dozwolony, walkower nie (zwycięzca traci co najmniej 15% załogi albo 10% kadłuba).
+
+## 17.11 Godzina zrzutów i poziomy jakości kadłubów (prośby właściciela)
+Pora dnia z parametru `hours=HH:MM` (albo godzina dziesiętna), `clock=stop` zatrzymuje zegar, żeby światło nie
+przesuwało się w trakcie zrzutu. Nazwane ujęcia w `tools/shots/views.json` (iso, chase, bow, broadside, reference,
+deck, storm, fog, port, phone), uruchamiane `node tools/shots/view.mjs <ujęcie> [HH:MM] [katalog]` (jak podglądy
+SekiSenshi). „Mniej upraszczaj”: kadłuby z modeli w dwóch poziomach (wzorzec LOD wybierany presetem grafiki): pełny
+250 tys. trójkątów i tekstury 4096 (high/ultra), `-lite` 80 tys. i 2048 (low/medium, domyślny na telefonie).
+Mapy normalnych z modeli przenoszone do StandardMaterial. Rozmiar `dist` 43 MB (fregata pełna 15,6 MB).
+Model liniowca 1700 usunięty z `hulls.json`: szkielet ma dziury w poszyciu.

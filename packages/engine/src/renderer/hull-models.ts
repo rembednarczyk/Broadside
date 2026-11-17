@@ -22,19 +22,26 @@ const BULWARK = 0.8;
 export class HullModels {
   private readonly loaded = new Map<ShipClassId, { container: AssetContainer; metrics: HullMetrics }>();
 
-  constructor(private readonly scene: Scene, private readonly baseUrl: string) {}
+  /** `tier`: "" for the full models (high and above), "-lite" for phones (low and medium presets). */
+  constructor(private readonly scene: Scene, private readonly baseUrl: string, private readonly tier: "" | "-lite" = "") {}
 
   /** Loads the classes that have a model; failures leave the procedural hull in place. */
   async load(classes: readonly ShipClassId[]): Promise<void> {
     await Promise.all(
       classes.map(async (id) => {
         try {
-          const container = await LoadAssetContainerAsync(`${this.baseUrl}${id}.glb`, this.scene);
+          const container = await LoadAssetContainerAsync(`${this.baseUrl}${id}${this.tier}.glb`, this.scene);
           // Iterate over a copy: the converted materials are added to the same list.
           for (const m of [...container.materials]) {
-            const albedo = (m as unknown as { albedoTexture?: Texture | null }).albedoTexture ?? null;
+            const pbr = m as unknown as { albedoTexture?: Texture | null; bumpTexture?: Texture | null; invertNormalMapX?: boolean; invertNormalMapY?: boolean };
             const std = new StandardMaterial(`hull-${id}-${m.name}`, this.scene);
-            std.diffuseTexture = albedo;
+            std.diffuseTexture = pbr.albedoTexture ?? null;
+            // Keep the model's normal map (planking, ports, carvings) with the loader's handedness flags.
+            if (pbr.bumpTexture) {
+              std.bumpTexture = pbr.bumpTexture;
+              std.invertNormalMapX = pbr.invertNormalMapX ?? false;
+              std.invertNormalMapY = pbr.invertNormalMapY ?? false;
+            }
             std.specularColor.set(0.06, 0.05, 0.04);
             for (const mesh of container.meshes) if (mesh.material === m) mesh.material = std;
             container.materials.push(std);

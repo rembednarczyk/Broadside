@@ -88,7 +88,7 @@ export class BabylonRenderer {
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
     this.forts = new FortsView(this.scene, this.shadows);
-    this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl) : null;
+    this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" || opts.graphics.preset === "medium" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
     this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);

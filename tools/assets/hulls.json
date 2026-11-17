@@ -9,15 +9,6 @@
     "minPiece": 0
   },
   {
-    "class": "liner",
-    "source": "ship_of_the_line_c._1700__linjeskepp_ca_1700.glb",
-    "lengthAxis": "z",
-    "bowAtMin": null,
-    "cut": 1.0,
-    "flipY": false,
-    "minPiece": 0
-  },
-  {
     "class": "frigate",
     "source": "baron_anders_von_hopken_1759.glb",
     "lengthAxis": "z",
