@@ -26,8 +26,12 @@ mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const page = await browser.newPage({ viewport: { width: Number(width), height: Number(height) }, deviceScaleFactor: 1 });
 const logs = [];
-page.on("console", (m) => logs.push(`${m.type()}: ${m.text()}`));
+page.on("console", (m) => {
+  logs.push(`${m.type()}: ${m.text()}`);
+  if (process.env.SHOT_VERBOSE) console.log(`console ${m.type()}: ${m.text()}`);
+});
 page.on("pageerror", (e) => logs.push(`pageerror: ${e.message}`));
+page.on("crash", () => console.log("crashed; last logs:\n" + logs.slice(-15).join("\n")));
 // Shots show the game, not the first-start help card.
 await page.addInitScript('localStorage.setItem("broadside.help", "1")');
 // Optional scripted actions during the advance: SHOT_SCRIPT is a function body (b, t) => {...}.
@@ -66,6 +70,7 @@ if (process.env.SHOT_BEFORE) {
   await page.evaluate(new Function("((b) => { " + process.env.SHOT_BEFORE + " })(globalThis.__broadside)"));
   await page.waitForTimeout(120);
 }
+if (process.env.SHOT_EVAL_FIRST) console.log("eval0:", JSON.stringify(await page.evaluate(new Function("return ((b) => { " + process.env.SHOT_EVAL_FIRST + " })(globalThis.__broadside)"))));
 await page.screenshot({ path: join(outDir, "scene.png"), timeout: 90000 });
 const stats = await page.evaluate(() => ({ drawCalls: globalThis.__broadside.renderer.drawCalls() }));
 // Optional diagnostics: SHOT_EVAL is a function body (b) => value, printed as JSON.

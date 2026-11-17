@@ -89,6 +89,9 @@ export class ShipDetail {
   /** Small parts hidden at a distance (ratlines, rails, lanterns, crew): level of detail. */
   private readonly fine: ReturnType<TransformNode["getChildMeshes"]> = [];
   private fineShown = true;
+  /** Parts a modelled hull brings itself (castles, rails, lanterns, crew stand-ins): hidden then. */
+  private readonly body: ReturnType<TransformNode["getChildMeshes"]> = [];
+  private bodyHidden = false;
 
   constructor(scene: Scene, parent: TransformNode, key: string, model: ShipModel, mats: DetailMaterials, shadows: ShadowGenerator | null) {
     const h = model.def.hull;
@@ -99,8 +102,10 @@ export class ShipDetail {
     if (c.poop > 0) castleMeshes.push(this.castle(scene, parent, h, -h.length / 2, -h.length / 2 + h.length * c.poop, mats.castle, "poop", CASTLE_HEIGHT));
     if (c.fore > 0) castleMeshes.push(this.castle(scene, parent, h, h.length / 2 - h.length * c.fore, h.length * 0.47, mats.castle, "fore"));
     for (const m of castleMeshes) shadows?.addShadowCaster(m);
+    this.body.push(...castleMeshes);
     const before = new Set(parent.getChildMeshes(true));
     this.ratlines(scene, parent, model);
+    const afterRatlines = new Set(parent.getChildMeshes(true));
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);
     this.crew = MeshBuilder.CreateCapsule(`crew-${key}`, { height: 1.7, radius: 0.24, tessellation: 6, subdivisions: 1 }, scene);
@@ -116,14 +121,21 @@ export class ShipDetail {
       this.crewSpots.push(Matrix.Translation(range(rng, -half, half), deckAt(h, z) + 0.85 + (raised ? CASTLE_HEIGHT : 0), z));
     }
     this.fine.push(...parent.getChildMeshes(true).filter((m) => !before.has(m)));
+    this.body.push(...parent.getChildMeshes(true).filter((m) => !afterRatlines.has(m)));
     this.setCrew(model.def.crew, model.def.crew);
   }
 
   /** Shows or hides the small parts (far ships lose them: a few draw calls each). */
+  /** A modelled hull carries its own castles, rails and fittings: hide the procedural ones. */
+  hideBody(): void {
+    this.bodyHidden = true;
+    for (const m of this.body) m.setEnabled(false);
+  }
+
   setFine(shown: boolean): void {
     if (shown === this.fineShown) return;
     this.fineShown = shown;
-    for (const m of this.fine) m.setEnabled(shown);
+    for (const m of this.fine) m.setEnabled(shown && !(this.bodyHidden && this.body.includes(m)));
   }
 
   private castle(scene: Scene, parent: TransformNode, h: HullShape, z0: number, z1: number, wood: StandardMaterial, name: string, lift = 0): Mesh {

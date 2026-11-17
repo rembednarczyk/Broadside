@@ -51,3 +51,8 @@ import "@babylonjs/core/Meshes/Builders/capsuleBuilder";
 import "@babylonjs/core/Meshes/Builders/planeBuilder";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
+export { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+export type { AssetContainer } from "@babylonjs/core/assetContainer";
+export type { Material } from "@babylonjs/core/Materials/material";
+// glTF 2.0 loader (modelled hulls from tools/assets).
+import "@babylonjs/loaders/glTF/2.0";

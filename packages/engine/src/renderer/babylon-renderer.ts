@@ -9,21 +9,27 @@ import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
+import { HullModels } from "./hull-models";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
 import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
-import { type DomainEvent, rotateInv, waterHeight, yawOf } from "@broadside/core";
+import { type DomainEvent, type ShipClassId, rotateInv, waterHeight, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
  * ocean, sky, lights, ships and the camera are separate parts; this class only wires them and
  * syncs them from the simulation once per frame. The simulation is read, never written.
  */
+/** Classes drawn with a modelled hull (tools/assets/hulls.json). */
+const MODELLED_HULLS: readonly ShipClassId[] = ["galleon"];
+
 export interface RendererOptions {
   readonly canvas: HTMLCanvasElement;
   readonly graphics: GraphicsSettings;
+  /** Where the modelled hulls lie (`<url><class>.glb`); omitted, every hull is generated. */
+  readonly hullsUrl?: string;
 }
 
 export interface FrameEnvironment {
@@ -44,6 +50,7 @@ export class BabylonRenderer {
   private readonly shadows: ShadowGenerator | null;
   private readonly materials: ShipMaterials;
   private readonly views = new Map<number, ShipView>();
+  private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
   private readonly effects: EffectsDirector;
@@ -81,6 +88,8 @@ export class BabylonRenderer {
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
     this.forts = new FortsView(this.scene, this.shadows);
+    this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl) : null;
+    void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
     this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);
   }
@@ -136,12 +145,13 @@ export class BabylonRenderer {
       seen.add(e.id);
       let v = this.views.get(e.id);
       // A ship bought in a yard keeps its id but changes hull: rebuild the view.
-      if (v && v.model !== e.ship!.model) {
+      // A ship bought in a yard keeps its id but changes hull, and a hull model may arrive after its ship: rebuild.
+      if (v && (v.model !== e.ship!.model || (!v.modelled && this.hulls?.has(e.ship!.model.def.id)))) {
         v.dispose();
         v = undefined;
       }
       if (!v) {
-        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows);
+        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls);
         this.views.set(e.id, v);
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);

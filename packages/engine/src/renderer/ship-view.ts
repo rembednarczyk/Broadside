@@ -4,6 +4,7 @@ import { Color3, DynamicTexture, Mesh, MeshBuilder, Quaternion, type Scene, Stan
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
+import { type HullModels } from "./hull-models";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
 import { type SailPaint, paintSail, paintSailGlow } from "./sail-texture";
@@ -115,8 +116,10 @@ export class ShipView {
     this.detail.setFine(d < FINE_DETAIL);
   }
   private shownCrew = -1;
+  /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
+  readonly modelled: boolean;
 
-  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);
@@ -129,6 +132,13 @@ export class ShipView {
     deck.parent = hullSpace;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows);
+    // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
+    this.modelled = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? false;
+    if (this.modelled) {
+      hullMesh.setEnabled(false);
+      deck.setEnabled(false);
+      this.detail.hideBody();
+    }
     const plan = rigPlan(model.def);
     const tallest = plan.mastTops.reduce((a, b) => (b.y > a.y ? b : a));
     const flag = this.buildFlag(scene, mats.flag[faction]);

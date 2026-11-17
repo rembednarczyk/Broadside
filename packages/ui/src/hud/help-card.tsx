@@ -2,7 +2,7 @@ import { useHud } from "../store/hud-store";
 import { text, type TextKey } from "../i18n/catalog";
 import { type SettingsIntents } from "../intents";
 
-const LINES: readonly TextKey[] = ["help.goal", "help.sail", "help.wind", "help.fire", "help.ammo", "help.port", "help.danger", "help.keys"];
+const LINES: readonly TextKey[] = ["help.goal", "help.sail", "help.wind", "help.fire", "help.ammo", "help.port", "help.danger", "help.keys", "help.credits"];
 
 /** How to play, on the first start and from the settings. */
 export const HelpCard = ({ intents }: { intents: SettingsIntents }) => {

@@ -38,6 +38,8 @@ const saved = params.has("seed") ? null : await readSave(store, "autosave").catc
 let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapshot) : new GameSession({ seed, weather });
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
 const GFX_KEY = "broadside.graphics";
+/** Modelled hulls (tools/assets), served beside the page in the web build and in the APK. */
+const HULLS_URL = new URLSearchParams(location.search).get("hulls") === "0" ? undefined : "assets/hulls/";
 const readStored = (): string | null => {
   try {
     return localStorage.getItem(GFX_KEY);
@@ -51,7 +53,7 @@ let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra",
 const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
 const urlCamera = params.get("camera");
-let renderer = new BabylonRenderer({ canvas, graphics });
+let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
@@ -62,7 +64,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   }
   const mode = renderer.camera.mode;
   renderer.dispose();
-  renderer = new BabylonRenderer({ canvas, graphics });
+  renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL });
   renderer.camera.mode = mode;
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };

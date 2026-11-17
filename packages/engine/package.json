@@ -3,7 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc --noEmit -p ." },
-  "dependencies": { "@broadside/core": "workspace:*", "@broadside/sim": "workspace:*", "@babylonjs/core": "9.32.0" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@babylonjs/core": "9.32.0",
+    "@babylonjs/loaders": "9.32.0",
+    "@broadside/core": "workspace:*",
+    "@broadside/sim": "workspace:*"
+  }
 }

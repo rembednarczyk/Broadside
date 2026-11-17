@@ -90,3 +90,11 @@ ze spowolnionej kuli balistyki gry (110 m/s). Moment przechylający wzmocniony 3
 salwa przechyla statek o 1,5–2,5° na burtę przeciwną do strzelającej (fizycznie byłoby ok. 0,5–1°). Dym prochowy:
 kłęby 2,5–4,5 m rosnące do ok. 20 m, szaro-białe, dryfują z wiatrem. Liczba kłębów ograniczona ze względu na
 nakładanie się przezroczystości na telefonie.
+
+## 17.11 Kadłuby z modeli właściciela (orkiestrator)
+Modele z Drive to skany muzealne i modele artystyczne z żaglami i olinowaniem zlepionymi w jedną bryłę. Gra bierze z nich
+tylko kadłub (cięcie nad pokładem, bez bukszprytu), a maszty, żagle i liny zostają proceduralne, bo muszą się ruszać
+z wiatrem, refować, łopotać i dziurawić. Kadłub dopasowany do fizyki: szerokość do szerokości klasy, wysokość tak, by
+nadburcie na śródokręciu wypadło na pokładzie fizycznym + 0,8 m, długość proporcjonalnie do szerokości. Materiały
+PBR z modeli zamienione na StandardMaterial z tą samą teksturą (spójność ze sceną, bez IBL). Uznanie autorstwa
+(CC BY 4.0): CREDITS.md i karta „Jak grać”. Model Thunderhawk (CC BY-NC-SA, współczesny) pominięty.
