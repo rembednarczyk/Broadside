@@ -133,6 +133,8 @@ vec4 marchClouds(vec3 d, float sunUp) {
         // At night there is no key light in the march: the overcast is lit evenly by the moon above
         // it and glows a dull grey, the sky's own colour, a little lighter where it is thin (ref_075).
         ambient = mix(ambient, mix(skyHorizon, skyZenith, 0.4) * (0.75 + 0.45 * open), 1.0 - sunUp);
+        // A lightning stroke lights the cloud from inside and below, most near the channel.
+        ambient += vec3(0.85, 0.9, 1.05) * lightning.w * (0.012 + 0.22 * pow(max(dot(normalize(p), lightning.xyz), 0.0), 8.0)) * (1.2 - hgt);
         vec3 lit = ambient + sunColor * beer * mix(powder, 1.0, 0.45) * phase * 2.0 * sunUp;
         float a = 1.0 - exp(-dens * ds * 4.5);
         light += T * a * lit;

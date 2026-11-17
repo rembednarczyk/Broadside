@@ -29,6 +29,8 @@ uniform vec3 skyHorizon;
 uniform float cloudCover;
 uniform float time;
 uniform vec2 windOffset;
+// Lightning: direction from the eye to the strike (xyz) and the flash's brightness (w).
+uniform vec4 lightning;
 varying vec3 vDir;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -128,6 +130,10 @@ void main() {
   }
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
   col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 1.5 * (0.08 + 0.92 * through) : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
+  // A lightning flash lights the whole sky a little and the clouds round the strike strongly; weak
+  // terms, since the night exposure lifts them (strong ones whiten the sky and hide the channel).
+  float toward = pow(max(dot(d, lightning.xyz), 0.0), 6.0);
+  col += vec3(0.82, 0.88, 1.0) * lightning.w * (0.006 + 0.12 * toward) * (VOLUMETRIC ? 0.6 : 1.0);
   gl_FragColor = vec4(col, 1.0);
 }
 `;

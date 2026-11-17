@@ -254,7 +254,10 @@ export class BabylonRenderer {
       glint: 1 - 0.92 * smoothstep(0.55, 0.92, look.cloudCover),
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
-    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
+    const strike = this.weather.strikeAt;
+    const eye = this.camera.camera.position;
+    const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
+    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
     const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));

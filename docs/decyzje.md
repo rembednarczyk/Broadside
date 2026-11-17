@@ -408,3 +408,14 @@ symulacji (ta sama scena przy tym samym ziarnie). Stanowiska obsadzane w kolejno
 fały, brasy, działa pokładu górnego (najwyżej ćwierć ludzi), śródokręcie; przy stratach pustoszeje najpierw śródokręcie.
 Statyczne figurki (`crew-figures.mjs`, `crew.glb`) usunięte. Plik 3,4 MB.
 
+
+**17.11, piorun (C6).** Kształt kanału: przesunięcie punktu środkowego (Reed i Wyvill 1994, „Visual simulation of
+lightning”), 7 poziomów podziału, 2–5 gałęzi odchodzących w dół; ziarno z pozycji uderzenia, więc ten sam piorun przy
+tym samym zdarzeniu, bez `Math.random`. Rysowany rurami z materiałem emisyjnym ponad 1 (łapie bloom): kanał 0,9 m,
+gałęzie 0,35 m. Jasność z krzywej trzech wyładowań zwrotnych (0; 0,11; 0,26 s, szczyty 1; 0,75; 0,55; Uman 1987,
+„The Lightning Discharge”: kilka wyładowań w jednym kanale co kilkadziesiąt ms), kanał widoczny tylko w impulsach,
+całość 0,5 s. Niebo i chmury dostają uniform `lightning` (kierunek od oka do uderzenia i jasność): słaby wzrost
+wszędzie i silny w stronę kanału. Współczynniki dobrane zrzutem: przy nocnej ekspozycji mocniejsze bieliły całe niebo
+i chowały kanał. Kierunek sprawdzony pomiarem jasności lewej i prawej strony kadru dla uderzeń po obu stronach.
+Uwaga do narzędzia zrzutów: `tools/shots/shot.mjs` serwuje `packages/app/dist`, więc po zmianie kodu przed zrzutem
+trzeba `pnpm build`.
