@@ -18,7 +18,8 @@ import { bindKeyboard } from "./controllers/keyboard";
 import "./style.css";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */
-const params = new URLSearchParams(location.search);
+// A page that cannot carry a query string (the ship viewer published as an artifact) sets the options itself.
+const params = new URLSearchParams((globalThis as { __broadsideQuery?: string }).__broadsideQuery ?? location.search);
 const seed = Number(params.get("seed") ?? 1797);
 const touch = matchMedia("(pointer: coarse)").matches;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -41,7 +42,7 @@ let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapsh
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
 const GFX_KEY = "broadside.graphics";
 /** Modelled hulls (tools/assets), served beside the page in the web build and in the APK. */
-const HULLS_URL = new URLSearchParams(location.search).get("hulls") === "0" ? undefined : "assets/hulls/";
+const HULLS_URL = params.get("hulls") === "0" ? undefined : "assets/hulls/";
 const readStored = (): string | null => {
   try {
     return localStorage.getItem(GFX_KEY);
@@ -57,6 +58,8 @@ if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") gr
 const urlCamera = params.get("camera");
 let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
+// `inspect=1`: the orbit may close in on the ship (a viewer of the model rather than the game's framing).
+renderer.camera.closeUp = params.get("inspect") === "1";
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
   try {

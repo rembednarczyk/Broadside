@@ -205,3 +205,11 @@ grafik referencyjnych. Przeszycia materiału żagla (szwy brytów) mają istnie�
 szwy płaskie z dwoma rzędami ściegów, dwa refbanty z refsejzingami, obszycie lików, zacieki od deszczu, łaty ze
 ściegiem. Układ (liczba brytów, refbanty, szerokość obszycia) jest w stałej `SAIL_LAYOUT`, żeby ta sama geometria
 szwów weszła później do fizyki płótna. Pokład 2048, drzewce 1024, splot lnu 1024 (kafelkowany 8 razy).
+
+## 17.11 Przeglądarka statku jako artefakt (prośba właściciela)
+Prywatny artefakt https://claude.ai/artifact/LYAkDLuLzZmuniUaP1gZCV: gra uruchomiona na statku gracza z wolną orbitą
+(od 6 m), bez HUD, godzina 16:40, bryza, kolory naturalne. Buduje ją `node tools/viewer/pack.mjs <katalog>` (wejście
+`packages/app/viewer.html`, `vite.viewer.config.ts`: jeden skrypt), publikacja narzędziem Artifact z tego katalogu pod
+ten sam adres. Host artefaktów nie serwuje .glb, więc modele idą jako JSON z base64, a strona zamienia je na adresy
+obiektów (`globalThis.__broadsideAssets`, `engine/renderer/asset-url.ts`). Opcje gry bez query stringu:
+`globalThis.__broadsideQuery`. Aktualizować po zmianach widocznych na statku gracza.

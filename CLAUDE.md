@@ -43,6 +43,11 @@ od niego różnimy i dlaczego. Bez własnych interpretacji wzorców i bez niedop
 Co się da, skryptujemy: generatory (kadłuby, ożaglowanie, wyspy, tekstury, dźwięki) biorą ziarno i dają ten sam wynik.
 Powtarzana ręczna praca (pomiary, zrzuty, raporty) od razu dostaje skrypt w `tools/` albo audyt w `*.audit.ts`.
 
+## Przeglądarka statku
+Prywatny artefakt z żywą sceną statku gracza: https://claude.ai/artifact/LYAkDLuLzZmuniUaP1gZCV. Po zmianie widocznej
+na statku gracza: `node tools/viewer/pack.mjs <katalog>` i publikacja `index.html` z tego katalogu (z plikami obok)
+pod ten sam adres.
+
 ## Definition of Done
 `pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.
 Zmiana widoczna: zrzut Playwright (SwiftShader) przed/po. Commity Conventional Commits po polsku, małe zmiany,

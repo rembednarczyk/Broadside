@@ -1,5 +1,6 @@
 import { type ShipClassId } from "@broadside/core";
 import { type AbstractMesh, type AssetContainer, Ray, type Scene, type TransformNode, LoadAssetContainerAsync, Vector3 } from "../babylon";
+import { GLB, assetUrl } from "./asset-url";
 import { useStandardMaterials } from "./model-materials";
 
 /**
@@ -35,7 +36,7 @@ export class HullModels {
     await Promise.all(
       classes.map(async (id) => {
         try {
-          const container = await LoadAssetContainerAsync(`${this.baseUrl}${id}${this.tier}.glb`, this.scene);
+          const container = await LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}${this.tier}.glb`), this.scene, GLB);
           useStandardMaterials(container, this.scene, `hull-${id}`, HULL_GAIN);
           const res = await fetch(`${this.baseUrl}${id}.json`);
           const metrics = (await res.json()) as HullMetrics;

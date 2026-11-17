@@ -1,5 +1,6 @@
 import { type WreckSite } from "@broadside/core";
 import { LoadAssetContainerAsync, type Scene, TransformNode } from "../babylon";
+import { GLB, assetUrl } from "./asset-url";
 import { useStandardMaterials } from "./model-materials";
 
 /**
@@ -27,7 +28,7 @@ export class WrecksView {
         const mine = sites.filter((s) => s.variant % MODELS.length === k);
         if (mine.length === 0) return;
         try {
-          const container = await LoadAssetContainerAsync(`${this.url}${m.file}`, this.scene);
+          const container = await LoadAssetContainerAsync(assetUrl(`${this.url}${m.file}`), this.scene, GLB);
           useStandardMaterials(container, this.scene, `wreck${k}`);
           mine.forEach((s, i) => {
             const at = new TransformNode(`wreck${k}-${i}`, this.scene);

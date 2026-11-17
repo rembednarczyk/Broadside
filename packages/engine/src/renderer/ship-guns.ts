@@ -1,5 +1,6 @@
 import { type ShipModel } from "@broadside/sim";
 import { type AssetContainer, LoadAssetContainerAsync, Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, type StandardMaterial, type TransformNode, Vector3 } from "../babylon";
+import { GLB, assetUrl } from "./asset-url";
 import { useStandardMaterials } from "./model-materials";
 import { beamAt } from "./hull-stations";
 import { RECOIL_TIME, recoilShare } from "./gun-recoil";
@@ -21,7 +22,7 @@ export class GunScan {
   container: AssetContainer | null = null;
 
   constructor(scene: Scene, url: string) {
-    LoadAssetContainerAsync(url, scene).then(
+    LoadAssetContainerAsync(assetUrl(url), scene, GLB).then(
       (c) => {
         useStandardMaterials(c, scene, "gun", 1.3);
         // The meshes are used without the loader's handedness root: draw both faces.

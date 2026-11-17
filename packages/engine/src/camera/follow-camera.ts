@@ -42,6 +42,8 @@ export class FollowCamera {
   /** The player's isometric zoom (wheel, pinch); the orbit radius also carries the combat pull-back. */
   private isoZoom = 0;
   private setRadius = -1;
+  /** Lets the chase orbit come within a few metres of the ship (inspecting the model). */
+  closeUp = false;
   /** Half-height of the isometric frame in metres (marks on the water scale with it). */
   viewHalf = 60;
 
@@ -102,7 +104,7 @@ export class FollowCamera {
       this.camera.orthoRight = half * aspect;
     }
     // The orbit's minimum radius would push a deck eye off the ship.
-    this.camera.lowerRadiusLimit = this.mode === "deck" ? 0.5 : 18;
+    this.camera.lowerRadiusLimit = this.mode === "deck" ? 0.5 : this.closeUp ? 6 : 18;
     if (this.mode === "deck") {
       const q = new Quaternion(p.qx, p.qy, p.qz, p.qw);
       const eye = new Vector3(...p.deck).rotateByQuaternionToRef(q, new Vector3()).addInPlaceFromFloats(p.x, p.y, p.z);
