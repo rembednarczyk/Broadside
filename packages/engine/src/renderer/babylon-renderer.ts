@@ -222,7 +222,7 @@ export class BabylonRenderer {
         // shrouds to either side, the deck running forward below, the sails against the sky).
         const main = player.ship!.model.def.masts.reduce((a, m) => (m.height > a.height ? m : a));
         const deckY = h.freeboard + 4.6 - c.y;
-        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [0.5, deckY, main.z - 8 - c.z], length: h.length, focus: this.focus }, dt);
+        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [0.5, deckY, main.z - 8 - c.z], length: h.length, focus: this.focus, surface: (x: number, z: number) => waterHeight(sim.env.waves, x, z, sim.env.time) }, dt);
       }
     }
     this.applyLook(look);

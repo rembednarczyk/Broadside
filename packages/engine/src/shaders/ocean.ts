@@ -285,12 +285,16 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // Seen from below: inside Snell's window (about 48.6 deg from the zenith, critical angle of
   // water) the sky shows through, bright and blurred; outside it total internal reflection
   // mirrors the dark depths.
+  // up: the ray from the eye to the surface; its angle from the surface's (upward) normal.
   vec3 up = -v;
-  float c = dot(up, -n);
+  float c = dot(up, n);
   float window = smoothstep(0.62, 0.7, c);
   float sun = pow(max(dot(refract(up, -n, 1.33), sunDirection), 0.0), 40.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.6 + sunColor * sun * 4.0;
-  vec3 deep = vec3(0.02, 0.1, 0.1);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.6 + sunColor * sun * 5.0;
+  // Outside the window the depths, mirrored, with the waves' relief catching the light from the
+  // window's side (the teal ripples round the bright disc in ref_161).
+  float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
+  vec3 deep = vec3(0.03, 0.14, 0.13) * relief;
   vec3 col = mix(deep, sky, window);
   return mix(col, vec3(0.02, 0.13, 0.12), 1.0 - exp(-0.035 * dist));
 }
@@ -299,10 +303,6 @@ void main() {
   vec3 viewVec = cameraPosition - vWorld;
   float dist = length(viewVec);
   vec3 v = viewVec / dist;
-  if (underwater > 0.5) {
-    gl_FragColor = vec4(underside(v, vNormal, dist), 1.0);
-    return;
-  }
   // Micro-surface: wind chop as normal detail from two scales of fbm (finite differences),
   // scrolling downwind. Faded by screen-space footprint (fwidth) so it never shimmers: the
   // detail fades where one pixel covers more than a ripple.
@@ -320,6 +320,11 @@ void main() {
   float detail2 = (1.0 - smoothstep(0.15, 0.9, foot)) * 0.35;
   vec3 dn = vec3(-(cx - c0) / e * detail0 - (ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(cz - c0) / e * detail0 - (az - a0) / e * detail1 - (bz - b0) / e * detail2);
   vec3 n = normalize(vNormal + dn * 0.5);
+  // From below the same surface, ripples and all (seen through it: Snell's window).
+  if (underwater > 0.5) {
+    gl_FragColor = vec4(underside(v, n, dist), 1.0);
+    return;
+  }
   float nv = clamp(dot(n, v), 0.0, 1.0);
   // Schlick Fresnel, F0 of water = 0.02.
   float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);

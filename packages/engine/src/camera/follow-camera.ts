@@ -1,4 +1,5 @@
 import { ArcRotateCamera, Quaternion, type Scene, Vector3 } from "../babylon";
+import { type CineState, orbitRadius, rideStep, tiltStep } from "./cinematic";
 
 /**
  * Chase camera around the player's ship: a high three-quarter view as in Overboard!, orbit and
@@ -29,12 +30,15 @@ export interface ShipPose {
   readonly length: number;
   /** Nearest enemy in a fight: the isometric view widens to keep both ships in frame. */
   readonly focus?: { readonly x: number; readonly z: number } | null;
+  /** Height of the sea at a point (the cinematic camera rides it). */
+  readonly surface?: (x: number, z: number) => number;
 }
 
 export class FollowCamera {
   mode: CameraMode = "isometric";
   private lastMode: CameraMode | null = null;
-  private drift = 0;
+  /** The cinematic eye riding the swell (null until the mode is entered). */
+  private cine: CineState | null = null;
   readonly camera: ArcRotateCamera;
   private readonly target = new Vector3();
   /** Height of the aim point above the ship: the middle of the rig frames a ship like the reference. */
@@ -119,14 +123,19 @@ export class FollowCamera {
       return;
     }
     this.camera.fov = FOV;
-    if (this.mode === "cinematic") {
-      this.drift += dt * 0.05;
-      this.camera.alpha += dt * 0.05;
-      // Low over the swell, now and then dipping through the surface (the reference's passes
-      // from above to below the water).
-      this.camera.beta = 1.5 + Math.sin(this.drift * 0.7) * 0.03 + 0.12 * Math.pow(Math.max(0, Math.sin(this.drift * 0.45)), 6);
-      this.camera.radius = p.length * 2.3;
+    if (this.mode === "cinematic" && p.surface) {
+      // Low over the swell, riding it, circling the ship (cinematic.ts); aimed at her hull and lower rig.
+      const surface = p.surface;
+      this.cine ??= { angle: this.camera.alpha, t: 0, y: surface(p.x, p.z) + 1.3 };
+      const eye = rideStep(this.cine, p, surface, dt);
+      this.follow(p.x, p.y - this.lift * 0.4, p.z, dt);
+      // Under the surface the aim rises to look up at it (about 40 degrees).
+      const up = tiltStep(this.cine, surface(eye.x, eye.z) - eye.y, dt) * orbitRadius(p.length) * 0.85;
+      this.camera.setTarget(new Vector3(this.target.x, this.target.y + up, this.target.z));
+      this.camera.setPosition(new Vector3(eye.x, eye.y, eye.z));
+      return;
     }
+    this.cine = null;
     if (this.mode === "isometric") this.follow(p.x + this.aim.x, p.y, p.z + this.aim.z, dt);
     else this.follow(p.x, p.y, p.z, dt);
   }
@@ -137,7 +146,8 @@ export class FollowCamera {
     this.lastMode = this.mode;
     const iso = this.mode === "isometric";
     this.camera.mode = iso ? 1 : 0; // Camera.ORTHOGRAPHIC_CAMERA : PERSPECTIVE_CAMERA
-    this.camera.upperBetaLimit = iso ? ISO_BETA : 1.78;
+    // The cinematic eye looks up at the ship from the water and, under it, up at the surface.
+    this.camera.upperBetaLimit = iso ? ISO_BETA : this.mode === "cinematic" ? 2.9 : 1.78;
     this.camera.minZ = iso ? -1500 : 0.5;
     this.camera.lowerBetaLimit = iso ? ISO_BETA : 0.35;
     if (iso) this.camera.radius = Math.max(60, length * 3.2);

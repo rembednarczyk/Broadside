@@ -437,3 +437,14 @@ brasach: wchodzi, gdy na jego maszcie stawia się albo zwija żagiel, zostaje na
 pochylony wzdłuż wanty, przodem do masztu, ręce na wyblinkach (zasięg rąk z klipu). Klipy liny i ściany wypieczone na
 później (wejście po linie, abordaż przez burtę). Plik postaci 3,85 → 4,45 MB. W zrzutach (`shot.mjs` przewija symulację
 bez klatek renderu) pozycje topmanów ustawiane ręcznie przez `SHOT_EVAL_FIRST`.
+
+**17.11, kamera filmowa (C5).** Oko w trybie `cinematic` jedzie po fali jak kamera na pławie albo łodzi: wysokość
+oka to wysokość morza w tym punkcie plus prześwit ok. 1,3 m, wygładzona wykładniczo (1 − e^(−2,5 dt)), więc długą falę
+oko przechodzi, a na krótkiej zostaje w tyle i grzbiet zalewa obiektyw (linia wody i krople po wynurzeniu już były
+w `grade.ts`). Co 45 s prześwit spada pod zero na ok. 2 s (zanurzenie jak w `ref_158`–`ref_165`), a celownik płynnie
+unosi się o ok. 40° ku powierzchni i wraca po wynurzeniu. Orbita 1,8 długości statku (26–90 m), obrót raz na ok. 2 min.
+Kamera orbitalna miała górny limit kąta 1,78 rad, który przy patrzeniu w górę wyrzucał oko na 42 m: w tym trybie
+limit 2,9. Przy okazji: w shaderze spodu fali kąt widzenia liczono względem normalnej skierowanej w dół, więc okno
+Snella nigdy się nie pokazywało (pod wodą była ciemna toń); po poprawce okno pokazuje niebo i słońce, a spód ma te
+same drobne zmarszczki co wierzch. Rozmycie ruchu przy obrocie zostaje na później (osobny przebieg postprocesu, koszt
+na telefonie).
