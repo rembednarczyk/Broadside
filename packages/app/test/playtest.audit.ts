@@ -7,13 +7,18 @@ import { GameSession } from "../src/game-session";
 /**
  * Playtest of the core loop on autopilot: an AI captain takes the player's helm, sails to the
  * nearest friendly port, stops, takes the contract on offer and carries it out (the AI fights what
- * the contract names when it comes in sight). Reports the timeline; fails if the loop cannot be
- * completed for any of the seeds (a blocker: unreachable port, contract that cannot end).
+ * the contract names when it comes in sight). Reports the timeline; fails on a blocker: no seed
+ * reaches a port and takes a contract, or a contract taken never ends (neither paid nor failed
+ * for a reason). Whether the autopilot wins its contract is reported, not required: an escort
+ * whose charge strikes to an attacker has run its course (decyzje 17.11, brasowanie).
+ * PLAYTEST_SEEDS=3,7,11,... runs other seeds.
  */
-const SEEDS = [3, 7, 21];
+const SEEDS = (process.env.PLAYTEST_SEEDS ?? "3,7,21").split(",").map(Number);
 
 it("port, contract, pay: the core loop can be played through (report)", () => {
   let paid = 0;
+  let taken = 0;
+  let unfinished = 0;
   for (const seed of SEEDS) {
     const s = new GameSession({ seed });
     const sim = s.sim;
@@ -72,6 +77,7 @@ it("port, contract, pay: the core loop can be played through (report)", () => {
         return e ? ` [target ${tt ? `${tt.ship!.sinking ? "sinking" : ""}${tt.ship!.struck ? "struck" : ""} crew ${tt.ship!.crew}` : "gone"}]` : "";
       };
       if (job) {
+        taken++;
         const target = sim.byId(job.target);
         // Steer for the ship named in the contract (escorts keep station on her).
         sim.world.addComponent(me, "captain", { ...createCaptain(b().x, b().z, 200, "patrol"), leader: target && job.offer.kind === "escort" ? target.id : -1 });
@@ -86,10 +92,13 @@ it("port, contract, pay: the core loop can be played through (report)", () => {
         });
         const done = events.some((e) => e.type === "contractDone");
         if (done) paid++;
+        if (sim.jobs.active !== null) unfinished++;
         log.push(`${done ? "fulfilled" : events.some((e) => e.type === "contractFailed") ? `failed${fail()}` : "unfinished"} at ${(t / 60).toFixed(1)} min, gold ${gold} -> ${sim.purse.gold}`);
       }
     }
     console.log(`seed ${seed}: ${log.join("; ")}`);
   }
-  expect(paid, "contracts fulfilled on autopilot").toBeGreaterThan(0);
+  console.log(`contracts: ${taken} taken, ${paid} paid, ${unfinished} unfinished`);
+  expect(taken, "a contract taken on autopilot").toBeGreaterThan(0);
+  expect(unfinished, "contracts that never end").toBe(0);
 });

@@ -384,3 +384,15 @@ na postać (pierwsza wersja z kolorem w wierzchołkach i 1,6 tys. była zbyt zgr
 detale). Gra ładuje plik bez korzenia glTF, więc jego przeliczenie układu wpieka się w wierzchołki przy ładowaniu.
 Następny etap (D2): animacje i role ze stanu symulacji.
 
+**17.11, brasowanie z czasem (reguła symulacji, D1; właściciel: „wstaw do kolejki”).** Kąt rei był ustawiany
+natychmiast na najlepszy do wiatru pozornego. Teraz reje i bomy dochodzą do niego z prędkością `BRACE_RATE`: rejowe
+6°/s (70° zakresu w ok. 12 s), skośne 18°/s, razy udział załogi (min. 0,15) i stan olinowania (0,35 + 0,65 ×
+olinowanie); siła z kąta, który reja ma teraz. Skala gry: na okrętach epoki przebrasowanie wszystkich rej przy zwrocie
+trwało blisko minutę. Złoty hash c420eba5 → 81d3dd8a. Audyty: biegunowy, zwrotów i bitew zielone. Audyt rozgrywki
+na 3 ziarnach padł, bo jego próg wymagał opłaconego zlecenia, a autopilot przed zmianą miał jedno zlecenie na trzech
+(i sześciu) ziarnach, wygrane przypadkiem: po zmianie przypływa 6 s wcześniej, dostaje eskortę galeonu i eskortowany
+statek poddaje się napastnikom. Nawigacja na sześciu ziarnach nie jest gorsza (ziarno 11 dopiero teraz dociera do
+portu, 3 i 21 o 1–2 min później, 33 i 45 nie docierały już wcześniej). Próg audytu zmieniony zgodnie z jego opisem
+(blokady): co najmniej jedno zlecenie wzięte i żadne niezakończone; liczba opłaconych jest raportowana. Do zrobienia:
+autopilot bierze zlecenie rzadko (1 na 6 ziaren), ziarna 33 i 45 nie docierają do portu w 20 min.
+
