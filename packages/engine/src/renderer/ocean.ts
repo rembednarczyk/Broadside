@@ -1,6 +1,7 @@
 import { type GerstnerWave, MAX_WAVES, createRng, makeWave, packWaves, range } from "@broadside/core";
 import { Color3, Mesh, type Scene, ShaderMaterial, VertexData, Vector2, type Vector3 } from "../babylon";
 import { OCEAN_FRAGMENT, OCEAN_VERTEX } from "../shaders/ocean";
+import { type TrailUniforms } from "./wake-trails";
 
 /**
  * Ocean surface: one grid that follows the camera. Vertex density falls off with distance (a
@@ -68,7 +69,7 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
@@ -98,6 +99,14 @@ export class Ocean {
     this.material.setArray4("shipA", a);
     this.material.setArray4("shipB", b);
     this.material.setInt("shipCount", Math.min(8, ships.length));
+  }
+
+  /** Trails of the nearest ships (wake-trails): the wakes follow the course sailed. */
+  setTrails(t: TrailUniforms): void {
+    this.material.setArray4("trail", Array.from(t.points));
+    this.material.setArray4("trailMeta", Array.from(t.meta));
+    this.material.setFloats("trailReach", Array.from(t.reach));
+    this.material.setInt("trailCount", t.count);
   }
 
   update(waves: readonly GerstnerWave[], time: number, cameraX: number, cameraZ: number, look: OceanLook, windSpeed: number, windDirection = 0): void {

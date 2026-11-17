@@ -1,3 +1,4 @@
+import { WakeTrails } from "./wake-trails";
 import { type Simulation } from "@broadside/sim";
 import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
@@ -64,6 +65,8 @@ export class BabylonRenderer {
   private readonly shadows: ShadowGenerator | null;
   private readonly materials: ShipMaterials;
   private readonly views = new Map<number, ShipView>();
+  /** Where the ships have sailed: the wakes follow it (wake-trails). */
+  private readonly trails = new WakeTrails();
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
@@ -259,8 +262,9 @@ export class BabylonRenderer {
     const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
-    const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
+    const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
+    this.ocean.setTrails(this.trails.update(ships, sim.env.time));
     this.syncShips(sim);
     this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
     this.weather.frame(sim, dt);

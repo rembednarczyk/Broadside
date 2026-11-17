@@ -1,4 +1,5 @@
 import { MAX_WAVES } from "@broadside/core";
+import { WAKE_TRAIL } from "./wake-trail";
 
 /**
  * Ocean shader. The vertex stage evaluates the same Gerstner sum as `core/ocean/gerstner.ts`
@@ -25,6 +26,7 @@ uniform int detailCount;
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
+${WAKE_TRAIL}
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
@@ -67,14 +69,18 @@ float hullWater(vec2 p) {
       float ridge = abs(abs(across) - (0.7 + fromStem * 0.354));
       h += 0.03 * sq * exp(-ridge * ridge / 1.6) * exp(-fromStem / (7.0 + speed * 5.0));
     }
-    // Stern: a trough under the counter, then the Kelvin arms (half-angle 19.47 deg) fading astern.
+    // Stern: a trough under the counter (the arms astern follow the track, below).
     float back = -(along + halfLen);
     if (back > 0.0) {
-      float fade = exp(-back / (8.0 + speed * 6.0));
-      float arm = abs(abs(across) - (halfBeam + back * 0.354));
-      h += 0.02 * sq * exp(-arm * arm / 2.5) * fade;
       h -= 0.015 * sq * exp(-back / 4.0) * exp(-across * across / (halfBeam * halfBeam));
     }
+  }
+  // The Kelvin arms along the course sailed (wake-trail), standing off the track as it ages.
+  vec4 tr = trailAt(p);
+  if (tr.y >= 0.0) {
+    float run = tr.y * tr.z;
+    float arm = abs(tr.x - (tr.w * 0.5 + run * 0.354));
+    h += 0.02 * min(tr.z * tr.z, 49.0) * exp(-arm * arm / 2.5) * exp(-run / (8.0 + tr.z * 6.0));
   }
   return h;
 }
@@ -147,6 +153,7 @@ uniform float sunGlint;
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
+${WAKE_TRAIL}
 uniform float underwater;
 // Islands for shallows and surf: (x, z, radius, shoal); up to 32.
 uniform vec4 islands[32];
@@ -265,18 +272,19 @@ vec2 wakes(vec2 p) {
       float crest = smoothstep(1.5, 0.0, abs(across - (0.7 + fromStem * 0.354))) * exp(-fromStem / (5.0 + speed * 4.0));
       foam += crest * clamp((speed - 1.5) / 4.0, 0.0, 1.0) * 0.8;
     }
-    // Behind the stern.
-    float back = -(along + halfLen);
-    if (back > 0.0) {
-      // The churned water astern stays white for a long way (about 25 s of sailing).
-      float len = speed * 25.0;
-      float fade = exp(-back / max(len, 1.0));
-      float width = b.z * 0.6 + back * 0.354;
-      float centre = smoothstep(b.z * 0.5 + back * 0.04, 0.0, across) * fade;
-      float arms = smoothstep(2.0, 0.0, abs(across - width)) * fade * 0.3;
-      foam += (centre * 0.45 + arms) * clamp(speed / 5.0, 0.0, 1.0);
-      glit += (centre * 0.6 + arms) * fade;
-    }
+  }
+  // Astern, along the course sailed (wake-trail): churned white water on the track for about
+  // 25 s of sailing, and the Kelvin arms standing off it as it ages.
+  vec4 tr = trailAt(p);
+  if (tr.y >= 0.0) {
+    float speed = tr.z;
+    float run = tr.y * speed;
+    float fade = exp(-tr.y / 25.0);
+    float width = tr.w * 0.6 + run * 0.354;
+    float centre = smoothstep(tr.w * 0.5 + run * 0.04, 0.0, tr.x) * fade;
+    float arms = smoothstep(2.0, 0.0, abs(tr.x - width)) * fade * 0.3;
+    foam += (centre * 0.45 + arms) * clamp(speed / 5.0, 0.0, 1.0);
+    glit += (centre * 0.6 + arms) * fade;
   }
   return vec2(clamp(foam, 0.0, 1.0), clamp(glit, 0.0, 1.0));
 }

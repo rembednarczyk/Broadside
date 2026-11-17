@@ -501,3 +501,14 @@ wysunięta 0,75 m za pawęż, balustrada 0,85 m z tych samych tralek co na pokł
 i XVIII w., Chapman, „Architectura Navalis Mercatoria”, 1768). Galeria, pilastry i listwa scalone w jedną siatkę,
 tralki dopisane do instancji kasztelu: +2 wywołania rysowania na statek z modelu. Plansza `stern-castle` pokazuje,
 że pawęż referencji jest szersza i wyższa niż nasza (kadłub modelu zwęża się ku linii wody): osobna pozycja.
+
+**17.11, kilwater po przebytej drodze (właściciel: „przecięcie wody za statkiem jest zawsze proste i skręca razem
+z nim; niech gra pamięta, gdzie płynęliśmy”).** Ślad liczony w shaderze z bieżącej pozycji i kursu był prostym klinem
+w układzie statku. Teraz gra zapisuje drogę (ślad okruchów jak historia ścieżki w wstęgach cząstek, np. Niagara w
+Unrealu): co 1,6 s pozycja rufy, prędkość i czas, 16 punktów (ok. 24 s, tyle, ile trwa piana kilwateru), a pierwszy
+punkt to zawsze rufa teraz. Shader dla każdego piksela szuka najbliższego punktu łamanej i z jego wieku liczy pianę
+w osi śladu i ramiona Kelvina (odsunięte o 0,354 × przebytą drogę, zanik 25 s); te same ramiona podnoszą wodę w
+shaderze wierzchołków. Przy kadłubie bez zmian: fala dziobowa, woda przy burtach, dolina pod rufą. Budżet uniformów:
+3 statki najbliżej kamery × 16 punktów (52 wektory), z testem odległości od środka śladu, żeby piksele daleko od
+śladów nie liczyły odcinków. Ślad jest widokiem (silnik), symulacja i złoty hash bez zmian. Niesprawdzone na
+telefonie: limit uniformów fragment shadera (WebGL2 gwarantuje 224 wektory, telefony zwykle mają więcej).
