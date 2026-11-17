@@ -1,9 +1,11 @@
 import { type ShipModel } from "@broadside/sim";
 import { type HullShape, createRng, hashString, range, stationZ } from "@broadside/core";
 import { beamAt, deckAt } from "./hull-stations";
+import { type CrewSpot, crewFigures } from "./crew-layout";
+import { CrewView } from "./crew-view";
 import { Ratlines } from "./ratlines";
 import { type SideProfile } from "./side-profile";
-import { Color3, DynamicTexture, Matrix, Vector4, type Mesh, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
+import { Color3, DynamicTexture, Matrix, Mesh, Vector4, MeshBuilder, type Scene, StandardMaterial, type TransformNode, Vector3, type ShadowGenerator } from "../babylon";
 
 /**
  * Period detail that sells the silhouette (visual reference, decyzje 16.11): ratlines on the
@@ -77,6 +79,20 @@ const castles = (id: string): { quarter: number; fore: number; poop: number } =>
 
 const CASTLE_HEIGHT = 2.8;
 
+/**
+ * A standing man as one small mesh, his origin at his feet: a body (capsule) and a head (sphere),
+ * enough for the silhouettes on the rail the reference shows against the sky.
+ */
+const figure = (scene: Scene, name: string): Mesh => {
+  const body = MeshBuilder.CreateCapsule(`${name}-body`, { height: 1.42, radius: 0.22, tessellation: 6, subdivisions: 1 }, scene);
+  body.position.y = 0.71;
+  const head = MeshBuilder.CreateSphere(`${name}-head`, { diameter: 0.26, segments: 4 }, scene);
+  head.position.y = 1.58;
+  const man = Mesh.MergeMeshes([body, head], true, true)!;
+  man.name = name;
+  return man;
+};
+
 const instances = (mesh: Mesh, matrices: Matrix[]): void => {
   const buf = new Float32Array(matrices.length * 16);
   matrices.forEach((m, i) => buf.set(m.m, i * 16));
@@ -85,10 +101,10 @@ const instances = (mesh: Mesh, matrices: Matrix[]): void => {
 
 
 export class ShipDetail {
-  private readonly crew: Mesh;
+  /** The men on deck (stand-ins until the animated figures load). */
+  readonly crew: CrewView;
   /** Shrouds and ratlines, moving with the masts (ship-view drives them). */
   readonly ratlines: Ratlines;
-  private readonly crewSpots: Matrix[];
   /** Small parts hidden at a distance (ratlines, rails, lanterns, crew): level of detail. */
   private readonly fine: ReturnType<TransformNode["getChildMeshes"]> = [];
   private fineShown = true;
@@ -111,21 +127,24 @@ export class ShipDetail {
     const afterRatlines = new Set(parent.getChildMeshes(true));
     this.rails(scene, parent, h, mats, c);
     this.lanterns(scene, parent, h, mats, c.quarter > 0 ? CASTLE_HEIGHT : 0);
-    this.crew = MeshBuilder.CreateCapsule(`crew-${key}`, { height: 1.7, radius: 0.24, tessellation: 6, subdivisions: 1 }, scene);
-    this.crew.material = mats.crew;
-    this.crew.parent = parent;
-    this.crew.isPickable = false;
-    this.crewSpots = [];
-    const spots = Math.min(40, Math.round(model.def.crew / 6));
-    for (let i = 0; i < spots; i++) {
+    const plain = figure(scene, `crew-${key}`);
+    plain.material = mats.crew;
+    plain.parent = parent;
+    plain.isPickable = false;
+    const spots: CrewSpot[] = [];
+    const count = crewFigures(model.def.crew);
+    for (let i = 0; i < count; i++) {
       const z = range(rng, -0.45, 0.42) * h.length;
       const half = Math.max(0.3, beamAt(h, z) - 0.6);
       const raised = (c.quarter > 0 && z < -h.length / 2 + h.length * c.quarter) || (c.fore > 0 && z > h.length / 2 - h.length * c.fore);
-      this.crewSpots.push(Matrix.Translation(range(rng, -half, half), deckAt(h, z) + 0.85 + (raised ? CASTLE_HEIGHT : 0), z));
+      spots.push({ at: [range(rng, -half, half), deckAt(h, z) + (raised ? CASTLE_HEIGHT : 0), z], yaw: range(rng, 0, Math.PI * 2), role: "waist", of: -1 });
     }
-    this.fine.push(...parent.getChildMeshes(true).filter((m) => !before.has(m)));
-    this.body.push(...parent.getChildMeshes(true).filter((m) => !afterRatlines.has(m)));
-    this.setCrew(model.def.crew, model.def.crew);
+    this.fine.push(...parent.getChildMeshes(true).filter((m) => !before.has(m) && m !== plain));
+    // The crew stay aboard a modelled hull too: only their stations change (crew.setSpots).
+    this.body.push(...parent.getChildMeshes(true).filter((m) => !afterRatlines.has(m) && m !== plain));
+    this.crew = new CrewView(plain, parent);
+    this.crew.setSpots(spots);
+    this.crew.setCrew(model.def.crew, model.def.crew);
   }
 
   /** Shows or hides the small parts (far ships lose them: a few draw calls each). */
@@ -139,6 +158,7 @@ export class ShipDetail {
     if (shown === this.fineShown) return;
     this.fineShown = shown;
     for (const m of this.fine) m.setEnabled(shown && !(this.bodyHidden && this.body.includes(m)));
+    this.crew.setShown(shown);
   }
 
   private castle(scene: Scene, parent: TransformNode, h: HullShape, z0: number, z1: number, wood: StandardMaterial, name: string, lift = 0): Mesh {
@@ -180,12 +200,5 @@ export class ShipDetail {
     const z = -h.length / 2 + 0.2;
     const y = deckAt(h, z) + lift + 1.6;
     instances(lamp, lift > 0 ? [Matrix.Translation(-0.9, y, z), Matrix.Translation(0, y + 0.4, z), Matrix.Translation(0.9, y, z)] : [Matrix.Translation(0, y, z)]);
-  }
-
-  /** Shows a share of the figures matching the crew left aboard. */
-  setCrew(crew: number, max: number): void {
-    const n = Math.round((this.crewSpots.length * crew) / Math.max(1, max));
-    this.crew.isVisible = n > 0;
-    if (n > 0) instances(this.crew, this.crewSpots.slice(0, n));
   }
 }

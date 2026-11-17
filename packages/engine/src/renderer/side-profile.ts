@@ -21,6 +21,12 @@ export interface HullFit {
   readonly length: number;
 }
 
+/** Height of the bulwark above the deck the physics hull is built to (m). */
+const BULWARK = 0.8;
+
+/** Scales that fit a model to a physics hull: the beam to its beam, the gunwale to its deck plus a bulwark. */
+export const hullFit = (m: { beam: number; gunwale: number }, hull: { beam: number; draft: number; freeboard: number }): { kx: number; ky: number } => ({ kx: hull.beam / m.beam, ky: (hull.draft + hull.freeboard + BULWARK) / m.gunwale });
+
 const median = (v: readonly number[], k: number, window: number): number => {
   const part = v.slice(Math.max(0, k - window), Math.min(v.length, k + window + 1)).filter((x) => x > 0);
   if (part.length === 0) return 0;

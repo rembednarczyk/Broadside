@@ -108,3 +108,38 @@ describe("helmsman", () => {
     expect(Math.abs(yawOf(e.body!.rot) - 1.2)).toBeLessThan(0.12);
   });
 });
+
+describe("bracing the yards", () => {
+  // Wind from the starboard beam, then the ship put about onto the other tack in a moment:
+  // the yards swing round at the rate the hands can brace them, not at once.
+  const swing = (crewShare: number): number[] => {
+    const sim = new Simulation({ seed: 4, windDirection: Math.PI / 2, windSpeed: 9 });
+    const e = sim.spawnShip({ classId: "frigate", faction: "player", x: 0, z: 0, heading: Math.PI * 0.15 });
+    e.ship!.crew = Math.round(e.ship!.model.def.crew * crewShare);
+    run(sim, 20);
+    const before = e.ship!.sailChord[1]![0]!;
+    // Turn the hull to the other side of the wind in one step (as a hard tack ends).
+    const yaw = yawOf(e.body!.rot);
+    const q = e.body!.rot;
+    const half = -yaw * 0.85;
+    const c = Math.cos(half);
+    const s = Math.sin(half);
+    e.body!.rot = { x: q.x * c + q.z * s, y: q.y * c + q.w * s, z: q.z * c - q.x * s, w: q.w * c - q.y * s };
+    const chords = [before];
+    for (let t = 0; t < 4; t++) {
+      run(sim, 1);
+      chords.push(e.ship!.sailChord[1]![0]!);
+    }
+    return chords;
+  };
+
+  it("swings the yards round over seconds, slower with fewer hands", () => {
+    const full = swing(1);
+    const short = swing(0.3);
+    const step = (c: number[]): number => Math.abs(c[1]! - c[0]!);
+    // A second of bracing moves the main course's yard a few degrees, never the whole range at once.
+    expect(step(full)).toBeGreaterThan(0.02);
+    expect(step(full)).toBeLessThan(0.15);
+    expect(step(short)).toBeLessThan(step(full));
+  });
+});

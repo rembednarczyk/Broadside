@@ -15,9 +15,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 const server = createServer(async (req, res) => {
   const path = join(root, decodeURIComponent((req.url ?? "/").split("?")[0]) === "/" ? "index.html" : decodeURIComponent(req.url.split("?")[0]));
   try {
+    // Read first: a missing file answers 404 instead of failing after the headers went out.
+    const body = await readFile(path);
     res.writeHead(200, { "content-type": types[extname(path)] ?? "application/octet-stream" });
-    res.end(await readFile(path));
+    res.end(body);
   } catch {
+    if (process.env.SHOT_VERBOSE) console.log(`404 ${req.url}`);
     res.writeHead(404).end();
   }
 }).listen(0);

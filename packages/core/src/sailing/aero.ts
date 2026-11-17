@@ -104,3 +104,21 @@ export const sailForce = (rig: RigType, area: number, awx: number, awz: number, 
   const fz = best.fz * (0.55 + 0.45 * skill) + Math.min(0, worstFz) * 0.05 * (1 - skill);
   return { fx: best.fx, fz, chord: best.chord };
 };
+
+/** Drive kept by a crew trimming with `trimSkill` (0..1): a green or short-handed crew wastes some. */
+const driveShare = (trimSkill: number): number => 0.55 + 0.45 * clamp(trimSkill, 0, 1);
+
+/**
+ * Force of one sail held at a given chord angle (the yards where the braces have them, which may
+ * lag the best trim while the crew brace round: the yards swing at a rate, not at once). The chord
+ * is kept within the rig's reach.
+ */
+export const sailForceAt = (rig: RigType, area: number, awx: number, awz: number, chord: number, trimSkill: number): SailForce2D => {
+  const p = POLARS[rig];
+  const c = clamp(chord, p.chordMin, p.chordMax);
+  const speed = Math.hypot(awx, awz);
+  if (speed < 0.05 || area <= 0) return { fx: 0, fz: 0, chord: c };
+  const f = forceAt(p, c, awx / speed, awz / speed, 0.5 * AIR_DENSITY * speed * speed, area);
+  return { fx: f.fx, fz: f.fz > 0 ? f.fz * driveShare(trimSkill) : f.fz, chord: c };
+};
+

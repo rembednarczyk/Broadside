@@ -16,6 +16,9 @@ const sound = (): ShipPart[] => [
   { id: partId("sheet", 0), kind: "sheet", at: [3.5, 2.9, 1], on: partId("sail", 0, 0) },
   { id: partId("brace", 0), kind: "brace", at: [3.4, 2.9, -8], on: partId("yard", 0, 0) },
   { id: partId("brace", 1), kind: "brace", at: [-3.4, 2.9, -8], on: partId("yard", 0, 0) },
+  { id: partId("lift", 2), kind: "lift", at: [0.4, 18, 3], on: partId("yard", 0, 0) },
+  { id: partId("lift", 3), kind: "lift", at: [-0.4, 18, 3], on: partId("yard", 0, 0) },
+  { id: partId("clewline", 4), kind: "clewline", at: [0, 12, 3], on: partId("sail", 0, 0) },
   { id: partId("carriage", 0), kind: "carriage", at: [3, 2.2, 0], on: "deck" },
   { id: partId("gun", 0), kind: "gun", at: [3.4, 2.6, 0], on: partId("carriage", 0) },
 ];
@@ -43,8 +46,9 @@ describe("ship parts catalogue", () => {
     expect(faultsOf(sound().filter((p) => p.id !== "hull"))).toContain("noHull:hull");
   });
 
-  it("wants a sheet to every sail and a brace to each arm of every yard", () => {
+  it("wants a sheet to every sail, and a brace and a lift to each arm of every yard", () => {
     expect(faultsOf(sound().filter((p) => p.kind !== "sheet"))).toEqual(["noSheet:sail:0:0"]);
     expect(faultsOf(sound().filter((p) => p.id !== "brace:1"))).toEqual(["noBraces:yard:0:0"]);
+    expect(faultsOf(sound().filter((p) => p.id !== "lift:3"))).toEqual(["noLifts:yard:0:0"]);
   });
 });

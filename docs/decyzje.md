@@ -343,3 +343,146 @@ szumem wartości. Jeden odczyt daje trzy skale, więc wariant ma sześć skal, 9
 i WebGL1 zostają przy szumie liczonym w shaderze. Stanowisko `tools/sky/sky-test.mjs` działa na WebGL2, argument
 `octaves` 6 pokazuje wariant teksturowy. Pamięć: 1 MB tekstury. Nie zmierzono czasu generowania na telefonie ani czasu
 klatki na GPU.
+
+**17.11, niebo przy wichurze (orkiestrator).** Plansza `side-dark` miała w grze gładkie, ciemne niebo. Przyczyny po
+kolei wykluczone zrzutami: ławice mgły i zasłony deszczu (wyłączone w żywej scenie, bez zmiany), preset (domyślny to
+high, objętościowy). Właściwa przyczyna: przy pokryciu 0,8 mapa pokrycia dawała wszędzie pełną wieżę, czyli jednolitą
+płytę grubości 12 jednostek bez przerw. Próg wież zależy teraz słabiej od pokrycia (0,42 zamiast 0,55), więc przy
+wichurze zostają cieńsze miejsca i przerwy, a przy sztormie jedna szczelina; drugi człon Beera 0,3·exp(−1,1·τ) przepuszcza
+więcej światła przez cienkie miejsca; płat fazy do przodu ograniczony do 3,2 (było 1,6). Pas przy horyzoncie pod ciężkim
+niebem zamyka przyćmiona mgiełka dalekich chmur (`lid`), bo jasna szczelina pod pokrywą nie występuje w klatkach.
+Mgiełka chmur przy horyzoncie do ok. 6° (było 11°). Skutek uboczny: przy pogodzie `fresh` (0,45) chmur jest mniej niż
+przed zmianą. Ujęcie `deck` wraca do kamery pokładowej gry; ustawienie jak w `ref_112` zostaje do zrobienia.
+
+**17.11, przenikanie części statku (orkiestrator, „Bierz”).** Części w katalogu mają bryły (kapsuła dla drzewc, dział
+i lin, prostopadłościan w układzie kadłuba dla zabudowy; Ericson, „Real-Time Collision Detection”, rozdz. 4–5), a
+`auditClashes` zgłasza pary, które nie mogą się przecinać. Różnica wobec wzorca: kapsuła–prostopadłościan liczona w 17
+punktach osi kapsuły zamiast dokładnie. Audyt na kadłubach z modeli (z prawdziwymi profilami burt) wykrył cztery wanty
+bezanmasztu galeonu w kasztelu; stopy want są teraz przesuwane przed kasztel. Działo w kasztelu jest dozwolone tylko
+z furtą (`port:<nr działa>`), bo działa w kajutach rufowych strzelały przez furty; furta to ciemny otwór z ramą i
+podniesioną klapą. Baksztagi schodzą do burty modelu (były do burty kadłuba fizycznego, ponad metr poza modelem na
+rufie). Maszt przechodzący przez pokład kasztelu nie jest regułą audytu: maszty przechodzą przez pokłady.
+Żagle rejowe wisiały w osi masztu; teraz reja wisi 0,42 m przed masztem po stronie dziobu (`foreSide`), a tkanina ma
+jeden kolider, walec masztu o promieniu 0,3 m (Müller i in. 2007, §3.4, bez tarcia). Położenie dział liczy jeden moduł
+`gun-layout.ts` dla siatek i dla listy części.
+
+**17.11, piana, kamera pokładowa, załoga (orkiestrator, „lecimy dalej”).** Piana w shaderze oceanu to koronka z szumu
+komórkowego (F2−F1, Worley 1996) w dwóch skalach, gęstniejąca do pełnej plamy; bez tekstury, bo ten sam kod liczy
+grzbiety, kilwater i przybój. Kamera pokładowa stoi na przełamaniu pokładu rufowego (4,6 m nad pokładem, 8 m za
+grotmasztem) i patrzy lekko w dół; niżej przednia część kadłuba zasłaniała pokład. Załoga na kadłubach z modeli jest
+rozmieszczana z profilu burty i kasztelu (`crew-layout.ts`): rząd przy balustradzie rufowej, reszta na śródokręciu,
+liczba jak dotąd (szósta część załogi, najwyżej 40); znikają w miarę strat jak wcześniej.
+
+**17.11, figurki załogi (właściciel: „postacie z SekiSenshi”, potem „poszukaj w sieci”, „popraw jakość”).** Modele VRM z
+folderu SekiSenshi odrzucone na prośbę właściciela (współczesne stroje, jeden na licencji niekomercyjnej). W sieci:
+rejestr Open Source Avatars (CC0) ma prawie wyłącznie kreskówkowe postacie, a zestaw piracki Quaterniusa proporcje chibi;
+wybrane darmowe paczki Quaterniusa (CC0) o realistycznych proporcjach: stroje „Peasant” i „Ranger” wyglądają jak
+ubiór marynarzy XVII–XVIII w. Postać składa skrypt (strój, głowa wycięta z postaci bazowej po kościach szyi i głowy,
+fryzura), pozuje jedną klatką animacji i wypieka skinning na CPU (glTF 2.0, liniowe mieszanie kości) do statycznej
+siatki; wszystkie tekstury w jednym atlasie, żeby gra rysowała figurki instancjami jednego materiału. 5 tys. trójkątów
+na postać (pierwsza wersja z kolorem w wierzchołkach i 1,6 tys. była zbyt zgrubna); widoczne tylko z bliska (jak drobne
+detale). Gra ładuje plik bez korzenia glTF, więc jego przeliczenie układu wpieka się w wierzchołki przy ładowaniu.
+Następny etap (D2): animacje i role ze stanu symulacji.
+
+**17.11, brasowanie z czasem (reguła symulacji, D1; właściciel: „wstaw do kolejki”).** Kąt rei był ustawiany
+natychmiast na najlepszy do wiatru pozornego. Teraz reje i bomy dochodzą do niego z prędkością `BRACE_RATE`: rejowe
+6°/s (70° zakresu w ok. 12 s), skośne 18°/s, razy udział załogi (min. 0,15) i stan olinowania (0,35 + 0,65 ×
+olinowanie); siła z kąta, który reja ma teraz. Skala gry: na okrętach epoki przebrasowanie wszystkich rej przy zwrocie
+trwało blisko minutę. Złoty hash c420eba5 → 81d3dd8a. Audyty: biegunowy, zwrotów i bitew zielone. Audyt rozgrywki
+na 3 ziarnach padł, bo jego próg wymagał opłaconego zlecenia, a autopilot przed zmianą miał jedno zlecenie na trzech
+(i sześciu) ziarnach, wygrane przypadkiem: po zmianie przypływa 6 s wcześniej, dostaje eskortę galeonu i eskortowany
+statek poddaje się napastnikom. Nawigacja na sześciu ziarnach nie jest gorsza (ziarno 11 dopiero teraz dociera do
+portu, 3 i 21 o 1–2 min później, 33 i 45 nie docierały już wcześniej). Próg audytu zmieniony zgodnie z jego opisem
+(blokady): co najmniej jedno zlecenie wzięte i żadne niezakończone; liczba opłaconych jest raportowana. Do zrobienia:
+autopilot bierze zlecenie rzadko (1 na 6 ziaren), ziarna 33 i 45 nie docierają do portu w 20 min.
+
+**17.11, żywa załoga, część 1 (właściciel: „więcej postaci, różne operacje, ruchome, zależnie od ruchu statku i decyzji
+gracza”).** Wzorzec: tekstury animacji wierzchołków (GPU Gems 3, rozdz. 2 „Animating Crowds”; w Babylonie
+`BakedVertexAnimationManager`): macierze kości każdej klatki w teksturze, klip i faza na instancję, jedno wywołanie
+rysowania na wariant postaci. Własny wypiek w `tools/assets/crew-anim.mjs` zamiast `VertexAnimationBaker` Babylona,
+bo ten odtwarza tylko animacje przypięte do szkieletu, a biblioteka Quaterniusa ma animacje węzłów glTF; układ tekstury
+ten sam co u Babylona. Szkielet biblioteki ma krótszą szyję niż postacie: brane są obroty kości i przesunięcie miednicy
+przeskalowane do wysokości bioder postaci. Gra buduje siatki sama z pliku binarnego (bez ładowarki glTF), więc postać
+jest lustrzanym odbiciem (lewa z prawą), co dla marynarza nie ma znaczenia; rysowane obie strony. Czas klipów = czas
+symulacji (ta sama scena przy tym samym ziarnie). Stanowiska obsadzane w kolejności: ster, mars, reling kasztelu,
+fały, brasy, działa pokładu górnego (najwyżej ćwierć ludzi), śródokręcie; przy stratach pustoszeje najpierw śródokręcie.
+Statyczne figurki (`crew-figures.mjs`, `crew.glb`) usunięte. Plik 3,4 MB.
+
+
+**17.11, piorun (C6).** Kształt kanału: przesunięcie punktu środkowego (Reed i Wyvill 1994, „Visual simulation of
+lightning”), 7 poziomów podziału, 2–5 gałęzi odchodzących w dół; ziarno z pozycji uderzenia, więc ten sam piorun przy
+tym samym zdarzeniu, bez `Math.random`. Rysowany rurami z materiałem emisyjnym ponad 1 (łapie bloom): kanał 0,9 m,
+gałęzie 0,35 m. Jasność z krzywej trzech wyładowań zwrotnych (0; 0,11; 0,26 s, szczyty 1; 0,75; 0,55; Uman 1987,
+„The Lightning Discharge”: kilka wyładowań w jednym kanale co kilkadziesiąt ms), kanał widoczny tylko w impulsach,
+całość 0,5 s. Niebo i chmury dostają uniform `lightning` (kierunek od oka do uderzenia i jasność): słaby wzrost
+wszędzie i silny w stronę kanału. Współczynniki dobrane zrzutem: przy nocnej ekspozycji mocniejsze bieliły całe niebo
+i chowały kanał. Kierunek sprawdzony pomiarem jasności lewej i prawej strony kadru dla uderzeń po obu stronach.
+Uwaga do narzędzia zrzutów: `tools/shots/shot.mjs` serwuje `packages/app/dist`, więc po zmianie kodu przed zrzutem
+trzeba `pnpm build`.
+
+**17.11, wspinaczka załogi (D2 część 3; właściciel podrzucił animacje wspinania).** Cztery klipy Mixamo („Climbing
+Ladder”, „Climbing A Rope”, „Climbing Up Wall”, „Climbing To Top”) z Drive właściciela. FBX czyta `tools/assets/fbx-anim.mjs`
+(FBXLoader i AnimationMixer z three.js w Node, `three` jako zależność narzędzi); gotowy konwerter FBX2glTF z npm odpadł,
+bo to obcy program binarny. Przeniesienie na szkielet Quaterniusa (`tools/assets/retarget.mjs`): metoda „różnicy w
+układzie świata” jak `SkeletonUtils.retarget` z three.js: obrót kości źródła względem jej pozy spoczynkowej, w układzie
+świata, nakładany na pozę spoczynkową kości celu; przedtem każda kość celu obrócona tak, by w spoczynku wskazywała
+tam, gdzie kość źródła (poza T Mixamo kontra poza postaci). Skręt kości wzdłuż jej osi nie jest dopasowywany (tu
+pełne retargetery, np. HumanIK, robią więcej); na zbliżeniu niewidoczne. Układy obu szkieletów z bioder, głowy i ud,
+klip obrócony przodem do postaci w pierwszej klatce, przesunięcie bioder w skali długości nóg. Klipy zapętlone mają
+zdjęty stały przyrost wysokości (wspinaczka w miejscu), a nagłówek pliku podaje wzniesienie na cykl (drabina 0,50 m na
+0,77 s), przesunięcie i zasięg rąk; grę porusza człowieka sama (ruch korzenia sterowany przez grę, jak animacje „in
+place” w Unrealu), a klatkę klipu bierze z tej samej pozycji, więc ręce i nogi idą w takt wznoszenia, a schodzenie to
+ten sam klip wstecz. Topman przy każdej drabince want pod marsem (do 6 na galeonie), w kolejności obsadzania po
+brasach: wchodzi, gdy na jego maszcie stawia się albo zwija żagiel, zostaje na marsie 20 s po robocie, potem schodzi;
+pochylony wzdłuż wanty, przodem do masztu, ręce na wyblinkach (zasięg rąk z klipu). Klipy liny i ściany wypieczone na
+później (wejście po linie, abordaż przez burtę). Plik postaci 3,85 → 4,45 MB. W zrzutach (`shot.mjs` przewija symulację
+bez klatek renderu) pozycje topmanów ustawiane ręcznie przez `SHOT_EVAL_FIRST`.
+
+**17.11, kamera filmowa (C5).** Oko w trybie `cinematic` jedzie po fali jak kamera na pławie albo łodzi: wysokość
+oka to wysokość morza w tym punkcie plus prześwit ok. 1,3 m, wygładzona wykładniczo (1 − e^(−2,5 dt)), więc długą falę
+oko przechodzi, a na krótkiej zostaje w tyle i grzbiet zalewa obiektyw (linia wody i krople po wynurzeniu już były
+w `grade.ts`). Co 45 s prześwit spada pod zero na ok. 2 s (zanurzenie jak w `ref_158`–`ref_165`), a celownik płynnie
+unosi się o ok. 40° ku powierzchni i wraca po wynurzeniu. Orbita 1,8 długości statku (26–90 m), obrót raz na ok. 2 min.
+Kamera orbitalna miała górny limit kąta 1,78 rad, który przy patrzeniu w górę wyrzucał oko na 42 m: w tym trybie
+limit 2,9. Przy okazji: w shaderze spodu fali kąt widzenia liczono względem normalnej skierowanej w dół, więc okno
+Snella nigdy się nie pokazywało (pod wodą była ciemna toń); po poprawce okno pokazuje niebo i słońce, a spód ma te
+same drobne zmarszczki co wierzch. Rozmycie ruchu przy obrocie zostaje na później (osobny przebieg postprocesu, koszt
+na telefonie).
+
+**17.11, olinowanie i płótno (C4).** Do lin ruchomych doszły topenanty (dwie na każdą reję rejową, od nok do masztu
+nad reją: do stopy rei wyższej albo do topu masztu), gejtawy (od rogu szotowego do nok rei tej samej burty: przy
+postawionym żaglu biegną wzdłuż liku) oraz fał gafla i topenanta bomu do topu masztu; wzór prowadzenia według Levera
+(„The Young Sea Officer's Sheet Anchor”, 1808). Gejtawa idzie do nok rei zamiast do ćwierci rei, bo katalog rogów
+żagla zna tylko rogi; różnica przy brasowanej rei jest mniejsza niż przy punkcie na stałe w kadłubie. Katalog części:
+rodzaje `lift` i `clewline`, reguła audytu `noLifts`. Płótno: lik dolny wycięty w alfie tekstury (ząbki 0,4–1,8%
+wysokości i trzy rozdarcia 5–13% wysokości, dwa przy rogach szotowych), z ziarnem tkaniny; materiał żagla przechodzi
+na test alfa, więc cień ma ten sam kształt. Postrzępienie jest jednakowe na wszystkich statkach (zużycie płótna);
+dziury po kulach dalej zależą od uszkodzeń masztu.
+
+**17.11, zwinięte żagle (C4).** Płótno zwiniętego żagla rejowego znikało i reje były gołe. Teraz leży na rei jako
+wałek (instancje jednej kapsuły na statek, jedno wywołanie rysowania): średnica rośnie z zwiniętą częścią i z
+pierwiastkiem powierzchni żagla (ok. 0,55 m dla grota 14 × 8 m, najwyżej 0,7 m), długość 0,94 szerokości żagla,
+na wierzchu rei; materiał gładkiego płótna bez szwów i godła. Częściowo postawiony żagiel ma wałek z części zwiniętej.
+Żagle skośne i sztaksle bez wałka (gafel i bom zwijane do masztu, sztaksle opuszczane na sztag: do zrobienia).
+
+**17.11, kasztel dziobowy (C4).** Ten sam układ i ten sam budowniczy co kasztel rufowy, w odbiciu lustrzanym: profil
+burty czytany od drugiego końca (z → −z), siatka pod węzłem ze skalą z = −1 (Babylon odwraca kolejność ścian przy
+ujemnym wyznaczniku macierzy świata). Bez nowego budowniczego, więc deski, listwy, balustrada, furty i schody są te
+same. Różnice: ściany 1,7 m (rufowy 2,2 m), długość do 2,5 m przed fokmasztem (najwyżej 16% kadłuba, poniżej 6%
+kasztelu nie ma), podłoga na najniższym pokładzie pod kasztelem, a pokład 0,35 m nad najwyższą burtą dziobu (kadłub
+modelu wznosi się ku dziobowi i pierwsza wersja kasztelu schowała się w nim), bez koła, okien i latarni. Śródokręcie
+załogi kończy się 1,2 m przed jego przerwą. Kształt jest kanciasty wobec `ref_064` (tam dziób wznosi się łagodnie
+i kończy galionem): do dalszej pracy.
+
+**17.11, zwinięte żagle, poprawka (właściciel: „te cygara nie wyglądają najlepiej”).** Gładką kapsułę zastąpił
+zwój liczony w `furl-geometry.ts` według opisu zwijania u Levera (1808): grubszy środek (płótno zebrane w środku
+żagla), zwężenie ku nokom, dwa sejzingi po bokach (po dwa zwoje liny, w ciemnym obszyciu górnego liku tekstury),
+przewężenie płótna pod nimi, łuk zwisający między sejzingami (do 0,3 średnicy) i krótsze na zewnątrz, fałdy wzdłuż
+zwoju. Faktura: środek tej samej tekstury płótna co żagle (bez godła, z dala od postrzępionego liku dolnego).
+Nadal jedna bryła instancjonowana na statek (wierzchołki 585 → ok. 700), koszt rysowania bez zmian.
+
+**17.11, kasztel dziobowy wycofany (właściciel: „chyba w naszym przypadku nie jest zupełnie potrzebny”).** Ocena:
+kadłuby z modeli mają już wznoszącą się burtę dziobu, a dobudowana skrzynia była kanciasta wobec `ref_064` (tam dziób
+wznosi się łagodnie i kończy galionem) i kosztowała 50 wywołań rysowania na scenę (trzy statki z modeli: 219 → 269,
++23%). Commit 3c82831 cofnięty w całości (`git revert`); wpis o nim wyżej zostaje jako historia. Jeśli dziób ma
+zyskać sylwetkę z referencji, to przez galion i lekkie podniesienie burty w siatce, bez osobnej skrzyni.

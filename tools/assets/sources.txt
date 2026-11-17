@@ -15,3 +15,7 @@
 1832IGP1mCLDX5JjdF1baPX2FJlBJe2M4 ship_of_the_line_c._1700__linjeskepp_ca_1700.glb
 1ELh_SJAzZfp4zVVGFlhjlFYrcODOnzGL three-decker_c._1660.glb
 1rZhrwM9XJPcb9rc7JX65DKmsEABZqIl_ carrack__holk.glb
+1ehZjW3JuHSoNaHGVCt3L3y9Qrk-cwpsO climb_ladder.fbx
+1UF9Fs1nZm8wojXadIwsoV4086BSby9jl climb_rope.fbx
+1XG4ykJmfH9kmj1yzzxfxUzbNs0yijEsn climb_wall.fbx
+1kQW1vYIahitk5U8EzLKgVqxPgqq5vxLu climb_top.fbx

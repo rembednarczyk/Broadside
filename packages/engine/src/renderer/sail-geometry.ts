@@ -5,6 +5,17 @@
  */
 export const SAIL_COLS = 12;
 export const SAIL_ROWS = 8;
+/**
+ * A square yard is slung before its mast, not through it: the distance from the mast's axis to the
+ * yard's (m), and the radius of the mast the canvas lies against when the sail is aback.
+ */
+export const YARD_CLEAR = 0.42;
+export const MAST_GIRTH = 0.3;
+/**
+ * Which side of the sail's own plane (its +x or -x) is before the mast for a trim angle (the
+ * rotation about the mast, Babylon's rotation.y): the sail's +x points to hull -z at +90 degrees.
+ */
+export const foreSide = (angle: number): 1 | -1 => (Math.sin(angle) <= 0 ? 1 : -1);
 
 export type SailShape = "square" | "gaff" | "jib";
 

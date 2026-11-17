@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAIL_COLS, SAIL_ROWS, type SailOutline } from "../src/renderer/sail-geometry";
+import { MAST_GIRTH, SAIL_COLS, SAIL_ROWS, type SailOutline, YARD_CLEAR } from "../src/renderer/sail-geometry";
 import { SailSim } from "../src/renderer/sail-sim";
 
 const square: SailOutline = { shape: "square", width: 12, height: 9, foot: 6 };
@@ -91,6 +91,30 @@ describe("sailcloth simulation", () => {
     for (let i = 1; i < reefed.length; i += 3) lowest = Math.min(lowest, reefed[i]!);
     // Taken in to 0.4, the foot is far above where it hangs at full sail.
     expect(lowest).toBeGreaterThan(square.foot + square.height * 0.45);
+  });
+
+  it("lies against the mast when taken aback instead of passing through it", () => {
+    // The mast stands 0.42 m abaft the yard (at x = -0.42 in the sail's space); the wind blows the
+    // canvas towards it.
+    const mastX = -YARD_CLEAR;
+    const inside = (sim: SailSim): number => {
+      let count = 0;
+      for (let i = 0; i < sim.positions.length; i += 3) if (Math.hypot(sim.positions[i]! - mastX, sim.positions[i + 2]!) < MAST_GIRTH - 1e-6) count++;
+      return count;
+    };
+    const free = new SailSim(square);
+    const held = new SailSim(square);
+    for (let i = 0; i < 360; i++) {
+      free.advance(1 / 60, 1, -1, 12, 0);
+      held.advance(1 / 60, 1, -1, 12, 0, mastX);
+    }
+    // Without the collider the bunt blows through where the mast stands; with it nothing is inside.
+    expect(inside(free)).toBeGreaterThan(0);
+    expect(inside(held)).toBe(0);
+    // The sail still fills aback on either side of the mast.
+    let deepest = 0;
+    for (let i = 0; i < held.positions.length; i += 3) deepest = Math.min(deepest, held.positions[i]!);
+    expect(deepest).toBeLessThan(mastX - 0.3);
   });
 
   it("is cheap enough for a ship's suit of sails every frame", () => {

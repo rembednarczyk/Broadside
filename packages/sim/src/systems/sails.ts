@@ -1,4 +1,4 @@
-import { type Vec3, approach, rotate, rotateInv, sailForce, vec3 } from "@broadside/core";
+import { DEG, type RigType, type Vec3, approach, rotate, rotateInv, sailForce, sailForceAt, vec3 } from "@broadside/core";
 import { type System } from "./context";
 import { applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare, setFactor } from "../ship/ship-state";
@@ -7,8 +7,11 @@ import { type MastModel } from "../ship/ship-model";
 
 /**
  * Sail handling and sail forces. Setting or taking in sail takes time that grows with the sail
- * area and shrinks with the hands available and the rigging condition. Each mast reports its
- * force; a mast loaded past its strength is damaged and can go by the board.
+ * area and shrinks with the hands available and the rigging condition. Trimming takes time too:
+ * the crew find the best chord for the apparent wind (sailForce), but the yards are braced round,
+ * and the booms sheeted, at a rate (BRACE_RATE) that the hands and the rigging set, and the sail
+ * pulls where its yard is now (sailForceAt). A ship that tacks has her yards aback for a while.
+ * Each mast reports its force; a mast loaded past its strength is damaged and can go by the board.
  */
 const HANDLING_RATE = 0.25;
 /** Damage per second per unit of overload (force / strength - 1). */
@@ -18,6 +21,14 @@ const OVERLOAD_DAMAGE = 0.5;
  * the game wants about 10-12 kn. Mast strength is scaled by the same factor.
  */
 export const SAIL_GAIN = 1.6;
+
+/**
+ * How fast a full, well-found crew swings a yard or a boom (radians per second). Square yards are
+ * braced round by the hands on the braces, about 12 s through their 70 degree range; a boom swings
+ * on its sheet about three times as fast. Game scale: on real ships of the period a full tack of
+ * all the yards took the better part of a minute.
+ */
+export const BRACE_RATE: Readonly<Record<RigType, number>> = { square: 6 * DEG, foreAft: 18 * DEG };
 
 const studdingOf = (m: MastModel): boolean => m.sails.some((s) => s.studding);
 
@@ -41,6 +52,7 @@ export const sailSystem: System = (ctx, dt) => {
     if (s.sinking) continue;
     handleSails(s, dt);
     const trim = Math.min(1, crewShare(s) * 1.2) * (0.4 + 0.6 * s.rigging);
+    const hands = Math.max(0.15, crewShare(s)) * (0.35 + 0.65 * s.rigging);
     s.model.masts.forEach((m, i) => {
       if (s.mastHp[i]! <= 0 || s.sailSet[i]! <= 0) return;
       let total: Vec3 = vec3(0, 0, 0);
@@ -50,7 +62,10 @@ export const sailSystem: System = (ctx, dt) => {
         const pv = pointVelocity(b, ceWorld);
         const local = rotateInv(b.rot, vec3(tw.x - pv.x, 0, tw.z - pv.z));
         const area = sail.area * s.sailSet[i]! * (0.3 + 0.7 * s.sailCloth[i]!);
-        const f = sailForce(sail.rig, area, local.x, local.z, trim);
+        // The trim the crew want, and the yards swung towards it as fast as the hands can brace them.
+        const want = sailForce(sail.rig, area, local.x, local.z, trim).chord;
+        const chord = approach(s.sailChord[i]![j]!, want, BRACE_RATE[sail.rig] * hands * dt);
+        const f = sailForceAt(sail.rig, area, local.x, local.z, chord, trim);
         const world = rotate(b.rot, vec3(f.fx * SAIL_GAIN, 0, f.fz * SAIL_GAIN));
         applyForceAt(b, world, ceWorld);
         total = vec3(total.x + world.x, total.y + world.y, total.z + world.z);

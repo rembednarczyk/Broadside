@@ -16,6 +16,7 @@ import { IslandsView } from "./islands-view";
 import { FortsView } from "./forts-view";
 import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
+import { CrewRig } from "./crew-rig";
 import { GunScan } from "./ship-guns";
 import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
@@ -37,6 +38,11 @@ export interface RendererOptions {
   /** Folder of the prop models (wrecks for the shoals, the scanned gun); none without it. */
   readonly propsUrl?: string;
 }
+
+const smoothstep = (a: number, b: number, x: number): number => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 
 export interface FrameEnvironment {
   readonly hours: number;
@@ -73,6 +79,7 @@ export class BabylonRenderer {
   private towns: TownsView | null = null;
   private readonly wreckUrl: string | undefined;
   private readonly gunScan: GunScan | null;
+  private readonly crewRig: CrewRig | null;
   private readonly treeBudget: number;
   private readonly post: PostStack;
   private dropsLeft = 0;
@@ -102,6 +109,7 @@ export class BabylonRenderer {
     this.forts = new FortsView(this.scene, this.shadows);
     this.wreckUrl = opts.propsUrl;
     this.gunScan = opts.propsUrl && opts.graphics.preset !== "low" ? new GunScan(this.scene, `${opts.propsUrl}gun.glb`) : null;
+    this.crewRig = opts.propsUrl && opts.graphics.preset !== "low" ? new CrewRig(this.scene, `${opts.propsUrl}crew-anim.bin`) : null;
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
@@ -171,13 +179,15 @@ export class BabylonRenderer {
         v = undefined;
       }
       if (!v) {
-        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan);
+        v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan, this.crewRig);
         this.views.set(e.id, v);
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);
       const cam = this.camera.camera.position;
       v.setDistance(Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z));
     }
+    // The crew's clips run on simulation time: the same deck on every run of a seed.
+    this.crewRig?.setTime(sim.env.time);
     for (const [id, v] of this.views) {
       if (!seen.has(id)) {
         v.dispose();
@@ -207,10 +217,12 @@ export class BabylonRenderer {
         const r = player.body.rot;
         const h = player.ship!.model.def.hull;
         const c = player.ship!.model.com;
-        // Eye in the waist, off the centreline between main and mizzen, a man's height above the
-        // deck (the reference's deck shot looks up the mainmast through the shrouds).
-        const deckY = h.freeboard + 1.8 - c.y;
-        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [h.beam * 0.3, deckY, -h.length * 0.16 - c.z], length: h.length, focus: this.focus }, dt);
+        // Eye at the break of the quarterdeck, well abaft the mainmast and above the waist, just off
+        // the centreline (the reference's deck shot, ref_112: the mainmast before the eye, the
+        // shrouds to either side, the deck running forward below, the sails against the sky).
+        const main = player.ship!.model.def.masts.reduce((a, m) => (m.height > a.height ? m : a));
+        const deckY = h.freeboard + 4.6 - c.y;
+        this.camera.place({ x: p.x, y: p.y, z: p.z, qx: r.x, qy: r.y, qz: r.z, qw: r.w, deck: [0.5, deckY, main.z - 8 - c.z], length: h.length, focus: this.focus, surface: (x: number, z: number) => waterHeight(sim.env.waves, x, z, sim.env.time) }, dt);
       }
     }
     this.applyLook(look);
@@ -225,19 +237,27 @@ export class BabylonRenderer {
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);
+    const underside = 1 - 0.55 * smoothstep(0.4, 0.95, look.cloudCover);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.keyDir.x, look.keyDir.y, look.keyDir.z),
       // Glint and glitter follow the key light (a moon path at night): clouds take them away.
       sunColor: new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b).scale(Math.min(1, look.keyIntensity / 2.2)),
-      // A lightning flash lights the sky the sea reflects (the flash of the last frame).
-      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale(1 + this.weather.flash * 4),
-      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale(1 + this.weather.flash * 3),
+      // The sea reflects the sky over it: under a heavy sky that is the dark underside of the cloud,
+      // not the clear sky's colours (ref_060). A lightning flash lights it (the flash of the last frame).
+      skyZenith: new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b).scale((1 + this.weather.flash * 4) * underside),
+      skyHorizon: new Color3(look.skyHorizon.r, look.skyHorizon.g, look.skyHorizon.b).scale((1 + this.weather.flash * 3) * underside),
       fogColor: new Color3(look.fogColor.r, look.fogColor.g, look.fogColor.b),
       fogDensity: look.fogDensity,
       daylight: (look.sunDir.y + 0.05) / 0.35,
+      // Under a heavy sky the sun's disc is behind the cloud and the sea has no path of light
+      // (ref_060); through a broken sky it has (ref_090).
+      glint: 1 - 0.92 * smoothstep(0.55, 0.92, look.cloudCover),
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
-    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws);
+    const strike = this.weather.strikeAt;
+    const eye = this.camera.camera.position;
+    const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
+    this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
     const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));

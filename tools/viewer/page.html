@@ -9,8 +9,12 @@ body { background: var(--bg); color: var(--ink); font-family: var(--text); overf
 .plate div { max-width: 34rem; min-width: 0; padding: 10px 14px; background: var(--panel); border-top: 1px solid var(--rule); backdrop-filter: blur(6px); }
 .plate h1 { margin: 0 0 2px; font-family: var(--display); font-weight: 600; font-size: 1.35rem; letter-spacing: 0.01em; text-wrap: balance; }
 .plate p { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--ink-soft); }
+#sails { pointer-events: auto; align-self: flex-end; margin-left: 10px; flex: none; padding: 10px 14px; min-height: 44px; font: 500 0.85rem var(--text); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 0; backdrop-filter: blur(6px); cursor: pointer; }
+#sails:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 #boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); color: var(--ink-soft); font-size: 0.9rem; z-index: 4; pointer-events: none; transition: opacity 0.6s; }
-@media (prefers-reduced-motion: reduce) { #boot { transition: none; } }
+@media (prefers-reduced-motion: reduce) { #sails { pointer-events: auto; align-self: flex-end; margin-left: 10px; flex: none; padding: 10px 14px; min-height: 44px; font: 500 0.85rem var(--text); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 0; backdrop-filter: blur(6px); cursor: pointer; }
+#sails:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+#boot { transition: none; } }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500&display=swap">
 <style>
@@ -21,13 +25,23 @@ body { background: var(--bg); color: var(--ink); font-family: var(--text); overf
 <div id="boot">Wczytywanie statku i morza…</div>
 <div class="plate"><div>
   <h1>Galeon gracza, Broadside</h1>
-  <p>Przeciągnij, żeby obrócić widok. Kółko myszy albo dwa palce przybliżają i oddalają (od 6 m). Scena jest żywa: statek płynie, żagle i olinowanie pracują na wietrze. Godzina 16:40, bryza, kolory naturalne.</p>
-</div></div>
+  <p>Przeciągnij, żeby obrócić widok. Kółko myszy albo dwa palce przybliżają i oddalają (od 6 m). Scena jest żywa: statek płynie, żagle i olinowanie pracują na wietrze. Godzina 16:40, bryza, kolory naturalne. Przycisk obok zwija i stawia żagle: topmani wchodzą wtedy po wantach na marsy, a po pracy schodzą.</p>
+</div><button id="sails" type="button">Zwiń żagle</button></div>
 <script>
   globalThis.__broadsideQuery = "seed=7&camera=chase&hud=0&inspect=1&weather=breeze&hours=16:40&color=natural&quality=high";
   // The boot note goes once the game has drawn (its global appears when the scene is running).
   const boot = document.getElementById("boot");
   const gone = setInterval(() => { if (globalThis.__broadside) { setTimeout(() => Object.assign(globalThis.__broadside.renderer.camera.camera, { alpha: -0.85, beta: 1.32, radius: 46 }), 1500); boot.style.opacity = "0"; clearInterval(gone); } }, 300);
+  // Sail taken in and set again: the topmen go aloft for the work (crew-aloft).
+  const sails = document.getElementById("sails");
+  sails.addEventListener("click", () => {
+    const b = globalThis.__broadside;
+    const me = b?.session.sim.player();
+    if (!me) return;
+    const furl = me.ship.sailTarget[0] !== 0;
+    b.session.sim.command({ type: "sails", ship: me.id, mast: "all", level: furl ? 0 : 3 });
+    sails.textContent = furl ? "Postaw żagle" : "Zwiń żagle";
+  });
   addEventListener("error", (e) => { boot.textContent = "Nie udało się uruchomić sceny 3D: " + (e.message || "błąd skryptu"); boot.style.opacity = "1"; });
 </script>
 <script>
@@ -35,12 +49,12 @@ body { background: var(--bg); color: var(--ink); font-family: var(--text); overf
   // binary object URLs under their game paths, then start the game.
   (async () => {
     const assets = {};
-    await Promise.all(["assets/hulls/galleon.glb", "assets/props/gun.glb"].map(async (path) => {
+    await Promise.all(/*MODELS*/[].map(async (path) => {
       try {
         const { base64 } = await (await fetch(path + ".json")).json();
         const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-        assets[path] = URL.createObjectURL(new Blob([bytes], { type: "model/gltf-binary" }));
-      } catch { /* the game falls back to its generated hull and lathed guns */ }
+        assets[path] = URL.createObjectURL(new Blob([bytes], { type: path.endsWith(".glb") ? "model/gltf-binary" : "application/octet-stream" }));
+      } catch { /* the game falls back to its generated hull, lathed guns and plain crew figures */ }
     }));
     globalThis.__broadsideAssets = assets;
     await import("./viewer.js");

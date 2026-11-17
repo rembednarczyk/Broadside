@@ -74,9 +74,11 @@ export class PostStack {
     p.samples = g.msaa;
     p.fxaaEnabled = g.msaa === 1;
     p.bloomEnabled = g.bloom;
-    p.bloomThreshold = 0.8;
-    p.bloomWeight = 0.35;
-    p.bloomKernel = g.msaa >= 4 ? 64 : 32;
+    // A wide, soft glow round the sun and its glitter (the reference's blown-out sky): a lower
+    // threshold and a broad kernel from the high preset up.
+    p.bloomThreshold = 0.72;
+    p.bloomWeight = 0.45;
+    p.bloomKernel = g.msaa >= 2 ? 72 : 32;
     p.imageProcessingEnabled = true;
     p.imageProcessing.toneMappingEnabled = true;
     p.imageProcessing.toneMappingType = 1; // ACES

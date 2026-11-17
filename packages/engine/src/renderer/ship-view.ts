@@ -7,11 +7,16 @@ import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-
 import { type HullModels } from "./hull-models";
 import { BentMast } from "./bent-mast";
 import { sternCastle } from "./castle-layout";
+import { type SideProfile } from "./side-profile";
+import { gunPlaces } from "./gun-layout";
+import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelDecks, buildModelRails } from "./model-rails";
-import { type RunningLine, runningRigging, stayEnds } from "./rig-layout";
+import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
+import { CrewActivityTracker } from "./crew-activity";
+import { type CrewRig } from "./crew-rig";
 import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
@@ -68,7 +73,9 @@ export const createShipMaterials = (scene: Scene, texturesUrl?: string, quality:
   const hull = material(scene, "hull", [1, 1, 1], 0.08);
   hull.backFaceCulling = false;
   hull.twoSidedLighting = true;
-  const deck = material(scene, "deck", [0.5, 0.42, 0.32], 0.04);
+  // A deck at sea is wet with spray: a tight sheen that throws the low sun back (ref_112).
+  const deck = material(scene, "deck", [0.5, 0.42, 0.32], 0.32);
+  deck.specularPower = 42;
   deck.backFaceCulling = false;
   deck.twoSidedLighting = true;
   const sail = material(scene, "sail", [0.6, 0.55, 0.46], 0.02);
@@ -119,6 +126,8 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const tex = new DynamicTexture(key, { width: size, height: size }, scene, true);
   paintSail(tex.getContext() as unknown as SailPaint, size, faction, emblem);
   tex.update(true);
+  // The frayed foot is cut out of the alpha (alpha test, so shadows follow it).
+  tex.hasAlpha = true;
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;
@@ -181,6 +190,8 @@ export class ShipView {
 
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
+    // The animated crew replace the stand-ins the first time the ship comes close after they load.
+    if (d < FINE_DETAIL && this.rig?.templates) this.detail.crew.useRig(this.rig);
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);
@@ -188,6 +199,9 @@ export class ShipView {
     this.running.tubes.mesh.setEnabled(d < FINE_DETAIL);
   }
   private shownCrew = -1;
+  private activity: CrewActivityTracker | null = null;
+  /** The ship's own frame (hull space), parent of everything drawn on her. */
+  private hullSpace!: TransformNode;
   private clothNear = false;
   private running!: { lines: RunningLine[]; tubes: RopeTubes };
   private springs!: MastSprings;
@@ -200,10 +214,11 @@ export class ShipView {
   /** Whether this view shows a modelled hull (rebuilt when the model arrives after the ship). */
   readonly modelled: boolean;
 
-  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null) {
+  constructor(scene: Scene, readonly entityId: number, readonly model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, hulls: HullModels | null = null, gunScan: GunScan | null = null, private readonly rig: CrewRig | null = null) {
     this.root = new TransformNode(`ship-${entityId}`, scene);
     this.root.rotationQuaternion = new Quaternion();
     const hullSpace = new TransformNode(`ship-${entityId}-hull`, scene);
+    this.hullSpace = hullSpace;
     hullSpace.parent = this.root;
     hullSpace.position = new Vector3(-model.com.x, -model.com.y, -model.com.z);
     const hullMesh = this.buildMesh(scene, `hull-${entityId}`, hullGeometry(model.def.hull), this.liveryMaterial(scene, model, faction, mats));
@@ -211,15 +226,17 @@ export class ShipView {
     shadows?.addShadowCaster(hullMesh);
     const deck = this.buildMesh(scene, `deck-${entityId}`, deckGeometry(model.def.hull), mats.deck);
     deck.parent = hullSpace;
-    this.buildRig(scene, hullSpace, model, faction, mats, shadows);
-    // The measured side of a modelled hull: shrouds, channels and the rail are fitted to it.
+    // The measured side of a modelled hull: stays, shrouds, channels and the rail are fitted to it.
     const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
+    this.buildRig(scene, hullSpace, model, faction, mats, shadows, side);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
     if (side) {
       buildModelRails(scene, hullSpace, side, mats.wood, shadows);
       buildModelDecks(scene, hullSpace, side, mats.deck);
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
-      const castle = sternCastle(side);
+      const places = gunPlaces(model, (_, z) => side.halfAt(z));
+      const castle = sternCastle(side, places);
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
       if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
     }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
@@ -275,7 +292,7 @@ export class ShipView {
     return m;
   }
 
-  private buildRig(scene: Scene, parent: TransformNode, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null): void {
+  private buildRig(scene: Scene, parent: TransformNode, model: ShipModel, faction: FactionId, mats: ShipMaterials, shadows: ShadowGenerator | null, side: SideProfile | null): void {
     const plan = rigPlan(model.def);
     // Masts: one merged mesh per mast (so a fallen mast can be hidden), bowsprit and tops with the first.
     const parts: Mesh[][] = model.def.masts.map(() => []);
@@ -317,15 +334,15 @@ export class ShipView {
     this.fixed = this.plans.map((p) => p.shape === "square" && model.def.masts[p.mast]!.sails[p.sail]!.rig === "foreAft");
     this.cloth = new SailCloth(scene, parent, `ship-${this.entityId}`, this.plans, (p) => sailMaterial(scene, mats.sail, faction, p.emblem, mats.sailSize), mats.wood, shadows);
     this.springs = new MastSprings(plan.mastTops.map((t, i) => ({ base: t.y - model.def.masts[i]!.height, height: model.def.masts[i]!.height })));
-    this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model);
+    this.buildStays(scene, parent, plan.mastTops, plan.bowspritEnd, model, side);
     // Sheets and braces: thin laid rope from the sails' corners (close ships only).
     const lines = runningRigging(plan, model.def.hull);
     this.running = { lines, tubes: new RopeTubes(scene, parent, `running-ropes-${this.entityId}`, lines.length, 6, 0.02) };
   }
 
   /** Fore-and-aft stays between mast heads and to the bowsprit, and backstays to the rail. */
-  private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel): void {
-    const ends = stayEnds(tops, bow, model.def.hull);
+  private buildStays(scene: Scene, parent: TransformNode, tops: readonly { y: number; z: number }[], bow: { y: number; z: number }, model: ShipModel, side: SideProfile | null): void {
+    const ends = stayEnds(tops, bow, model.def.hull, side);
     const lines = ends.map((e) => sagLine(e.a, e.b, 0).map((p) => new Vector3(...p)));
     const rig = MeshBuilder.CreateLineSystem(`stays-${this.entityId}`, { lines, updatable: true }, scene);
     rig.color = new Color3(0.08, 0.06, 0.05);
@@ -359,7 +376,7 @@ export class ShipView {
   /** A gun fired at a world position: the nearest one recoils. */
   gunFired(at: { readonly x: number; readonly y: number; readonly z: number }): void {
     const local = Vector3.TransformCoordinates(new Vector3(at.x, at.y, at.z), this.root.computeWorldMatrix(true).clone().invert());
-    this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z);
+    this.activity?.fired(this.guns.fired(local.x + this.model.com.x, local.y + this.model.com.y, local.z + this.model.com.z));
   }
 
   /**
@@ -411,7 +428,7 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter };
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0 };
     });
     const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
@@ -432,8 +449,11 @@ export class ShipView {
     if (fb) this.flag.position.set(this.flagBase.x + fb.dx, this.flagBase.y, this.flagBase.z + fb.dz);
     if (s.crew !== this.shownCrew) {
       this.shownCrew = s.crew;
-      this.detail.setCrew(s.crew, s.model.def.crew);
+      this.detail.crew.setCrew(s.crew, s.model.def.crew);
     }
+    // What the men are doing comes from what the ship is doing.
+    this.activity ??= new CrewActivityTracker(s);
+    this.detail.crew.animate(this.activity.update(s, time), time);
     this.updateFlag(aw.x, aw.z, time);
   }
 

@@ -142,6 +142,7 @@ uniform vec3 fogColor;
 uniform float fogDensity;
 uniform float time;
 uniform float foamAmount;
+uniform float sunGlint;
 // Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, 0); up to 8.
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
@@ -160,6 +161,31 @@ float vnoise(vec2 p) {
   vec2 i = floor(p); vec2 f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+// Foam is lace, not a blot: a network of bubble walls between rounded open cells, closing up to a
+// solid sheet where it is thick. The walls are where the two nearest feature points of cellular
+// noise are nearly equally near (F2 - F1 small, Worley 1996); \`cover\` 0..1 thickens them.
+vec2 cells(vec2 p) {
+  vec2 c = floor(p);
+  float f1 = 9.0;
+  float f2 = 9.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 o = c + vec2(float(i), float(j));
+      vec2 r = o + vec2(hash(o), hash(o + 17.3)) - p;
+      float d = dot(r, r);
+      if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+    }
+  }
+  return sqrt(vec2(f1, f2));
+}
+float lace(vec2 p, float cover) {
+  if (cover <= 0.01) return 0.0;
+  float a = cells(p).y - cells(p).x;
+  float b = cells(p * 2.7 + 5.1).y - cells(p * 2.7 + 5.1).x;
+  float wall = min(a, b * 0.8);
+  float w = 0.03 + cover * 0.55;
+  return smoothstep(w, w - 0.06, wall) * smoothstep(0.0, 0.25, cover);
 }
 float fbm(vec2 p) {
   float s = 0.0; float a = 0.5;
@@ -259,12 +285,16 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // Seen from below: inside Snell's window (about 48.6 deg from the zenith, critical angle of
   // water) the sky shows through, bright and blurred; outside it total internal reflection
   // mirrors the dark depths.
+  // up: the ray from the eye to the surface; its angle from the surface's (upward) normal.
   vec3 up = -v;
-  float c = dot(up, -n);
+  float c = dot(up, n);
   float window = smoothstep(0.62, 0.7, c);
   float sun = pow(max(dot(refract(up, -n, 1.33), sunDirection), 0.0), 40.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.6 + sunColor * sun * 4.0;
-  vec3 deep = vec3(0.02, 0.1, 0.1);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.6 + sunColor * sun * 5.0;
+  // Outside the window the depths, mirrored, with the waves' relief catching the light from the
+  // window's side (the teal ripples round the bright disc in ref_161).
+  float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
+  vec3 deep = vec3(0.03, 0.14, 0.13) * relief;
   vec3 col = mix(deep, sky, window);
   return mix(col, vec3(0.02, 0.13, 0.12), 1.0 - exp(-0.035 * dist));
 }
@@ -273,10 +303,6 @@ void main() {
   vec3 viewVec = cameraPosition - vWorld;
   float dist = length(viewVec);
   vec3 v = viewVec / dist;
-  if (underwater > 0.5) {
-    gl_FragColor = vec4(underside(v, vNormal, dist), 1.0);
-    return;
-  }
   // Micro-surface: wind chop as normal detail from two scales of fbm (finite differences),
   // scrolling downwind. Faded by screen-space footprint (fwidth) so it never shimmers: the
   // detail fades where one pixel covers more than a ripple.
@@ -294,6 +320,11 @@ void main() {
   float detail2 = (1.0 - smoothstep(0.15, 0.9, foot)) * 0.35;
   vec3 dn = vec3(-(cx - c0) / e * detail0 - (ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(cz - c0) / e * detail0 - (az - a0) / e * detail1 - (bz - b0) / e * detail2);
   vec3 n = normalize(vNormal + dn * 0.5);
+  // From below the same surface, ripples and all (seen through it: Snell's window).
+  if (underwater > 0.5) {
+    gl_FragColor = vec4(underside(v, n, dist), 1.0);
+    return;
+  }
   float nv = clamp(dot(n, v), 0.0, 1.0);
   // Schlick Fresnel, F0 of water = 0.02.
   float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);
@@ -317,18 +348,20 @@ void main() {
   vec3 gn = normalize(n + gfade * (0.5 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.4 * vec3(vnoise(gp * 2.7) - 0.5, 0.0, vnoise(gp * 2.7 + 5.1) - 0.5)));
   vec2 wk = wakes(vWorld.xz);
   float glitter = pow(max(dot(gn, h), 0.0), 5000.0 - wk.y * 2500.0) * (70.0 + wk.y * 50.0) * smoothstep(-0.05, 0.25, sunDirection.y);
-  col += sunColor * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
+  col += sunColor * sunGlint * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
   float foamNoise = fbm(vWorld.xz * 0.18 + vec2(time * 0.05, -time * 0.03));
-  float foam = clamp(fold * foamAmount * 0.6 * smoothstep(0.5, 0.85, foamNoise + fold * 0.3), 0.0, 1.0);
-  float wakeFoam = wk.x * smoothstep(0.45, 0.75, fbm(vWorld.xz * 0.6 + vec2(time * 0.2, 0.0)) + wk.x * 0.2);
-  foam = max(foam, wakeFoam * 0.5);
+  float caps = fold * foamAmount * smoothstep(0.45, 0.8, foamNoise + fold * 0.3);
+  // The wake's and the crests' foam drawn as lace that drifts and opens as it ages.
+  vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
+  float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
+  foam = max(foam, lace(fp * 1.15 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)) * (0.35 + 0.4 * wk.x));
   col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
-  float surfFoam = sh.y * smoothstep(0.35, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3);
+  float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
   col = mix(col, vec3(0.9, 0.92, 0.92) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);

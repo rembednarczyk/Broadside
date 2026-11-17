@@ -9,8 +9,16 @@
  *
  * The structure is a tree by `on` (Composite, GoF: parts carried by parts down to the hull).
  */
-export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag", "sheet", "brace", "castle", "lantern"] as const;
+export const PART_KINDS = ["hull", "deck", "mast", "bowsprit", "top", "yard", "sail", "stay", "shroud", "channel", "rail", "gun", "carriage", "flag", "sheet", "brace", "lift", "clewline", "castle", "lantern", "port"] as const;
 export type PartKind = (typeof PART_KINDS)[number];
+
+/** A point or a vector in hull space. */
+export type Vec = readonly [number, number, number];
+
+/** What a part takes up: a capsule for the long round parts, an axis-aligned box for the built ones. */
+export type PartVolume =
+  | { readonly shape: "capsule"; readonly a: Vec; readonly b: Vec; readonly r: number }
+  | { readonly shape: "box"; readonly min: Vec; readonly max: Vec };
 
 export interface ShipPart {
   readonly id: string;
@@ -19,6 +27,8 @@ export interface ShipPart {
   readonly at: readonly [number, number, number];
   /** Identifier of the part that carries this one; null only for the hull. */
   readonly on: string | null;
+  /** What the part takes up in hull space, for the rule against parts running through one another (part-volumes). */
+  readonly volumes?: readonly PartVolume[];
 }
 
 /** Identifier of a part: its kind and its indices, joined by colons. */
@@ -42,11 +52,14 @@ export const CARRIERS: Readonly<Record<PartKind, readonly PartKind[]>> = {
   flag: ["mast"],
   sheet: ["sail"],
   brace: ["yard"],
+  lift: ["yard"],
+  clewline: ["sail"],
   castle: ["hull"],
   lantern: ["castle", "rail"],
+  port: ["castle"],
 };
 
-export type PartFaultKind = "duplicate" | "orphan" | "wrongCarrier" | "outside" | "unstayed" | "noShrouds" | "noHull" | "noSheet" | "noBraces";
+export type PartFaultKind = "duplicate" | "orphan" | "wrongCarrier" | "outside" | "unstayed" | "noShrouds" | "noHull" | "noSheet" | "noBraces" | "noLifts" | "clash";
 
 export interface PartFault {
   readonly fault: PartFaultKind;
@@ -99,6 +112,10 @@ export const auditParts = (parts: readonly ShipPart[], b: PartBounds): PartFault
     if (rigged.length < 2) faults.push({ fault: "noShrouds", part: m.id });
   }
   for (const s of parts.filter((p) => p.kind === "sail")) if (!parts.some((p) => p.kind === "sheet" && p.on === s.id)) faults.push({ fault: "noSheet", part: s.id });
-  for (const y of parts.filter((p) => p.kind === "yard")) if (parts.filter((p) => p.kind === "brace" && p.on === y.id).length < 2 && !y.id.startsWith("yard:gaff")) faults.push({ fault: "noBraces", part: y.id });
+  for (const y of parts.filter((p) => p.kind === "yard" && !p.id.startsWith("yard:gaff"))) {
+    if (parts.filter((p) => p.kind === "brace" && p.on === y.id).length < 2) faults.push({ fault: "noBraces", part: y.id });
+    // A square yard hangs in its lifts, one from each arm to the mast above it.
+    if (parts.filter((p) => p.kind === "lift" && p.on === y.id).length < 2) faults.push({ fault: "noLifts", part: y.id });
+  }
   return faults;
 };

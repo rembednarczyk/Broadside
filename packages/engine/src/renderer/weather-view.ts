@@ -1,13 +1,14 @@
 import { type DomainEvent, cellInfluence } from "@broadside/core";
 import { RainShafts } from "./rain-shafts";
 import { type Simulation } from "@broadside/sim";
-import { Color3, Color4, type Mesh, MeshBuilder, ParticleSystem, type Scene, StandardMaterial, Vector3, type LinesMesh, type ArcRotateCamera } from "../babylon";
+import { Color3, Color4, Mesh, MeshBuilder, ParticleSystem, type Scene, StandardMaterial, Vector3, type ArcRotateCamera } from "../babylon";
+import { STRIKE_LENGTH, flashCurve, lightningBolt } from "./lightning-bolt";
 import { type Sprites } from "../effects/sprite-textures";
 
 /**
  * Weather made visible: rain streaks around the camera (a particle box that follows it, the
- * standard trick for local precipitation), lightning bolts as jagged polylines with a sky flash
- * (midpoint displacement for the bolt shape), and waterspouts as tapered rotating funnels.
+ * standard trick for local precipitation), lightning as branched glowing channels that flicker
+ * with their return strokes (lightning-bolt), and waterspouts as tapered rotating funnels.
  */
 export class WeatherView {
   private readonly rain: ParticleSystem;
@@ -15,8 +16,11 @@ export class WeatherView {
   private readonly spoutMeshes = new Map<object, Mesh>();
   private readonly spoutMaterial: StandardMaterial;
   private readonly shafts: RainShafts;
-  private bolt: LinesMesh | null = null;
-  private boltLife = 0;
+  private bolt: Mesh | null = null;
+  private strikeAge = 0;
+  /** Where the last strike hit the sea, while its flash lasts (the sky lights its clouds from there). */
+  strikeAt: { x: number; z: number } | null = null;
+  private readonly boltMaterial: StandardMaterial;
   /** 0..1 brightness of the current lightning flash, read by the renderer for the lights. */
   flash = 0;
 
@@ -52,6 +56,10 @@ export class WeatherView {
     m.backFaceCulling = false;
     this.shafts = new RainShafts(scene);
     this.spoutMaterial = m;
+    const bm = new StandardMaterial("bolt", scene);
+    bm.disableLighting = true;
+    bm.emissiveColor.set(3, 3.1, 3.6);
+    this.boltMaterial = bm;
   }
 
   /**
@@ -91,23 +99,19 @@ export class WeatherView {
 
   private strike(x: number, z: number): void {
     this.bolt?.dispose();
-    const pts: Vector3[] = [new Vector3(x + 40, 420, z - 30), new Vector3(x, 0, z)];
-    // Midpoint displacement: split each segment and push the midpoint sideways.
-    for (let level = 0; level < 6; level++) {
-      const next: Vector3[] = [];
-      for (let i = 0; i < pts.length - 1; i++) {
-        const a = pts[i]!;
-        const b = pts[i + 1]!;
-        const off = Vector3.Distance(a, b) * 0.18;
-        next.push(a, new Vector3((a.x + b.x) / 2 + (Math.random() - 0.5) * off, (a.y + b.y) / 2, (a.z + b.z) / 2 + (Math.random() - 0.5) * off));
-      }
-      next.push(pts[pts.length - 1]!);
-      pts.splice(0, pts.length, ...next);
-    }
-    this.bolt = MeshBuilder.CreateLines("bolt", { points: pts }, this.scene);
-    this.bolt.color = new Color3(3, 3, 3.4);
-    this.bolt.applyFog = false;
-    this.boltLife = 0.25;
+    // A branched channel from the seeded shape (lightning-bolt), drawn as glowing tubes: bright
+    // enough to bloom, the main channel about a metre thick, the branches less than half that.
+    const shape = lightningBolt(x, z);
+    const vec = (p: readonly (readonly [number, number, number])[]): Vector3[] => p.map((q) => new Vector3(q[0], q[1], q[2]));
+    const tubes = [MeshBuilder.CreateTube("bolt-channel", { path: vec(shape.channel), radius: 0.9, tessellation: 5 }, this.scene), ...shape.branches.map((b, i) => MeshBuilder.CreateTube(`bolt-branch-${i}`, { path: vec(b), radius: 0.35, tessellation: 4 }, this.scene))];
+    const bolt = Mesh.MergeMeshes(tubes, true, true)!;
+    bolt.name = "bolt";
+    bolt.material = this.boltMaterial;
+    bolt.applyFog = false;
+    bolt.isPickable = false;
+    this.bolt = bolt;
+    this.strikeAge = 0;
+    this.strikeAt = { x, z };
     this.flash = 1;
   }
 
@@ -132,12 +136,17 @@ export class WeatherView {
     this.fogBanks.manualEmitCount = missing > 0 ? Math.min(5, missing) : 0;
     (this.fogBanks.emitter as Vector3).set(t.x, 0, t.z);
     this.fogBanks.gravity.set(wx * 0.06, 0, wz * 0.06);
-    this.flash = Math.max(0, this.flash - dt * 1.6);
-    if (this.boltLife > 0) {
-      this.boltLife -= dt;
-      if (this.boltLife <= 0) {
+    // The flash flickers with the return strokes; the channel shows only while a stroke is bright.
+    if (this.strikeAt) {
+      this.strikeAge += dt;
+      this.flash = flashCurve(this.strikeAge);
+      if (this.bolt) this.bolt.setEnabled(this.flash > 0.3);
+      this.boltMaterial.emissiveColor.set(2.6 * this.flash + 0.4, 2.7 * this.flash + 0.4, 3.2 * this.flash + 0.5);
+      if (this.strikeAge > STRIKE_LENGTH) {
         this.bolt?.dispose();
         this.bolt = null;
+        this.strikeAt = null;
+        this.flash = 0;
       }
     }
     this.syncSpouts(sim, dt);

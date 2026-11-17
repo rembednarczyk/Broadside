@@ -12,6 +12,8 @@ export interface SailPaint {
   strokeStyle: string | CanvasGradient | CanvasPattern;
   lineWidth: number;
   globalAlpha: number;
+  /** "destination-out" cuts the cloth away (frayed edges); absent on a test double. */
+  globalCompositeOperation?: string;
   fillRect(x: number, y: number, w: number, h: number): void;
   beginPath(): void;
   arc(x: number, y: number, r: number, a0: number, a1: number): void;
@@ -186,6 +188,41 @@ export const paintSail = (ctx: SailPaint, size: number, faction: FactionId, with
   }
   ctx.globalAlpha = 1;
   if (withEmblem) emblem(ctx, faction, size / 2, size * 0.52, size * 0.3);
+  fray(ctx, size, rng);
+};
+
+/**
+ * Wear at the foot, where canvas chafes on the rigging and flogs in a blow (the reference's
+ * fore course hangs in rags, ref_024): the edge cut away in an uneven line of small teeth, and a
+ * few tears running up from it, mostly near the clews. Cut out of the texture's alpha; the sail
+ * material tests alpha, so the cloth and its shadow lose the same shape. Seeded with the cloth.
+ */
+const fray = (ctx: SailPaint, size: number, rng: ReturnType<typeof createRng>): void => {
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgb(0,0,0)";
+  ctx.beginPath();
+  ctx.moveTo(0, size);
+  const teeth = 96;
+  for (let i = 0; i <= teeth; i++) ctx.lineTo((i / teeth) * size, size - size * range(rng, 0.004, 0.018));
+  ctx.lineTo(size, size);
+  ctx.closePath();
+  ctx.fill();
+  for (const at of [range(rng, 0.05, 0.16), range(rng, 0.3, 0.7), range(rng, 0.84, 0.95)]) {
+    const half = range(rng, 0.01, 0.025) * size;
+    const depth = range(rng, 0.05, 0.13) * size;
+    const x = at * size;
+    ctx.beginPath();
+    ctx.moveTo(x - half, size);
+    // A ragged V: the tear wanders a little as it runs up the cloth.
+    for (let k = 1; k <= 4; k++) ctx.lineTo(x - half * (1 - k / 5) + range(rng, -0.4, 0.4) * half, size - (depth * k) / 5);
+    ctx.lineTo(x + range(rng, -0.3, 0.3) * half, size - depth);
+    for (let k = 4; k >= 1; k--) ctx.lineTo(x + half * (1 - k / 5) + range(rng, -0.4, 0.4) * half, size - (depth * k) / 5);
+    ctx.lineTo(x + half, size);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = "source-over";
 };
 
 /**

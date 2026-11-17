@@ -1,4 +1,4 @@
-import { Color3, type Engine, Mesh, MeshBuilder, RawTexture3D, type Scene, ShaderMaterial, Texture, Vector2, Vector3 } from "../babylon";
+import { Color3, type Engine, Mesh, MeshBuilder, RawTexture3D, type Scene, ShaderMaterial, Texture, Vector2, Vector3, Vector4 } from "../babylon";
 import { CLOUD_NOISE_SIZE, cloudNoiseVolume } from "../shaders/cloud-noise";
 import { SKY_VERTEX, skyFragment } from "../shaders/sky";
 import { type SceneLook } from "./look";
@@ -17,7 +17,7 @@ export class Sky {
     const noiseVolume = octaves >= 6 && (scene.getEngine() as Engine).webGLVersion >= 2;
     this.material = new ShaderMaterial("sky", scene, { vertexSource: SKY_VERTEX, fragmentSource: skyFragment(octaves, noiseVolume) }, {
       attributes: ["position"],
-      uniforms: ["worldViewProjection", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "cloudCover", "time", "windOffset"],
+      uniforms: ["worldViewProjection", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "cloudCover", "time", "windOffset", "lightning"],
       samplers: noiseVolume ? ["cloudNoise"] : [],
     });
     if (noiseVolume) {
@@ -33,7 +33,9 @@ export class Sky {
     this.mesh.isPickable = false;
   }
 
-  update(look: SceneLook, time: number, windX: number, windZ: number): void {
+  /** `lightning`: unit direction from the eye to a strike and the flash's brightness (w), or none. */
+  update(look: SceneLook, time: number, windX: number, windZ: number, lightning: { x: number; y: number; z: number; w: number } | null = null): void {
+    this.material.setVector4("lightning", lightning ? new Vector4(lightning.x, lightning.y, lightning.z, lightning.w) : new Vector4(0, 1, 0, 0));
     this.material.setVector3("sunDirection", new Vector3(look.sunDir.x, look.sunDir.y, look.sunDir.z));
     this.material.setColor3("sunColor", new Color3(look.sunColor.r, look.sunColor.g, look.sunColor.b));
     this.material.setColor3("skyZenith", new Color3(look.skyZenith.r, look.skyZenith.g, look.skyZenith.b));

@@ -23,7 +23,7 @@ if (!out) {
 execFileSync("npx", ["vite", "build", "-c", "vite.viewer.config.ts"], { cwd: app, stdio: "inherit" });
 rmSync(out, { recursive: true, force: true });
 const pub = join(app, "public");
-const MODELS = ["assets/hulls/galleon.glb", "assets/props/gun.glb"];
+const MODELS = ["assets/hulls/galleon.glb", "assets/props/gun.glb", "assets/props/crew-anim.bin"];
 const FILES = ["assets/hulls/galleon.json", "assets/hulls/galleon-planks.jpg", ...["dark_planks_diff", "dark_planks_nor_gl", "weathered_planks_diff", "weathered_planks_nor_gl"].map((t) => `assets/textures/${t}.jpg`), "assets/textures/rough_linen_detail.png"];
 // The recorded sounds (ambience beds, ship sounds): without them the game falls back to a plain noise synth.
 const AUDIO = readdirSync(join(pub, "assets/audio")).map((f) => `assets/audio/${f}`);
@@ -33,6 +33,6 @@ for (const f of FILES) cpSync(join(pub, f), join(out, f));
 for (const f of MODELS) writeFileSync(join(out, `${f}.json`), JSON.stringify({ base64: readFileSync(join(pub, f)).toString("base64") }));
 cpSync(join(app, "dist-viewer/viewer.js"), join(out, "viewer.js"));
 const css = readFileSync(join(app, "dist-viewer/viewer.css"), "utf8");
-writeFileSync(join(out, "index.html"), readFileSync(join(here, "page.html"), "utf8").replace("/*VIEWER_CSS*/", () => css));
+writeFileSync(join(out, "index.html"), readFileSync(join(here, "page.html"), "utf8").replace("/*VIEWER_CSS*/", () => css).replace("/*MODELS*/[]", () => JSON.stringify(MODELS)));
 writeFileSync(join(out, "files.json"), JSON.stringify(["viewer.js", ...MODELS.map((f) => `${f}.json`), ...FILES]));
 console.log(`packed ${out}: index.html, viewer.js, ${MODELS.length} models, ${FILES.length} files`);

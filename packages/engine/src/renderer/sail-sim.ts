@@ -1,4 +1,4 @@
-import { SAIL_COLS, SAIL_ROWS, type SailOutline, sailPositions } from "./sail-geometry";
+import { MAST_GIRTH, SAIL_COLS, SAIL_ROWS, type SailOutline, sailPositions } from "./sail-geometry";
 import { SAIL_LAYOUT } from "./sail-texture";
 
 /**
@@ -21,8 +21,10 @@ import { SAIL_LAYOUT } from "./sail-texture";
  *   fair along them, which is what the seams of a real sail are for.
  *
  * Deterministic: fixed steps, no random numbers; the flutter of a luffing sail is excited by a
- * travelling sine field, not noise. We differ from the papers in leaving out self-collision and
- * collision with the rig (a sail aback lies through its mast): not worth the cost at this scale.
+ * travelling sine field, not noise. We differ from the papers in leaving out self-collision. Of the
+ * rig only the mast is a collider (a square sail aback lies against it): after each solver pass
+ * the particles inside the mast's cylinder are projected out to its surface, the collision
+ * constraint of Müller et al., "Position Based Dynamics" (2007), §3.4, without friction.
  */
 const COLS = SAIL_COLS;
 const ROWS = SAIL_ROWS;
@@ -158,16 +160,34 @@ export class SailSim {
    * @param wind apparent wind speed (m/s)
    * @param flutter 0..1 how hard the sail is luffing
    */
-  advance(dt: number, set: number, drive: number, wind: number, flutter: number): void {
+  advance(dt: number, set: number, drive: number, wind: number, flutter: number, mastX: number | null = null): void {
     this.pending = Math.min(this.pending + Math.max(0, dt), STEP * MAX_STEPS);
     this.reshape(set);
     while (this.pending >= STEP) {
       this.pending -= STEP;
-      this.step(drive, wind, flutter);
+      this.step(drive, wind, flutter, mastX);
     }
   }
 
-  private step(drive: number, wind: number, flutter: number): void {
+  /** Puts the particles that lie inside the mast (a cylinder about the vertical at x = mastX, z = 0) on its surface. */
+  private clearMast(mastX: number): void {
+    const p = this.positions;
+    const side = mastX < 0 ? 1 : -1;
+    for (let i = 0; i < N; i++) {
+      if (this.pinned[i]) continue;
+      const dx = p[i * 3]! - mastX;
+      const dz = p[i * 3 + 2]!;
+      const d2 = dx * dx + dz * dz;
+      if (d2 >= MAST_GIRTH * MAST_GIRTH) continue;
+      // Out along the radius; a particle on the axis itself goes out on the yard's side.
+      const d = Math.sqrt(d2);
+      const k = d > 1e-6 ? MAST_GIRTH / d : 0;
+      p[i * 3] = d > 1e-6 ? mastX + dx * k : mastX + side * MAST_GIRTH;
+      p[i * 3 + 2] = dz * k;
+    }
+  }
+
+  private step(drive: number, wind: number, flutter: number, mastX: number | null): void {
     const p = this.positions;
     const h = STEP;
     this.clock += h;
@@ -244,6 +264,7 @@ export class SailSim {
         p[b + 1] = p[b + 1]! - dy * s * wb;
         p[b + 2] = p[b + 2]! - dz * s * wb;
       }
+      if (mastX !== null) this.clearMast(mastX);
     }
     for (let i = 0; i < N * 3; i++) this.vel[i] = (p[i]! - this.prev[i]!) / h;
   }
