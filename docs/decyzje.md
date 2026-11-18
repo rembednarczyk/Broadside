@@ -783,3 +783,9 @@ rozciągniętego 8 razy wzdłuż wiatru, niebo w oknie przygaszone do 1,4, scena
 ## 18.11 Nocne dostosowanie oka do ×2 (orkiestrator, M9 C1)
 Po podniesieniu ekspozycji sepii (1,15) jasne partie nocy wyszły ponad klatkę `ref_075` (75. percentyl 56 przy 46).
 Dostosowanie oka w nocy z ×2,2 do ×2,0: 75. percentyl 48 przy 46, 95. percentyl 64 przy 67.
+
+## 18.11 Rufa względem rej: bez zmiany kamery kinowej (orkiestrator, M9 C5)
+Szeroka rufa na `ref_090` to perspektywa bliskiej kamery. Kamera kinowa krąży na 1,8 długości statku, 1,3 m nad wodą
+(kąt 0,9 rad); żeby rufa wyszła szersza od rej, musiałaby podejść na ok. 1,3 długości, a wtedy ucina wierzchołki masztów
+(potrzebny pionowy kąt ok. 41°), podczas gdy klatka pokazuje cały statek z niebem nad nim. Zostaje jak jest; wcześniej
+sprawdzony szerszy kasztel (0,95) też nie zmieniał obrazu.
