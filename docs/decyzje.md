@@ -668,3 +668,14 @@ strony płótna, N·(−L) po stronie widzianej, z płatkiem rozpraszania w prz�
 kluczowe (słońce albo księżyc) wspólne dla sceny, aktualizowane co klatkę. Różnice: bez mapy grubości (płótno jest równe)
 i bez cienia (żagiel zasłonięty innym też prześwieca). Przepuszczalność 0,07 dobrana na planszach: 0,32 i 0,1 robiły z
 żagli pod słońce jasne płótno jak oświetlone od przodu. Scena `quarter-close` od dziobu ze słońcem za rufą.
+
+## 18.11 Mokry pokład na kadłubach z modeli (orkiestrator, M9 C1)
+Pozycja z backlogu „plamy słońca na mokrych deskach”: kadłuby z modeli mają jeden materiał na pokład i burty, prawie bez
+połysku. Wtyczka `WetDeck` (`wet-deck.ts`, `MaterialPluginBase`) podmienia przed pętlą świateł kolor i połysk
+odbicia Blinna-Phonga tam, gdzie normalna patrzy w górę (maska nachylenia jak śnieg na płaskim w shaderach terenu):
+pokład, wierzchy relingów i luków błyszczą (0,6 i połysk 32), burty zostają matowe; cienie i światła bez zmian. Sprawdzone
+ujęciem z boku (burty matowe) i z pokładu pod słońce: efekt jest subtelny, bo przy nisko stojącym słońcu pokład leży w
+cieniu nadburć; jasne plamy z `ref_112` wymagają jeszcze światła przez szczeliny między żaglami.
+Drugi wniosek tej rundy: jasna przerwa przy słońcu na `horizon` nie pochodzi z promieni (`VolumetricLightScattering`
+wyłączony daje prawie ten sam obraz), tylko z samego nieba z ekspozycją i bloomem; zostawiona, bo klip też ma tam
+prześwietlenie.

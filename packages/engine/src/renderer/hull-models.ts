@@ -47,7 +47,7 @@ export class HullModels {
             LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}${this.tier}.glb`), this.scene, GLB),
             fetch(`${this.baseUrl}${id}.json`).then((res) => res.json() as Promise<HullMetrics>),
           ]);
-          useStandardMaterials(container, this.scene, `hull-${id}`, metrics.gain ?? HULL_GAIN);
+          useStandardMaterials(container, this.scene, `hull-${id}`, metrics.gain ?? HULL_GAIN, true);
           this.loaded.set(id, { container, metrics });
         } catch {
           // No model for this class (or offline): the ship keeps its generated hull.
