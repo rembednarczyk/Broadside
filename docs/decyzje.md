@@ -702,3 +702,11 @@ biorą do 6 świateł, żeby wypełnienie nie wypchnęło świateł błysków lu
 (deski, galeria, żagle) zamiast sylwetki; nocą w widoku izometrycznym statek widoczny zamiast prawie czarnego.
 Przy okazji pod wodą: słońce widziane spod powierzchni wzdłuż załamanego promienia (Snell, n = 1,33), smugi światła
 tylko pod słońcem i na ciemnej wodzie, okno Snella przygaszone do 1,8 (słońce jest w kadrze sceny `underwater`, sun=97).
+
+## 18.11 Mniej plamek na morzu z daleka i nocą (orkiestrator, M9 C3)
+Na zrzucie izometrycznym nocą całe morze pokrywały jasne kropki. Dwa źródła: iskry odblasku księżyca (mnożnik 70 i
+nocna ekspozycja ×2,2) i koronka piany na grzbietach, której komórki (0,4–1,1 m) z wysokiej kamery są mniejsze od
+piksela i aliasują w plamki. Zmiany: iskry nocą do 10% dziennych (szeroki połysk zostaje); koronka grzbietów przechodzi
+w swoje średnie pokrycie, gdy piksel obejmuje 0,12–0,5 m wody, a drobniejsza koronka kilwateru przy 0,05–0,2 m
+(filtrowanie po rozmiarze piksela, `foot = length(fwidth(xz))`, jak przy normalnych iskier). Kilwater z daleka zostaje
+widoczny jako miękki pas (średnia 0,85 pokrycia).

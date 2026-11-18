@@ -274,7 +274,9 @@ export class BabylonRenderer {
       daylight: (look.sunDir.y + 0.05) / 0.35,
       // Under a heavy sky the sun's disc is behind the cloud and the sea has no path of light
       // (ref_060); through a broken sky it has (ref_090).
-      glint: 1 - 0.97 * smoothstep(0.5, 0.85, look.cloudCover),
+      // At night the moon's glitter is a few sparks near its path, not a field of them (ref_075; the
+      // night exposure lifts every spark): a tenth of the day's.
+      glint: (1 - 0.97 * smoothstep(0.5, 0.85, look.cloudCover)) * (1 - 0.9 * (1 - Math.min(1, look.sunIntensity / 0.8))),
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
     const strike = this.weather.strikeAt;

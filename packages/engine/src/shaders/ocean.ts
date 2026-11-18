@@ -378,10 +378,14 @@ void main() {
   float caps = fold * foamAmount * smoothstep(0.45, 0.8, foamNoise + fold * 0.3);
   // The wake's and the crests' foam drawn as lace that drifts and opens as it ages.
   vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
-  float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
+  // Where a pixel spans more than the lace's cells (far off, or the isometric camera high up) the
+  // pattern would alias into specks: it gives way to its average cover (the same filtering by
+  // footprint as the glitter's normals).
+  float laceFar = smoothstep(0.12, 0.5, foot);
+  float foam = mix(lace(fp, clamp(caps * 1.2, 0.0, 1.0)), clamp(caps * 1.2, 0.0, 1.0) * 0.45, laceFar) * 0.75;
   // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
   // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
-  float wakeLace = lace(fp * 2.6 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0));
+  float wakeLace = mix(lace(fp * 2.6 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)), clamp(wk.x * 1.3, 0.0, 1.0) * 0.85, smoothstep(0.05, 0.2, foot));
   float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
   foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
