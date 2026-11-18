@@ -818,3 +818,12 @@ GPU Gems 3 rozdz. 13; maszty, żagle i liny są w obrazie ciemne, więc same prz
 dawnego ustawienia `sunShafts` (8 do 32). Siła: nisko stojące słońce przed kamerą, słabnąca gdy słońce wysoko, za kamerą
 albo pod ciężkim niebem; pod wodą zostają promienie podwodne. Plansze `deck` i `stern-sun`: smugi między wantami i wokół
 masztów. Pomiar high: klatka 1,90 → 1,77 s, wywołania rysowania 243 → 176.
+
+## 18.11, użytkownik: woda wokół statku, chlapanie o burtę, uderzenia fal, fizyka
+Właściciel: „popraw wodę wokół statku do maksymalnego realizmu… chlapanie wody o burtę, uderzanie fal i fizyka”.
+Zrobione: punkty wzdłuż linii wodnej obu burt porównują ruch wody (nowe `waterState` w `core`: pochodna przemieszczenia
+Gerstnera w punkcie spoczynku, zanik Airy'ego w głąb) z ruchem kadłuba; woda podnosząca się względem burty albo
+napływająca na nią szybciej niż 1,2 m/s rzuca bryzgi w górę i na zewnątrz, cięższe przy mocnych uderzeniach (Kerner,
+„Water interaction model for boats in video games”, 2015); wygasająca siła uderzeń bieli wodę przy linii wodnej w
+shaderze. Fizyka (opór na prędkości względem wody, człon oporu Morisona) zrobiona, ale wycofana: pełna psuje dwa audyty,
+sam pion psuje bramkę liczby statków o jeden statek (opis w backlogu). Bramki ADR-0005 nie luzuję bez decyzji.

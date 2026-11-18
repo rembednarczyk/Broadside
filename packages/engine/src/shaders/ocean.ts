@@ -36,7 +36,7 @@ varying float vHeight;
 // the square of its speed (wave-making, cf. Froude scaling), piles water along its sides, holds
 // the sea below its keel inside the hull outline (so the hull cuts the water and no crest shows
 // through the deck), and leaves Kelvin-wedge ridges astern. Data: (x, z, dirX, dirZ) and
-// (speed, length, beam, 0) per ship.
+// (speed, length, beam, slap) per ship (slap: how hard the sea has lately struck the sides).
 float hullWater(vec2 p) {
   float h = 0.0;
   for (int i = 0; i < 8; i++) {
@@ -152,7 +152,7 @@ uniform float fogDensity;
 uniform float time;
 uniform float foamAmount;
 uniform float sunGlint;
-// Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, 0); up to 8.
+// Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, slap); up to 8.
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
@@ -276,6 +276,8 @@ vec2 wakes(vec2 p) {
     float w = across / (b.z * 0.5);
     float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
     foam += exp(-pow((outline - 1.0) / 0.12, 2.0)) * (0.35 + clamp(speed / 6.0, 0.0, 0.5));
+    // Where the sea has just struck the side, the water along it is white with the broken wave.
+    foam += exp(-pow((outline - 1.0) / 0.35, 2.0)) * b.w * 0.8;
     // The churned water along the side glitters too (ref_020: sparks at the hull, not only astern).
     glit += exp(-pow((outline - 1.0) / 0.3, 2.0)) * 0.6 * clamp(speed / 4.0, 0.0, 1.0);
     // Bow wave: a foam collar around the forward hull.

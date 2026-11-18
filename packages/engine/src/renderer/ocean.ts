@@ -89,12 +89,13 @@ export class Ocean {
   }
 
   /** Ships for the wake term (nearest first, at most 8): position, heading, speed and size. */
-  setShips(ships: readonly { x: number; z: number; heading: number; speed: number; length: number; beam: number }[]): void {
+  /** `slap` 0..1: how hard the sea has lately struck the sides (effects/hull-slap): whiter water along the waterline. */
+  setShips(ships: readonly { x: number; z: number; heading: number; speed: number; length: number; beam: number; slap?: number }[]): void {
     const a = new Array<number>(32).fill(0);
     const b = new Array<number>(32).fill(0);
     ships.slice(0, 8).forEach((s, i) => {
       a.splice(i * 4, 4, s.x, s.z, Math.sin(s.heading), Math.cos(s.heading));
-      b.splice(i * 4, 4, s.speed, s.length, s.beam, 0);
+      b.splice(i * 4, 4, s.speed, s.length, s.beam, s.slap ?? 0);
     });
     this.material.setArray4("shipA", a);
     this.material.setArray4("shipB", b);

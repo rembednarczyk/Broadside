@@ -4,6 +4,7 @@ import { Color3, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, V
 import { BurstEmitter, rgba } from "./burst-emitter";
 import { type Sprites, createSprites } from "./sprite-textures";
 import { FlashLights } from "./flash-lights";
+import { hullSlaps } from "./hull-slap";
 
 /**
  * Turns domain events into particles (Observer: the director reacts, the simulation does not
@@ -12,6 +13,8 @@ import { FlashLights } from "./flash-lights";
  */
 export class EffectsDirector {
   readonly sprites: Sprites;
+  /** How hard the sea has lately struck each ship's sides (decays over about a second): the ocean whitens the waterline with it. */
+  readonly slap = new Map<number, number>();
   private readonly smoke: BurstEmitter;
   private readonly flash: BurstEmitter;
   private readonly spray: BurstEmitter;
@@ -149,6 +152,7 @@ this.mist = new BurstEmitter("fx-mist", scene, { texture: this.sprites.puff, cap
       }
     }
     this.bowSpray(sim, dt);
+    this.sideSpray(sim, dt);
     this.syncInstances(sim);
     for (const em of [this.smoke, this.flash, this.spray, this.mist, this.splinters, this.flames, this.fireSmoke, this.embers, this.screen]) em.flush();
   }
@@ -200,6 +204,31 @@ this.mist = new BurstEmitter("fx-mist", scene, { texture: this.sprites.puff, cap
           this.mist.emit(x, y, z, side.x * sx * 0.75 - ahead.x * 0.25, 0.55 + slam * 0.35, side.z * sx * 0.75 - ahead.z * 0.25, n, 0.35);
         }
       }
+    }
+  }
+
+  /**
+   * Spray where the sea strikes the sides (hull-slap.ts): a sheet of droplets up the planking and
+   * out, more and higher the harder the meeting; the hard ones throw heavy spray as well.
+   */
+  private sideSpray(sim: Simulation, dt: number): void {
+    const env = sim.env;
+    for (const e of sim.ships()) {
+      const b = e.body!;
+      const s = e.ship!;
+      let struck = (this.slap.get(e.id) ?? 0) * Math.exp(-dt * 1.2);
+      const hull = { pos: b.pos, rot: b.rot, pointVelocity: (p: { x: number; y: number; z: number }) => pointVelocity(b, vec3(p.x, p.y, p.z)), length: this.hullLength(s.model.def.id, s.model.def.hull.length), beam: s.model.def.hull.beam, waterline: -s.model.com.y };
+      for (const hit of hullSlaps(hull, env.waves, env.time)) {
+        struck = Math.max(struck, Math.min(1, hit.strength / 3));
+        const up = 0.9 + 0.3 * hit.strength;
+        const n = Math.floor(Math.min(160, 40 + 60 * hit.strength * hit.strength) * dt + Math.random());
+        if (n > 0) this.mist.emit(hit.x, hit.y + 0.1, hit.z, hit.nx * 0.5, up, hit.nz * 0.5, n, 0.9);
+        if (hit.strength > 0.6) {
+          const m = Math.floor(Math.min(40, 10 * hit.strength) * dt + Math.random());
+          if (m > 0) this.spray.emit(hit.x, hit.y + 0.2, hit.z, hit.nx * 0.4, up * 0.8, hit.nz * 0.4, m, 0.7);
+        }
+      }
+      this.slap.set(e.id, struck);
     }
   }
 
