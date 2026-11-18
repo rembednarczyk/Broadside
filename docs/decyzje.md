@@ -621,3 +621,10 @@ a pod nim widać było krągły tył kadłuba, więc sylwetka od rufy była wąs
 największej szerokości kadłuba pod nim (nadbudówka galeonu wystaje nad zwężającą się rufą); płaska pawęż z desek od
 podłogi kasztelu do 0,9 m nad wodą, zwężająca się trapezem do szerokości kadłuba u dołu (kwadratowa rufa galeonu),
 z trzema listwami w poprzek. Wszystko w siatce ścian kasztelu (bez nowych wywołań rysowania poza listwami).
+
+## 18.11 Mgła rośnie z zachmurzeniem, chmury z tekstury na presecie high (orkiestrator, M9 C2)
+Plansza `horizon` (ref_152): na klatce pełne zachmurzenie i zamglony horyzont, u nas ostre wyspy i gładkie bryły chmur.
+Gęstość mgły zależy teraz od pokrycia w potędze 1,5 (`0.0006 + 0.0028·cover^1.5 + 0.006·fog`), więc pogodne niebo
+zostaje przejrzyste, a pod ciężkim niebem horyzont szarzeje. Preset high przechodzi na chmury z tekstury szumu 3D
+(`cloudOctaves` 6, jak ultra): na stanowisku `tools/sky/sky-test.mjs` (SwiftShader) wariant proceduralny z 5 oktawami
+liczył się 3,58 s, teksturowy 2,71 s, a ma drobniejszą fakturę. Na WebGL1 silnik i tak wraca do wariantu proceduralnego.

@@ -76,6 +76,8 @@ export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?
   const moonDir = { x: -Math.cos(az) * moonH, y: moonY, z: -Math.sin(az) * moonH };
   const moonIntensity = (1 - day) * MOON_INTENSITY * clamp01(-elevation / 0.25 + 0.3) * (1 - 0.75 * cover);
   const moonKey = moonIntensity > sunIntensity;
-  const fogDensity = 0.0006 + 0.0012 * cover + 0.006 * clamp01(fog);
+  // Haze thickens faster than the cover: under a heavy sky the horizon and its cliffs sink into
+  // it (ref_152, ref_060), under a broken one hardly changes (cover^1.5).
+  const fogDensity = 0.0006 + 0.0028 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
   return { sunDir, sunColor, sunIntensity, keyDir: moonKey ? moonDir : sunDir, keyColor: moonKey ? MOON : sunColor, keyIntensity: moonKey ? moonIntensity : sunIntensity, ambient, skyZenith: zenith, skyHorizon: horizon, fogColor: horizon, fogDensity, cloudCover: cover };
 };
