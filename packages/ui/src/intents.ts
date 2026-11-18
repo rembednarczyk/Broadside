@@ -51,6 +51,8 @@ export interface SettingsIntents {
   setSteering(mode: "simple" | "classic"): void;
   /** Standing order: the crew reefs in squalls by itself. */
   setReef(on: boolean): void;
+  /** Vibration on hits and broadsides (phones). */
+  setHaptics(on: boolean): void;
   toggleSettings(): void;
   toggleHelp(): void;
   newGame(): void;

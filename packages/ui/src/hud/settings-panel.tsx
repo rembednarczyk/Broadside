@@ -11,6 +11,7 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
   const lang = useHud((h) => h.language);
   const steering = useHud((h) => h.steering);
   const reef = useHud((h) => h.reef);
+  const haptics = useHud((h) => h.haptics);
   if (!open) return null;
   const custom = `gfx.${g.preset}`;
   return (
@@ -48,6 +49,14 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
       <div className="presets">
         {([true, false] as const).map((on) => (
           <button key={String(on)} className={reef === on ? "on" : ""} onPointerDown={() => intents.setReef(on)} data-testid={`reef-${on ? "on" : "off"}`}>
+            {text(lang, on ? "settings.on" : "settings.off")}
+          </button>
+        ))}
+      </div>
+      <div className="label">{text(lang, "settings.haptics")}</div>
+      <div className="presets">
+        {([true, false] as const).map((on) => (
+          <button key={String(on)} className={haptics === on ? "on" : ""} onPointerDown={() => intents.setHaptics(on)} data-testid={`haptics-${on ? "on" : "off"}`}>
             {text(lang, on ? "settings.on" : "settings.off")}
           </button>
         ))}

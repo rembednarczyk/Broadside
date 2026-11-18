@@ -41,6 +41,41 @@ export const ribbonOnWater = (points: readonly P[], width: number, height: (x: n
   return { positions, uvs, indices };
 };
 
+/**
+ * The no-go zone on the water (pure): a fan round the ship's position, from the wind's eye out to
+ * the close-hauled limit on either side (`upwind`: the direction the wind comes from, `half`: the
+ * angle off it a ship cannot sail inside), `radius` metres out; a triangle fan as a list.
+ */
+export const noGoFan = (at: P, upwind: number, half: number, radius: number, height: (x: number, z: number) => number, segments = 16): { positions: number[]; indices: number[] } => {
+  const positions = [at.x, height(at.x, at.z), at.z];
+  const indices: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const a = upwind - half + (2 * half * i) / segments;
+    const x = at.x + Math.sin(a) * radius;
+    const z = at.z + Math.cos(a) * radius;
+    positions.push(x, height(x, z), z);
+    if (i > 0) indices.push(0, i, i + 1);
+  }
+  return { positions, indices };
+};
+
+/** Laylines of a point to windward (pure): the two close-hauled tracks that fetch it, `length` metres back from it. */
+export const laylines = (goal: P, upwind: number, half: number, length: number): P[][] =>
+  [-1, 1].map((s) => {
+    const h = upwind + s * half;
+    return [{ x: goal.x - Math.sin(h) * length, z: goal.z - Math.cos(h) * length }, goal];
+  });
+
+/** What the wind allows, shown on the water (the app decides when). */
+export interface WindView {
+  readonly at: P;
+  /** Where the wind comes from, and the close-hauled limit off it (radians). */
+  readonly upwind: number;
+  readonly half: number;
+  /** A point to windward to show the laylines of (null: none). */
+  readonly goal: P | null;
+}
+
 /** Colours of the marks by what they stand for (the app's CourseMark). */
 const MARK_COLOURS: Record<string, Color3> = {
   go: new Color3(0.97, 0.97, 0.92),
@@ -87,6 +122,9 @@ export class CourseView {
   private path: readonly P[] = [];
   private goal: (P & { kind?: string; size?: number }) | null = null;
   private readonly ripples: Ripple[] = [];
+  private readonly fan: Mesh;
+  private readonly lays: Mesh[];
+  private wind: WindView | null = null;
   private time = 0;
   visible = true;
 
@@ -119,10 +157,27 @@ export class CourseView {
       r.material = flat(`course-ripple-mat-${i}`, 0.7);
       return r;
     });
-    for (const m of [this.stroke, this.route, this.goalRing, this.echo, ...this.rings]) {
+    // The no-go zone: a faint red fan; the laylines: thin red strips.
+    const nogo = flat("course-nogo-mat", 0.16);
+    nogo.emissiveColor = new Color3(0.95, 0.35, 0.25);
+    this.fan = new Mesh("course-nogo", scene);
+    this.fan.material = nogo;
+    const lay = flat("course-layline-mat", 0.55);
+    lay.emissiveColor = new Color3(1, 0.55, 0.4);
+    this.lays = [0, 1].map((i) => {
+      const m = new Mesh(`course-layline-${i}`, scene);
+      m.material = lay;
+      return m;
+    });
+    for (const m of [this.stroke, this.route, this.goalRing, this.echo, ...this.rings, this.fan, ...this.lays]) {
       m.isPickable = false;
       m.isVisible = false;
     }
+  }
+
+  /** The no-go zone round the ship and the laylines of a point to windward (null: hidden). */
+  setWind(w: WindView | null): void {
+    this.wind = w;
   }
 
   /** The line being drawn (world points; empty: let go, and the last one sinks). */
@@ -159,6 +214,20 @@ export class CourseView {
     this.strip(this.route, on ? this.path : [], 1.6 * zoom, h);
     this.uniforms(this.routeMat, colourOf(this.goal?.kind ?? "go"), 0.7, 1);
     this.marks(on, zoom, h);
+    this.windMarks(on ? this.wind : null, zoom, h);
+  }
+
+  private windMarks(w: WindView | null, zoom: number, h: (x: number, z: number) => number): void {
+    this.fan.isVisible = w !== null;
+    if (w) {
+      const f = noGoFan(w.at, w.upwind, w.half, 70 * zoom, h);
+      const data = new VertexData();
+      data.positions = f.positions;
+      data.indices = f.indices;
+      data.applyToMesh(this.fan, true);
+    }
+    const lines = w?.goal ? laylines(w.goal, w.upwind, w.half, 160 * zoom) : [];
+    this.lays.forEach((m, i) => this.strip(m, lines[i] ?? [], 0.9 * zoom, h));
   }
 
   private uniforms(m: ShaderMaterial, c: Color3, glow: number, flow: number): void {
@@ -208,6 +277,6 @@ export class CourseView {
   }
 
   dispose(): void {
-    for (const m of [this.stroke, this.route, this.goalRing, this.echo, ...this.rings]) m.dispose();
+    for (const m of [this.stroke, this.route, this.goalRing, this.echo, ...this.rings, this.fan, ...this.lays]) m.dispose();
   }
 }

@@ -573,3 +573,24 @@ tapnięcie, np. abordaż po podpłynięciu; całość wydziel ładnie SRP i dete
   tapnięcie puszcza kręgi na wodzie; cel ma oddychający pierścień z echem w kolorze rozkazu (biały: płyń, złoty: port,
   czerwony: abordaż i szturm, morska zieleń: eskorta). Animacja z czasu symulacji (zrzuty powtarzalne).
 - Propozycje dalszego sterowania zapisane w backlogu jako D6, do decyzji właściciela.
+
+**18.11, sterowanie, druga partia (D6; właściciel: „wszystkie pomysły dobre, możesz wdrażać”).**
+- Trasa omijająca wyspy: A* (Hart, Nilsson, Raphael 1968) po siatce dna co 40 m, 8 sąsiadów, heurystyka oktylowa,
+  remisy rozstrzygane numerem komórki (deterministycznie), bez ścinania rogów lądu; potem naciąganie sznurka. Liczone
+  raz przy rozkazie dla odcinków nad lądem lub mielizną; odcinek po czystej wodzie zostaje taki, jak go narysowano.
+  Pościg, eskorta i atak dalej omijają mielizny na bieżąco (`clearHeading`).
+- Refowanie: rozkaz stały `crew` (komponent `reefing`, zapisywany), domyślnie włączony w grze. Raz na sekundę: maszt
+  ponad 0,95 wytrzymałości (próg ostrzeżenia w HUD) traci stopień żagla; po 8 s obciążenia poniżej 0,55 stopień wraca,
+  najwyżej do poziomu ustawionego przez kapitana (jego rozkazy i rozkazy pilota zapisują „chciany” plan). Komunikaty
+  w HUD.
+- Atak burtą (przytrzymanie na wrogu albo linia z własnego statku na wroga): walka kapitanów AI (`captain.engage`:
+  zasięg doktryny, burta naładowana, wyprzedzenie celu, działa pościgowe i moździerz), bez wyboru amunicji, beczek,
+  min i abordażu, które zostają graczowi; zasięg walki 220 m. Koniec, gdy wróg się podda albo tonie.
+- Kolejka punktów: przytrzymanie na wodzie (550 ms bez ruchu) albo Shift+klik dopisuje punkt; `navigate` z `append`.
+  Przytrzymanie na statku otwiera menu: abordaż, atak (tylko wróg), płyń za nim. Przycisk „Anuluj kurs” na dole.
+- Obrót dwoma palcami: zmiana kąta linii między palcami obraca widok (jak na mapie), przybliżanie zostaje Babylona.
+- Stożek martwego kąta: podczas rysowania czerwonawy wachlarz od oka wiatru do granicy na wiatr (74° rejowe, 50°
+  skośne); laylinie, gdy cel trasy leży w martwym kącie.
+- Wibracje: wtyczka Capacitor Haptics (na stronie Vibration API), lekki impuls przy własnej salwie, średni przy
+  trafieniu i wejściu na mieliznę, mocny przy upadku masztu, wybuchu prochowni, zderzeniu; najmocniejszy z klatki,
+  nie częściej niż co 0,12 s; przełącznik w ustawieniach.

@@ -16,9 +16,10 @@ import { cueFor, noticeFor } from "./presenters/event-presenter";
 import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
-import { presentCourse } from "./presenters/course-presenter";
+import { presentCourse, presentWind } from "./presenters/course-presenter";
 import { type TapOrder, attackDrawn, orderFor, tappedAt } from "./controllers/tap-targets";
 import { presentTappables } from "./presenters/tappables";
+import { Haptics, strongest } from "./feedback/haptics";
 // Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
 // EB Garamond for the text (SIL Open Font License).
 import "@fontsource/cinzel/600.css";
@@ -118,6 +119,24 @@ const setReef = (on: boolean) => {
     // Storage unavailable: the choice lasts for this run only.
   }
 };
+// Vibration on hits and broadsides: on unless turned off on this device.
+const HAPTICS_KEY = "broadside.haptics";
+const storedHaptics = ((): boolean => {
+  try {
+    return localStorage.getItem(HAPTICS_KEY) !== "0";
+  } catch {
+    return true;
+  }
+})();
+patchHud({ haptics: storedHaptics });
+const setHaptics = (on: boolean) => {
+  patchHud({ haptics: on });
+  try {
+    localStorage.setItem(HAPTICS_KEY, on ? "1" : "0");
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
 const setSteering = (steering: "simple" | "classic") => {
   patchHud({ steering });
   renderer.camera.drawGestures = steering === "simple";
@@ -171,6 +190,7 @@ const intents: UiIntents = {
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setSteering,
     setReef,
+    setHaptics,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
     toggleHelp: () => {
@@ -210,6 +230,8 @@ const tappables = () => {
   };
   return presentTappables(session.sim, session.playerId, project);
 };
+/** A course is being drawn now (the no-go zone shows meanwhile). */
+let drawing = false;
 const issue = (order: TapOrder) => {
   session.helm.order(order);
   renderer.course.ripple(order.at.x, order.at.z, order.kind === "stop" ? "go" : order.kind);
@@ -222,7 +244,10 @@ const shipOrder = (kind: "board" | "follow" | "engage") => (target: number) => {
 bindCourseGestures(canvas, {
   enabled: () => useHud.getState().steering === "simple",
   pick: (x, y) => renderer.pickWater(x, y),
-  showStroke: (points) => renderer.course.setStroke(points),
+  showStroke: (points) => {
+    drawing = points.length > 1;
+    renderer.course.setStroke(points);
+  },
   tap: (x, y, append) => {
     const hit = tappedAt(x, y, tappables());
     const water = renderer.pickWater(x, y);
@@ -272,6 +297,7 @@ const pushNotice = (key: string) => {
   setTimeout(() => patchHud({ notices: useHud.getState().notices.filter((n) => n.id !== id) }), 3500);
 };
 
+const haptics = new Haptics();
 let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
@@ -294,6 +320,8 @@ const frame = (now: number) => {
   session.advance(dt);
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
+  haptics.enabled = useHud.getState().haptics;
+  haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
     const cue = cueFor(e, session.playerId);
@@ -309,6 +337,7 @@ const frame = (now: number) => {
   const course = presentCourse(session.sim, session.playerId);
   renderer.course.visible = !useHud.getState().hudHidden;
   renderer.course.setRoute(course.path, course.goal);
+  renderer.course.setWind(presentWind(session.sim, session.playerId, drawing, course.goal ?? course.path[course.path.length - 1] ?? null));
   if (useHud.getState().courseActive !== (course.path.length > 0)) patchHud({ courseActive: course.path.length > 0 });
   const focus = combatFocus(session.sim, session.playerId);
   renderer.focus = focus;

@@ -15,6 +15,7 @@
     "@broadside/persistence": "workspace:*",
     "@broadside/sim": "workspace:*",
     "@broadside/ui": "workspace:*",
+    "@capacitor/haptics": "^8.0.2",
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/eb-garamond": "^5.3.0",
     "react": "^19.3.1",

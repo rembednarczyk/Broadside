@@ -1,5 +1,6 @@
 import { ArcRotateCamera, Quaternion, type Scene, Vector3 } from "../babylon";
 import { type CineState, orbitRadius, rideStep, tiltStep } from "./cinematic";
+import { bindTwist } from "./twist";
 
 /**
  * Chase camera around the player's ship: a high three-quarter view as in Overboard!, orbit and
@@ -79,6 +80,10 @@ export class FollowCamera {
         orbit(p, x, y);
       };
     }
+    // ...and on a phone two fingers twist the view round (bindTwist), as on a map.
+    if (canvas) bindTwist(canvas, (d) => {
+      if (this.drawGestures) this.camera.alpha -= d;
+    });
   }
 
   /** A one-finger or left-button drag draws a course instead of turning the view (simple steering). */

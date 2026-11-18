@@ -1,4 +1,5 @@
-import { type Simulation } from "@broadside/sim";
+import { type Simulation, closeHauled } from "@broadside/sim";
+import { angleOffWind } from "@broadside/core";
 
 type P = { x: number; z: number };
 
@@ -44,4 +45,21 @@ export const presentCourse = (sim: Simulation, playerId: number): CourseHud => {
       return { path: [from, at], goal: { ...at, kind: "storm", size: f.def.radius / 8 } };
     }
   }
+};
+
+/**
+ * What the wind allows, for the water overlay: while a course is being drawn, the no-go zone round
+ * the ship; and whenever the goal of the course lies inside it (to windward), the laylines
+ * (the two close-hauled tracks that fetch it) so the player sees why the crew goes about.
+ */
+export const presentWind = (sim: Simulation, playerId: number, drawing: boolean, goal: P | null): { at: P; upwind: number; half: number; goal: P | null } | null => {
+  const me = sim.byId(playerId);
+  if (!me?.body || !me.ship || me.ship.oars) return null;
+  const at = { x: me.body.pos.x, z: me.body.pos.z };
+  const half = closeHauled(me.ship);
+  const wind = sim.env.windDirection;
+  const upwind = wind + Math.PI;
+  const windward = goal !== null && angleOffWind(Math.atan2(goal.x - at.x, goal.z - at.z), wind) > Math.PI - half;
+  if (!drawing && !windward) return null;
+  return { at, upwind, half, goal: windward ? goal : null };
 };
