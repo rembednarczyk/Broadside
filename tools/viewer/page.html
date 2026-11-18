@@ -28,6 +28,8 @@ body { background: var(--bg); color: var(--ink); font-family: var(--text); overf
   <p>Przeciągnij, żeby obrócić widok. Kółko myszy albo dwa palce przybliżają i oddalają (od 6 m). Scena jest żywa: statek płynie, żagle i olinowanie pracują na wietrze. Godzina 16:40, bryza, kolory naturalne. Przycisk obok zwija i stawia żagle: topmani wchodzą wtedy po wantach na marsy, a po pracy schodzą.</p>
 </div><button id="sails" type="button">Zwiń żagle</button></div>
 <script>
+  // The viewer turns the view with a drag: the classic helm (simple steering would draw courses with it).
+  try { localStorage.setItem("broadside.steering", "classic"); } catch { /* no storage: the game's default */ }
   globalThis.__broadsideQuery = "seed=7&camera=chase&hud=0&inspect=1&weather=breeze&hours=16:40&color=natural&quality=high";
   // The boot note goes once the game has drawn (its global appears when the scene is running).
   const boot = document.getElementById("boot");
