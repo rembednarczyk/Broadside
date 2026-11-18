@@ -21,7 +21,7 @@ interface ColorLook {
 }
 
 const COLOR_LOOKS: Readonly<Record<ColorMode, ColorLook>> = {
-  sepia: { saturation: -40, highlightsHue: 40, highlightsDensity: 55, shadowsDensity: 20, shadowsExposure: -30, exposure: 0.95, contrast: 1.45, sepia: 0.72, finalContrast: 1.12 },
+  sepia: { saturation: -40, highlightsHue: 40, highlightsDensity: 55, shadowsDensity: 20, shadowsExposure: -30, exposure: 1.15, contrast: 1.45, sepia: 0.72, finalContrast: 1.12 },
   natural: { saturation: 0, highlightsHue: 40, highlightsDensity: 8, shadowsDensity: 0, shadowsExposure: -8, exposure: 1.05, contrast: 1.2, sepia: 0, finalContrast: 1.04 },
   vibrant: { saturation: 35, highlightsHue: 35, highlightsDensity: 15, shadowsDensity: 10, shadowsExposure: -12, exposure: 1.1, contrast: 1.3, sepia: 0, finalContrast: 1.1 },
 };

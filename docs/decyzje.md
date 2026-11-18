@@ -637,3 +637,12 @@ skalami szumu, szara od światła dnia, srebrzysta w wąskim stożku wokół sł
 objętościowym węższy (`pow(c, 64)` zamiast `pow(c, 5)`); mgiełka horyzontu i mgła sceny przyciemnione tą samą krzywą
 (`hazeShade` w `look.ts`, `horizonHaze` w `shaders/sky.ts`, do 0,6 przy pełnym zachmurzeniu); iskry na wodzie gasną od
 pokrycia 0,5 (było 0,55) prawie do zera przy 0,85. Na stanowisku nieba wariant proceduralny (3 oktawy) bez zmian.
+
+## 18.11 Jaśniejsze półtony sepii (orkiestrator, M9 C1)
+Pomiar percentyli jasności na planszach (gra kontra klatka, siedem scen) pokazał, że czerń mamy jak klip, ale dolny
+kwartyl i mediana są o 10–40 poziomów za niskie. Próba z mniejszym kontrastem (1,3 i cienie −12) dała 3–4 poziomy i
+rozjaśniła czerń wichury ponad klatkę, więc odrzucona. Ekspozycja looku sepii 0,95 → 1,15: rufa pod słońce mediana
+41 → 51 i 75. percentyl 96 → 117 (klatka 82 i 148), bok w wichurze 75. percentyl 72 → 83 (klatka 87), noc lekko ponad
+klatką (56 przy 46). Ujęcie rufy pod słońce (ref_090) jest dalej czarne tam, gdzie klatka pokazuje okna i galerię:
+następny krok to światło na pawęży (latarnie, okna), bo samo rozproszone niebo daje tam ok. 1/4 światła słońca.
+Narzędzie: `SHOT_INSPECT` z kątem „@a” względem kursu (ujęcie rufy z wiatrem).
