@@ -61,6 +61,13 @@ export class PostStack {
       ssao.maxZ = 400;
     }
     this.pipeline(scene, camera, g);
+    // SSAO renders the scene through Babylon's pre-pass (multiple render targets), and the pipeline's
+    // MSAA then only reaches the finished image, where it smooths nothing: the samples belong on the
+    // pre-pass, where the geometry is drawn (the ultra and cinematic presets had no anti-aliasing).
+    if (g.ssao) {
+      const pre = scene.enablePrePassRenderer();
+      if (pre) pre.samples = g.msaa;
+    }
     this.sunDisc = g.sunShafts > 0 ? this.shafts(scene, engine, camera, g.sunShafts, excludeFromShafts) : null;
     if (g.motionBlur) {
       const mb = new MotionBlurPostProcess("motion", scene, 1, camera);
@@ -75,6 +82,13 @@ export class PostStack {
     const p = new DefaultRenderingPipeline("post", true, scene, [camera]);
     p.samples = g.msaa;
     p.fxaaEnabled = g.msaa === 1;
+    // Below full resolution the upscaled frame softens: a light unsharp mask restores the edges
+    // (the sharpening pass that follows the upscale in FSR and DLSS, here Babylon's sharpen).
+    if (g.renderScale < 0.95) {
+      p.sharpenEnabled = true;
+      p.sharpen.edgeAmount = Math.min(0.45, (1 - g.renderScale) * 1.2);
+      p.sharpen.colorAmount = 1;
+    }
     p.bloomEnabled = g.bloom;
     // A wide, soft glow round the sun and its glitter (the reference's blown-out sky): a lower
     // threshold and a broad kernel from the high preset up.

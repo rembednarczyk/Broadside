@@ -11,9 +11,16 @@ describe("graphics settings", () => {
 
   it("turns a changed preset into custom, and back when it matches again", () => {
     const high = presetSettings("high");
-    const changed = withSetting(high, "renderScale", 0.8);
+    const changed = withSetting(high, "msaa", 4);
     expect(changed.preset).toBe("custom");
-    expect(withSetting(changed, "renderScale", 1).preset).toBe("high");
+    expect(withSetting(changed, "msaa", 2).preset).toBe("high");
+  });
+
+  it("keeps the preset when only the resolution changes", () => {
+    const ultra = withSetting(presetSettings("ultra"), "renderScale", 0.8);
+    expect(ultra.preset).toBe("ultra");
+    expect(ultra.renderScale).toBe(0.8);
+    expect(ultra.skyScale).toBe(0.5);
   });
 
   it("defaults by device and survives bad storage", () => {

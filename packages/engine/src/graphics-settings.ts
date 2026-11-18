@@ -36,22 +36,28 @@ export interface GraphicsSettings {
   readonly lens: boolean;
   /** Particle budget multiplier. */
   readonly particles: number;
+  /** Share of the render resolution the sky and its volumetric clouds are drawn at (soft, so half loses next to nothing). */
+  readonly skyScale: number;
 }
 
 const BASE: Readonly<Record<GraphicsPreset, Omit<GraphicsSettings, "preset" | "colorMode">>> = {
-  low: { renderScale: 0.6, msaa: 1, shadowSize: 0, cascades: false, oceanCells: 120, detailWaves: 0, cloudOctaves: 3, sunShafts: 0, bloom: false, ssao: false, motionBlur: false, lens: false, particles: 0.4 },
-  medium: { renderScale: 0.75, msaa: 1, shadowSize: 1024, cascades: false, oceanCells: 180, detailWaves: 0, cloudOctaves: 4, sunShafts: 30, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 0.7 },
-  high: { renderScale: 1, msaa: 2, shadowSize: 2048, cascades: false, oceanCells: 240, detailWaves: 4, cloudOctaves: 6, sunShafts: 60, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 1 },
-  ultra: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 360, detailWaves: 8, cloudOctaves: 6, sunShafts: 90, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.3 },
-  cinematic: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 480, detailWaves: 8, cloudOctaves: 6, sunShafts: 120, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.6 },
+  low: { renderScale: 0.6, msaa: 1, shadowSize: 0, cascades: false, oceanCells: 120, detailWaves: 0, cloudOctaves: 3, sunShafts: 0, bloom: false, ssao: false, motionBlur: false, lens: false, particles: 0.4, skyScale: 1 },
+  medium: { renderScale: 0.75, msaa: 1, shadowSize: 1024, cascades: false, oceanCells: 180, detailWaves: 0, cloudOctaves: 4, sunShafts: 30, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 0.7, skyScale: 1 },
+  high: { renderScale: 1, msaa: 2, shadowSize: 2048, cascades: false, oceanCells: 240, detailWaves: 4, cloudOctaves: 6, sunShafts: 60, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 1, skyScale: 0.5 },
+  ultra: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 360, detailWaves: 8, cloudOctaves: 6, sunShafts: 90, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.3, skyScale: 0.5 },
+  cinematic: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 480, detailWaves: 8, cloudOctaves: 6, sunShafts: 120, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.6, skyScale: 1 },
 };
 
 export const presetSettings = (p: GraphicsPreset, colorMode: ColorMode = "sepia"): GraphicsSettings => ({ preset: p, colorMode, ...BASE[p] });
 
-/** Changes one field; the result is "custom" unless it still equals a preset exactly. */
+/**
+ * Changes one field; the result is "custom" unless it still equals a preset in everything but the
+ * render resolution: the resolution slider sits beside the preset (ultra at 80% is still ultra,
+ * every effect kept, fewer pixels shaded).
+ */
 export const withSetting = <K extends keyof Omit<GraphicsSettings, "preset" | "colorMode">>(s: GraphicsSettings, key: K, value: GraphicsSettings[K]): GraphicsSettings => {
   const next = { ...s, [key]: value };
-  const match = GRAPHICS_PRESETS.find((p) => (Object.keys(BASE[p]) as (keyof typeof BASE.low)[]).every((k) => BASE[p][k] === next[k]));
+  const match = GRAPHICS_PRESETS.find((p) => (Object.keys(BASE[p]) as (keyof typeof BASE.low)[]).every((k) => k === "renderScale" || BASE[p][k] === next[k]));
   return { ...next, preset: match ?? "custom" };
 };
 

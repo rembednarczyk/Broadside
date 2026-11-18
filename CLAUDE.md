@@ -60,5 +60,7 @@ przeglądarki statku. CI (`android.yml`) buduje ten sam APK tym samym kluczem i 
 
 ## Definition of Done
 `pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.
+Koszt klatki po zmianie grafiki: `node tools/perf/frame-bench.mjs "quality=<preset>&…"` (udział nieba, oceanu, statków,
+cieni i post-procesów; SwiftShader, więc udziały, nie milisekundy telefonu).
 Zmiana widoczna: zrzut Playwright (SwiftShader) przed/po. Commity Conventional Commits po polsku, małe zmiany,
 bez identyfikatora modelu. Gałąź robocza `claude/youthful-galileo-kzhtmo`, PR tylko na prośbę użytkownika.

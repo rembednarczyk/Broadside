@@ -188,8 +188,11 @@ vec2 cells(vec2 p) {
 }
 float lace(vec2 p, float cover) {
   if (cover <= 0.01) return 0.0;
-  float a = cells(p).y - cells(p).x;
-  float b = cells(p * 2.7 + 5.1).y - cells(p * 2.7 + 5.1).x;
+  // One evaluation of each cell field (nine hashed cells apiece): the compiler need not merge two calls.
+  vec2 ca = cells(p);
+  vec2 cb = cells(p * 2.7 + 5.1);
+  float a = ca.y - ca.x;
+  float b = cb.y - cb.x;
   float wall = min(a, b * 0.8);
   float w = 0.03 + cover * 0.55;
   return smoothstep(w, w - 0.06, wall) * smoothstep(0.0, 0.25, cover);
@@ -382,10 +385,14 @@ void main() {
   // pattern would alias into specks: it gives way to its average cover (the same filtering by
   // footprint as the glitter's normals).
   float laceFar = smoothstep(0.12, 0.5, foot);
-  float foam = mix(lace(fp, clamp(caps * 1.2, 0.0, 1.0)), clamp(caps * 1.2, 0.0, 1.0) * 0.45, laceFar) * 0.75;
+  float capCover = clamp(caps * 1.2, 0.0, 1.0);
+  // Past the far end of the blend only the average is seen: the cells are not computed there.
+  float foam = (laceFar < 1.0 ? mix(lace(fp, capCover), capCover * 0.45, laceFar) : capCover * 0.45) * 0.75;
   // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
   // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
-  float wakeLace = mix(lace(fp * 2.6 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)), clamp(wk.x * 1.3, 0.0, 1.0) * 0.85, smoothstep(0.05, 0.2, foot));
+  float wakeCover = clamp(wk.x * 1.3, 0.0, 1.0);
+  float wakeFar = smoothstep(0.05, 0.2, foot);
+  float wakeLace = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), wakeCover * 0.85, wakeFar) : wakeCover * 0.85;
   float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
   foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);

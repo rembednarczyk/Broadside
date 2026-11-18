@@ -710,3 +710,26 @@ piksela i aliasują w plamki. Zmiany: iskry nocą do 10% dziennych (szeroki poł
 w swoje średnie pokrycie, gdy piksel obejmuje 0,12–0,5 m wody, a drobniejsza koronka kilwateru przy 0,05–0,2 m
 (filtrowanie po rozmiarze piksela, `foot = length(fwidth(xz))`, jak przy normalnych iskier). Kilwater z daleka zostaje
 widoczny jako miękki pas (średnia 0,85 pokrycia).
+
+## 18.11, użytkownik: optymalizacje bez straty efektów, rozdzielczość na suwaku także dla ultra
+Właściciel: „Pomyśl nad jakimiś trickami optymalizacyjnymi które poprawią wydajność bez straty efektów… obniżenie
+rozdzielczości na suwaku również dla ultra”. Najpierw pomiar: `tools/perf/frame-bench.mjs` mierzy czas `scene.render()`
+z wyłączanymi po kolei częściami (niebo, ocean, statki, cienie, post-procesy), z rozgrzewką po każdym przełączeniu
+(przełączenie przebudowuje shadery). SwiftShader liczy na CPU: milisekundy nie są telefonu, udziały kosztu pikseli tak;
+MSAA liczy w nim każdą próbkę osobno, więc jego koszt jest tu zawyżony względem GPU. Wyniki 640×360, ziarno 7, 17:00:
+- Ultra nie miał wygładzania krawędzi: SSAO prowadzi scenę przez pre-pass Babylona (wiele celów renderowania) z jedną
+  próbką, a MSAA ×4 łańcucha post-procesów trafiało dopiero w gotowy obraz. Próbki ustawione na pre-passie: liny i reje
+  gładkie (zrzut A/B). Koszt klatki ultra rośnie (na SwiftShader 1,7 → 3,2 s), to cena wygładzania, które było tylko
+  w ustawieniach.
+- Niebo i chmury objętościowe w połowie rozdzielczości (`skyScale` 0,5 dla high i ultra, pełne dla cinematic i presetów
+  bez chmur objętościowych): kopuła rysowana do tekstury half-float (rdzeń słońca dalej powyżej 1 dla bloomu) i pokazana
+  jako tło (`Layer`), reszta sceny na wierzchu w pełnej rozdzielczości, więc krawędzie masztów i wybrzeża bez zmian.
+  Koszt nieba 110–330 → 31–70 ms (ok. 75% mniej); na planszach `stern-sun` i `horizon` różnicy w chmurach nie widać.
+  Wzorzec: wolumetria w obniżonej rozdzielczości z silników gier, u nas bez rzutowania czasowego.
+- Ocean: pole komórek Worleya liczone raz zamiast dwa razy na wywołanie koronki, a koronki nie liczy się tam, gdzie z
+  daleka i tak zastępuje ją średnia (ocean 693 → 565 ms przy szumie pomiaru ok. ±100 ms).
+- Suwak rozdzielczości obok presetu: zmiana samej rozdzielczości nie robi z presetu „własnego” (ultra przy 80% zostaje
+  ultra ze wszystkimi efektami). Poniżej 95% lekkie wyostrzenie po skalowaniu (`sharpen` Babylona, siła 1,2 × ubytek, do
+  0,45), jak krok wyostrzania w FSR i DLSS. Gęstość pikseli ograniczona do 2: ekran 3x liczył 2,25 raza więcej pikseli
+  niż 2x przy różnicy niewidocznej z odległości ręki (tak samo robią three.js i większość gier w przeglądarce).
+Nie sprawdzone: czasy na prawdziwym telefonie i GPU.
