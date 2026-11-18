@@ -765,3 +765,11 @@ Teraz przy zachmurzeniu dryfuje kilka zabłąkanych ławic (6% budżetu przy pok
 przechodzi przez kadr przy zachodzie z rozbitymi chmurami), a kolor ławic co klatkę idzie za kolorem mgły sceny (ciepły
 o zachodzie, szary nocą). Zostawione rzadkie, żeby nie zasłaniały widoku do grania. Tabela stanu w
 `docs/reference/README.md` uaktualniona (wiele pozycji ✘ było już zrobionych).
+
+## 18.11 Mokry pokład odbija niebo (orkiestrator, M9 C1)
+Na ujęciu z pokładu pod słońce (`ref_112`) cały pokład leży w cieniu żagli, więc połysk od słońca (mnożony przez cień)
+nie miał się gdzie pokazać, a na klatce deski są jasne. Mokra powierzchnia oglądana wzdłuż desek odbija przede wszystkim
+jasne niebo, którego cień żagli nie zatrzymuje. `WetDeck` dodaje odbicie nieba z członem Fresnela Schlicka (F0 = 0,02 jak
+dla wody), kolor nieba z wysokości odbitego promienia (horyzont do zenitu, ten sam gradient co kopuła), tylko na
+powierzchniach skierowanych w górę. Bez sondy odbić: relief desek i ciemne zakamarki pod nadbudówkami nie wchodzą.
+Plansza `deck`: deski i luki szare i czytelne zamiast czarnej plamy.

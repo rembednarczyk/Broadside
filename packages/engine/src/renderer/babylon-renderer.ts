@@ -10,6 +10,7 @@ import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
 import { ShipFill } from "./ship-fill";
+import { wetSkyOf } from "./wet-deck";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
@@ -168,6 +169,10 @@ export class BabylonRenderer {
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
     this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
     this.sun.intensity = look.keyIntensity;
+    // The sky the wet decks mirror (wet-deck.ts).
+    const wet = wetSkyOf(this.scene);
+    wet.horizon = look.skyHorizon;
+    wet.zenith = look.skyZenith;
     // The same key light, through the canvas of the sails (sail-translucency.ts).
     const through = sailLightOf(this.scene);
     through.dir = { x: look.keyDir.x, y: Math.max(0.05, look.keyDir.y), z: look.keyDir.z };
