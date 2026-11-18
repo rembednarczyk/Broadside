@@ -2,11 +2,10 @@ import { fbm2, noise1 } from "@broadside/core";
 import { Color3, Mesh, type Scene, StandardMaterial, VertexData } from "../babylon";
 
 /**
- * Distant coast as a backdrop: a ring of hills far out, its skyline from fractal noise and broken
- * into separate headlands by a low-frequency mask, drawn in the haze (fog does the aerial
- * perspective). It follows the camera horizontally, like a skybox layer with parallax-free depth.
+ * Distant coast as a backdrop: two rings of headlands far out, their skylines from fractal noise
+ * and broken into separate headlands by a low-frequency mask, drawn in their own haze (setHaze).
+ * They follow the camera horizontally, like a skybox layer with parallax-free depth.
  */
-const RADIUS = 3400;
 const SEGMENTS = 256;
 
 export const coastHeights = (seed: number): number[] => {
@@ -24,41 +23,72 @@ export const coastHeights = (seed: number): number[] => {
   return h;
 };
 
+/**
+ * The coast's rings: the nearer shore and a farther, taller one behind it (ref_095, ref_176: the
+ * coast stands in layers, each paler in the haze than the one before it).
+ */
+const RINGS = [
+  { radius: 2600, height: 1, salt: 0 },
+  { radius: 3800, height: 1.45, salt: 17 },
+] as const;
+/**
+ * The coast's own aerial perspective, thinner than the scene's fog (which leaves about 1% of a shore
+ * at 3 km): the rock's colour goes to the fog's by 1 - exp(-d * density * HAZE_SCALE), Koschmieder's
+ * law of the airlight with the extinction scaled down, so the shore reads as pale layers on a clear
+ * or broken day and fades out under a heavy sky.
+ */
+export const HAZE_SCALE = 0.35;
+export const coastHaze = (distance: number, fogDensity: number): number => Math.min(0.97, 1 - Math.exp(-distance * fogDensity * HAZE_SCALE));
+
 export class FarCoast {
-  readonly mesh: Mesh;
+  readonly meshes: Mesh[] = [];
+  private readonly materials: StandardMaterial[] = [];
 
   constructor(scene: Scene, seed: number) {
-    const heights = coastHeights(seed);
-    const positions: number[] = [];
-    const indices: number[] = [];
-    for (let i = 0; i <= SEGMENTS; i++) {
-      const a = (i / SEGMENTS) * Math.PI * 2;
-      const h = heights[i % SEGMENTS]!;
-      const x = Math.sin(a) * RADIUS;
-      const z = Math.cos(a) * RADIUS;
-      positions.push(x, -20, z, x * 1.01, h, z * 1.01);
-    }
-    for (let i = 0; i < SEGMENTS; i++) {
-      const b = i * 2;
-      indices.push(b, b + 1, b + 2, b + 2, b + 1, b + 3);
-    }
-    this.mesh = new Mesh("far-coast", scene);
-    const data = new VertexData();
-    data.positions = positions;
-    data.indices = indices;
-    const normals: number[] = [];
-    VertexData.ComputeNormals(positions, indices, normals);
-    data.normals = normals;
-    data.applyToMesh(this.mesh);
-    const m = new StandardMaterial("far-coast", scene);
-    m.diffuseColor = new Color3(0.16, 0.15, 0.13);
-    m.specularColor = new Color3(0, 0, 0);
-    m.backFaceCulling = false;
-    this.mesh.material = m;
-    this.mesh.isPickable = false;
+    RINGS.forEach((ring, r) => {
+      const heights = coastHeights(seed + ring.salt);
+      const positions: number[] = [];
+      const indices: number[] = [];
+      for (let i = 0; i <= SEGMENTS; i++) {
+        const a = (i / SEGMENTS) * Math.PI * 2;
+        const h = heights[i % SEGMENTS]! * ring.height;
+        const x = Math.sin(a) * ring.radius;
+        const z = Math.cos(a) * ring.radius;
+        positions.push(x, -20, z, x * 1.01, h, z * 1.01);
+      }
+      for (let i = 0; i < SEGMENTS; i++) {
+        const b = i * 2;
+        indices.push(b, b + 1, b + 2, b + 2, b + 1, b + 3);
+      }
+      const mesh = new Mesh(`far-coast-${r}`, scene);
+      const data = new VertexData();
+      data.positions = positions;
+      data.indices = indices;
+      data.applyToMesh(mesh);
+      // Unlit and unfogged: the colour is the haze over the rock, set each frame (setHaze).
+      const m = new StandardMaterial(`far-coast-${r}`, scene);
+      m.disableLighting = true;
+      m.diffuseColor = Color3.Black();
+      m.specularColor = Color3.Black();
+      m.backFaceCulling = false;
+      mesh.material = m;
+      mesh.applyFog = false;
+      mesh.isPickable = false;
+      this.meshes.push(mesh);
+      this.materials.push(m);
+    });
+  }
+
+  /** The haze over each ring from the scene's fog: its colour and density (look.ts). */
+  setHaze(fog: { r: number; g: number; b: number }, density: number): void {
+    RINGS.forEach((ring, r) => {
+      // The rock in shadow against the light: a third of the haze's brightness, then the airlight.
+      const k = 0.35 + 0.65 * coastHaze(ring.radius, density);
+      this.materials[r]!.emissiveColor.set(fog.r * k, fog.g * k, fog.b * k);
+    });
   }
 
   follow(x: number, z: number): void {
-    this.mesh.position.set(x, 0, z);
+    for (const m of this.meshes) m.position.set(x, 0, z);
   }
 }

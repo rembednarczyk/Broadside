@@ -265,6 +265,7 @@ export class BabylonRenderer {
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
     this.coast.follow(cam.x, cam.z);
+    this.coast.setHaze(this.scene.fogColor, look.fogDensity);
     const underside = 1 - 0.55 * smoothstep(0.4, 0.95, look.cloudCover);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.keyDir.x, look.keyDir.y, look.keyDir.z),

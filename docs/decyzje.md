@@ -749,3 +749,12 @@ wyrazów (rufa: e^-6 na 25 m, grzbiet fali dziobowej: trzy długości zaniku), a
 trójki fbm po cztery oktawy) liczą się tylko tam, gdzie ich waga od rozmiaru piksela jest niezerowa. Wynik bez zmiany w
 obrazie (pominięte wyrazy są zerowe). Ultra: 2,56 → 2,23 s, ocean 1,23 → 0,93 s. SwiftShader cieniuje każdą próbkę MSAA
 osobno, więc koszt pikseli na ultra jest tu zawyżony względem GPU.
+
+## 18.11 Wybrzeże w warstwach we mgle (orkiestrator, M9 C2)
+Klatki `ref_095` i `ref_176`: wzdłuż horyzontu długi, płaski płaskowyż w kilku coraz jaśniejszych warstwach. U nas
+pierścień wybrzeża stał 3400 m od kamery w zwykłej mgle sceny (przy gęstości ok. 0,0014 zostawało ok. 1% obrazu), więc
+go nie było widać, a jedyne lądy na horyzoncie to bliskie wyspy. Zmiana: dwa pierścienie (2600 m i 3800 m, drugi 1,45
+raza wyższy, inne ziarno), bez oświetlenia i bez mgły sceny, z własną perspektywą powietrzną: kolor skały w cieniu (35%
+koloru mgły) przechodzi w kolor mgły według `1 - exp(-d * gęstość * 0,35)` (prawo Koschmiedera ze zmniejszonym
+wygaszaniem, `coastHaze`, test). Dalsza warstwa wychodzi jaśniejsza, pod ciężkim niebem obie znikają. Plansze
+`stern-castle`, `horizon`, `stern-sun`.
