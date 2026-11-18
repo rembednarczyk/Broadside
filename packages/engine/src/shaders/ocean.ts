@@ -326,7 +326,12 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // the critical angle), and the ripples of the surface show as brighter and darker streaks.
   float rim = mix(0.55, 1.0, smoothstep(0.66, 0.97, c));
   float ripple = 0.75 + 0.5 * clamp(0.5 + dot(n.xz, vec2(0.6, 0.8)) * 5.0, 0.0, 1.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.8 * rim * ripple + sunColor * sun;
+  // Seen from below the wind's ripples run in long streaks across the window (ref_161): noise
+  // stretched eight times along the wind (the same direction as the surface's chop above).
+  vec2 wdir = normalize(vec2(0.9, 0.5));
+  vec2 sp = vec2(dot(vWorld.xz, wdir) * 0.12, dot(vWorld.xz, vec2(-wdir.y, wdir.x)) * 0.95) + vec2(time * 0.08, 0.0);
+  ripple *= 0.7 + 0.6 * fbm(sp);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.4 * rim * ripple + sunColor * sun;
   // Outside the window the depths, mirrored, with the waves' relief catching the light from the
   // window's side (the teal ripples round the bright disc in ref_161).
   float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
@@ -361,7 +366,9 @@ void main() {
   vec3 n = normalize(vNormal + dn * 0.5);
   // From below the same surface, ripples and all (seen through it: Snell's window).
   if (underwater > 0.5) {
-    gl_FragColor = vec4(underside(v, n, dist), 1.0);
+    // Seen from below through a few metres of water the slopes read gentler (the window's edge
+    // wanders, it does not shatter into black patches): half the tilt of the surface's normal.
+    gl_FragColor = vec4(underside(v, normalize(mix(n, vec3(0.0, 1.0, 0.0), 0.5)), dist), 1.0);
     return;
   }
   float nv = clamp(dot(n, v), 0.0, 1.0);

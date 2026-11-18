@@ -773,3 +773,9 @@ jasne niebo, którego cień żagli nie zatrzymuje. `WetDeck` dodaje odbicie nieb
 dla wody), kolor nieba z wysokości odbitego promienia (horyzont do zenitu, ten sam gradient co kopuła), tylko na
 powierzchniach skierowanych w górę. Bez sondy odbić: relief desek i ciemne zakamarki pod nadbudówkami nie wchodzą.
 Plansza `deck`: deski i luki szare i czytelne zamiast czarnej plamy.
+
+## 18.11 Spód powierzchni łagodniejszy i w smugach (orkiestrator, M9 C5)
+Plansza `underwater` (ref_161): okno Snella rozpadało się na czarne łaty całkowitego wewnętrznego odbicia, bo widok od
+spodu brał pełne nachylenie fal i detalu. Teraz do widoku spod wody normalna jest spłaszczona w połowie ku pionowi (przez
+kilka metrów wody zbocza czyta się łagodniej): okno jest okrągłe, z błądzącym brzegiem. Jasność okna dostaje smugi z szumu
+rozciągniętego 8 razy wzdłuż wiatru, niebo w oknie przygaszone do 1,4, scena z kamerą pochyloną mniej (0,6), jak na klatce.
