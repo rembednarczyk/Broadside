@@ -835,3 +835,14 @@ bramka ADR-0005; wcześniej konwój dobierany przy pięciu statkach dawał dzies
 pionowy kadłuba liczony od prędkości względem wody w fali (człon oporu Morisona z `waterState`), więc fala unosząca się
 pod dnem i przy burcie uderza w nie, a statek kołysze się i nurkuje z martwą falą. Poziom pominięty (opis w backlogu).
 Złoty hash ręcznie: 81d3dd8a → 8cfc76e. Audyty: 5 z 5, najgorszy krok długiego przebiegu 1,05 ms (bramka 2 ms).
+
+## 18.11, użytkownik: PWA i podpisany APK
+Właściciel: „zrób PWA i podpisz APK”. PWA: manifest (pełny ekran, poziomo, sepia), własny service worker według „The
+Offline Cookbook” (strona: najpierw sieć; paczki Vite z hashem: najpierw pamięć; modele, tekstury, dźwięki: z pamięci z
+odświeżaniem w tle), rejestracja tylko w przeglądarce przez HTTPS albo localhost (nie w aplikacji Capacitora). Pierwsza
+wizyta ładuje grę przed startem workera, więc strona przekazuje mu listę wczytanych plików (Resource Timing) do zapisania.
+Sprawdzenie skryptem `tools/pwa/pwa-check.mjs`: manifest i 3 ikony, worker aktywny, 154 pliki w pamięci, start offline.
+Ikona: aplikacja miała domyślną ikonę Capacitora; nowa z generatora `tools/icons/icon.mjs` (sylwetka galeonu pod niskim
+słońcem w sepii, SVG renderowany przez sharp) dla PWA i Androida (ikona adaptacyjna, kwadratowa i okrągła w 5 gęstościach).
+APK: podpisany kluczem wydania (`broadside.keystore`, ten sam w CI), schemat v2, `apksigner verify` przechodzi
+(CN=Broadside). Hosting PWA (adres HTTPS) nie jest ustawiony: wymaga decyzji, gdzie publikować.

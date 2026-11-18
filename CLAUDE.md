@@ -58,6 +58,11 @@ ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane 
 `tools/android/README.md`). Po zmianie widocznej w grze: zbudować i wysłać właścicielowi plik razem z aktualizacją
 przeglądarki statku. CI (`android.yml`) buduje ten sam APK tym samym kluczem i numerem wersji.
 
+## PWA i ikona
+Gra instaluje się jako PWA (`public/manifest.webmanifest`, `public/sw.js`, rejestracja w `src/pwa.ts`, poza Capacitorem)
+i działa offline po pierwszym uruchomieniu. Sprawdzenie: `pnpm build && node tools/pwa/pwa-check.mjs` (manifest, ikony,
+service worker, start bez sieci). Ikona z generatora `node tools/icons/icon.mjs` (PWA i ikony Androida naraz).
+
 ## Definition of Done
 `pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.
 Koszt klatki po zmianie grafiki: `node tools/perf/frame-bench.mjs "quality=<preset>&…"` (udział nieba, oceanu, statków,

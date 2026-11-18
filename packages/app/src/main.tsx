@@ -28,6 +28,7 @@ import "@fontsource/eb-garamond/400.css";
 import "@fontsource/eb-garamond/400-italic.css";
 import "@fontsource/eb-garamond/600.css";
 import "./style.css";
+import { registerServiceWorker } from "./pwa";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */
 // A page that cannot carry a query string (the ship viewer published as an artifact) sets the options itself.
@@ -366,3 +367,6 @@ const frame = (now: number) => {
 };
 requestAnimationFrame(frame);
 Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer, audio, wrecks: () => (session.sim.env.archipelago ? wreckSites(session.sim.env.archipelago) : []) }) });
+
+// Installable and offline once opened (PWA): the service worker in a browser, not in the Android app.
+registerServiceWorker();
