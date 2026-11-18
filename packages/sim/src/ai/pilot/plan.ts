@@ -17,6 +17,31 @@ const MAX_SIDE = 160;
 /** Sampling step of a line-of-sight check (m). */
 const STEP = 10;
 
+/**
+ * The seabed of a map read through a cache of its 40 m lattice (the cells A* asks for; other
+ * points are computed as before): the islands do not move, so a second search over the same
+ * water costs a lookup. One cache per map (`key`), dropped with it.
+ */
+const caches = new WeakMap<object, Bed>();
+export const gridBed = (key: object, raw: Bed): Bed => {
+  let bed = caches.get(key);
+  if (!bed) {
+    const cells = new Map<number, number>();
+    bed = (x, z) => {
+      if (x % CELL !== 0 || z % CELL !== 0) return raw(x, z);
+      const k = (x / CELL + 32768) * 65536 + (z / CELL + 32768);
+      let h = cells.get(k);
+      if (h === undefined) {
+        h = raw(x, z);
+        cells.set(k, h);
+      }
+      return h;
+    };
+    caches.set(key, bed);
+  }
+  return bed;
+};
+
 /** Is the water along a straight leg deep enough (`keel`: the seabed must lie below it)? */
 export const clearLeg = (bed: Bed, a: P, b: P, keel: number): boolean => {
   const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / STEP));
@@ -26,8 +51,9 @@ export const clearLeg = (bed: Bed, a: P, b: P, keel: number): boolean => {
 
 /** A way from a to b through water deeper than `keel` (b included, a not), or null if there is none in reach. */
 export const findWay = (bed: Bed, a: P, b: P, keel: number): P[] | null => {
-  const x0 = Math.min(a.x, b.x) - MARGIN;
-  const z0 = Math.min(a.z, b.z) - MARGIN;
+  // On the world's 40 m lattice, so that the cells of every search are the same cells (gridBed caches them).
+  const x0 = Math.floor((Math.min(a.x, b.x) - MARGIN) / CELL) * CELL;
+  const z0 = Math.floor((Math.min(a.z, b.z) - MARGIN) / CELL) * CELL;
   const nx = Math.min(MAX_SIDE, Math.ceil((Math.max(a.x, b.x) + MARGIN - x0) / CELL));
   const nz = Math.min(MAX_SIDE, Math.ceil((Math.max(a.z, b.z) + MARGIN - z0) / CELL));
   const cellOf = (p: P): [number, number] => [Math.max(0, Math.min(nx - 1, Math.round((p.x - x0) / CELL))), Math.max(0, Math.min(nz - 1, Math.round((p.z - z0) / CELL)))];
@@ -103,23 +129,30 @@ export const findWay = (bed: Bed, a: P, b: P, keel: number): P[] | null => {
     }
   }
   if (from[goal] === -1 && goal !== start) return null;
-  const cells: P[] = [];
-  for (let c = goal; c !== start && c !== -1; c = from[c]!) cells.unshift(centre(c % nx, Math.floor(c / nx)));
-  cells[cells.length - 1] = b;
-  // String pulling: from each kept point, on to the farthest one in sight.
+  const path: number[] = [];
+  for (let c = goal; c !== start && c !== -1; c = from[c]!) path.unshift(c);
+  // Line of sight over the grid already read (half-cell steps between cell centres): no new
+  // reads of the seabed, so the string pulling costs next to nothing.
+  const sees = (c0: number, c1: number): boolean => {
+    const i0 = c0 % nx, k0 = Math.floor(c0 / nx), i1 = c1 % nx, k1 = Math.floor(c1 / nx);
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(i1 - i0), Math.abs(k1 - k0)) * 2));
+    for (let j = 1; j < n; j++) if (!open[Math.round(k0 + ((k1 - k0) * j) / n) * nx + Math.round(i0 + ((i1 - i0) * j) / n)]) return false;
+    return true;
+  };
+  // String pulling: from each kept cell, on to the farthest one in sight.
   const out: P[] = [];
-  let at = a;
+  let at = start;
   let j = 0;
-  while (j < cells.length) {
+  while (j < path.length) {
     let far = j;
-    for (let m = cells.length - 1; m > j; m--) {
-      if (clearLeg(bed, at, cells[m]!, keel)) {
+    for (let m = path.length - 1; m > j; m--) {
+      if (sees(at, path[m]!)) {
         far = m;
         break;
       }
     }
-    out.push(cells[far]!);
-    at = cells[far]!;
+    out.push(path[far] === goal ? b : centre(path[far]! % nx, Math.floor(path[far]! / nx)));
+    at = path[far]!;
     j = far + 1;
   }
   return out;

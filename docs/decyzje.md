@@ -600,3 +600,8 @@ bieżąco), więc port za wyspą pod wiatr bywał nieosiągalny (seed 3). Teraz 
 gracza (A* po dnie i naciąganie sznurka), liczoną raz, gdy punkt się zmienia, i trzymaną w stanie kapitana (zapis
 gry, determinizm); punkt zwrotny uznany za minięty w 80 m. Na czystej wodzie droga to sam punkt. Złoty hash bez
 zmian (przebieg wzorcowy nie ma archipelagu); audyty liczbowe po zmianie w raporcie poniżej.
+Audyty po zmianie: cztery z pięciu zielone za pierwszym razem; test wytrzymałości dał 2,56 ms/krok (limit 2 ms,
+ADR-0005), bo planer kosztował ok. 4,7 ms na plan, a audyt liczył się obok renderowania plansz. Poprawka: siatka A*
+wyrównana do stałej kraty 40 m i dno w jej węzłach zapamiętane na mapę (`gridBed`, archipelag się nie zmienia),
+a naciąganie sznurka sprawdza widoczność po już policzonej siatce zamiast czytać dno co 10 m: 1,6–1,9 ms na plan
+(z 4,7). Test wytrzymałości osobno: 0,97 ms/krok.
