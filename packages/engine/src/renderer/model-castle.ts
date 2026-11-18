@@ -144,9 +144,10 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
     }
     // Mouldings along the foot and the head of the wall, like the wales of the hull.
     for (const y of [c.base + 0.03, c.top - 0.06]) mouldings.push(run.pts.map((p, i) => p.add(run.normal(i).scale(0.05)).add(new Vector3(0, y, 0))));
-    // Windows at mid-height, about every 2.4 m, clear of the corners.
+    // Windows at mid-height, about every 2.4 m along the sides, clear of the corners; across the
+    // transom a close row of them, the stern gallery's lights (ref_090).
     const total = dist[dist.length - 1]!;
-    const count = Math.max(0, Math.floor((total - 1.2) / 2.4));
+    const count = ri === 2 ? Math.max(0, Math.floor((total - 0.5) / GALLERY_PITCH)) : Math.max(0, Math.floor((total - 1.2) / 2.4));
     for (let w = 0; w < count; w++) {
       const d = (total * (w + 0.5)) / count;
       const i = Math.max(0, dist.findIndex((x) => x >= d) - 1);
@@ -156,6 +157,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       if (!c.ports.some((port) => Math.hypot(port.at[0] - at.x, port.at[2] - at.z) < 1.1)) windows.push({ at, n: run.normal(i) });
     }
   });
+  transom(c, { wp, wu, wi, mouldings, windows }, pw, ph, hash);
   const walls = meshOf(scene, `castle-${parent.name}`, wp, wu, wi);
   walls.material = wallMaterial(scene, mats.castle, planks?.texture ?? null, key);
   const trims = mouldings.map((path, i) => MeshBuilder.CreateTube(`castle-moulding-${i}`, { path, radius: 0.075, tessellation: 6, cap: Mesh.CAP_ALL }, scene));
@@ -190,6 +192,8 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       posts.push(Matrix.Compose(new Vector3(1, BALUSTRADE, 1), Quaternion.Identity(), new Vector3(p.x, c.top + BALUSTRADE / 2, p.z)));
     }
   }
+  const gallery = sternGallery(scene, parent.name, c, windows.filter((w) => w.n.z < -0.9 && w.at.y > c.base), mats.wood);
+  posts.push(...gallery.posts);
   instances(baluster, posts);
   // Stairs from the waist up to the castle's deck, one a side.
   const rise = Math.max(0.5, c.top - c.waist);
@@ -206,13 +210,60 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
   const post = MeshBuilder.CreateCylinder(`castle-lantern-posts-${parent.name}`, { height: 1, diameter: 0.06, tessellation: 5 }, scene);
   post.material = mats.wood;
   instances(post, c.lanterns.map((l) => Matrix.Compose(new Vector3(1, l[1] - 0.27 - (c.top + BALUSTRADE), 1), Quaternion.Identity(), new Vector3(l[0], (l[1] - 0.27 + c.top + BALUSTRADE) / 2, l[2]))));
-  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post, ...buildCastlePorts(scene, parent.name, c.ports, mats.wood), shipWheel(scene, parent.name, c.top, last.z - WHEEL_ABAFT, mats.wood)];
+  const all = [walls, moulding, bar, pane, deck, rail, baluster, step, lantern, post, ...gallery.meshes, ...buildCastlePorts(scene, parent.name, c.ports, mats.wood), shipWheel(scene, parent.name, c.top, last.z - WHEEL_ABAFT, mats.wood)];
   for (const m of all) {
     m.parent = parent;
     m.isPickable = false;
   }
   for (const m of [walls, rail]) shadows?.addShadowCaster(m);
   return all;
+};
+
+/** Spacing of the gallery windows across the transom (m): a 0.78 m light and a pilaster between. */
+const GALLERY_PITCH = 1.05;
+/** How far the stern gallery stands out abaft the transom, and the height of its rail (m). */
+const GALLERY_DEPTH = 0.75;
+const GALLERY_RAIL = 0.85;
+
+/**
+ * The stern gallery: an open balcony across the transom at the level of the great cabin, its floor
+ * on the castle's floor and standing out abaft it, railed with the castle's balusters (their
+ * posts are returned to join the castle's own), and carved pilasters between the gallery's lights
+ * with a moulding along their heads (the stern of a 17th to 18th century ship of war, as in
+ * Chapman's "Architectura Navalis Mercatoria", 1768; the reference's stern, ref_090, shows its
+ * close row of windows under a balustraded taffrail).
+ */
+const sternGallery = (scene: Scene, name: string, c: CastleLayout, lights: readonly { at: Vector3 }[], wood: StandardMaterial): { meshes: Mesh[]; posts: Matrix[] } => {
+  const stern = c.ring[0]!;
+  const half = stern.half * 0.94;
+  const z = stern.z - GALLERY_DEPTH;
+  const floor = MeshBuilder.CreateBox(`castle-gallery-${name}`, { width: half * 2, height: 0.12, depth: GALLERY_DEPTH }, scene);
+  floor.position.set(0, c.base + 0.02, stern.z - GALLERY_DEPTH / 2);
+  const y = c.base + GALLERY_RAIL;
+  const path = [new Vector3(-half, y, stern.z), new Vector3(-half, y, z), new Vector3(half, y, z), new Vector3(half, y, stern.z)];
+  const rail = MeshBuilder.CreateTube(`castle-gallery-rail-${name}`, { path, radius: 0.06, tessellation: 6, cap: Mesh.CAP_ALL }, scene);
+  const posts: Matrix[] = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const n = Math.max(1, Math.round(Vector3.Distance(path[i]!, path[i + 1]!) / 0.32));
+    for (let k = 0; k <= n; k++) {
+      const p = Vector3.Lerp(path[i]!, path[i + 1]!, k / n);
+      posts.push(Matrix.Compose(new Vector3(0.9, GALLERY_RAIL, 0.9), Quaternion.Identity(), new Vector3(p.x, c.base + GALLERY_RAIL / 2, p.z)));
+    }
+  }
+  // Pilasters between the lights and at the ends of the row, and a moulding over their heads.
+  const xs = lights.map((l) => l.at.x).sort((a, b) => a - b);
+  const pilasters = xs.length ? [xs[0]! - GALLERY_PITCH / 2, ...xs.slice(1).map((x, i) => (x + xs[i]!) / 2), xs[xs.length - 1]! + GALLERY_PITCH / 2] : [];
+  const parts = pilasters.map((x, i) => {
+    const p = MeshBuilder.CreateBox(`gallery-pilaster-${name}-${i}`, { width: 0.16, height: c.top - c.base - 0.2, depth: 0.12 }, scene);
+    p.position.set(x, (c.top + c.base) / 2, stern.z - 0.07);
+    return p;
+  });
+  const head = MeshBuilder.CreateBox(`gallery-head-${name}`, { width: half * 2, height: 0.14, depth: 0.16 }, scene);
+  head.position.set(0, c.base + (c.top - c.base) * 0.55 + 0.6, stern.z - 0.08);
+  const carved = Mesh.MergeMeshes([floor, rail, head, ...parts], true, true)!;
+  carved.name = `castle-gallery-${name}`;
+  carved.material = wood;
+  return { meshes: [carved], posts };
 };
 
 /**
@@ -246,3 +297,36 @@ const shipWheel = (scene: Scene, name: string, deckY: number, z: number, wood: S
   return wheel;
 };
 
+/**
+ * The flat transom under the castle (a galleon's square tuck stern): strakes from the castle's
+ * floor down towards the water, narrowing to the breadth of the hull's run, and mouldings across
+ * it as the wales run round a hull. Added to the castle walls' arrays (one mesh, one draw).
+ */
+const transom = (c: CastleLayout, out: { wp: number[]; wu: number[]; wi: number[]; mouldings: Vector3[][]; windows: { at: Vector3; n: Vector3 }[] }, pw: number, ph: number, hash: (j: number, salt: number) => number): void => {
+  const { wp, wu, wi, mouldings, windows } = out;
+  const stern = c.ring[0]!;
+  const rows = Math.max(3, Math.round((c.base - c.transom.foot) / 0.3));
+  for (let j = 0; j < rows; j++) {
+    const y0 = c.transom.foot + ((c.base - c.transom.foot) * j) / rows;
+    const y1 = c.transom.foot + ((c.base - c.transom.foot) * (j + 1)) / rows;
+    const h0 = c.transom.half + (stern.half - c.transom.half) * (j / rows);
+    const h1 = c.transom.half + (stern.half - c.transom.half) * ((j + 1) / rows);
+    const n = wp.length / 3;
+    const u0 = hash(j, 31);
+    wp.push(-h0, y0, stern.z - 0.035, h0, y0, stern.z - 0.035, -h1, y1, stern.z, h1, y1, stern.z);
+    wu.push(u0, 0, u0 + (2 * h0) / pw, 0, u0, (y1 - y0) / ph, u0 + (2 * h1) / pw, (y1 - y0) / ph);
+    wi.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
+  }
+  for (const k of [0.04, 0.4, 0.75]) {
+    const y = c.transom.foot + (c.base - c.transom.foot) * k;
+    const h = c.transom.half + (stern.half - c.transom.half) * k;
+    mouldings.push([new Vector3(-h, y, stern.z - 0.07), new Vector3(h, y, stern.z - 0.07)]);
+  }
+  // The lower stern lights, the windows of the gunroom between the two upper mouldings (ref_090
+  // shows two rows across the stern): wider spaced than the gallery's, clear of the corners.
+  const k = 0.58;
+  const y = c.transom.foot + (c.base - c.transom.foot) * k;
+  const h = c.transom.half + (stern.half - c.transom.half) * k;
+  const n = Math.max(0, Math.floor((2 * h - 1) / (GALLERY_PITCH * 1.4)));
+  for (let w = 0; w < n; w++) windows.push({ at: new Vector3(-h + 0.5 + ((2 * h - 1) * (w + 0.5)) / n, y, stern.z - 0.02), n: new Vector3(0, 0, -1) });
+};

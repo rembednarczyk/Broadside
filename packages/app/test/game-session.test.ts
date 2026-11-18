@@ -17,9 +17,9 @@ describe("game session", () => {
     const s = new GameSession({ seed: 1 });
     s.advance(2);
     const before = yawOf(s.sim.byId(s.playerId)!.body!.rot);
-    s.steer(1);
+    s.helm.steer(1);
     for (let i = 0; i < 60 * 4; i++) s.advance(STEP);
-    s.steer(0);
+    s.helm.steer(0);
     for (let i = 0; i < 60 * 15; i++) s.advance(STEP);
     const after = yawOf(s.sim.byId(s.playerId)!.body!.rot);
     expect(after - before).toBeGreaterThan(0.35);

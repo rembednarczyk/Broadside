@@ -1,11 +1,13 @@
 import { type AssetContainer, Mesh, type Scene, StandardMaterial, type Texture, VertexData } from "../babylon";
+import { WetDeck } from "./wet-deck";
 
 /**
  * Turns a loaded model's PBR materials into StandardMaterials with the same colour texture and
  * normal map, like the rest of the scene (no image-based lighting, see decyzje 16.11). `gain`
- * multiplies the colour texture. Meshes without normals get them computed.
+ * multiplies the colour texture. Meshes without normals get them computed. `wet`: the faces that
+ * look up get a wet sheen (wet-deck.ts; the hulls).
  */
-export const useStandardMaterials = (container: AssetContainer, scene: Scene, prefix: string, gain = 1): void => {
+export const useStandardMaterials = (container: AssetContainer, scene: Scene, prefix: string, gain = 1, wet = false): void => {
   // A mesh that lost its normals in the asset pipeline (cutting, welding) would shade black: rebuild them.
   // glTF data is right-handed: the normals are computed for that winding.
   for (const mesh of container.meshes) {
@@ -38,6 +40,7 @@ export const useStandardMaterials = (container: AssetContainer, scene: Scene, pr
       std.invertNormalMapY = pbr.invertNormalMapY ?? false;
     }
     std.specularColor.set(0.06, 0.05, 0.04);
+    if (wet) new WetDeck(std);
     for (const mesh of container.meshes) if (mesh.material === m) mesh.material = std;
     container.materials.push(std);
   }

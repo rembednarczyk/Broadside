@@ -21,6 +21,7 @@ import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
+import { SailTranslucency, sailLightOf } from "./sail-translucency";
 import { type SailPaint, paintSail, paintSailGlow, paintSailRelief } from "./sail-texture";
 
 /**
@@ -131,6 +132,9 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;
+  // Lit through from behind by the key light (on the clone only: Babylon re-creates a cloned
+  // material's plugins from a class registry, and this one needs the scene's light).
+  new SailTranslucency(m, sailLightOf(scene));
   // The sewing stands proud of the cloth: one relief map for all sails of this size.
   const reliefKey = `sail-relief-${size}`;
   let relief = scene.getTextureByName(reliefKey) as DynamicTexture | null;
@@ -142,7 +146,7 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   m.bumpTexture = relief;
   if (emblem) {
     const glow = new DynamicTexture(`${key}-glow`, { width: 128, height: 128 }, scene, true);
-    paintSailGlow(glow.getContext() as unknown as SailPaint, 128);
+    paintSailGlow(glow.getContext() as unknown as SailPaint, 128, faction);
     glow.update(true);
     m.emissiveTexture = glow;
   }
@@ -153,18 +157,22 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
  * Night lighting of the ships: emblem sails and gallery windows glow as the daylight goes
  * (emissive scaled by darkness, so they stay invisible by day as in the reference).
  */
-export const setNightGlow = (scene: Scene, darkness: number): void => {
+export const setNightGlow = (scene: Scene, darkness: number, sunHeight = 1): void => {
   const k = Math.max(0, Math.min(1, darkness));
+  // Lamps in the cabins and the stern lanterns are lit before dark: once the sun is low the
+  // windows of the stern gallery show warm (ref_090, late afternoon); the emblems wait for night.
+  const lamps = Math.max(k, 0.45 * Math.max(0, Math.min(1, (0.45 - sunHeight) / 0.35)));
   for (const m of scene.materials) {
     // StandardMaterial adds the emissive colour everywhere and the emissive texture on top:
     // the colour stays black, the glow map's level carries the strength.
     if (!(m instanceof StandardMaterial)) continue;
     if (m.name.startsWith("sail-") || m.name.startsWith("castle")) m.emissiveColor = Color3.Black();
-    if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 3 * k;
+    // Strong enough to bloom but short of white, so the warm colour survives the toning (grade.ts).
+    if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 2.4 * k;
     // Lanterns are lit at dusk: by day the glass only catches a little light.
-    if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * k), 1.1 * (0.18 + 0.82 * k), 0.55 * (0.18 + 0.82 * k));
-    if (m.name === "castle-glass") m.emissiveColor.set(1.1 * k, 0.72 * k, 0.32 * k);
-    if ((m.name.startsWith("castle")) && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * k;
+    if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * lamps), 1.1 * (0.18 + 0.82 * lamps), 0.55 * (0.18 + 0.82 * lamps));
+    if (m.name === "castle-glass") m.emissiveColor.set(1.1 * lamps, 0.72 * lamps, 0.32 * lamps);
+    if ((m.name.startsWith("castle")) && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * lamps;
   }
 };
 

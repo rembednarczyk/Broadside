@@ -18,7 +18,8 @@
     "audit": "vitest run -c vitest.audit.config.ts",
     "test:e2e": "playwright test",
     "gen": "node tools/gen/run.mjs",
-    "ci": "pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build"
+    "ci": "pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build",
+    "apk": "bash tools/android/apk.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

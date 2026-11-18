@@ -1,5 +1,6 @@
 import { ArcRotateCamera, Quaternion, type Scene, Vector3 } from "../babylon";
 import { type CineState, orbitRadius, rideStep, tiltStep } from "./cinematic";
+import { bindTwist } from "./twist";
 
 /**
  * Chase camera around the player's ship: a high three-quarter view as in Overboard!, orbit and
@@ -68,7 +69,25 @@ export class FollowCamera {
     this.camera.fov = FOV;
     this.camera.panningSensibility = 0;
     if (canvas) this.camera.attachControl(canvas, true);
+    // Simple steering draws courses with a one-finger (or left-button) drag: the orbit then turns
+    // only with the right button; pinch and wheel zoom as before (Babylon's pointer input routes
+    // single-pointer drags to onTouch, and buttonsPressed tells the left button from the right).
+    const pointers = this.camera.inputs.attached["pointers"] as unknown as { onTouch: (p: unknown, x: number, y: number) => void; _buttonsPressed?: number } | undefined;
+    if (pointers) {
+      const orbit = pointers.onTouch.bind(pointers);
+      pointers.onTouch = (p, x, y) => {
+        if (this.drawGestures && (pointers._buttonsPressed ?? 1) === 1) return;
+        orbit(p, x, y);
+      };
+    }
+    // ...and on a phone two fingers twist the view round (bindTwist), as on a map.
+    if (canvas) bindTwist(canvas, (d) => {
+      if (this.drawGestures) this.camera.alpha -= d;
+    });
   }
+
+  /** A one-finger or left-button drag draws a course instead of turning the view (simple steering). */
+  drawGestures = false;
 
   /** Frames a ship of the given length on first use. */
   frameShip(length: number, rigHeight = 10): void {
@@ -129,8 +148,8 @@ export class FollowCamera {
       this.cine ??= { angle: this.camera.alpha, t: 0, y: surface(p.x, p.z) + 1.3 };
       const eye = rideStep(this.cine, p, surface, dt);
       this.follow(p.x, p.y - this.lift * 0.4, p.z, dt);
-      // Under the surface the aim rises to look up at it (about 40 degrees).
-      const up = tiltStep(this.cine, surface(eye.x, eye.z) - eye.y, dt) * orbitRadius(p.length) * 0.85;
+      // Under the surface the aim rises to look up at it (about 45 degrees, as in ref_161).
+      const up = tiltStep(this.cine, surface(eye.x, eye.z) - eye.y, dt) * orbitRadius(p.length) * 0.95;
       this.camera.setTarget(new Vector3(this.target.x, this.target.y + up, this.target.z));
       this.camera.setPosition(new Vector3(eye.x, eye.y, eye.z));
       return;

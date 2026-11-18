@@ -20,6 +20,8 @@ export interface CastleLayout {
   readonly lanterns: readonly (readonly [number, number, number])[];
   /** Gun ports cut in the walls for the guns that stand inside the castle. */
   readonly ports: readonly CastlePort[];
+  /** The flat transom under the castle, down towards the water: its foot's height and half-width. */
+  readonly transom: { readonly foot: number; readonly half: number };
 }
 
 /** A gun port: the gun it serves (index in the ship's mounts), its middle on the wall and the wall's outward normal. */
@@ -40,6 +42,10 @@ export const WHEEL_REACH = 0.6;
 export const CASTLE_WALL = 2.2;
 export const BALUSTRADE = 0.95;
 const LANTERN_POST = 0.7;
+/** The sterncastle is at least this share of the hull's greatest breadth (a broad, square stern). */
+const BROAD_STERN = 0.82;
+/** The flat transom comes down to this height above the waterline (m). */
+const TRANSOM_FOOT = 0.9;
 /** The castle covers this share of the length from the stern (the reference's is about a quarter). */
 const SHARE = 0.24;
 
@@ -76,9 +82,12 @@ export const sternCastle = (side: SideProfile, guns: readonly GunPlace[] = []): 
   const base = ys[ys.length >> 1] ?? side.topAt(stations[0]!) - 0.95;
   const step = stations[1]! - stations[0]!;
   // Carried half a station on at each end, to the transom and to the break of the castle.
-  const ring = stations.map((z, i) => ({ z: z + (i === 0 ? -step / 2 : i === stations.length - 1 ? step / 2 : 0), half: side.halfAt(z) * 1.01 }));
+  // A galleon's sterncastle stands broad over the run of the hull (ref_090: the stern a tall,
+  // flat slab nearly as wide as the main yard): never narrower than BROAD_STERN of the widest.
+  const widest = Math.max(...stations.map((z) => side.halfAt(z)));
+  const ring = stations.map((z, i) => ({ z: z + (i === 0 ? -step / 2 : i === stations.length - 1 ? step / 2 : 0), half: Math.max(side.halfAt(z), widest * BROAD_STERN) * 1.01 }));
   const top = base + CASTLE_WALL;
   const stern = ring[0]!;
   const y = top + BALUSTRADE + LANTERN_POST;
-  return { ring, base, top, waist: side.topAt(end + step * 2) - 0.95, lanterns: [[0, y + 0.25, stern.z], [-stern.half * 0.72, y, stern.z], [stern.half * 0.72, y, stern.z]], ports: portsFor(ring, base, top, guns) };
+  return { ring, base, top, waist: side.topAt(end + step * 2) - 0.95, lanterns: [[0, y + 0.25, stern.z], [-stern.half * 0.72, y, stern.z], [stern.half * 0.72, y, stern.z]], ports: portsFor(ring, base, top, guns), transom: { foot: TRANSOM_FOOT, half: Math.max(0.6, side.halfAt(stations[0]!) * 0.85) } };
 };

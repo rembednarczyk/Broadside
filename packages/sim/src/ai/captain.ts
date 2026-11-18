@@ -2,6 +2,7 @@ import { DOCTRINES, type AmmoId, type GameCommand, type Relations, type SailLeve
 import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
+import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
 import { aimHeightFor, firesAtRigging, lineStation, tacticalHeading } from "./tactics";
@@ -45,7 +46,7 @@ const ARC = 0.28;
  * out to either side until one is clear.
  */
 const LOOKAHEAD = [60, 130, 250];
-const clearHeading = (me: Entity, heading: number, w: World2D): number => {
+export const clearHeading = (me: Entity, heading: number, w: Pick<World2D, "bed" | "windDirection">): number => {
   if (!w.bed) return heading;
   const b = me.body!;
   const keel = -me.ship!.model.def.hull.draft - 2;
@@ -93,7 +94,7 @@ const chooseAmmo = (me: ShipState, target: ShipState, range: number): AmmoId => 
   return "round";
 };
 
-const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand[] => {
+export const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand[] => {
   const s = me.ship!;
   const b = me.body!;
   const tb = t.body!;
@@ -169,7 +170,7 @@ const nextPort = (c: CaptainState, w: World2D): void => {
  * a point astern and abeam of the leader, and match its canvas.
  */
 const STATION_ASTERN = 140;
-const keepStation = (me: Entity, leader: Entity, w: World2D): GameCommand[] => {
+export const keepStation = (me: Entity, leader: Entity, w: Pick<World2D, "bed" | "windDirection">): GameCommand[] => {
   const b = me.body!;
   const lb = leader.body!;
   const lh = yawOf(lb.rot);
@@ -195,7 +196,9 @@ const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
     c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
     c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
   }
-  const desired = Math.atan2(c.wx - b.pos.x, c.wz - b.pos.z);
+  // Round the islands to the waypoint (a port behind an island is reached the long way).
+  const next = wayPoint(me, c, w.bed);
+  const desired = Math.atan2(next.x - b.pos.x, next.z - b.pos.z);
   // A convoy sails at the pace of its slowest ship: shorten sail while a follower lags.
   const lagging = w.ships.some((f) => f.captain?.leader === me.id && !f.ship!.sinking && Math.hypot(f.body!.pos.x - b.pos.x, f.body!.pos.z - b.pos.z) > 320);
   const level: SailLevel = lagging ? 1 : 3;

@@ -8,7 +8,19 @@ export const Compass = () => {
   const courseDeg = s.course === null ? null : (((s.course - s.heading) * 180) / Math.PI);
   return (
     <svg className="compass" viewBox="-50 -50 100 100" data-testid="compass">
+      <defs>
+        <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f0d28a" />
+          <stop offset="0.5" stopColor="#c9a050" />
+          <stop offset="1" stopColor="#7a5a24" />
+        </linearGradient>
+      </defs>
       <circle r="46" className="dial" />
+      <circle r="46" className="rim" />
+      {/* A card of 32 points: ticks every 11.25 deg, the eight principal ones longer. */}
+      {Array.from({ length: 32 }, (_, i) => (
+        <line key={i} className={i % 4 === 0 ? "tick major" : "tick"} x1="0" y1={-43} x2="0" y2={i % 4 === 0 ? -36 : -39.5} transform={`rotate(${i * 11.25})`} />
+      ))}
       <path d="M0,-40 L6,-28 L-6,-28 Z" className="bow" />
       <g transform={`rotate(${windDeg})`}>
         <path d="M0,-44 L0,-14 M-6,-22 L0,-14 L6,-22" className="wind" />

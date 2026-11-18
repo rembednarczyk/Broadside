@@ -45,6 +45,8 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
   switch (e.type) {
     case "mastFell":
       return e.ship === playerId ? "notice.mastFell" : null;
+    case "reefed":
+      return e.ship === playerId ? (e.up ? "notice.sailUp" : "notice.reefed") : null;
     case "fireStarted":
       return e.ship === playerId ? "notice.fire" : null;
     case "crewOverboard":

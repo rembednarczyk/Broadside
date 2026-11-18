@@ -69,17 +69,26 @@ if (process.env.SHOT_CLICK) {
 }
 // SHOT_WAIT: extra milliseconds before the shot (large models arrive after the first frames).
 await page.waitForTimeout(3000 + Number(process.env.SHOT_WAIT ?? 0));
-// Optional action right before the shot (short-lived effects): SHOT_BEFORE is a function body (b) => {...}.
+// Optional action right before the shot (short-lived effects): SHOT_BEFORE is a function body (b) => {...},
+// followed by SHOT_BEFORE_WAIT milliseconds of frames (default 120; more for a state the frames must settle into).
 if (process.env.SHOT_BEFORE) {
   await page.evaluate(new Function("((b) => { " + process.env.SHOT_BEFORE + " })(globalThis.__broadside)"));
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(Number(process.env.SHOT_BEFORE_WAIT ?? 120));
 }
 // Optional inspection view: SHOT_INSPECT = "alpha,beta,radius,height". The game's own chase camera
 // (with its post-processing), aimed `height` above the centre of the player's ship and let closer
-// than the game allows (the chase camera aims high and keeps 18 m off).
+// than the game allows (the chase camera aims high and keeps 18 m off). An alpha written "@a" is
+// relative to the ship's heading: "@0" looks from dead astern, "@1.57" from the port beam.
 if (process.env.SHOT_INSPECT) {
   await page.evaluate((spec) => {
-    const [alpha, beta, radius, height = 2] = spec.split(",").map(Number);
+    const parts = spec.split(",");
+    const [, beta, radius, height = 2] = parts.map(Number);
+    let alpha = Number(parts[0]);
+    if (parts[0].startsWith("@")) {
+      // Yaw of the hull from its quaternion (rotation about +Y; roll and pitch are small).
+      const q = globalThis.__broadside.session.sim.player().body.rot;
+      alpha = -Math.PI / 2 - 2 * Math.atan2(q.y, q.w) + Number(parts[0].slice(1));
+    }
     const follow = globalThis.__broadside.renderer.camera;
     follow.lift = height;
     Object.defineProperty(follow.camera, "lowerRadiusLimit", { get: () => 0.5, set: () => {} });

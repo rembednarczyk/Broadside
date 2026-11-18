@@ -15,6 +15,18 @@ import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
 import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
+import { bindCourseGestures } from "./controllers/course-gestures";
+import { presentCourse, presentWind } from "./presenters/course-presenter";
+import { type TapOrder, attackDrawn, orderFor, tappedAt } from "./controllers/tap-targets";
+import { presentTappables } from "./presenters/tappables";
+import { Haptics, strongest } from "./feedback/haptics";
+// Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
+// EB Garamond for the text (SIL Open Font License).
+import "@fontsource/cinzel/600.css";
+import "@fontsource/cinzel/700.css";
+import "@fontsource/eb-garamond/400.css";
+import "@fontsource/eb-garamond/400-italic.css";
+import "@fontsource/eb-garamond/600.css";
 import "./style.css";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */
@@ -55,11 +67,22 @@ const stored = parseGraphics(readStored(), touch);
 let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra", "cinematic"].includes(urlPreset) ? presetSettings(urlPreset as GraphicsPreset, stored.colorMode) : stored;
 const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
+// Steering: simple (tap or draw a course, the crew sails it) by default, the classic helm on request.
+const STEER_KEY = "broadside.steering";
+const storedSteering = ((): "simple" | "classic" => {
+  try {
+    return localStorage.getItem(STEER_KEY) === "classic" ? "classic" : "simple";
+  } catch {
+    return "simple";
+  }
+})();
 const urlCamera = params.get("camera");
 let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 // `inspect=1`: the orbit may close in on the ship (a viewer of the model rather than the game's framing).
 renderer.camera.closeUp = params.get("inspect") === "1";
+// `fill=0`: no fill light on the ships (the cinematic camera's look in every camera; reference shots).
+renderer.shipFill.enabled = params.get("fill") !== "0";
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
   try {
@@ -71,13 +94,70 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer.dispose();
   renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
   renderer.camera.mode = mode;
+  renderer.camera.drawGestures = useHud.getState().steering === "simple";
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
 if (!helpSeen) patchHud({ helpOpen: true });
+patchHud({ steering: storedSteering });
+renderer.camera.drawGestures = storedSteering === "simple";
+// The crew's standing order to reef in squalls: on unless the player turned it off on this device.
+const REEF_KEY = "broadside.reef";
+const storedReef = ((): boolean => {
+  try {
+    return localStorage.getItem(REEF_KEY) !== "0";
+  } catch {
+    return true;
+  }
+})();
+patchHud({ reef: storedReef });
+session.crewOrders(storedReef);
+const setReef = (on: boolean) => {
+  patchHud({ reef: on });
+  session.crewOrders(on);
+  try {
+    localStorage.setItem(REEF_KEY, on ? "1" : "0");
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
+// Vibration on hits and broadsides: on unless turned off on this device.
+const HAPTICS_KEY = "broadside.haptics";
+const storedHaptics = ((): boolean => {
+  try {
+    return localStorage.getItem(HAPTICS_KEY) !== "0";
+  } catch {
+    return true;
+  }
+})();
+patchHud({ haptics: storedHaptics });
+const setHaptics = (on: boolean) => {
+  patchHud({ haptics: on });
+  try {
+    localStorage.setItem(HAPTICS_KEY, on ? "1" : "0");
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
+const setSteering = (steering: "simple" | "classic") => {
+  patchHud({ steering });
+  renderer.camera.drawGestures = steering === "simple";
+  try {
+    localStorage.setItem(STEER_KEY, steering);
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
 
 const intents: UiIntents = {
-  helm: { steer: (d) => session.steer(d) },
+  helm: { steer: (d) => session.helm.steer(d) },
+  orders: {
+    board: (t) => shipOrder("board")(t),
+    follow: (t) => shipOrder("follow")(t),
+    engage: (t) => shipOrder("engage")(t),
+    cancelCourse: () => session.helm.navigate([], false),
+    closeMenu: () => patchHud({ shipMenu: null }),
+  },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
   port: {
     trade: (service, qty, ammo) => {
@@ -110,6 +190,9 @@ const intents: UiIntents = {
     setLanguage: (language) => patchHud({ language }),
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
+    setSteering,
+    setReef,
+    setHaptics,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
     toggleHelp: () => {
@@ -125,6 +208,7 @@ const intents: UiIntents = {
     },
     newGame: () => {
       session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
+      session.crewOrders(useHud.getState().reef);
       applyGraphics(graphics);
       patchHud({ settingsOpen: false });
     },
@@ -139,6 +223,65 @@ const intents: UiIntents = {
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
 bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
 addEventListener("resize", () => renderer.resize());
+// Simple steering: what a tap, a long press or a drawn line on the canvas means (tap-targets), as orders to the crew.
+const tappables = () => {
+  const rect = canvas.getBoundingClientRect();
+  const project = (wx: number, wy: number, wz: number) => {
+    const p = renderer.project(wx, wy, wz);
+    return { x: rect.left + p.x * rect.width, y: rect.top + p.y * rect.height };
+  };
+  return presentTappables(session.sim, session.playerId, project);
+};
+/** A course is being drawn now (the no-go zone shows meanwhile). */
+let drawing = false;
+const issue = (order: TapOrder) => {
+  session.helm.order(order);
+  renderer.course.ripple(order.at.x, order.at.z, order.kind === "stop" ? "go" : order.kind);
+  patchHud({ shipMenu: null });
+};
+const shipOrder = (kind: "board" | "follow" | "engage") => (target: number) => {
+  const t = session.sim.byId(target);
+  if (t?.body) issue({ kind, target, at: { x: t.body.pos.x, z: t.body.pos.z } });
+};
+bindCourseGestures(canvas, {
+  enabled: () => useHud.getState().steering === "simple",
+  pick: (x, y) => renderer.pickWater(x, y),
+  showStroke: (points) => {
+    drawing = points.length > 1;
+    renderer.course.setStroke(points);
+  },
+  tap: (x, y, append) => {
+    const hit = tappedAt(x, y, tappables());
+    const water = renderer.pickWater(x, y);
+    if (append && !hit && water) {
+      session.helm.navigate([water], false, true);
+      renderer.course.ripple(water.x, water.z, "go");
+      return;
+    }
+    const order = orderFor(hit, water);
+    if (order) issue(order);
+  },
+  longPress: (x, y) => {
+    const hit = tappedAt(x, y, tappables());
+    if (hit?.kind === "ship") {
+      const rect = canvas.getBoundingClientRect();
+      patchHud({ shipMenu: { x: (x - rect.left) / rect.width, y: (y - rect.top) / rect.height, target: hit.id, hostile: !!hit.hostile } });
+      return;
+    }
+    // On open water a long press adds a waypoint to the route in hand.
+    const water = hit ? null : renderer.pickWater(x, y);
+    if (water) {
+      session.helm.navigate([water], false, true);
+      renderer.course.ripple(water.x, water.z, "go");
+    }
+  },
+  draw: (route, from, to) => {
+    const items = tappables();
+    const attack = attackDrawn(tappedAt(from.x, from.y, items), tappedAt(to.x, to.y, items));
+    if (attack) issue(attack);
+    else session.helm.navigate(route, true);
+  },
+});
 const audio = new SynthAudio("assets/audio/");
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
@@ -156,6 +299,7 @@ const pushNotice = (key: string) => {
   setTimeout(() => patchHud({ notices: useHud.getState().notices.filter((n) => n.id !== id) }), 3500);
 };
 
+const haptics = new Haptics();
 let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
@@ -178,6 +322,8 @@ const frame = (now: number) => {
   session.advance(dt);
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
+  haptics.enabled = useHud.getState().haptics;
+  haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
     const cue = cueFor(e, session.playerId);
@@ -190,6 +336,11 @@ const frame = (now: number) => {
   if (aboard) audio.setShip(aboard);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
+  const course = presentCourse(session.sim, session.playerId);
+  renderer.course.visible = !useHud.getState().hudHidden;
+  renderer.course.setRoute(course.path, course.goal);
+  renderer.course.setWind(presentWind(session.sim, session.playerId, drawing, course.goal ?? course.path[course.path.length - 1] ?? null));
+  if (useHud.getState().courseActive !== (course.path.length > 0)) patchHud({ courseActive: course.path.length > 0 });
   const focus = combatFocus(session.sim, session.playerId);
   renderer.focus = focus;
   renderer.frame(session.sim, { hours: hoursNow(), ...(sunAzimuth === undefined ? {} : { sunAzimuth }), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);

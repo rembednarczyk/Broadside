@@ -1,107 +1,223 @@
-:root { --ink: #f2ead8; --panel: rgba(12, 18, 24, 0.62); --accent: #d9a441; font-family: Georgia, "Times New Roman", serif; }
+/*
+ * HUD of Broadside. Layout: a grid of fixed regions round a clear middle (the sea), designed on a
+ * 960 x 540 frame and scaled with the screen by one unit, --u (1 design pixel): the smaller of
+ * width / 960 and height / 540, so the whole design always fits and no two regions can meet
+ * (checked by tools/ui/ui-audit.mjs over phones, tablets and monitors). Look: dark stained wood
+ * panels with brass rims, engraved-brass buttons, a lacquered red for the guns; type in Cinzel
+ * (Roman inscriptional capitals) for titles and buttons and EB Garamond (Garamond's 16th century
+ * romans) for the text, both bundled (SIL OFL), so the APK needs no network.
+ */
+:root {
+  --u: clamp(0.55px, min(calc(100vw / 960), calc(100vh / 540)), 1.7px);
+  --ink: #efe3c8;
+  --ink-soft: #cdbb97;
+  --brass: #c9a050;
+  --brass-hi: #f0d28a;
+  --brass-lo: #7a5a24;
+  --wood: rgba(30, 21, 14, 0.86);
+  --wood-2: rgba(18, 12, 8, 0.9);
+  --red: #8e2a1c;
+  --red-hi: #c4472d;
+  --alarm: #ff9a6e;
+  --sea-blue: #8fd3f2;
+  --display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --text: "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+  font-family: var(--text);
+}
 html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1218; color: var(--ink); touch-action: none; user-select: none; -webkit-user-select: none; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
 #hud { position: fixed; inset: 0; pointer-events: none; }
-.hud > * { pointer-events: auto; }
-.panel { position: absolute; background: var(--panel); border: 1px solid rgba(217, 164, 65, 0.4); border-radius: 10px; padding: 10px 12px; backdrop-filter: blur(4px); }
-.sailing { left: max(12px, env(safe-area-inset-left)); top: 12px; width: 230px; font-size: 14px; }
-.sailing .title { font-size: 17px; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.04em; }
-.row { display: flex; justify-content: space-between; margin: 2px 0; }
-.label { opacity: 0.75; }
-.sail-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 4px; }
-button { font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; padding: 6px 2px; font-size: 11px; touch-action: none; }
-button.on { background: rgba(217, 164, 65, 0.55); border-color: var(--accent); color: #111; }
-button.wide { width: 100%; margin-top: 6px; }
-.compass { position: absolute; right: max(12px, env(safe-area-inset-right)); top: 12px; width: 120px; height: 120px; }
-.compass .dial { fill: var(--panel); stroke: rgba(217, 164, 65, 0.6); stroke-width: 1.5; }
-.compass .bow { fill: var(--ink); }
-.compass .wind { stroke: #7fd0ff; stroke-width: 3; fill: none; stroke-linecap: round; }
-.compass .course { fill: var(--accent); }
-.compass .heading { fill: var(--ink); font-size: 14px; text-anchor: middle; }
-.helm-pad { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; gap: 120px; }
-.helm { width: 76px; height: 76px; border-radius: 50%; font-size: 26px; background: var(--panel); }
-.corner { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; align-items: center; font-size: 11px; opacity: 0.8; }
-.lang { width: 40px; }
-@media (max-width: 700px) { .sailing { width: 190px; font-size: 12px; } .compass { width: 92px; height: 92px; } }
-.fire.side { position: absolute; bottom: max(110px, calc(env(safe-area-inset-bottom) + 100px)); width: 110px; height: 88px; border-radius: 14px; font-size: 18px; background: rgba(120, 30, 20, 0.62); border-color: rgba(255, 160, 120, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-.fire.side small { font-size: 11px; opacity: 0.8; }
-.fire.port { left: max(16px, env(safe-area-inset-left)); }
-.fire.starboard { right: max(16px, env(safe-area-inset-right)); }
-.gauge { display: block; width: 80%; height: 5px; background: rgba(0, 0, 0, 0.4); border-radius: 3px; overflow: hidden; margin-top: 3px; }
-.gauge span { display: block; height: 100%; background: var(--accent); }
-.combat { left: 50%; transform: translateX(-50%); top: 12px; width: min(560px, 52vw); font-size: 12px; }
-.combat .ammo, .combat .batteries { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
-.combat .ammo button, .combat .batteries button { flex: 1; min-width: 56px; }
-.combat small { opacity: 0.7; margin-left: 3px; }
-.combat .status { display: flex; gap: 12px; justify-content: center; }
-.alarm { color: #ff8a65; }
-button:disabled { opacity: 0.35; }
-.target { right: max(12px, env(safe-area-inset-right)); top: 142px; width: 180px; font-size: 12px; }
-.target .bar { height: 6px; background: rgba(0, 0, 0, 0.4); border-radius: 3px; overflow: hidden; margin: 4px 0; }
-.target .bar span { display: block; height: 100%; background: #c0392b; }
-.notices { position: absolute; top: 34%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
-.notice { background: var(--panel); padding: 6px 14px; border-radius: 8px; font-size: 16px; color: var(--accent); }
-@media (max-width: 900px) { .combat { width: 46vw; font-size: 10px; } .combat button { font-size: 9px; padding: 4px 1px; } .fire.side { width: 92px; height: 72px; font-size: 15px; } .target { top: 112px; width: 150px; } }
-.masts { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
-.mast-row { display: grid; grid-template-columns: 1fr 26px 70px 26px; align-items: center; gap: 4px; font-size: 11px; }
-.mast-row button { padding: 2px 0; font-size: 13px; }
-.mast-row .lvl { text-align: center; }
-.masts-toggle { display: none; }
-.mast-row.warn { color: #ffd27f; }
-.mast-row.alarm, .sailing .alarm { color: #ff8a65; }
-.settings { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, 80vw); font-size: 13px; z-index: 5; }
-.settings .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 4px 0 10px; }
-.settings input[type=range] { width: 100%; margin-bottom: 10px; }
-.show-hud { position: absolute; right: 12px; bottom: 12px; width: 40px; opacity: 0.5; }
-.corner .lang { width: auto; min-width: 40px; padding: 6px 8px; }
-.settings .presets.three { grid-template-columns: repeat(3, 1fr); }
-.harbour { left: 50%; bottom: 120px; transform: translateX(-50%); width: min(460px, 60vw); font-size: 12px; }
-.port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 6px 0; }
-.port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 
-.standings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
-.standing { font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
-.standing i { display: block; height: 4px; border-radius: 2px; background: #c9a35a; }
+/* --- regions --- */
+.hud {
+  position: absolute;
+  inset: 0;
+  padding: max(calc(8 * var(--u)), env(safe-area-inset-top)) max(calc(10 * var(--u)), env(safe-area-inset-right)) max(calc(8 * var(--u)), env(safe-area-inset-bottom)) max(calc(10 * var(--u)), env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: calc(236 * var(--u)) minmax(0, 1fr) calc(196 * var(--u));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "left top right" "left middle right" "fireL bottom fireR";
+  column-gap: calc(10 * var(--u));
+  row-gap: calc(8 * var(--u));
+  font-size: calc(13 * var(--u));
+  line-height: 1.25;
+}
+.hud > *, .col > * { pointer-events: auto; }
+.col { display: flex; flex-direction: column; gap: calc(8 * var(--u)); min-height: 0; overflow-y: auto; scrollbar-width: none; pointer-events: none; }
+.col::-webkit-scrollbar { display: none; }
+.col.left { grid-area: left; }
+.col.right { grid-area: right; align-items: flex-end; }
+.bottom { grid-area: bottom; display: flex; align-items: flex-end; justify-content: space-between; gap: calc(8 * var(--u)); pointer-events: none; min-width: 0; }
+.bottom > * { pointer-events: auto; }
+
+/* --- panels: dark wood, brass rim, a faint grain --- */
+.panel {
+  position: relative;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(91deg, rgba(255, 230, 190, 0.025) 0 calc(2 * var(--u)), rgba(0, 0, 0, 0.03) calc(2 * var(--u)) calc(5 * var(--u))),
+    linear-gradient(180deg, var(--wood), var(--wood-2));
+  border: calc(1.5 * var(--u)) solid var(--brass-lo);
+  border-radius: calc(7 * var(--u));
+  box-shadow: inset 0 0 0 calc(1 * var(--u)) rgba(240, 210, 138, 0.18), inset 0 calc(10 * var(--u)) calc(18 * var(--u)) rgba(0, 0, 0, 0.35), 0 calc(3 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.45);
+  padding: calc(8 * var(--u)) calc(10 * var(--u));
+  backdrop-filter: blur(3px);
+}
+/* Brass corner studs. */
+.panel::before, .panel::after { content: ""; position: absolute; top: calc(4 * var(--u)); width: calc(4 * var(--u)); height: calc(4 * var(--u)); border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--brass-hi), var(--brass-lo)); }
+.panel::before { left: calc(4 * var(--u)); }
+.panel::after { right: calc(4 * var(--u)); }
+.title { font-family: var(--display); font-weight: 700; font-size: calc(14 * var(--u)); letter-spacing: 0.06em; color: var(--brass-hi); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6); margin: 0 0 calc(5 * var(--u)); padding-bottom: calc(4 * var(--u)); border-bottom: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.35); text-align: center; }
+.row { display: flex; justify-content: space-between; gap: calc(6 * var(--u)); margin: calc(2 * var(--u)) 0; }
+.label { color: var(--ink-soft); font-style: italic; }
+.value { font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
+.alarm { color: var(--alarm); font-weight: 600; }
+
+/* --- buttons: engraved brass plates --- */
+button {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: calc(10 * var(--u));
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(90, 66, 36, 0.55), rgba(40, 28, 16, 0.7));
+  border: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.55);
+  border-radius: calc(4 * var(--u));
+  box-shadow: inset 0 calc(1 * var(--u)) 0 rgba(255, 230, 170, 0.15), 0 calc(1 * var(--u)) calc(2 * var(--u)) rgba(0, 0, 0, 0.4);
+  padding: calc(5 * var(--u)) calc(3 * var(--u));
+  touch-action: none;
+  cursor: pointer;
+}
+button:active { transform: translateY(calc(1 * var(--u))); }
+button.on { background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo)); color: #24170a; border-color: var(--brass-hi); text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4); }
+button:disabled { opacity: 0.35; }
+button.wide { width: 100%; margin-top: calc(6 * var(--u)); }
+small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em); }
+
+/* --- sailing (left) --- */
+.sailing { width: 100%; }
+/* Five sail plans in two rows (three and two): the names stay whole in either language. */
+.sail-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: calc(3 * var(--u)); margin-top: calc(3 * var(--u)); }
+.sail-buttons button { grid-column: span 2; }
+.sail-buttons button:nth-child(4), .sail-buttons button:nth-child(5) { grid-column: span 3; }
+.sails-label { margin-top: calc(4 * var(--u)); }
+.masts { display: none; margin-top: calc(5 * var(--u)); flex-direction: column; gap: calc(3 * var(--u)); }
+.sailing.open .masts { display: flex; }
+.masts-toggle { display: block; width: 100%; margin-top: calc(5 * var(--u)); padding: calc(3 * var(--u)) 0; }
+.mast-row { display: grid; grid-template-columns: 1fr calc(24 * var(--u)) calc(66 * var(--u)) calc(24 * var(--u)); align-items: center; gap: calc(4 * var(--u)); }
+.mast-row button { padding: calc(2 * var(--u)) 0; font-size: calc(12 * var(--u)); }
+.mast-row .lvl { text-align: center; font-style: italic; }
+.mast-row.warn { color: #ffd27f; }
+.mast-row.alarm { color: var(--alarm); }
+.job { width: 100%; }
+.offer button { width: 100%; margin-top: calc(6 * var(--u)); }
+
+/* --- compass and target (right) --- */
+.compass { width: calc(118 * var(--u)); height: calc(118 * var(--u)); flex: none; filter: drop-shadow(0 calc(3 * var(--u)) calc(6 * var(--u)) rgba(0, 0, 0, 0.5)); }
+.compass .rim { fill: none; stroke: url(#brass); stroke-width: 4; }
+.compass .dial { fill: rgba(22, 16, 10, 0.86); }
+.compass .tick { stroke: var(--brass); stroke-width: 0.8; }
+.compass .tick.major { stroke: var(--brass-hi); stroke-width: 1.4; }
+.compass .cardinal { fill: var(--brass-hi); font-family: var(--display); font-size: 7px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+.compass .bow { fill: var(--ink); }
+.compass .wind { stroke: var(--sea-blue); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.compass .course { fill: var(--brass-hi); stroke: #24170a; stroke-width: 0.8; }
+.compass .heading { fill: var(--ink); font-family: var(--display); font-weight: 700; font-size: 12px; text-anchor: middle; }
+.target { width: 100%; }
+.target .bar, .gauge { display: block; height: calc(5 * var(--u)); background: rgba(0, 0, 0, 0.5); border: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.35); border-radius: calc(3 * var(--u)); overflow: hidden; margin: calc(4 * var(--u)) 0; }
+.target .bar span { display: block; height: 100%; background: linear-gradient(180deg, #e2553a, #8e2a1c); }
+
+/* --- combat (top) and the broadside buttons (bottom corners) --- */
+.combat { grid-area: top; justify-self: center; width: min(100%, calc(480 * var(--u))); font-size: calc(11 * var(--u)); }
+.combat .ammo, .combat .batteries { display: flex; gap: calc(3 * var(--u)); flex-wrap: wrap; margin-bottom: calc(3 * var(--u)); }
+.combat .ammo button, .combat .batteries button { flex: 1; min-width: calc(52 * var(--u)); }
+.combat small { opacity: 0.75; margin-left: calc(3 * var(--u)); }
+.combat .status { display: flex; gap: calc(12 * var(--u)); justify-content: center; font-weight: 600; }
+.gauge { width: 82%; margin: calc(3 * var(--u)) auto 0; }
+.gauge span { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi)); }
+.storm { border-color: var(--red-hi); }
+.fire.side {
+  align-self: end;
+  width: calc(112 * var(--u));
+  height: calc(80 * var(--u));
+  border-radius: calc(12 * var(--u));
+  font-size: calc(17 * var(--u));
+  letter-spacing: 0.08em;
+  background: radial-gradient(ellipse at 50% 30%, var(--red-hi), var(--red) 60%, #4a140c);
+  border: calc(2 * var(--u)) solid var(--brass);
+  box-shadow: inset 0 0 0 calc(1 * var(--u)) rgba(255, 220, 160, 0.35), 0 calc(3 * var(--u)) calc(8 * var(--u)) rgba(0, 0, 0, 0.55);
+  text-shadow: 0 calc(1 * var(--u)) calc(2 * var(--u)) rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(1 * var(--u));
+}
+.fire.side small { font-size: calc(11 * var(--u)); font-style: italic; letter-spacing: 0; opacity: 0.85; }
+.fire.port { grid-area: fireL; justify-self: start; }
+.fire.starboard { grid-area: fireR; justify-self: end; }
+
+/* --- bottom: helm (classic steering), camera and settings --- */
+.helm-pad { display: flex; gap: calc(24 * var(--u)); }
+.helm { width: calc(64 * var(--u)); height: calc(64 * var(--u)); border-radius: 50%; font-size: calc(24 * var(--u)); background: radial-gradient(circle at 40% 35%, rgba(110, 82, 44, 0.9), rgba(30, 21, 14, 0.92)); border: calc(2 * var(--u)) solid var(--brass); }
+.corner { display: flex; gap: calc(6 * var(--u)); align-items: center; margin-left: auto; }
+.corner .lang, .lang { min-width: calc(34 * var(--u)); padding: calc(5 * var(--u)) calc(7 * var(--u)); }
+.fps { font-size: calc(10 * var(--u)); color: var(--ink-soft); opacity: 0.75; }
+.show-hud { position: absolute; right: calc(10 * var(--u)); bottom: calc(10 * var(--u)); width: calc(36 * var(--u)); opacity: 0.6; pointer-events: auto; }
+
+/* --- port (middle, above the sea's foot) --- */
+.harbour { grid-area: middle; align-self: end; justify-self: center; width: min(100%, calc(460 * var(--u))); max-height: 100%; overflow-y: auto; font-size: calc(11 * var(--u)); }
+.port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4 * var(--u)); margin: calc(6 * var(--u)) 0; }
+.port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); }
+.port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(4 * var(--u)); }
+.port-yard small { display: block; font-size: calc(9 * var(--u)); opacity: 0.8; }
+.port-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(4 * var(--u)); margin: calc(4 * var(--u)) 0 calc(6 * var(--u)); }
+.standings { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(6 * var(--u)); margin-top: calc(4 * var(--u)); }
+.standing { font-size: calc(11 * var(--u)); display: flex; flex-direction: column; gap: calc(3 * var(--u)); }
+.standing i { display: block; height: calc(4 * var(--u)); border-radius: calc(2 * var(--u)); background: var(--brass); }
 .standing.war span { color: #e0614f; }
 .standing.war i { background: #c0392b; }
-.port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.port-yard small { display: block; font-size: 10px; opacity: 0.8; }
-.port-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0 6px; }
-.port-tabs { grid-template-columns: repeat(4, 1fr); }
-.job { left: max(12px, env(safe-area-inset-left)); top: 286px; width: 220px; font-size: 12px; }
-.offer button { width: 100%; margin-top: 6px; }
-.enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 4px #000; }
-.enemy-marker .arrow { font-size: 22px; line-height: 22px; }
-.enemy-marker small { font-size: 11px; color: #f1e3c6; }
 
-/* Phones in landscape (height under 500 px): a compact HUD that leaves the middle of the sea clear. */
-@media (max-height: 500px) {
-  .panel { padding: 5px 8px; border-radius: 8px; }
-  .sailing { width: 168px; font-size: 11px; top: 6px; left: max(6px, env(safe-area-inset-left)); }
-  .sailing .title { font-size: 13px; margin-bottom: 2px; }
-  .sailing .heel, .sailing .weather, .sailing .masts, .sailing .sails-label { display: none; }
-  .masts-toggle { display: block; width: 100%; margin-top: 3px; padding: 2px 0; font-size: 9px; }
-  .sailing.open .masts { display: flex; }
-  .sailing.open .mast-row { font-size: 9px; grid-template-columns: 1fr 22px 52px 22px; }
-  .sail-buttons { gap: 2px; }
-  .sail-buttons button { font-size: 8px; padding: 4px 0; }
-  .combat { top: 6px; width: 48vw; font-size: 9px; }
-  .combat .ammo, .combat .batteries { gap: 2px; margin-bottom: 2px; }
-  .combat .ammo button, .combat .batteries button { min-width: 38px; font-size: 8px; padding: 3px 1px; }
-  .compass { width: 76px; height: 76px; top: 6px; right: max(6px, env(safe-area-inset-right)); }
-  .target { top: 88px; width: 132px; font-size: 10px; right: max(6px, env(safe-area-inset-right)); }
-  .job { top: 128px; width: 168px; font-size: 10px; left: max(6px, env(safe-area-inset-left)); }
-  .fire.side { bottom: max(76px, calc(env(safe-area-inset-bottom) + 70px)); width: 84px; height: 62px; font-size: 14px; }
-  .fire.port { left: max(8px, env(safe-area-inset-left)); }
-  .fire.starboard { right: max(8px, env(safe-area-inset-right)); }
-  .helm-pad { gap: 90px; bottom: max(8px, env(safe-area-inset-bottom)); }
-  .helm { width: 58px; height: 58px; font-size: 20px; }
-  .harbour { bottom: 70px; width: 58vw; max-height: 62vh; overflow-y: auto; font-size: 10px; }
-  .notices { top: 28%; }
-  .notice { font-size: 13px; }
-  .corner { bottom: 6px; right: 6px; }
+/* --- overlays: notices, the enemy arrow, settings and the help card --- */
+.notices { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: calc(6 * var(--u)); pointer-events: none; }
+.notice { font-family: var(--display); font-weight: 700; font-size: calc(15 * var(--u)); letter-spacing: 0.05em; color: #2a1a0a; padding: calc(6 * var(--u)) calc(20 * var(--u)); background: linear-gradient(180deg, #ecd9a8, #cdb27a); border: calc(1.5 * var(--u)) solid var(--brass-lo); border-radius: calc(3 * var(--u)); box-shadow: 0 calc(3 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.5); }
+.enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 calc(4 * var(--u)) #000; }
+.enemy-marker .arrow { font-size: calc(22 * var(--u)); line-height: 1; }
+.enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }
+.settings, .help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: calc(100% - 20 * var(--u)); overflow-y: auto; z-index: 5; }
+.settings { width: calc(420 * var(--u)); font-size: calc(13 * var(--u)); }
+.settings .label { display: block; margin-top: calc(4 * var(--u)); font-family: var(--display); font-style: normal; font-size: calc(11 * var(--u)); letter-spacing: 0.05em; color: var(--brass-hi); }
+.settings .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); margin: calc(4 * var(--u)) 0 calc(8 * var(--u)); }
+.settings .presets.three { grid-template-columns: repeat(3, 1fr); }
+.settings input[type=range] { width: 100%; margin-bottom: calc(8 * var(--u)); accent-color: var(--brass); }
+.help { width: calc(560 * var(--u)); font-size: calc(13 * var(--u)); z-index: 6; }
+.help ul { margin: calc(6 * var(--u)) 0 calc(10 * var(--u)); padding-left: calc(18 * var(--u)); }
+.help li { margin: calc(4 * var(--u)) 0; line-height: 1.35; }
+.help li::marker { color: var(--brass); }
+
+/*
+ * Phones in landscape and small windows: a smaller design frame (760 x 430), so the same screen
+ * gives a larger unit and readable type; narrower columns, larger text, and the secondary rows
+ * (heel, weather, the sails heading) left out.
+ */
+@media (max-height: 500px), (max-width: 700px) {
+  :root { --u: clamp(0.55px, min(calc(100vw / 760), calc(100vh / 430)), 1.7px); }
+  .hud { grid-template-columns: calc(200 * var(--u)) minmax(0, 1fr) calc(150 * var(--u)); font-size: calc(13.5 * var(--u)); column-gap: calc(8 * var(--u)); row-gap: calc(6 * var(--u)); }
+  .panel { padding: calc(6 * var(--u)) calc(8 * var(--u)); }
+  button { font-size: calc(11 * var(--u)); padding: calc(4 * var(--u)) calc(2 * var(--u)); }
+  .title { font-size: calc(13 * var(--u)); margin-bottom: calc(3 * var(--u)); padding-bottom: calc(3 * var(--u)); }
+  .sailing .heel, .sailing .weather, .sailing .sails-label { display: none; }
+  .compass { width: calc(96 * var(--u)); height: calc(96 * var(--u)); }
+  .combat { font-size: calc(11 * var(--u)); }
+  .combat .ammo button, .combat .batteries button { min-width: calc(44 * var(--u)); }
+  .fire.side { width: calc(96 * var(--u)); height: calc(68 * var(--u)); font-size: calc(16 * var(--u)); }
+  .fire.side small { font-size: calc(11 * var(--u)); }
+  .fps { font-size: calc(10 * var(--u)); }
+  .settings { width: calc(400 * var(--u)); }
+  .help { width: calc(600 * var(--u)); }
 }
-.help { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 86vw); max-height: 84vh; overflow-y: auto; font-size: 13px; z-index: 6; }
-.help ul { margin: 6px 0 10px; padding-left: 18px; }
-.help li { margin: 4px 0; line-height: 1.35; }
-@media (max-height: 500px) { .help { font-size: 10px; width: 80vw; } .help li { margin: 2px 0; } }
+
+/* --- simple steering: the cancel button and the menu of a ship held down on --- */
+.cancel-course { padding: calc(6 * var(--u)) calc(12 * var(--u)); border-color: var(--brass); }
+.ship-menu { position: absolute; transform: translate(-50%, calc(-100% - 14 * var(--u))); display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: calc(120 * var(--u)); z-index: 4; padding-top: calc(10 * var(--u)); }
+.ship-menu button { padding: calc(7 * var(--u)) calc(10 * var(--u)); }

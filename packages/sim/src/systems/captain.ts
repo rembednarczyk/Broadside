@@ -4,11 +4,12 @@ import { screens } from "../combat/smoke";
 import { applyCommand } from "../commands/apply";
 import { sortedById } from "../world/world";
 import { terrainHeight } from "@broadside/core";
+import { gridBed } from "../ai/pilot/plan";
 import { type SimContext } from "./context";
 
 const bedOf = (ctx: SimContext): ((x: number, z: number) => number) | null => {
   const a = ctx.env.archipelago;
-  return a ? (x, z) => terrainHeight(a, x, z) : null;
+  return a ? gridBed(a, (x, z) => terrainHeight(a, x, z)) : null;
 };
 
 /** AI captains think twice a second and command their ships like a player would. */

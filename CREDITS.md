@@ -44,3 +44,8 @@ skryptem `tools/assets/crew-anim.mjs` do `packages/app/public/assets/props/crew-
 właściciela projektu). Warunki Mixamo pozwalają używać animacji w grach bez opłat; surowych plików nie rozpowszechniamy
 (nie są w repozytorium), w grze są tylko macierze kości przeniesione na postacie Quaterniusa i wypieczone do
 `crew-anim.bin`.
+
+## Czcionki interfejsu (SIL Open Font License 1.1)
+Cinzel (Natanael Gama, https://github.com/NDISCOVER/Cinzel) i EB Garamond (Georg Duffner, Octavio Pardo,
+https://github.com/octaviopardo/EBGaramond12), z pakietów `@fontsource/cinzel` i `@fontsource/eb-garamond`, wbudowane
+w paczkę gry (działają w APK bez sieci).

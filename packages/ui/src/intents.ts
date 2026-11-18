@@ -7,6 +7,15 @@ export interface HelmIntents {
   steer(direction: -1 | 0 | 1): void;
 }
 
+/** Simple steering: orders about a ship (from the menu of a ship held down on) and the course. */
+export interface OrderIntents {
+  board(target: number): void;
+  follow(target: number): void;
+  engage(target: number): void;
+  cancelCourse(): void;
+  closeMenu(): void;
+}
+
 export interface SailIntents {
   setSails(level: number): void;
   setMastSails(mast: number, level: number): void;
@@ -38,6 +47,12 @@ export interface SettingsIntents {
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
   setColorMode(mode: string): void;
+  /** Simple steering (tap or draw a course, the crew sails it) or the classic helm. */
+  setSteering(mode: "simple" | "classic"): void;
+  /** Standing order: the crew reefs in squalls by itself. */
+  setReef(on: boolean): void;
+  /** Vibration on hits and broadsides (phones). */
+  setHaptics(on: boolean): void;
   toggleSettings(): void;
   toggleHelp(): void;
   newGame(): void;
@@ -47,6 +62,7 @@ export interface SettingsIntents {
 
 export interface UiIntents {
   readonly helm: HelmIntents;
+  readonly orders: OrderIntents;
   readonly sails: SailIntents;
   readonly combat: CombatIntents;
   readonly port: PortIntents;

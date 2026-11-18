@@ -1,3 +1,4 @@
+import { WakeTrails } from "./wake-trails";
 import { type Simulation } from "@broadside/sim";
 import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
@@ -7,8 +8,11 @@ import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
+import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
+import { ShipFill } from "./ship-fill";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
+import { CourseView } from "./course-view";
 import { HullModels } from "./hull-models";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
@@ -61,9 +65,13 @@ export class BabylonRenderer {
   private readonly sky: Sky;
   private readonly sun: DirectionalLight;
   private readonly ambient: HemisphericLight;
+  /** Fill light on the ships in the playing cameras (ship-fill.ts); `shipFill.enabled = false` for the reference shots. */
+  readonly shipFill: ShipFill;
   private readonly shadows: ShadowGenerator | null;
   private readonly materials: ShipMaterials;
   private readonly views = new Map<number, ShipView>();
+  /** Where the ships have sailed: the wakes follow it (wake-trails). */
+  private readonly trails = new WakeTrails();
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
@@ -71,6 +79,8 @@ export class BabylonRenderer {
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
   readonly salvo: SalvoMarks;
+  /** Simple steering: the course drawn and the route sailed, on the water. */
+  readonly course: CourseView;
   /** Nearest enemy the isometric camera keeps in frame (the app sets it each frame). */
   focus: { x: number; z: number } | null = null;
   private coast: FarCoast | null = null;
@@ -94,6 +104,8 @@ export class BabylonRenderer {
     this.sun = new DirectionalLight("sun", new Vector3(-0.4, -0.8, 0.3), this.scene);
     this.ambient = new HemisphericLight("sky-light", new Vector3(0, 1, 0), this.scene);
     this.ambient.groundColor = new Color3(0.05, 0.12, 0.15);
+    // Made before the muzzle-flash lights, so it counts among the first lights of a ship's material.
+    this.shipFill = new ShipFill(this.scene);
     this.shadows = g.shadowSize > 0 ? this.createShadows(g) : null;
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves);
@@ -102,6 +114,7 @@ export class BabylonRenderer {
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
     this.effects.hullLength = (id, physical) => this.hulls?.fitted(id as ShipClassId, SHIP_CLASSES[id as ShipClassId].hull)?.length ?? physical;
     this.salvo = new SalvoMarks(this.scene);
+    this.course = new CourseView(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
@@ -150,13 +163,18 @@ export class BabylonRenderer {
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
     this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
     this.sun.intensity = look.keyIntensity;
+    // The same key light, through the canvas of the sails (sail-translucency.ts).
+    const through = sailLightOf(this.scene);
+    through.dir = { x: look.keyDir.x, y: Math.max(0.05, look.keyDir.y), z: look.keyDir.z };
+    const k = look.keyIntensity * SAIL_TRANSMITTANCE;
+    through.color = { r: look.keyColor.r * k, g: look.keyColor.g * k, b: look.keyColor.b * k };
     // Sky light: the hemisphere carries most of the fill on an overcast sea (no GI).
     this.ambient.diffuse = new Color3(look.ambient.r * 1.9, look.ambient.g * 1.9, look.ambient.b * 1.9);
     // Light from below: the sea throws back the sky (a ship's sides stand in it), stronger than a
     // dark ground would.
     this.ambient.groundColor = new Color3(look.ambient.r * 0.8, look.ambient.g * 0.95, look.ambient.b * 1.05);
     this.ambient.intensity = 1;
-    setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
+    setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8), look.sunDir.y);
     // Eyes adjust to the night: up to 2.2 times the exposure once the sun is down (post-stack);
     // a storm by day stays dark, as it should.
     this.post.adapt(1 + 1.2 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
@@ -169,6 +187,7 @@ export class BabylonRenderer {
 
   private syncShips(sim: Simulation): void {
     const seen = new Set<number>();
+    let changed = false;
     for (const e of sim.ships()) {
       seen.add(e.id);
       let v = this.views.get(e.id);
@@ -181,6 +200,7 @@ export class BabylonRenderer {
       if (!v) {
         v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan, this.crewRig);
         this.views.set(e.id, v);
+        changed = true;
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);
       const cam = this.camera.camera.position;
@@ -192,8 +212,10 @@ export class BabylonRenderer {
       if (!seen.has(id)) {
         v.dispose();
         this.views.delete(id);
+        changed = true;
       }
     }
+    if (changed) this.shipFill.track([...this.views.values()].map((x) => x.root));
   }
 
   /** Domain events of the last steps (Observer): effects react to them. */
@@ -226,6 +248,7 @@ export class BabylonRenderer {
       }
     }
     this.applyLook(look);
+    this.shipFill.frame(this.camera.camera.getForwardRay(1).direction, this.camera.mode === "cinematic", 1 - Math.min(1, look.sunIntensity / 0.8), dt);
     const cam = this.camera.camera.position;
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
     if (!this.islands && sim.env.archipelago) {
@@ -251,7 +274,9 @@ export class BabylonRenderer {
       daylight: (look.sunDir.y + 0.05) / 0.35,
       // Under a heavy sky the sun's disc is behind the cloud and the sea has no path of light
       // (ref_060); through a broken sky it has (ref_090).
-      glint: 1 - 0.92 * smoothstep(0.55, 0.92, look.cloudCover),
+      // At night the moon's glitter is a few sparks near its path, not a field of them (ref_075; the
+      // night exposure lifts every spark): a tenth of the day's.
+      glint: (1 - 0.97 * smoothstep(0.5, 0.85, look.cloudCover)) * (1 - 0.9 * (1 - Math.min(1, look.sunIntensity / 0.8))),
     }, sim.env.windSpeed, sim.env.windDirection);
     const ws = sim.env.windSpeed;
     const strike = this.weather.strikeAt;
@@ -259,12 +284,14 @@ export class BabylonRenderer {
     const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
-    const ships = sim.ships().map((e) => ({ x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
+    const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
+    this.ocean.setTrails(this.trails.update(ships, sim.env.time));
     this.syncShips(sim);
     this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
     this.weather.frame(sim, dt);
     this.salvo.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
+    this.course.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
     if (this.weather.flash > 0) {
       this.ambient.intensity = 1 + this.weather.flash * 3;
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
@@ -283,13 +310,15 @@ export class BabylonRenderer {
     if (this.post.screen.underwater && !under) this.dropsLeft = 4;
     this.dropsLeft = Math.max(0, this.dropsLeft - dt);
     const rain = sim.env.weather?.rain ?? 0;
-    const sun = Vector3.Project(cam.add(new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z).scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
+    // Under the water the sun is seen along its refracted ray, steeper than in the air (Snell, n = 1.33).
+    const sd = under ? new Vector3(look.sunDir.x / 1.33, Math.sqrt(Math.max(0, 1 - (look.sunDir.x ** 2 + look.sunDir.z ** 2) / 1.77)), look.sunDir.z / 1.33) : new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z);
+    const sun = Vector3.Project(cam.add(sd.scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
     // Riding the surface: the lens as a dome of radius LENS; the surface crosses it at a height
     // that rises and falls with the passing waves (mid-frame when it cuts the lens centre).
     const LENS = 0.6;
     const h = cam.y - surface;
     const waterline = Math.abs(h) < LENS && this.camera.mode !== "isometric" ? 0.5 - h / (2 * LENS) : -1;
-    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline });
+    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8) });
     this.ocean.setUnderwater(under);
     if (under) {
       this.scene.fogColor = new Color3(0.02, 0.13, 0.12);
@@ -301,6 +330,21 @@ export class BabylonRenderer {
   project(x: number, y: number, z: number): { x: number; y: number } {
     const p = Vector3.Project(new Vector3(x, y, z), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
     return { x: p.x, y: p.y };
+  }
+
+  /**
+   * The point of the sea under a screen point (client pixels), or null above the horizon: the
+   * picking ray (perspective or orthographic) met with the mean sea level.
+   */
+  pickWater(clientX: number, clientY: number): { x: number; z: number } | null {
+    const rect = this.engine.getRenderingCanvasClientRect();
+    if (!rect) return null;
+    const scale = this.engine.getRenderWidth() / Math.max(1, rect.width);
+    const ray = this.scene.createPickingRay((clientX - rect.left) * scale, (clientY - rect.top) * scale, Matrix.Identity(), this.camera.camera);
+    if (ray.direction.y > -1e-4) return null;
+    const t = -ray.origin.y / ray.direction.y;
+    if (t < 0 || t > 5000) return null;
+    return { x: ray.origin.x + ray.direction.x * t, z: ray.origin.z + ray.direction.z * t };
   }
 
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */

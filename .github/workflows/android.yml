@@ -24,6 +24,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history: the version code counts the commits (as tools/android/apk.sh does).
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -44,10 +47,11 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then name="${GITHUB_REF_NAME#v}"; else name="0.1.0-${GITHUB_SHA::7}"; fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$((1000 + $(git rev-list --count HEAD)))" >> "$GITHUB_OUTPUT"
       - name: Assemble release APK
         working-directory: packages/app/android
         env:
-          VERSION_CODE: ${{ github.run_number }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
           VERSION_NAME: ${{ steps.version.outputs.name }}
         run: |
           chmod +x gradlew

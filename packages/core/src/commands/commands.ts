@@ -22,6 +22,17 @@ export type GameCommand =
   | { readonly type: "helm"; readonly ship: EntityId; readonly rudder: number }
   /** The helmsman steers to and holds a heading (null hands the wheel back to "helm"). */
   | { readonly type: "course"; readonly ship: EntityId; readonly heading: number | null }
+  /**
+   * Sail to these points in turn (simple steering): the crew steers and makes sail (sim pilot).
+   * `hold`: after the last point keep its direction (a course drawn on the water); otherwise
+   * take in sail there (a destination). An empty route cancels it. `append`: add the points to the
+   * route being sailed (a queue of waypoints) instead of replacing it.
+   */
+  | { readonly type: "navigate"; readonly ship: EntityId; readonly route: readonly { readonly x: number; readonly z: number }[]; readonly hold: boolean; readonly append?: boolean }
+  /** Simple steering: run down and board a ship, keep station on one, fight her broadside to broadside, or close and storm a fort. */
+  | { readonly type: "pilot"; readonly ship: EntityId; readonly order: { readonly kind: "board" | "follow" | "engage"; readonly target: EntityId } | { readonly kind: "assault"; readonly fort: EntityId } }
+  /** Standing orders to the crew: reef in a squall without being told (and make sail again after). */
+  | { readonly type: "crew"; readonly ship: EntityId; readonly reef: boolean }
   /** Sail plan of one mast, or of every mast. */
   | { readonly type: "sails"; readonly ship: EntityId; readonly mast: number | "all"; readonly level: SailLevel }
   /**

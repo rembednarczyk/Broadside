@@ -486,3 +486,227 @@ kadłuby z modeli mają już wznoszącą się burtę dziobu, a dobudowana skrzyn
 wznosi się łagodnie i kończy galionem) i kosztowała 50 wywołań rysowania na scenę (trzy statki z modeli: 219 → 269,
 +23%). Commit 3c82831 cofnięty w całości (`git revert`); wpis o nim wyżej zostaje jako historia. Jeśli dziób ma
 zyskać sylwetkę z referencji, to przez galion i lekkie podniesienie burty w siatce, bez osobnej skrzyni.
+
+**17.11, APK budowany w sesji (właściciel: „buduj mi tutaj podpisane apk”).** `pnpm apk` (`tools/android/apk.sh`):
+web build, `cap sync`, Gradle `assembleRelease`, podpis kluczem z repozytorium (ten sam co w CI), plik `Broadside.apk`
+wysyłany właścicielowi po zmianach widocznych w grze. Android SDK w `/root/android-sdk` (platforma 36, build-tools 36),
+JDK 21 z systemu. Maven Central nie oddaje Gradle'owi części plików z tej sieci, więc lustro Google podawane przez
+`-I tools/android/maven-mirror.gradle` (bez zmian w globalnej konfiguracji Gradle). Numer wersji 1000 + liczba
+commitów w obu miejscach (CI miało numer przebiegu Actions): APK z sesji i z CI instalują się jeden na drugim jako
+aktualizacje, kolejność wyznacza historia gałęzi.
+
+**17.11, galeria rufowa (C4).** Pawęż kasztelu dostała rząd okien galerii co 1,05 m (wcześniej dwa okna co 2,4 m jak
+na burtach), pilastry między nimi z listwą nad oknami i otwartą galerię: podłoga na poziomie podłogi kasztelu,
+wysunięta 0,75 m za pawęż, balustrada 0,85 m z tych samych tralek co na pokładzie kasztelu (wzór rufy okrętu z XVII
+i XVIII w., Chapman, „Architectura Navalis Mercatoria”, 1768). Galeria, pilastry i listwa scalone w jedną siatkę,
+tralki dopisane do instancji kasztelu: +2 wywołania rysowania na statek z modelu. Plansza `stern-castle` pokazuje,
+że pawęż referencji jest szersza i wyższa niż nasza (kadłub modelu zwęża się ku linii wody): osobna pozycja.
+
+**17.11, kilwater po przebytej drodze (właściciel: „przecięcie wody za statkiem jest zawsze proste i skręca razem
+z nim; niech gra pamięta, gdzie płynęliśmy”).** Ślad liczony w shaderze z bieżącej pozycji i kursu był prostym klinem
+w układzie statku. Teraz gra zapisuje drogę (ślad okruchów jak historia ścieżki w wstęgach cząstek, np. Niagara w
+Unrealu): co 1,6 s pozycja rufy, prędkość i czas, 16 punktów (ok. 24 s, tyle, ile trwa piana kilwateru), a pierwszy
+punkt to zawsze rufa teraz. Shader dla każdego piksela szuka najbliższego punktu łamanej i z jego wieku liczy pianę
+w osi śladu i ramiona Kelvina (odsunięte o 0,354 × przebytą drogę, zanik 25 s); te same ramiona podnoszą wodę w
+shaderze wierzchołków. Przy kadłubie bez zmian: fala dziobowa, woda przy burtach, dolina pod rufą. Budżet uniformów:
+3 statki najbliżej kamery × 16 punktów (52 wektory), z testem odległości od środka śladu, żeby piksele daleko od
+śladów nie liczyły odcinków. Ślad jest widokiem (silnik), symulacja i złoty hash bez zmian. Niesprawdzone na
+telefonie: limit uniformów fragment shadera (WebGL2 gwarantuje 224 wektory, telefony zwykle mają więcej).
+
+**18.11, proste sterowanie (D3; właściciel: „gracz zaznacza, gdzie chce płynąć, a marynarze ustawiają wszystko; rysuję
+przed sobą białą kreskę, statek płynie w tym kierunku; oryginalne sterowanie zostaje, ale nie domyślnie”).**
+- Komenda `navigate` (trasa punktów, `hold`) i system pilota w `createSystems()` po kapitanach, przed sterem. Pilot to
+  ta sama sztuka żeglarska co patrole AI: kurs na punkt zamieniony na możliwy do żeglugi i ominięcie mielizn
+  (`clearHeading`, teraz eksportowany), kurs dla sternika; zwroty i zwroty przez rufę robi istniejący system steru.
+- Pod wiatr inaczej niż AI: AI zmienia hals z zapasem 23°, co przy zwrotach przez rufę (każdy to 70–100 m straty z
+  wiatrem) dawało ujemny postęp. Pilot płynie jednym halsem do laylinii i robi jeden zwrot (zasada regatowa), z
+  poprawką na dryf (mierzony kąt między kursem a drogą, wygładzony) i 0,1 rad zapasu na stratę przy zwrocie. Statek
+  rejowy idzie realnie ok. 82° od wiatru, więc 200 m pod wiatr to ponad kilometr halsowania (test: do 700 s).
+- Tapnięcie: cel; u celu załoga zwija żagle (statek wytraca prędkość). Narysowana linia: punkty co 15 m (najwyżej 24),
+  po ostatnim statek trzyma kierunek ostatniego odcinka pod żaglami. Bez postawionych żagli załoga stawia pełne.
+  Żagle gracz dalej ustawia sam (szybciej, wolniej); ster (A i D albo przyciski w trybie klasycznym) kasuje trasę.
+- Gesty: w trybie prostym przeciągnięcie jednym palcem lub lewym przyciskiem rysuje, a kamera obraca się prawym
+  przyciskiem; przybliżanie dwoma palcami i kółkiem bez zmian; drugi palec przerywa rysowanie. Tapnięcie: ruch do
+  10 px i do 0,5 s. Punkt na wodzie z promienia kamery (`pickWater`, poziom morza). W trybie prostym znikają przyciski
+  steru. Ustawienie w ustawieniach (Sterowanie: Wskaż i płyń / Ster), pamiętane na urządzeniu.
+- Trasa w zapisie gry (pole opcjonalne, stare zapisy bez niej się wczytują). Złoty hash bez zmian (bez trasy system
+  nic nie robi).
+
+**18.11, HUD: skalowanie i wygląd (właściciel: „zrób skalowanie interfejsu, aby nic na siebie nie nachodziło; wybierz
+czcionkę pasującą do gry i uatrakcyjnij HUD”).**
+- Układ: zamiast paneli ustawianych bezwzględnie z kilkoma progami szerokości, siatka CSS z obszarami (lewa kolumna:
+  żagle i zlecenie, góra: walka, prawa kolumna: kompas i cel, dolne rogi: ogień, dół: ster, kamera i ustawienia, środek
+  wolny dla morza, panel portu u dołu środka). Wszystkie wymiary w jednostce `--u` = mniejsze z szerokość/960
+  i wysokość/540 (ograniczone do 0,55–1,7 px): projekt zawsze mieści się w ekranie, więc obszary nie mogą się spotkać.
+  Wzorzec: skalowanie interfejsu do rozdzielczości odniesienia, jak Canvas Scaler w Unity („Scale With Screen Size”,
+  dopasowanie do mniejszego boku); od wzorca różni się drugą ramką dla niskich ekranów (760 × 430), bo przy jednej
+  ramce pismo na telefonie spadało do 5,6 px.
+- Sprawdzanie: `tools/ui/ui-audit.mjs` (Playwright) dla 15 rozmiarów od 568 × 320 do 2560 × 1440, w angielskim z prostym
+  sterowaniem i w polskim z klasycznym: nakładanie obszarów, wyjście poza ekran, przewijanie kolumn, pismo poniżej 8 px,
+  okno ustawień w ekranie; zrzuty i raport.
+- Czcionki: Cinzel (kapitaliki z rzymskich inskrypcji) w tytułach i przyciskach, EB Garamond (antykwa Garamonda z XVI w.)
+  w tekście. IM Fell English SC odpadł, bo nie ma polskich znaków. Obie na licencji OFL, wbudowane przez `@fontsource`
+  (APK działa bez sieci).
+- Wygląd: panele z ciemnego drewna z mosiężnym obramowaniem i nitami, przyciski jak grawerowany mosiądz (wybrany:
+  polerowany), przyciski ognia w czerwonym laku z mosiężnym rantem, kompas z mosiężnym pierścieniem i różą 32
+  kierunków, komunikaty na pasku pergaminu. Przyciski żagli w dwóch rzędach (pełne nazwy w obu językach), wiersze
+  masztów zwinięte pod przyciskiem na każdym ekranie.
+
+**18.11, rozkazy po tapnięciu i efekt kursu (D5; właściciel: „fajny efekt na rysowanie w wodzie; interakcje przez
+tapnięcie, np. abordaż po podpłynięciu; całość wydziel ładnie SRP i deterministycznie”).**
+- Tapnięcie to rozkaz zależny od kontekstu (wzorzec z gier strategicznych: ten sam gest idzie na wolny teren i atakuje
+  wroga): wrogi statek: abordaż; inny statek: płynięcie w jego szyku; port: wejście na redę i stop (panel portu); fort:
+  dojście na odległość szturmu, desant, jeśli działa uciszone, inaczej dryf na pozycji ostrzału; własny statek: stop
+  (koniec trasy, żagle zwinięte); woda: płyń tam. Cel z najbliższego obiektu w zasięgu palca na ekranie (statek: pół
+  długości na ekranie, min. 28 px), czysta funkcja `tap-targets.ts`, dane z `presenters/tappables.ts`.
+- Symulacja (deterministyczna, bez losowania): komenda `pilot` (abordaż, eskorta, szturm) obok `navigate` (trasa).
+  Pilot podzielony według odpowiedzialności w `sim/ai/pilot/`: `state.ts` (rozkazy jako dane, zapisywane z grą, stare
+  zapisy tłumaczone `upgradePilot`), `seamanship.ts` (jedyna umiejętność: kurs na punkt z laylinią i dryfem), `route.ts`,
+  `board.ts` (pościg z wyprzedzeniem jak „pursuit” Reynoldsa, żagle zmniejszane z odległością, żeby zrównać prędkość;
+  abordaż istniejącą komendą, gdy `canBoard`), `follow.ts` (trzymanie pozycji z konwojów AI, ale z pełnymi żaglami,
+  gdy statek zostaje za daleko w tyle), `assault.ts`, `pilot.ts` (wybór modułu według rodzaju rozkazu: Strategy przez
+  dane). System pilota tylko wykonuje wynik: kurs, żagle, komendy. Złoty hash bez zmian.
+- Aplikacja: sterowanie gracza wydzielone z `GameSession` do `PlayerHelm` (klasyczny ster, trasy, rozkazy; sesja miała
+  21 metod przy limicie 20). Gesty (`course-gestures.ts`) nie znają rozkazów: dają tapnięcie albo narysowaną linię.
+- Efekt na wodzie (`course-view.ts`, `shaders/course.ts`): kurs jako świetlista nić z jasnym rdzeniem, impulsami
+  płynącymi wzdłuż drogi i iskrami jak słońce na pianie; rysowana linia jaśniejsza, po puszczeniu rozpływa się (0,8 s);
+  tapnięcie puszcza kręgi na wodzie; cel ma oddychający pierścień z echem w kolorze rozkazu (biały: płyń, złoty: port,
+  czerwony: abordaż i szturm, morska zieleń: eskorta). Animacja z czasu symulacji (zrzuty powtarzalne).
+- Propozycje dalszego sterowania zapisane w backlogu jako D6, do decyzji właściciela.
+
+**18.11, sterowanie, druga partia (D6; właściciel: „wszystkie pomysły dobre, możesz wdrażać”).**
+- Trasa omijająca wyspy: A* (Hart, Nilsson, Raphael 1968) po siatce dna co 40 m, 8 sąsiadów, heurystyka oktylowa,
+  remisy rozstrzygane numerem komórki (deterministycznie), bez ścinania rogów lądu; potem naciąganie sznurka. Liczone
+  raz przy rozkazie dla odcinków nad lądem lub mielizną; odcinek po czystej wodzie zostaje taki, jak go narysowano.
+  Pościg, eskorta i atak dalej omijają mielizny na bieżąco (`clearHeading`).
+- Refowanie: rozkaz stały `crew` (komponent `reefing`, zapisywany), domyślnie włączony w grze. Raz na sekundę: maszt
+  ponad 0,95 wytrzymałości (próg ostrzeżenia w HUD) traci stopień żagla; po 8 s obciążenia poniżej 0,55 stopień wraca,
+  najwyżej do poziomu ustawionego przez kapitana (jego rozkazy i rozkazy pilota zapisują „chciany” plan). Komunikaty
+  w HUD.
+- Atak burtą (przytrzymanie na wrogu albo linia z własnego statku na wroga): walka kapitanów AI (`captain.engage`:
+  zasięg doktryny, burta naładowana, wyprzedzenie celu, działa pościgowe i moździerz), bez wyboru amunicji, beczek,
+  min i abordażu, które zostają graczowi; zasięg walki 220 m. Koniec, gdy wróg się podda albo tonie.
+- Kolejka punktów: przytrzymanie na wodzie (550 ms bez ruchu) albo Shift+klik dopisuje punkt; `navigate` z `append`.
+  Przytrzymanie na statku otwiera menu: abordaż, atak (tylko wróg), płyń za nim. Przycisk „Anuluj kurs” na dole.
+- Obrót dwoma palcami: zmiana kąta linii między palcami obraca widok (jak na mapie), przybliżanie zostaje Babylona.
+- Stożek martwego kąta: podczas rysowania czerwonawy wachlarz od oka wiatru do granicy na wiatr (74° rejowe, 50°
+  skośne); laylinie, gdy cel trasy leży w martwym kącie.
+- Wibracje: wtyczka Capacitor Haptics (na stronie Vibration API), lekki impuls przy własnej salwie, średni przy
+  trafieniu i wejściu na mieliznę, mocny przy upadku masztu, wybuchu prochowni, zderzeniu; najmocniejszy z klatki,
+  nie częściej niż co 0,12 s; przełącznik w ustawieniach.
+
+**18.11, AI wokół wysp.** Kapitanowie AI w patrolu i handlu sterowali prosto na punkt (z omijaniem mielizn na
+bieżąco), więc port za wyspą pod wiatr bywał nieosiągalny (seed 3). Teraz biorą drogę z tego samego planera co pilot
+gracza (A* po dnie i naciąganie sznurka), liczoną raz, gdy punkt się zmienia, i trzymaną w stanie kapitana (zapis
+gry, determinizm); punkt zwrotny uznany za minięty w 80 m. Na czystej wodzie droga to sam punkt. Złoty hash bez
+zmian (przebieg wzorcowy nie ma archipelagu); audyty liczbowe po zmianie w raporcie poniżej.
+Audyty po zmianie: cztery z pięciu zielone za pierwszym razem; test wytrzymałości dał 2,56 ms/krok (limit 2 ms,
+ADR-0005), bo planer kosztował ok. 4,7 ms na plan, a audyt liczył się obok renderowania plansz. Poprawka: siatka A*
+wyrównana do stałej kraty 40 m i dno w jej węzłach zapamiętane na mapę (`gridBed`, archipelag się nie zmienia),
+a naciąganie sznurka sprawdza widoczność po już policzonej siatce zamiast czytać dno co 10 m: 1,6–1,9 ms na plan
+(z 4,7). Test wytrzymałości osobno: 0,97 ms/krok.
+
+**18.11, noc jak w referencji (C1, `night-bow` kontra `ref_075`).** Nocne klatki klipu są ciepło szare, kolor mają
+tylko światła: latarnie i godła na żaglach podświetlone od tyłu na bursztynowo, z ciemnym godłem na tle światła.
+U nas noc była brązowa od sepii, godła białe, a piana jasna. Zmiany: ramp tonowania przechodzi nocą (z jasności
+słońca, jak `setNightGlow`) w ciepłą szarość; piksele jasne i mocno ciepłe (stosunek (r − b)/r powyżej ok. 0,35)
+są tonowane do 75% słabiej, więc bursztyn przeżywa, a drewno w słońcu nie łapie się na to; mapa świecenia żagla
+ma węższy, głęboko pomarańczowy krąg i ciemne godło (to samo miejsce i rozmiar co na płótnie), siła 2,4 zamiast 3
+(przy 3 kolor przepalał się do bieli przed tonowaniem); jasność piany z koloru światła i nieba zamiast z wysokości
+„słońca” (nocą to księżyc pod chmurami). Kadr sceny bliżej (70 m zamiast 115).
+
+**18.11, szeroka, płaska rufa (C4, `stern-castle` kontra `ref_090`).** Na klatce rufa galeonu to wysoka płyta od
+relingu prawie do wody, szeroka na ok. trzy czwarte rei; u nas kasztel zwężał się z zaokrągloną rufą modelu,
+a pod nim widać było krągły tył kadłuba, więc sylwetka od rufy była wąska. Zmiany: kasztel rufowy nie węższy niż 0,82
+największej szerokości kadłuba pod nim (nadbudówka galeonu wystaje nad zwężającą się rufą); płaska pawęż z desek od
+podłogi kasztelu do 0,9 m nad wodą, zwężająca się trapezem do szerokości kadłuba u dołu (kwadratowa rufa galeonu),
+z trzema listwami w poprzek. Wszystko w siatce ścian kasztelu (bez nowych wywołań rysowania poza listwami).
+
+## 18.11 Mgła rośnie z zachmurzeniem, chmury z tekstury na presecie high (orkiestrator, M9 C2)
+Plansza `horizon` (ref_152): na klatce pełne zachmurzenie i zamglony horyzont, u nas ostre wyspy i gładkie bryły chmur.
+Gęstość mgły zależy teraz od pokrycia w potędze 1,5 (`0.0006 + 0.0028·cover^1.5 + 0.006·fog`), więc pogodne niebo
+zostaje przejrzyste, a pod ciężkim niebem horyzont szarzeje. Preset high przechodzi na chmury z tekstury szumu 3D
+(`cloudOctaves` 6, jak ultra): na stanowisku `tools/sky/sky-test.mjs` (SwiftShader) wariant proceduralny z 5 oktawami
+liczył się 3,58 s, teksturowy 2,71 s, a ma drobniejszą fakturę. Na WebGL1 silnik i tak wraca do wariantu proceduralnego.
+
+## 18.11 Warstwa stratusów między kłębami, węższa poświata słońca, ciemniejsza mgiełka (orkiestrator, M9 C2)
+Plansze `horizon` (ref_152) i `side-dark` (ref_060). Pod ciężkim niebem przerwy między kłębami były czystym, prześwietlonym
+niebem, a horyzont jasnym pasem; na klatkach całe niebo jest zachmurzone, słońce przebija cienką warstwę, horyzont jest
+szary. Zmiany: za kłębami cienka warstwa stratusów na płaszczyźnie (grubość `smoothstep(0.3, 0.7, cover)`, szarpana trzema
+skalami szumu, szara od światła dnia, srebrzysta w wąskim stożku wokół słońca); prześwietlony rdzeń słońca w wariancie
+objętościowym węższy (`pow(c, 64)` zamiast `pow(c, 5)`); mgiełka horyzontu i mgła sceny przyciemnione tą samą krzywą
+(`hazeShade` w `look.ts`, `horizonHaze` w `shaders/sky.ts`, do 0,6 przy pełnym zachmurzeniu); iskry na wodzie gasną od
+pokrycia 0,5 (było 0,55) prawie do zera przy 0,85. Na stanowisku nieba wariant proceduralny (3 oktawy) bez zmian.
+
+## 18.11 Jaśniejsze półtony sepii (orkiestrator, M9 C1)
+Pomiar percentyli jasności na planszach (gra kontra klatka, siedem scen) pokazał, że czerń mamy jak klip, ale dolny
+kwartyl i mediana są o 10–40 poziomów za niskie. Próba z mniejszym kontrastem (1,3 i cienie −12) dała 3–4 poziomy i
+rozjaśniła czerń wichury ponad klatkę, więc odrzucona. Ekspozycja looku sepii 0,95 → 1,15: rufa pod słońce mediana
+41 → 51 i 75. percentyl 96 → 117 (klatka 82 i 148), bok w wichurze 75. percentyl 72 → 83 (klatka 87), noc lekko ponad
+klatką (56 przy 46). Ujęcie rufy pod słońce (ref_090) jest dalej czarne tam, gdzie klatka pokazuje okna i galerię:
+następny krok to światło na pawęży (latarnie, okna), bo samo rozproszone niebo daje tam ok. 1/4 światła słońca.
+Narzędzie: `SHOT_INSPECT` z kątem „@a” względem kursu (ujęcie rufy z wiatrem).
+
+## 18.11 Dolny rząd okien rufowych, lampy zapalane o zmierzchu (orkiestrator, M9 C4)
+Na ref_090 rufa ma dwa rzędy okien i świeci od środka, zanim zapadnie noc. U nas pawęż pod kasztelem była gładka, a
+szyby i latarnie zapalały się dopiero razem z godłami żagli. Zmiany: na pawęży między dwiema górnymi listwami rząd okien
+mesy oficerskiej (rozstaw 1,4 rozstawu galerii, bez balkonu; galeria dalej tylko przy oknach kasztelu); `setNightGlow`
+dostaje wysokość słońca i lampy (szyby kasztelu, latarnie) rozjaśnia już od wysokości 0,45 do 45% przy 0,1, godła żagli
+dalej tylko nocą. Scena `stern-castle` z kamerą 52 m za rufą. Zostaje: rufa na klatce jest szersza względem rej niż u nas,
+piana kilwateru przy skręcie układa się w grube komórki.
+
+## 18.11 Drobniejsza piana kilwateru (orkiestrator, M9 C3)
+Koronka piany kilwateru miała komórki ok. 1,1 m: z 40–50 m za rufą układała się w siatkę z dziurami. Teraz komórki
+kilwateru są 2,6 raza mniejsze od komórek grzbietów fal i leżą na miękkim mlecznym podkładzie z szumu fbm (do 0,55
+krycia), więc z daleka piana czyta się jako biały pas, z bliska jako pęcherzyki.
+
+## 18.11 Żagle przeświecają pod słońce (orkiestrator, M9 C4)
+Na ref_124 i ref_090 ciemne żagle między kamerą a słońcem mają ciepłą poświatę i widoczne godła; u nas były jednolicie
+czarne. Wzorzec: przeświecanie cienkiej powierzchni jak liście w Crysis (Sousa, GPU Gems 3 rozdz. 16): światło z tylnej
+strony płótna, N·(−L) po stronie widzianej, z płatkiem rozpraszania w przód `pow(−V·L, 4)`. Wtyczka materiału Babylona
+(`MaterialPluginBase`, `sail-translucency.ts`) na każdym sklonowanym materiale żagla, kod przed kolorem końcowym; światło
+kluczowe (słońce albo księżyc) wspólne dla sceny, aktualizowane co klatkę. Różnice: bez mapy grubości (płótno jest równe)
+i bez cienia (żagiel zasłonięty innym też prześwieca). Przepuszczalność 0,07 dobrana na planszach: 0,32 i 0,1 robiły z
+żagli pod słońce jasne płótno jak oświetlone od przodu. Scena `quarter-close` od dziobu ze słońcem za rufą.
+
+## 18.11 Mokry pokład na kadłubach z modeli (orkiestrator, M9 C1)
+Pozycja z backlogu „plamy słońca na mokrych deskach”: kadłuby z modeli mają jeden materiał na pokład i burty, prawie bez
+połysku. Wtyczka `WetDeck` (`wet-deck.ts`, `MaterialPluginBase`) podmienia przed pętlą świateł kolor i połysk
+odbicia Blinna-Phonga tam, gdzie normalna patrzy w górę (maska nachylenia jak śnieg na płaskim w shaderach terenu):
+pokład, wierzchy relingów i luków błyszczą (0,6 i połysk 32), burty zostają matowe; cienie i światła bez zmian. Sprawdzone
+ujęciem z boku (burty matowe) i z pokładu pod słońce: efekt jest subtelny, bo przy nisko stojącym słońcu pokład leży w
+cieniu nadburć; jasne plamy z `ref_112` wymagają jeszcze światła przez szczeliny między żaglami.
+Drugi wniosek tej rundy: jasna przerwa przy słońcu na `horizon` nie pochodzi z promieni (`VolumetricLightScattering`
+wyłączony daje prawie ten sam obraz), tylko z samego nieba z ekspozycją i bloomem; zostawiona, bo klip też ma tam
+prześwietlenie.
+
+## 18.11 Okno Snella jaśniejsze, scena podwodna na planszach (orkiestrator, M9 C5)
+Pozycja „jaśniejsze okno Snella przy wysokim słońcu (`ref_161`)”. Nowa scena `underwater`: kamera filmowa przypięta w
+chwili zanurzenia (czas, kąt orbity, głębokość 2,5 m i pochylenie przez `before`, czyli `SHOT_BEFORE` z 15 s klatek po
+nim, `SHOT_BEFORE_WAIT` w `shot.mjs`); bez przypięcia kadr zmieniał się między przebiegami, bo kamera jedzie w czasie
+rzeczywistym. Zmiany: gradacja pod wodą przepuszcza jasne partie prawie w pełni (wcześniej cały obraz szedł do 55% i
+turkusu, więc okno było szarozielone), słońce w oknie ma twardy rdzeń i szeroką poświatę (`pow(·, 6)`), jasność okna
+spada ku brzegowi (transmisja Fresnela przy kącie granicznym) i ma smugi zmarszczek z normalnej, brzeg okna miękki
+(0,5–0,82 zamiast 0,62–0,7: przy stromej fali twardy próg rozbijał okno na czarne łaty), promienie pod wodą słabsze
+(0,2). Kamera pod wodą patrzy w górę ok. 45°. Zostaje: słońce w kadrze sceny (azymut względem kamery), smugi powierzchni
+dłuższe jak na klatce.
+
+## 18.11, użytkownik: rozjaśnianie statku w grze, kinowe słońce tylko w widoku kinowym
+Właściciel: „Przyda się chyba jeszcze rozjaśnianie samego statku… żeby wygodnie się grało i zawsze było go widać. Takie
+słońce kinowe jak referencja proponuję w widoku kinowym”. Wzorzec: światło wypełniające z oświetlenia trójpunktowego,
+jak gry oświetlają postać gracza dla czytelności. `ShipFill` (`ship-fill.ts`): światło kierunkowe od strony kamery,
+lekko z góry, tylko na siatkach statków (`includedOnlyMeshes`, lista odświeżana przy zmianie statków i co sekundę),
+bez odbić i cieni; siła 0,5 za dnia, 0,9 nocą (słońce w południe ok. 1,4). Wyłączone w kamerze kinowej (twarde
+światło pod słońce jak w klipie) i parametrem `fill=0`, którego używają plansze porównawcze z klipem. Materiały statków
+biorą do 6 świateł, żeby wypełnienie nie wypchnęło świateł błysków luf. Sprawdzone zrzutami: rufa pod słońce czytelna
+(deski, galeria, żagle) zamiast sylwetki; nocą w widoku izometrycznym statek widoczny zamiast prawie czarnego.
+Przy okazji pod wodą: słońce widziane spod powierzchni wzdłuż załamanego promienia (Snell, n = 1,33), smugi światła
+tylko pod słońcem i na ciemnej wodzie, okno Snella przygaszone do 1,8 (słońce jest w kadrze sceny `underwater`, sun=97).
+
+## 18.11 Mniej plamek na morzu z daleka i nocą (orkiestrator, M9 C3)
+Na zrzucie izometrycznym nocą całe morze pokrywały jasne kropki. Dwa źródła: iskry odblasku księżyca (mnożnik 70 i
+nocna ekspozycja ×2,2) i koronka piany na grzbietach, której komórki (0,4–1,1 m) z wysokiej kamery są mniejsze od
+piksela i aliasują w plamki. Zmiany: iskry nocą do 10% dziennych (szeroki połysk zostaje); koronka grzbietów przechodzi
+w swoje średnie pokrycie, gdy piksel obejmuje 0,12–0,5 m wody, a drobniejsza koronka kilwateru przy 0,05–0,2 m
+(filtrowanie po rozmiarze piksela, `foot = length(fwidth(xz))`, jak przy normalnych iskier). Kilwater z daleka zostaje
+widoczny jako miękki pas (średnia 0,85 pokrycia).

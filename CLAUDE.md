@@ -48,6 +48,16 @@ Prywatny artefakt z żywą sceną statku gracza: https://claude.ai/artifact/LYAk
 na statku gracza: `node tools/viewer/pack.mjs <katalog>` i publikacja `index.html` z tego katalogu (z plikami obok)
 pod ten sam adres.
 
+## HUD
+Style w `packages/app/src/style.css`: siatka obszarów wokół wolnego środka, wymiary w jednostce `--u` (projekt 960 × 540,
+na niskich ekranach 760 × 430). Po zmianie HUD: `pnpm build` i `node tools/ui/ui-audit.mjs <katalog>` (15 rozmiarów
+ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane kolumny, pismo poniżej 8 px; zrzuty).
+
+## APK
+`pnpm apk` buduje tutaj podpisany APK (`Broadside.apk` w katalogu głównym, poza gitem; SDK i lustro Maven:
+`tools/android/README.md`). Po zmianie widocznej w grze: zbudować i wysłać właścicielowi plik razem z aktualizacją
+przeglądarki statku. CI (`android.yml`) buduje ten sam APK tym samym kluczem i numerem wersji.
+
 ## Definition of Done
 `pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.
 Zmiana widoczna: zrzut Playwright (SwiftShader) przed/po. Commity Conventional Commits po polsku, małe zmiany,

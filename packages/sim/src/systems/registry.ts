@@ -10,6 +10,8 @@ import { damageControlSystem } from "./damage-control";
 import { castawaySystem } from "./castaways";
 import { cleanupSystem } from "./cleanup";
 import { captainSystem } from "./captain";
+import { pilotSystem } from "./pilot";
+import { reefingSystem } from "./reefing";
 import { weatherSystem } from "./weather";
 import { spoutSystem } from "./spouts";
 import { groundingSystem } from "./grounding";
@@ -28,6 +30,8 @@ import { rescueSystem } from "./rescue";
 export const createSystems = (): readonly System[] => [
   weatherSystem,
   captainSystem,
+  pilotSystem,
+  reefingSystem,
   helmSystem,
   sailSystem,
   hydroSystem,

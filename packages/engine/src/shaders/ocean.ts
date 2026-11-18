@@ -1,4 +1,5 @@
 import { MAX_WAVES } from "@broadside/core";
+import { WAKE_TRAIL } from "./wake-trail";
 
 /**
  * Ocean shader. The vertex stage evaluates the same Gerstner sum as `core/ocean/gerstner.ts`
@@ -25,6 +26,7 @@ uniform int detailCount;
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
+${WAKE_TRAIL}
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
@@ -67,14 +69,18 @@ float hullWater(vec2 p) {
       float ridge = abs(abs(across) - (0.7 + fromStem * 0.354));
       h += 0.03 * sq * exp(-ridge * ridge / 1.6) * exp(-fromStem / (7.0 + speed * 5.0));
     }
-    // Stern: a trough under the counter, then the Kelvin arms (half-angle 19.47 deg) fading astern.
+    // Stern: a trough under the counter (the arms astern follow the track, below).
     float back = -(along + halfLen);
     if (back > 0.0) {
-      float fade = exp(-back / (8.0 + speed * 6.0));
-      float arm = abs(abs(across) - (halfBeam + back * 0.354));
-      h += 0.02 * sq * exp(-arm * arm / 2.5) * fade;
       h -= 0.015 * sq * exp(-back / 4.0) * exp(-across * across / (halfBeam * halfBeam));
     }
+  }
+  // The Kelvin arms along the course sailed (wake-trail), standing off the track as it ages.
+  vec4 tr = trailAt(p);
+  if (tr.y >= 0.0) {
+    float run = tr.y * tr.z;
+    float arm = abs(tr.x - (tr.w * 0.5 + run * 0.354));
+    h += 0.02 * min(tr.z * tr.z, 49.0) * exp(-arm * arm / 2.5) * exp(-run / (8.0 + tr.z * 6.0));
   }
   return h;
 }
@@ -147,6 +153,7 @@ uniform float sunGlint;
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
+${WAKE_TRAIL}
 uniform float underwater;
 // Islands for shallows and surf: (x, z, radius, shoal); up to 32.
 uniform vec4 islands[32];
@@ -265,20 +272,27 @@ vec2 wakes(vec2 p) {
       float crest = smoothstep(1.5, 0.0, abs(across - (0.7 + fromStem * 0.354))) * exp(-fromStem / (5.0 + speed * 4.0));
       foam += crest * clamp((speed - 1.5) / 4.0, 0.0, 1.0) * 0.8;
     }
-    // Behind the stern.
-    float back = -(along + halfLen);
-    if (back > 0.0) {
-      // The churned water astern stays white for a long way (about 25 s of sailing).
-      float len = speed * 25.0;
-      float fade = exp(-back / max(len, 1.0));
-      float width = b.z * 0.6 + back * 0.354;
-      float centre = smoothstep(b.z * 0.5 + back * 0.04, 0.0, across) * fade;
-      float arms = smoothstep(2.0, 0.0, abs(across - width)) * fade * 0.3;
-      foam += (centre * 0.45 + arms) * clamp(speed / 5.0, 0.0, 1.0);
-      glit += (centre * 0.6 + arms) * fade;
-    }
+  }
+  // Astern, along the course sailed (wake-trail): churned white water on the track for about
+  // 25 s of sailing, and the Kelvin arms standing off it as it ages.
+  vec4 tr = trailAt(p);
+  if (tr.y >= 0.0) {
+    float speed = tr.z;
+    float run = tr.y * speed;
+    float fade = exp(-tr.y / 25.0);
+    float width = tr.w * 0.6 + run * 0.354;
+    float centre = smoothstep(tr.w * 0.5 + run * 0.04, 0.0, tr.x) * fade;
+    float arms = smoothstep(2.0, 0.0, abs(tr.x - width)) * fade * 0.3;
+    foam += (centre * 0.45 + arms) * clamp(speed / 5.0, 0.0, 1.0);
+    glit += (centre * 0.6 + arms) * fade;
   }
   return vec2(clamp(foam, 0.0, 1.0), clamp(glit, 0.0, 1.0));
+}
+
+// How bright white water is: lit by the key light (sun, or the moon at night: its colour carries
+// its strength) and by the sky; at night under cloud foam is a dim grey, not a white.
+float foamLight() {
+  return 0.2 + 0.8 * clamp(dot(sunColor, vec3(0.3333)) * 0.9 + dot(skyHorizon, vec3(0.3333)) * 0.8, 0.0, 1.0);
 }
 
 vec3 underside(vec3 v, vec3 n, float dist) {
@@ -288,9 +302,18 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // up: the ray from the eye to the surface; its angle from the surface's (upward) normal.
   vec3 up = -v;
   float c = dot(up, n);
-  float window = smoothstep(0.62, 0.7, c);
-  float sun = pow(max(dot(refract(up, -n, 1.33), sunDirection), 0.0), 40.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.6 + sunColor * sun * 5.0;
+  // A soft edge: the waves tilt the surface, and a hard one breaks the window into black patches.
+  float window = smoothstep(0.5, 0.82, c);
+  // The sun through the window: a hard core and a broad blown-out glow round it (ref_161: the
+  // disc is a quarter of the frame wide, white at its heart), the light scattered forward by the
+  // water and the ripples of the surface.
+  float toSun = max(dot(refract(up, -n, 1.33), sunDirection), 0.0);
+  float sun = pow(toSun, 40.0) * 5.0 + pow(toSun, 6.0) * 1.6;
+  // Less light comes through towards the window's rim (Fresnel transmission falls to nothing at
+  // the critical angle), and the ripples of the surface show as brighter and darker streaks.
+  float rim = mix(0.55, 1.0, smoothstep(0.66, 0.97, c));
+  float ripple = 0.75 + 0.5 * clamp(0.5 + dot(n.xz, vec2(0.6, 0.8)) * 5.0, 0.0, 1.0);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.8 * rim * ripple + sunColor * sun;
   // Outside the window the depths, mirrored, with the waves' relief catching the light from the
   // window's side (the teal ripples round the bright disc in ref_161).
   float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
@@ -355,14 +378,22 @@ void main() {
   float caps = fold * foamAmount * smoothstep(0.45, 0.8, foamNoise + fold * 0.3);
   // The wake's and the crests' foam drawn as lace that drifts and opens as it ages.
   vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
-  float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
-  foam = max(foam, lace(fp * 1.15 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)) * (0.35 + 0.4 * wk.x));
-  col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
+  // Where a pixel spans more than the lace's cells (far off, or the isometric camera high up) the
+  // pattern would alias into specks: it gives way to its average cover (the same filtering by
+  // footprint as the glitter's normals).
+  float laceFar = smoothstep(0.12, 0.5, foot);
+  float foam = mix(lace(fp, clamp(caps * 1.2, 0.0, 1.0)), clamp(caps * 1.2, 0.0, 1.0) * 0.45, laceFar) * 0.75;
+  // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
+  // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
+  float wakeLace = mix(lace(fp * 2.6 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)), clamp(wk.x * 1.3, 0.0, 1.0) * 0.85, smoothstep(0.05, 0.2, foot));
+  float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
+  foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
+  col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
   float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
-  col = mix(col, vec3(0.9, 0.92, 0.92) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), surfFoam * 0.8);
+  col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
   float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);
