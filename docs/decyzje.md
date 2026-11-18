@@ -614,3 +614,10 @@ są tonowane do 75% słabiej, więc bursztyn przeżywa, a drewno w słońcu nie 
 ma węższy, głęboko pomarańczowy krąg i ciemne godło (to samo miejsce i rozmiar co na płótnie), siła 2,4 zamiast 3
 (przy 3 kolor przepalał się do bieli przed tonowaniem); jasność piany z koloru światła i nieba zamiast z wysokości
 „słońca” (nocą to księżyc pod chmurami). Kadr sceny bliżej (70 m zamiast 115).
+
+**18.11, szeroka, płaska rufa (C4, `stern-castle` kontra `ref_090`).** Na klatce rufa galeonu to wysoka płyta od
+relingu prawie do wody, szeroka na ok. trzy czwarte rei; u nas kasztel zwężał się z zaokrągloną rufą modelu,
+a pod nim widać było krągły tył kadłuba, więc sylwetka od rufy była wąska. Zmiany: kasztel rufowy nie węższy niż 0,82
+największej szerokości kadłuba pod nim (nadbudówka galeonu wystaje nad zwężającą się rufą); płaska pawęż z desek od
+podłogi kasztelu do 0,9 m nad wodą, zwężająca się trapezem do szerokości kadłuba u dołu (kwadratowa rufa galeonu),
+z trzema listwami w poprzek. Wszystko w siatce ścian kasztelu (bez nowych wywołań rysowania poza listwami).
