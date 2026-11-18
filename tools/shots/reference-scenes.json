@@ -2,7 +2,7 @@
   "_comment": "Scenes of the reference clip and the game shot that answers each: frame of docs/reference/frames, game query, hour, seconds of play, inspect camera (alpha,beta,radius,height above the ship's centre), optional script run every frame (shot.mjs SHOT_SCRIPT). tools/shots/reference-sheet.mjs <out-dir> [scene ...].",
   "stern-sun": { "frame": "ref_020", "query": "seed=7&camera=chase&hud=0&weather=fresh&sun=100", "hours": "17:40", "seconds": 4, "inspect": "-1.57,1.5,62,6" },
   "side-dark": { "frame": "ref_060", "query": "seed=7&camera=chase&hud=0&weather=gale&sun=20", "hours": "16:30", "seconds": 4, "inspect": "-3.0,1.52,75,6" },
-  "night-bow": { "frame": "ref_075", "query": "seed=7&camera=chase&hud=0&weather=storm", "hours": "21:30", "seconds": 4, "inspect": "0.75,1.53,115,9" },
+  "night-bow": { "frame": "ref_075", "query": "seed=7&camera=chase&hud=0&weather=storm", "hours": "21:30", "seconds": 4, "inspect": "0.75,1.5,70,9" },
   "stern-castle": { "frame": "ref_090", "query": "seed=7&camera=chase&hud=0&weather=fresh&sun=105", "hours": "17:00", "seconds": 4, "inspect": "-1.57,1.5,88,11" },
   "deck": { "frame": "ref_112", "query": "seed=7&camera=deck&hud=0&weather=fresh&sun=105", "hours": "17:00", "seconds": 4, "inspect": "", "script": "const s=b.session.sim; const me=s.player(); if (me.ship.sailTarget[0] !== 2) s.command({ type: \"sails\", ship: me.id, mast: \"all\", level: 2 });" },
   "quarter-close": { "frame": "ref_124", "query": "seed=7&camera=chase&hud=0&weather=fresh", "hours": "17:20", "seconds": 4, "inspect": "-2.1,1.5,34,7" },

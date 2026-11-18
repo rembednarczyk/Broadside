@@ -261,18 +261,23 @@ export const paintSailRelief = (ctx: SailPaint, size: number): void => {
 
 /**
  * Glow map of an emblem sail: lanterns hung behind the canvas light the emblem from within at
- * night (reference s. 11-13). Black everywhere but a soft warm disc behind the emblem.
+ * night (reference s. 11-13). Black everywhere but a soft warm disc behind the emblem, with the
+ * emblem itself in shadow.
  */
-export const paintSailGlow = (ctx: SailPaint & { createRadialGradient?: unknown }, size: number): void => {
+export const paintSailGlow = (ctx: SailPaint & { createRadialGradient?: unknown }, size: number, faction?: FactionId): void => {
   ctx.globalAlpha = 1;
   ctx.fillStyle = "rgb(0,0,0)";
   ctx.fillRect(0, 0, size, size);
+  // A lantern's pool of light: a deep amber, brightest at the middle and gone by the emblem's rim.
   for (let r = 10; r > 0; r--) {
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = "rgb(255,170,70)";
+    ctx.globalAlpha = 0.24;
+    ctx.fillStyle = "rgb(255,135,35)";
     ctx.beginPath();
-    ctx.arc(size / 2, size * 0.52, (size * 0.32 * r) / 10, 0, Math.PI * 2);
+    ctx.arc(size / 2, size * 0.52, (size * 0.27 * r) / 10, 0, Math.PI * 2);
     ctx.fill();
   }
+  // The emblem painted on the canvas stops the light: it shows dark against the glow, as the
+  // reference's lit sails do (ref_075), at the same place and size as on the sail (paintSail).
+  if (faction) emblem(ctx, faction, size / 2, size * 0.52, size * 0.3);
   ctx.globalAlpha = 1;
 };

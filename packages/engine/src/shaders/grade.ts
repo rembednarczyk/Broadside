@@ -18,6 +18,7 @@ uniform float underwater;
 uniform float depth;
 uniform vec2 sunScreen;
 uniform float flash;
+uniform float night;
 uniform float time;
 uniform float waterline;
 
@@ -64,12 +65,19 @@ void main() {
   c = mix(c, vec3(0.95, 0.97, 1.0), smoothstep(0.75, 1.0, flash));
   c = mix(c, c * vec3(0.75, 0.9, 1.25) + vec3(0.03, 0.05, 0.09), min(1.0, flash * 1.5));
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  vec3 shadow = vec3(0.07, 0.055, 0.04);
-  vec3 mid = vec3(0.52, 0.43, 0.31);
-  vec3 high = vec3(1.0, 0.95, 0.84);
+  // The sepia ramp by day; at night it cools to a nearly neutral grey (the reference's night
+  // shots, ref_060 to ref_080, are a warm dark grey with only the lights amber).
+  vec3 shadow = mix(vec3(0.07, 0.055, 0.04), vec3(0.05, 0.046, 0.04), night);
+  vec3 mid = mix(vec3(0.52, 0.43, 0.31), vec3(0.44, 0.41, 0.36), night);
+  vec3 high = mix(vec3(1.0, 0.95, 0.84), vec3(0.94, 0.9, 0.82), night);
   vec3 sepia = l < 0.5 ? mix(shadow, mid, l * 2.0) : mix(mid, high, (l - 0.5) * 2.0);
   // Underwater keeps its teal; lightning washes the sepia out towards blue-white.
   float a = amount * (1.0 - uw * 0.8) * (1.0 - flash * 0.7);
+  // Warm light keeps its colour through the toning (ref_075: lanterns and emblems lit from
+  // behind glow amber in a grey night): bright, strongly warm pixels are toned less. Sunlit wood
+  // is not warm enough to count.
+  float warm = clamp((c.r - c.b) / max(c.r, 1e-3), 0.0, 1.0);
+  a *= 1.0 - 0.75 * smoothstep(0.35, 0.75, warm) * smoothstep(0.25, 0.7, l);
   vec3 g = mix(c, sepia, a);
   g = clamp((g - 0.5) * contrast + 0.5, 0.0, 1.0);
   g = g * g * (3.0 - 2.0 * g) * 0.35 + g * 0.65;

@@ -605,3 +605,12 @@ ADR-0005), bo planer kosztował ok. 4,7 ms na plan, a audyt liczył się obok re
 wyrównana do stałej kraty 40 m i dno w jej węzłach zapamiętane na mapę (`gridBed`, archipelag się nie zmienia),
 a naciąganie sznurka sprawdza widoczność po już policzonej siatce zamiast czytać dno co 10 m: 1,6–1,9 ms na plan
 (z 4,7). Test wytrzymałości osobno: 0,97 ms/krok.
+
+**18.11, noc jak w referencji (C1, `night-bow` kontra `ref_075`).** Nocne klatki klipu są ciepło szare, kolor mają
+tylko światła: latarnie i godła na żaglach podświetlone od tyłu na bursztynowo, z ciemnym godłem na tle światła.
+U nas noc była brązowa od sepii, godła białe, a piana jasna. Zmiany: ramp tonowania przechodzi nocą (z jasności
+słońca, jak `setNightGlow`) w ciepłą szarość; piksele jasne i mocno ciepłe (stosunek (r − b)/r powyżej ok. 0,35)
+są tonowane do 75% słabiej, więc bursztyn przeżywa, a drewno w słońcu nie łapie się na to; mapa świecenia żagla
+ma węższy, głęboko pomarańczowy krąg i ciemne godło (to samo miejsce i rozmiar co na płótnie), siła 2,4 zamiast 3
+(przy 3 kolor przepalał się do bieli przed tonowaniem); jasność piany z koloru światła i nieba zamiast z wysokości
+„słońca” (nocą to księżyc pod chmurami). Kadr sceny bliżej (70 m zamiast 115).

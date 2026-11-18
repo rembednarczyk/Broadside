@@ -142,7 +142,7 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   m.bumpTexture = relief;
   if (emblem) {
     const glow = new DynamicTexture(`${key}-glow`, { width: 128, height: 128 }, scene, true);
-    paintSailGlow(glow.getContext() as unknown as SailPaint, 128);
+    paintSailGlow(glow.getContext() as unknown as SailPaint, 128, faction);
     glow.update(true);
     m.emissiveTexture = glow;
   }
@@ -160,7 +160,8 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
     // the colour stays black, the glow map's level carries the strength.
     if (!(m instanceof StandardMaterial)) continue;
     if (m.name.startsWith("sail-") || m.name.startsWith("castle")) m.emissiveColor = Color3.Black();
-    if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 3 * k;
+    // Strong enough to bloom but short of white, so the warm colour survives the toning (grade.ts).
+    if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 2.4 * k;
     // Lanterns are lit at dusk: by day the glass only catches a little light.
     if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * k), 1.1 * (0.18 + 0.82 * k), 0.55 * (0.18 + 0.82 * k));
     if (m.name === "castle-glass") m.emissiveColor.set(1.1 * k, 0.72 * k, 0.32 * k);

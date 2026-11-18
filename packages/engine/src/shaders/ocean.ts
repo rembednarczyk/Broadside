@@ -289,6 +289,12 @@ vec2 wakes(vec2 p) {
   return vec2(clamp(foam, 0.0, 1.0), clamp(glit, 0.0, 1.0));
 }
 
+// How bright white water is: lit by the key light (sun, or the moon at night: its colour carries
+// its strength) and by the sky; at night under cloud foam is a dim grey, not a white.
+float foamLight() {
+  return 0.2 + 0.8 * clamp(dot(sunColor, vec3(0.3333)) * 0.9 + dot(skyHorizon, vec3(0.3333)) * 0.8, 0.0, 1.0);
+}
+
 vec3 underside(vec3 v, vec3 n, float dist) {
   // Seen from below: inside Snell's window (about 48.6 deg from the zenith, critical angle of
   // water) the sky shows through, bright and blurred; outside it total internal reflection
@@ -365,12 +371,12 @@ void main() {
   vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
   float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
   foam = max(foam, lace(fp * 1.15 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)) * (0.35 + 0.4 * wk.x));
-  col = mix(col, vec3(0.92, 0.95, 0.97) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), foam);
+  col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
   float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
-  col = mix(col, vec3(0.9, 0.92, 0.92) * (0.55 + 0.45 * max(sunDirection.y, 0.1)), surfFoam * 0.8);
+  col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
   float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);
