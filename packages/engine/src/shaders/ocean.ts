@@ -276,6 +276,8 @@ vec2 wakes(vec2 p) {
     float w = across / (b.z * 0.5);
     float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
     foam += exp(-pow((outline - 1.0) / 0.12, 2.0)) * (0.35 + clamp(speed / 6.0, 0.0, 0.5));
+    // The churned water along the side glitters too (ref_020: sparks at the hull, not only astern).
+    glit += exp(-pow((outline - 1.0) / 0.3, 2.0)) * 0.6 * clamp(speed / 4.0, 0.0, 1.0);
     // Bow wave: a foam collar around the forward hull.
     float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
     foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;

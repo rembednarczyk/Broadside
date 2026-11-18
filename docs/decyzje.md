@@ -804,3 +804,8 @@ Właściciel: „Zmień klify bez ruszania wysp”. Siatka wysp powyżej plaży 
 szczyt płaski, najwyższy punkt bez zmian; n = 5 dla wysp klifowych, 3 dla reszty. Tylko rysowanie: linia wody (wysokość
 0), mielizny i ląd w symulacji (`islandHeight` w `core`) bez zmian, złoty hash bez zmian, drzewa na przeliczonej
 wysokości. Test profilu; zrzuty `horizon`, `stern-sun` i szerokie ujęcie: wyspy jako płaskowyże ze stromymi ścianami.
+
+## 18.11 Iskry przy burcie; promienie słońca do backlogu (orkiestrator, M9 C1, C3)
+Wzburzona woda wzdłuż linii wodnej kadłuba błyszczy jak kilwater (pasmo szersze od piany, rośnie z prędkością). Promienie
+przez olinowanie: okazało się, że przebieg promieni od początku nic nie rysował (tarcza słońca poza warstwami kamery);
+próba naprawy dawała biały statek, więc wycofana i opisana w backlogu.
