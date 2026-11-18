@@ -797,3 +797,10 @@ wybrzeże ledwo z niego wychodzi. Zmiany: pas mgiełki nieba sięga pod słońce
 wąskiego; wybrzeże z mocniejszym zamgleniem (współczynnik 0,5) i jaśniejszym światłem powietrza (do ok. 1,1 koloru mgły,
 bo pas na horyzoncie jest jaśniejszy od mgły sceny). Trzy próby na planszy `stern-castle`: 0,65 zostawiało ciemny pas,
 0,95 chowało wybrzeże całkiem, 0,8 daje blady płaskowyż jak na klatce.
+
+## 18.11, użytkownik: klify na wyspach bez ruszania wysp
+Właściciel: „Zmień klify bez ruszania wysp”. Siatka wysp powyżej plaży (0,8 m) przeliczana krzywą wklęsłą
+1 - (1 - u)^n udziału w wysokości wyspy (`cliffProfile` w `island-geometry.ts`): brzeg wznosi się n razy bardziej stromo,
+szczyt płaski, najwyższy punkt bez zmian; n = 5 dla wysp klifowych, 3 dla reszty. Tylko rysowanie: linia wody (wysokość
+0), mielizny i ląd w symulacji (`islandHeight` w `core`) bez zmian, złoty hash bez zmian, drzewa na przeliczonej
+wysokości. Test profilu; zrzuty `horizon`, `stern-sun` i szerokie ujęcie: wyspy jako płaskowyże ze stromymi ścianami.
