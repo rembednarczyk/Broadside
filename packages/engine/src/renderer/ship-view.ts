@@ -21,6 +21,7 @@ import { type GunScan, ShipGuns, gunHeight } from "./ship-guns";
 import { type MastBend, MastSprings, bendShare, sagLine } from "./rig-motion";
 import { type SailPlan, rigPlan } from "./rig-plan";
 import { SailCloth, type SailState } from "./sail-cloth";
+import { SailTranslucency, sailLightOf } from "./sail-translucency";
 import { type SailPaint, paintSail, paintSailGlow, paintSailRelief } from "./sail-texture";
 
 /**
@@ -131,6 +132,9 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
   const m = base.clone(key) as StandardMaterial;
   m.diffuseColor = new Color3(1, 1, 1);
   m.diffuseTexture = tex;
+  // Lit through from behind by the key light (on the clone only: Babylon re-creates a cloned
+  // material's plugins from a class registry, and this one needs the scene's light).
+  new SailTranslucency(m, sailLightOf(scene));
   // The sewing stands proud of the cloth: one relief map for all sails of this size.
   const reliefKey = `sail-relief-${size}`;
   let relief = scene.getTextureByName(reliefKey) as DynamicTexture | null;

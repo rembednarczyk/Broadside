@@ -8,6 +8,7 @@ import { Ocean } from "./ocean";
 import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
+import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
@@ -157,6 +158,11 @@ export class BabylonRenderer {
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
     this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
     this.sun.intensity = look.keyIntensity;
+    // The same key light, through the canvas of the sails (sail-translucency.ts).
+    const through = sailLightOf(this.scene);
+    through.dir = { x: look.keyDir.x, y: Math.max(0.05, look.keyDir.y), z: look.keyDir.z };
+    const k = look.keyIntensity * SAIL_TRANSMITTANCE;
+    through.color = { r: look.keyColor.r * k, g: look.keyColor.g * k, b: look.keyColor.b * k };
     // Sky light: the hemisphere carries most of the fill on an overcast sea (no GI).
     this.ambient.diffuse = new Color3(look.ambient.r * 1.9, look.ambient.g * 1.9, look.ambient.b * 1.9);
     // Light from below: the sea throws back the sky (a ship's sides stand in it), stronger than a

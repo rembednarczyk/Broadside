@@ -659,3 +659,12 @@ piana kilwateru przy skręcie układa się w grube komórki.
 Koronka piany kilwateru miała komórki ok. 1,1 m: z 40–50 m za rufą układała się w siatkę z dziurami. Teraz komórki
 kilwateru są 2,6 raza mniejsze od komórek grzbietów fal i leżą na miękkim mlecznym podkładzie z szumu fbm (do 0,55
 krycia), więc z daleka piana czyta się jako biały pas, z bliska jako pęcherzyki.
+
+## 18.11 Żagle przeświecają pod słońce (orkiestrator, M9 C4)
+Na ref_124 i ref_090 ciemne żagle między kamerą a słońcem mają ciepłą poświatę i widoczne godła; u nas były jednolicie
+czarne. Wzorzec: przeświecanie cienkiej powierzchni jak liście w Crysis (Sousa, GPU Gems 3 rozdz. 16): światło z tylnej
+strony płótna, N·(−L) po stronie widzianej, z płatkiem rozpraszania w przód `pow(−V·L, 4)`. Wtyczka materiału Babylona
+(`MaterialPluginBase`, `sail-translucency.ts`) na każdym sklonowanym materiale żagla, kod przed kolorem końcowym; światło
+kluczowe (słońce albo księżyc) wspólne dla sceny, aktualizowane co klatkę. Różnice: bez mapy grubości (płótno jest równe)
+i bez cienia (żagiel zasłonięty innym też prześwieca). Przepuszczalność 0,07 dobrana na planszach: 0,32 i 0,1 robiły z
+żagli pod słońce jasne płótno jak oświetlone od przodu. Scena `quarter-close` od dziobu ze słońcem za rufą.
