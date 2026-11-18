@@ -23,3 +23,4 @@ export * from "./combat/smoke";
 export * from "./economy/shipyard";
 export * from "./economy/contracts";
 export { DIRECTOR } from "./world/director";
+export * from "./economy/salvage";

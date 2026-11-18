@@ -846,3 +846,11 @@ Ikona: aplikacja miała domyślną ikonę Capacitora; nowa z generatora `tools/i
 słońcem w sepii, SVG renderowany przez sharp) dla PWA i Androida (ikona adaptacyjna, kwadratowa i okrągła w 5 gęstościach).
 APK: podpisany kluczem wydania (`broadside.keystore`, ten sam w CI), schemat v2, `apksigner verify` przechodzi
 (CN=Broadside). Hosting PWA (adres HTTPS) nie jest ustawiony: wymaga decyzji, gdzie publikować.
+
+## 18.11 Łup z wraków (orkiestrator, M8)
+Pozycja backlogu M8. Statek gracza, który stoi do 60 m od nietkniętego wraku z prędkością najwyżej 1,5 m/s przez 5 s
+(wysyła łodzie), dostaje raz złoto 150–600, stałe dla ziarna świata i wraku (tabela `SALVAGE`, wzorzec Type Object).
+Stan (ograbione wraki, licznik postoju) w symulacji i w zapisie jako pole opcjonalne `salvage?` (jak `jobs?`, bez
+podbijania wersji schematu); system `salvageSystem` w `createSystems()` po zleceniach; stan w osobnym `salvage-state.ts`
+(bez cyklu z kontekstem systemów). Komunikat „Łup z wraku!” / „Salvage from the wreck!”. Mapy ze znacznikami w grze nie
+ma, więc znacznik wraku i rozkaz po tapnięciu w backlogu.

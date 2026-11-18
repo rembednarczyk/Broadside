@@ -75,7 +75,7 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
     case "contractFailed":
       return "notice.contractFailed";
     case "gold":
-      return "notice.gold";
+      return e.reason === "wreck" ? "notice.salvage" : "notice.gold";
     case "tradeRefused":
       return "notice.tradeRefused";
     case "fortSilenced":

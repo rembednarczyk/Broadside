@@ -25,6 +25,7 @@ export * from "./data/reputation";
 export * from "./data/upgrades";
 export * from "./data/contracts";
 export * from "./data/doctrines";
+export * from "./data/salvage";
 export * from "./economy/port-trade";
 export * from "./ship/parts";
 export * from "./ship/part-volumes";

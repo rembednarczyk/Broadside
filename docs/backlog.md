@@ -131,7 +131,11 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] zrzut salwy burtowej z bliska: rząd błysków i dym wzdłuż burty, salwa działa (17.11); odjazdu luf i zgodności z furtami kadłuba z modelu nie widać w rozdzielczości zrzutu, do sprawdzenia na żywo
 - [x] jasna płaszczyzna pod rufą: to było morze widziane przez niewyrysowane poszycie kadłuba z modelu (zgubiona orientacja ścian przy zamianie materiałów), naprawione (17.11)
 - [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu
-- [ ] łup z wraków: postój przy wraku daje złoto albo ładunek raz na wrak, znacznik na mapie (reguła symulacji, złoty hash ręcznie)
+- [x] łup z wraków (18.11): postój do 60 m od wraku, najwyżej 1,5 m/s przez 5 s daje raz złoto 150–600 z ziarna świata
+  (`core/data/salvage.ts`, `sim/economy/salvage.ts`, zdarzenie złota z powodem `wreck`, komunikat „Łup z wraku!”, zapis
+  w migawce, test); złoty hash bez zmian (przebieg kontrolny bez archipelagu)
+- [ ] wraki dalej: znacznik wraku (gra nie ma jeszcze mapy), tapnięcie wraku jako rozkaz „ratuj” (kurs i postój), ładunek
+  zamiast samego złota
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 
 ### M9 grafika do poziomu klatek referencyjnych i kolizje części statku (właściciel, 17.11)

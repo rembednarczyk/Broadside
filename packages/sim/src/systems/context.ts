@@ -4,6 +4,7 @@ import { type Environment } from "../environment/environment";
 import { type SimWorld } from "../world/world";
 import { type IdSource } from "../world/spawn";
 import { type Jobs } from "../economy/jobs";
+import { type Salvage } from "../economy/salvage-state";
 
 /** What every system receives (Update Method pattern, "Game Programming Patterns" ch. 10). */
 export interface SimContext {
@@ -23,6 +24,8 @@ export interface SimContext {
   readonly relations: Relations;
   /** The player's contract, if any. */
   readonly jobs: Jobs;
+  /** The wrecks already salvaged and the one being worked. */
+  readonly salvage: Salvage;
 }
 
 export type System = (ctx: SimContext, dt: number) => void;

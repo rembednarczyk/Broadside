@@ -21,6 +21,7 @@ import { collisionSystem } from "./collisions";
 import { populationSystem } from "./population";
 import { smokeSystem } from "./smoke";
 import { contractSystem } from "./contracts";
+import { salvageSystem } from "../economy/salvage";
 import { rescueSystem } from "./rescue";
 
 /**
@@ -48,6 +49,7 @@ export const createSystems = (): readonly System[] => [
   castawaySystem,
   provisionsSystem,
   contractSystem,
+  salvageSystem,
   rescueSystem,
   cleanupSystem,
   populationSystem,
