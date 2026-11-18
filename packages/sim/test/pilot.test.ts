@@ -116,3 +116,31 @@ describe("simple steering: orders about ships and forts", () => {
     expect(run()).toBe(run());
   });
 });
+
+describe("simple steering: waypoints and the attack", () => {
+  it("adds waypoints to the route in hand and sails them in turn", () => {
+    const sim = new Simulation({ seed: 7, windDirection: WIND, windSpeed: 8 });
+    const me = sim.spawnShip({ classId: "sloop", faction: "player", x: 0, z: 0, heading: WIND + 1.2, player: true });
+    sim.command({ type: "navigate", ship: me.id, route: [{ x: 0, z: 400 }], hold: false });
+    sim.step();
+    sim.command({ type: "navigate", ship: me.id, route: [{ x: 300, z: 400 }], hold: false, append: true });
+    sim.step();
+    const o = me.pilot!.order;
+    expect(o.kind === "route" && o.route).toEqual([{ x: 0, z: 400 }, { x: 300, z: 400 }]);
+  });
+
+  it("closes an enemy, lies broadside to her and fires as the guns bear", () => {
+    const sim = new Simulation({ seed: 7, windDirection: WIND, windSpeed: 8 });
+    const me = sim.spawnShip({ classId: "frigate", faction: "player", x: 0, z: 0, heading: WIND, player: true });
+    const foe = sim.spawnShip({ classId: "brig", faction: "pirates", x: Math.sin(WIND + 0.8) * 600, z: Math.cos(WIND + 0.8) * 600, heading: WIND + 1.5 });
+    foe.ship!.sailTarget = foe.ship!.sailTarget.map(() => 1);
+    sim.command({ type: "pilot", ship: me.id, order: { kind: "engage", target: foe.id } });
+    let fired = 0;
+    sail(sim, 240, () => {
+      for (const e of sim.drainEvents()) if (e.type === "gunFired" && e.ship === me.id) fired++;
+      return fired >= 4;
+    });
+    expect(fired).toBeGreaterThanOrEqual(4);
+    expect(me.pilot?.order.kind).toBe("engage");
+  });
+});

@@ -17,7 +17,7 @@ import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHE
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse } from "./presenters/course-presenter";
-import { orderFor, tappedAt } from "./controllers/tap-targets";
+import { type TapOrder, attackDrawn, orderFor, tappedAt } from "./controllers/tap-targets";
 import { presentTappables } from "./presenters/tappables";
 // Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
 // EB Garamond for the text (SIL Open Font License).
@@ -110,6 +110,13 @@ const setSteering = (steering: "simple" | "classic") => {
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.helm.steer(d) },
+  orders: {
+    board: (t) => shipOrder("board")(t),
+    follow: (t) => shipOrder("follow")(t),
+    engage: (t) => shipOrder("engage")(t),
+    cancelCourse: () => session.helm.navigate([], false),
+    closeMenu: () => patchHud({ shipMenu: null }),
+  },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
   port: {
     trade: (service, qty, ammo) => {
@@ -172,22 +179,59 @@ const intents: UiIntents = {
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
 bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
 addEventListener("resize", () => renderer.resize());
+// Simple steering: what a tap, a long press or a drawn line on the canvas means (tap-targets), as orders to the crew.
+const tappables = () => {
+  const rect = canvas.getBoundingClientRect();
+  const project = (wx: number, wy: number, wz: number) => {
+    const p = renderer.project(wx, wy, wz);
+    return { x: rect.left + p.x * rect.width, y: rect.top + p.y * rect.height };
+  };
+  return presentTappables(session.sim, session.playerId, project);
+};
+const issue = (order: TapOrder) => {
+  session.helm.order(order);
+  renderer.course.ripple(order.at.x, order.at.z, order.kind === "stop" ? "go" : order.kind);
+  patchHud({ shipMenu: null });
+};
+const shipOrder = (kind: "board" | "follow" | "engage") => (target: number) => {
+  const t = session.sim.byId(target);
+  if (t?.body) issue({ kind, target, at: { x: t.body.pos.x, z: t.body.pos.z } });
+};
 bindCourseGestures(canvas, {
   enabled: () => useHud.getState().steering === "simple",
   pick: (x, y) => renderer.pickWater(x, y),
   showStroke: (points) => renderer.course.setStroke(points),
-  tap: (x, y) => {
-    const rect = canvas.getBoundingClientRect();
-    const project = (wx: number, wy: number, wz: number) => {
-      const p = renderer.project(wx, wy, wz);
-      return { x: rect.left + p.x * rect.width, y: rect.top + p.y * rect.height };
-    };
-    const order = orderFor(tappedAt(x, y, presentTappables(session.sim, session.playerId, project)), renderer.pickWater(x, y));
-    if (!order) return;
-    session.helm.order(order);
-    renderer.course.ripple(order.at.x, order.at.z, order.kind === "stop" ? "go" : order.kind);
+  tap: (x, y, append) => {
+    const hit = tappedAt(x, y, tappables());
+    const water = renderer.pickWater(x, y);
+    if (append && !hit && water) {
+      session.helm.navigate([water], false, true);
+      renderer.course.ripple(water.x, water.z, "go");
+      return;
+    }
+    const order = orderFor(hit, water);
+    if (order) issue(order);
   },
-  draw: (route) => session.helm.navigate(route, true),
+  longPress: (x, y) => {
+    const hit = tappedAt(x, y, tappables());
+    if (hit?.kind === "ship") {
+      const rect = canvas.getBoundingClientRect();
+      patchHud({ shipMenu: { x: (x - rect.left) / rect.width, y: (y - rect.top) / rect.height, target: hit.id, hostile: !!hit.hostile } });
+      return;
+    }
+    // On open water a long press adds a waypoint to the route in hand.
+    const water = hit ? null : renderer.pickWater(x, y);
+    if (water) {
+      session.helm.navigate([water], false, true);
+      renderer.course.ripple(water.x, water.z, "go");
+    }
+  },
+  draw: (route, from, to) => {
+    const items = tappables();
+    const attack = attackDrawn(tappedAt(from.x, from.y, items), tappedAt(to.x, to.y, items));
+    if (attack) issue(attack);
+    else session.helm.navigate(route, true);
+  },
 });
 const audio = new SynthAudio("assets/audio/");
 addEventListener("pointerdown", () => audio.unlock());
@@ -243,6 +287,7 @@ const frame = (now: number) => {
   const course = presentCourse(session.sim, session.playerId);
   renderer.course.visible = !useHud.getState().hudHidden;
   renderer.course.setRoute(course.path, course.goal);
+  if (useHud.getState().courseActive !== (course.path.length > 0)) patchHud({ courseActive: course.path.length > 0 });
   const focus = combatFocus(session.sim, session.playerId);
   renderer.focus = focus;
   renderer.frame(session.sim, { hours: hoursNow(), ...(sunAzimuth === undefined ? {} : { sunAzimuth }), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);

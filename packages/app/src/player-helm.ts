@@ -37,10 +37,10 @@ export class PlayerHelm {
     this.steering = direction;
   }
 
-  /** Simple steering: the crew sails the ship through these points (`hold`: then keeps on). */
-  navigate(route: readonly { x: number; z: number }[], hold: boolean): void {
+  /** Simple steering: the crew sails the ship through these points (`hold`: then keeps on; `append`: after the route in hand). */
+  navigate(route: readonly { x: number; z: number }[], hold: boolean, append = false): void {
     this.steering = 0;
-    this.sim.command({ type: "navigate", ship: this.playerId, route, hold });
+    this.sim.command({ type: "navigate", ship: this.playerId, route, hold, append });
   }
 
   /** Simple steering: the order a tap gave (tap-targets). */
@@ -57,6 +57,7 @@ export class PlayerHelm {
         return this.navigate([o.at], false);
       case "board":
       case "follow":
+      case "engage":
         return this.sim.command({ type: "pilot", ship, order: { kind: o.kind, target: o.target } });
       case "storm":
         return this.sim.command({ type: "pilot", ship, order: { kind: "assault", fort: o.fort } });

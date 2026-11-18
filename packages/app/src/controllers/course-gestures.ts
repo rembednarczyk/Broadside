@@ -1,10 +1,11 @@
 /**
  * Simple steering on the canvas: a tap gives an order by what it falls on (tap-targets: a place
  * to sail to, a ship to board or follow, a port, a fort, the own ship to stop); a drag draws a
- * course on the water that the ship follows and then holds (GameSession.navigate). A tap is a press that
- * hardly moves and lets go quickly (the usual touch slop, about 10 px, and half a second); a
- * second finger (a pinch to zoom) abandons the line. Mouse: the left button only (the right one
- * turns the view, FollowCamera.drawGestures).
+ * course on the water that the ship follows and then holds. A tap is a press that hardly moves and
+ * lets go quickly (the usual touch slop, about 10 px, and half a second); held longer without
+ * moving it is a long press (a ship's menu of orders, or a waypoint added to the route); with
+ * Shift a click adds a waypoint too. A second finger (a pinch, a twist) abandons the line.
+ * Mouse: the left button only (the right one turns the view, FollowCamera.drawGestures).
  */
 type P = { x: number; z: number };
 
@@ -15,14 +16,18 @@ export interface CourseTarget {
   pick(clientX: number, clientY: number): P | null;
   /** The line being drawn (empty: none). */
   showStroke(points: readonly P[]): void;
-  /** A tap at a screen point (client pixels). */
-  tap(clientX: number, clientY: number): void;
-  /** A course drawn on the water. */
-  draw(route: readonly P[]): void;
+  /** A tap at a screen point (client pixels); `append`: add to the route instead of replacing it. */
+  tap(clientX: number, clientY: number, append: boolean): void;
+  /** A press held without moving. */
+  longPress(clientX: number, clientY: number): void;
+  /** A course drawn on the water, and where on screen it began and ended. */
+  draw(route: readonly P[], from: { x: number; y: number }, to: { x: number; y: number }): void;
 }
 
 const TAP_SLOP = 10;
 const TAP_TIME = 500;
+/** A press held this long without moving is a long press (ms). */
+export const LONG_PRESS = 550;
 /** A drawn course keeps a point every this many metres, at most MAX_POINTS of them. */
 export const COURSE_SPACING = 15;
 export const MAX_POINTS = 24;
@@ -73,11 +78,13 @@ export const bindCourseGestures = (canvas: HTMLElement, t: CourseTarget): void =
     end();
     if (e.type === "pointercancel") return;
     if (!p.drawing) {
-      if (e.timeStamp - p.at <= TAP_TIME) t.tap(e.clientX, e.clientY);
+      const held = e.timeStamp - p.at;
+      if (held >= LONG_PRESS) t.longPress(e.clientX, e.clientY);
+      else if (held <= TAP_TIME) t.tap(e.clientX, e.clientY, e.shiftKey);
       return;
     }
     const route = thinCourse(p.line);
-    if (route.length >= 2) t.draw(route);
+    if (route.length >= 2) t.draw(route, { x: p.x, y: p.y }, { x: e.clientX, y: e.clientY });
   };
   canvas.addEventListener("pointerup", up);
   canvas.addEventListener("pointercancel", up);

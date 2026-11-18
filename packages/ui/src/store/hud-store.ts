@@ -137,10 +137,14 @@ export interface HudState {
   readonly language: "en" | "pl";
   /** Simple steering (tap or draw a course on the sea) or the classic helm buttons. */
   readonly steering: "simple" | "classic";
+  /** The crew has a course or an order (simple steering): the cancel button shows. */
+  readonly courseActive: boolean;
+  /** Orders for a ship held down on (screen fractions, the ship, whether she is an enemy). */
+  readonly shipMenu: { readonly x: number; readonly y: number; readonly target: number; readonly hostile: boolean } | null;
   readonly drawCalls: number;
   readonly fps: number;
 }
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", courseActive: false, shipMenu: null, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

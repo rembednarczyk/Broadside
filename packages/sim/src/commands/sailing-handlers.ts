@@ -16,6 +16,12 @@ export const sailingHandlers: HandlerTable = {
     if (e.pilot) ctx.world.removeComponent(e, "pilot");
   },
   navigate: (e, cmd, ctx) => {
+    const o = e.pilot?.order;
+    if (cmd.append && o?.kind === "route" && cmd.route.length > 0) {
+      o.route.push(...cmd.route.map((p) => ({ x: p.x, z: p.z })));
+      o.hold = cmd.hold;
+      return;
+    }
     if (cmd.route.length === 0) {
       if (e.pilot) ctx.world.removeComponent(e, "pilot");
       return;
@@ -23,7 +29,8 @@ export const sailingHandlers: HandlerTable = {
     givePilot(e, ctx, { kind: "route", route: cmd.route.map((p) => ({ x: p.x, z: p.z })), hold: cmd.hold, heading: e.ship.course ?? 0, from: { x: e.body.pos.x, z: e.body.pos.z } });
   },
   pilot: (e, cmd, ctx) => {
-    givePilot(e, ctx, cmd.order.kind === "assault" ? { kind: "assault", fort: cmd.order.fort } : { kind: cmd.order.kind, target: cmd.order.target });
+    const o = cmd.order;
+    givePilot(e, ctx, o.kind === "assault" ? { kind: "assault", fort: o.fort } : o.kind === "engage" ? { kind: "engage", target: o.target, side: "starboard", range: ENGAGE_RANGE } : { kind: o.kind, target: o.target });
   },
   sails: (e, cmd) => {
     if (cmd.mast === "all") e.ship.sailTarget = e.ship.sailTarget.map(() => cmd.level);
@@ -33,6 +40,9 @@ export const sailingHandlers: HandlerTable = {
     e.ship.oars = cmd.on;
   },
 };
+
+/** The range the player's gunners fight at (m): the AI's middle range, inside the guns' effective reach. */
+const ENGAGE_RANGE = 220;
 
 /** Sail made when an order is given to a ship with none set: full sail, the AI's cruising plan. */
 const CRUISING = 3;

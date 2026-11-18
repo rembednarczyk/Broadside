@@ -3,7 +3,7 @@ import { STEP } from "@broadside/sim";
 import { GameSession } from "../src/game-session";
 import { COURSE_SPACING, MAX_POINTS, bindCourseGestures, thinCourse } from "../src/controllers/course-gestures";
 import { presentCourse } from "../src/presenters/course-presenter";
-import { type Tappable, orderFor, tappedAt } from "../src/controllers/tap-targets";
+import { type Tappable, attackDrawn, orderFor, tappedAt } from "../src/controllers/tap-targets";
 
 describe("simple steering in the app", () => {
   it("thins a drawn line to points some metres apart, keeping its ends", () => {
@@ -37,18 +37,25 @@ describe("simple steering in the app", () => {
     const canvas = { addEventListener: (t: string, f: (e: PointerEvent) => void) => listeners.set(t, f) } as unknown as HTMLElement;
     const taps: { x: number; y: number }[] = [];
     const drawn: (readonly { x: number; z: number }[])[] = [];
+    const longs: { x: number; y: number }[] = [];
     let stroke = 0;
     bindCourseGestures(canvas, {
       enabled: () => true,
       pick: (x, y) => ({ x, z: y }),
       showStroke: (p) => (stroke = p.length),
       tap: (x, y) => taps.push({ x, y }),
+      longPress: (x, y) => longs.push({ x, y }),
       draw: (route) => drawn.push(route),
     });
     const ev = (type: string, x: number, y: number, at: number) => listeners.get(type)!({ type, pointerId: 1, pointerType: "touch", button: 0, clientX: x, clientY: y, timeStamp: at } as PointerEvent);
     ev("pointerdown", 100, 100, 0);
     ev("pointerup", 103, 101, 120);
     expect(taps).toEqual([{ x: 103, y: 101 }]);
+    // Held without moving: a long press, not a tap.
+    ev("pointerdown", 50, 50, 500);
+    ev("pointerup", 52, 50, 1200);
+    expect(longs).toEqual([{ x: 52, y: 50 }]);
+    expect(taps).toHaveLength(1);
     ev("pointerdown", 0, 0, 1000);
     for (let i = 1; i <= 50; i++) ev("pointermove", i * 4, 0, 1000 + i * 10);
     expect(stroke).toBeGreaterThan(10);
@@ -76,6 +83,10 @@ describe("simple steering in the app", () => {
     expect(tap(340, 300)).toBe("storm");
     expect(tap(700, 400)).toBe("go");
     expect(orderFor(null, null)).toBeNull();
+    // A line drawn from the own ship onto an enemy is an attack; onto a friend or water, a course.
+    expect(attackDrawn(tappedAt(100, 100, items), tappedAt(300, 100, items))?.kind).toBe("engage");
+    expect(attackDrawn(tappedAt(100, 100, items), tappedAt(500, 100, items))).toBeNull();
+    expect(attackDrawn(tappedAt(100, 100, items), null)).toBeNull();
     // Overlapping reaches: the one whose middle is nearer, for its size, wins.
     expect(tappedAt(300, 330, items)?.kind).toBe("fort");
   });

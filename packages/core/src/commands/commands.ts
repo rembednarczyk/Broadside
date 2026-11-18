@@ -25,11 +25,12 @@ export type GameCommand =
   /**
    * Sail to these points in turn (simple steering): the crew steers and makes sail (sim pilot).
    * `hold`: after the last point keep its direction (a course drawn on the water); otherwise
-   * take in sail there (a destination). An empty route cancels it.
+   * take in sail there (a destination). An empty route cancels it. `append`: add the points to the
+   * route being sailed (a queue of waypoints) instead of replacing it.
    */
-  | { readonly type: "navigate"; readonly ship: EntityId; readonly route: readonly { readonly x: number; readonly z: number }[]; readonly hold: boolean }
-  /** Simple steering: run down and board a ship, keep station on one, or close and storm a fort. */
-  | { readonly type: "pilot"; readonly ship: EntityId; readonly order: { readonly kind: "board" | "follow"; readonly target: EntityId } | { readonly kind: "assault"; readonly fort: EntityId } }
+  | { readonly type: "navigate"; readonly ship: EntityId; readonly route: readonly { readonly x: number; readonly z: number }[]; readonly hold: boolean; readonly append?: boolean }
+  /** Simple steering: run down and board a ship, keep station on one, fight her broadside to broadside, or close and storm a fort. */
+  | { readonly type: "pilot"; readonly ship: EntityId; readonly order: { readonly kind: "board" | "follow" | "engage"; readonly target: EntityId } | { readonly kind: "assault"; readonly fort: EntityId } }
   /** Sail plan of one mast, or of every mast. */
   | { readonly type: "sails"; readonly ship: EntityId; readonly mast: number | "all"; readonly level: SailLevel }
   /**

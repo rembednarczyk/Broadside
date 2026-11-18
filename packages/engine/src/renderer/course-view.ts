@@ -46,6 +46,7 @@ const MARK_COLOURS: Record<string, Color3> = {
   go: new Color3(0.97, 0.97, 0.92),
   dock: new Color3(1.0, 0.82, 0.42),
   board: new Color3(1.0, 0.36, 0.25),
+  engage: new Color3(1.0, 0.2, 0.15),
   storm: new Color3(1.0, 0.5, 0.2),
   follow: new Color3(0.45, 0.95, 0.85),
 };
@@ -68,7 +69,7 @@ interface Ripple {
  * sun on foam (shaders/course.ts); a line being drawn burns brighter and, let go, sinks into the
  * sea while the route the crew takes appears. A tap sends out rings on the water, and the
  * destination, or the ship or fort an order is about, has a breathing ring with an echo in the
- * order's colour (white: sail there, gold: put into port, red: board or storm, sea green:
+ * order's colour (white: sail there, gold: put into port, red: board, attack or storm, sea green:
  * follow). Animated with simulation time (shots are reproducible). Unlit, riding the waves like
  * the salvo marks, widened with the isometric zoom.
  */

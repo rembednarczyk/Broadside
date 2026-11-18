@@ -93,7 +93,7 @@ const chooseAmmo = (me: ShipState, target: ShipState, range: number): AmmoId => 
   return "round";
 };
 
-const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand[] => {
+export const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): GameCommand[] => {
   const s = me.ship!;
   const b = me.body!;
   const tb = t.body!;

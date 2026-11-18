@@ -25,7 +25,7 @@ export type TapOrder =
   | { readonly kind: "stop"; readonly at: P }
   | { readonly kind: "go"; readonly at: P }
   | { readonly kind: "dock"; readonly at: P }
-  | { readonly kind: "board" | "follow"; readonly target: number; readonly at: P }
+  | { readonly kind: "board" | "follow" | "engage"; readonly target: number; readonly at: P }
   | { readonly kind: "storm"; readonly fort: number; readonly at: P };
 
 /** The nearest thing within reach of the tap, or null (open water). */
@@ -56,3 +56,10 @@ export const orderFor = (hit: Tappable | null, water: P | null): TapOrder | null
       return { kind: "storm", fort: hit.id, at: hit.at };
   }
 };
+
+/**
+ * A course drawn from the own ship onto an enemy is an attack: lie broadside to her and fire as
+ * the guns bear (a gesture from one unit to another, as a drag-to-attack in strategy games).
+ */
+export const attackDrawn = (from: Tappable | null, to: Tappable | null): TapOrder | null =>
+  from?.kind === "self" && to?.kind === "ship" && to.hostile ? { kind: "engage", target: to.id, at: to.at } : null;

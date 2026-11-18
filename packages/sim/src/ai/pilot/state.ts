@@ -12,6 +12,8 @@ export type PilotOrder =
   | { kind: "board"; target: number }
   /** Keep station astern of a ship (escort, follow). */
   | { kind: "follow"; target: number }
+  /** Fight a ship broadside to broadside (the AI captains' engagement: gunnery range, the side that is loaded). */
+  | { kind: "engage"; target: number; side: "port" | "starboard"; range: number }
   /** Close a fort to storming distance; storm it if silenced, else heave to there (bombard). */
   | { kind: "assault"; fort: number };
 

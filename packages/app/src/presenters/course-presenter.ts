@@ -3,7 +3,7 @@ import { type Simulation } from "@broadside/sim";
 type P = { x: number; z: number };
 
 /** What a mark on the water stands for: a destination, a ship to board or follow, a fort to storm, a port to put into. */
-export type CourseMark = "go" | "board" | "follow" | "storm" | "dock";
+export type CourseMark = "go" | "board" | "follow" | "engage" | "storm" | "dock";
 
 export interface CourseHud {
   /** From the ship through the points to come (or to the ship or fort in hand). */
@@ -30,7 +30,8 @@ export const presentCourse = (sim: Simulation, playerId: number): CourseHud => {
       return { path, goal: o.hold ? null : { ...end, kind: port ? "dock" : "go", size: 1 } };
     }
     case "board":
-    case "follow": {
+    case "follow":
+    case "engage": {
       const t = sim.byId(o.target);
       if (!t?.body || !t.ship) return { path: [], goal: null };
       const at = { x: t.body.pos.x, z: t.body.pos.z };
