@@ -1,6 +1,7 @@
 /**
- * Simple steering on the canvas: a tap on the sea sends the crew there; a drag draws a course on
- * the water that the ship follows and then holds (GameSession.navigate). A tap is a press that
+ * Simple steering on the canvas: a tap gives an order by what it falls on (tap-targets: a place
+ * to sail to, a ship to board or follow, a port, a fort, the own ship to stop); a drag draws a
+ * course on the water that the ship follows and then holds (GameSession.navigate). A tap is a press that
  * hardly moves and lets go quickly (the usual touch slop, about 10 px, and half a second); a
  * second finger (a pinch to zoom) abandons the line. Mouse: the left button only (the right one
  * turns the view, FollowCamera.drawGestures).
@@ -14,7 +15,10 @@ export interface CourseTarget {
   pick(clientX: number, clientY: number): P | null;
   /** The line being drawn (empty: none). */
   showStroke(points: readonly P[]): void;
-  navigate(route: readonly P[], hold: boolean): void;
+  /** A tap at a screen point (client pixels). */
+  tap(clientX: number, clientY: number): void;
+  /** A course drawn on the water. */
+  draw(route: readonly P[]): void;
 }
 
 const TAP_SLOP = 10;
@@ -69,13 +73,11 @@ export const bindCourseGestures = (canvas: HTMLElement, t: CourseTarget): void =
     end();
     if (e.type === "pointercancel") return;
     if (!p.drawing) {
-      if (e.timeStamp - p.at > TAP_TIME) return;
-      const at = t.pick(e.clientX, e.clientY);
-      if (at) t.navigate([at], false);
+      if (e.timeStamp - p.at <= TAP_TIME) t.tap(e.clientX, e.clientY);
       return;
     }
     const route = thinCourse(p.line);
-    if (route.length >= 2) t.navigate(route, true);
+    if (route.length >= 2) t.draw(route);
   };
   canvas.addEventListener("pointerup", up);
   canvas.addEventListener("pointercancel", up);

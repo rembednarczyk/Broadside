@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { wrapAngle, yawOf } from "@broadside/core";
 import { Simulation } from "../src/simulation";
-import { arriveDistance } from "../src/ai/pilot";
+import { arriveDistance } from "../src/ai/pilot/seamanship";
 import { restore, snapshot } from "../src/save/snapshot";
 
 const WIND = 1.2;
@@ -63,7 +63,7 @@ describe("simple steering: the crew sails the player's route", () => {
     sim.step();
     expect(me.pilot).toBeDefined();
     const copy = restore(JSON.parse(JSON.stringify(snapshot(sim, { seed: 7, windDirection: WIND, windSpeed: 8 }))), null);
-    expect(copy.player()?.pilot?.route).toEqual([{ x: 0, z: 800 }]);
+    expect(copy.player()?.pilot?.order).toMatchObject({ kind: "route", route: [{ x: 0, z: 800 }] });
     sim.command({ type: "helm", ship: me.id, rudder: 0.3 });
     sim.step();
     expect(me.pilot).toBeUndefined();
@@ -72,5 +72,47 @@ describe("simple steering: the crew sails the player's route", () => {
     sim.command({ type: "navigate", ship: me.id, route: [], hold: false });
     sim.step();
     expect(me.pilot).toBeUndefined();
+  });
+});
+
+describe("simple steering: orders about ships and forts", () => {
+  it("runs down a slower ship, comes alongside at her speed and boards her", () => {
+    const sim = new Simulation({ seed: 7, windDirection: WIND, windSpeed: 8 });
+    const me = sim.spawnShip({ classId: "frigate", faction: "player", x: 0, z: 0, heading: WIND, player: true });
+    const prey = sim.spawnShip({ classId: "sloop", faction: "pirates", x: Math.sin(WIND + 0.5) * 300, z: Math.cos(WIND + 0.5) * 300, heading: WIND + 0.5 });
+    prey.ship!.sailTarget = prey.ship!.sailTarget.map(() => 1);
+    sim.command({ type: "pilot", ship: me.id, order: { kind: "board", target: prey.id } });
+    const events: string[] = [];
+    const t = sail(sim, 300, () => {
+      for (const e of sim.drainEvents()) events.push(e.type);
+      return !me.pilot;
+    });
+    expect(t).toBeLessThan(300);
+    expect(events.some((e) => /board/i.test(e))).toBe(true);
+  });
+
+  it("keeps station astern of a friendly ship", () => {
+    const sim = new Simulation({ seed: 7, windDirection: WIND, windSpeed: 8 });
+    const me = sim.spawnShip({ classId: "sloop", faction: "player", x: 0, z: 0, heading: WIND, player: true });
+    const lead = sim.spawnShip({ classId: "brig", faction: "player", x: Math.sin(WIND) * 250, z: Math.cos(WIND) * 250, heading: WIND });
+    // A merchant under easy sail, as a convoy goes.
+    lead.ship!.sailTarget = lead.ship!.sailTarget.map(() => 1);
+    sim.command({ type: "pilot", ship: me.id, order: { kind: "follow", target: lead.id } });
+    sail(sim, 200, () => false);
+    expect(me.pilot).toBeDefined();
+    const d = Math.hypot(me.body!.pos.x - lead.body!.pos.x, me.body!.pos.z - lead.body!.pos.z);
+    expect(d).toBeLessThan(260);
+  });
+
+  it("gives the same voyage for the same orders (no random source)", () => {
+    const run = (): string => {
+      const sim = new Simulation({ seed: 3, windDirection: WIND, windSpeed: 8 });
+      const me = sim.spawnShip({ classId: "brig", faction: "player", x: 0, z: 0, heading: 0, player: true });
+      const other = sim.spawnShip({ classId: "sloop", faction: "pirates", x: 200, z: 300, heading: 1 });
+      sim.command({ type: "pilot", ship: me.id, order: { kind: "board", target: other.id } });
+      sail(sim, 60, () => false);
+      return `${me.body!.pos.x.toFixed(6)},${me.body!.pos.z.toFixed(6)}`;
+    };
+    expect(run()).toBe(run());
   });
 });

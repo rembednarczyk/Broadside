@@ -3,6 +3,7 @@ import { STEP } from "@broadside/sim";
 import { GameSession } from "../src/game-session";
 import { COURSE_SPACING, MAX_POINTS, bindCourseGestures, thinCourse } from "../src/controllers/course-gestures";
 import { presentCourse } from "../src/presenters/course-presenter";
+import { type Tappable, orderFor, tappedAt } from "../src/controllers/tap-targets";
 
 describe("simple steering in the app", () => {
   it("thins a drawn line to points some metres apart, keeping its ends", () => {
@@ -19,39 +20,63 @@ describe("simple steering in the app", () => {
     s.advance(1);
     const me = s.sim.byId(s.playerId)!;
     const to = { x: me.body!.pos.x + 300, z: me.body!.pos.z + 300 };
-    s.navigate([to], false);
+    s.helm.navigate([to], false);
     s.advance(STEP * 2);
     const c = presentCourse(s.sim, s.playerId);
     expect(c.path).toHaveLength(2);
-    expect(c.goal).toEqual(to);
+    expect(c.goal).toMatchObject({ ...to, kind: "go" });
     // The helm takes the wheel back.
-    s.steer(1);
+    s.helm.steer(1);
     s.advance(STEP * 2);
-    s.steer(0);
+    s.helm.steer(0);
     expect(presentCourse(s.sim, s.playerId).path).toHaveLength(0);
   });
 
   it("tells a tap from a drawn line on the canvas", () => {
     const listeners = new Map<string, (e: PointerEvent) => void>();
     const canvas = { addEventListener: (t: string, f: (e: PointerEvent) => void) => listeners.set(t, f) } as unknown as HTMLElement;
-    const sent: { route: readonly { x: number; z: number }[]; hold: boolean }[] = [];
+    const taps: { x: number; y: number }[] = [];
+    const drawn: (readonly { x: number; z: number }[])[] = [];
     let stroke = 0;
     bindCourseGestures(canvas, {
       enabled: () => true,
       pick: (x, y) => ({ x, z: y }),
       showStroke: (p) => (stroke = p.length),
-      navigate: (route, hold) => sent.push({ route, hold }),
+      tap: (x, y) => taps.push({ x, y }),
+      draw: (route) => drawn.push(route),
     });
     const ev = (type: string, x: number, y: number, at: number) => listeners.get(type)!({ type, pointerId: 1, pointerType: "touch", button: 0, clientX: x, clientY: y, timeStamp: at } as PointerEvent);
     ev("pointerdown", 100, 100, 0);
     ev("pointerup", 103, 101, 120);
-    expect(sent[0]).toEqual({ route: [{ x: 103, z: 101 }], hold: false });
+    expect(taps).toEqual([{ x: 103, y: 101 }]);
     ev("pointerdown", 0, 0, 1000);
     for (let i = 1; i <= 50; i++) ev("pointermove", i * 4, 0, 1000 + i * 10);
     expect(stroke).toBeGreaterThan(10);
     ev("pointerup", 200, 0, 1600);
-    expect(sent[1]!.hold).toBe(true);
-    expect(sent[1]!.route.length).toBeGreaterThan(5);
+    expect(drawn).toHaveLength(1);
+    expect(drawn[0]!.length).toBeGreaterThan(5);
     expect(stroke).toBe(0);
+  });
+
+  it("reads a tap by what it falls on: board an enemy, follow a friend, put into port, storm a fort, stop the ship, else sail there", () => {
+    const at = { x: 0, z: 0 };
+    const items: Tappable[] = [
+      { kind: "self", id: 1, sx: 100, sy: 100, reach: 30, at },
+      { kind: "ship", id: 2, sx: 300, sy: 100, reach: 30, at, hostile: true },
+      { kind: "ship", id: 3, sx: 500, sy: 100, reach: 30, at, hostile: false },
+      { kind: "port", id: 0, sx: 100, sy: 300, reach: 40, at },
+      { kind: "fort", id: 9, sx: 300, sy: 300, reach: 60, at },
+    ];
+    const water = { x: 5, z: 6 };
+    const tap = (x: number, y: number) => orderFor(tappedAt(x, y, items), water)?.kind;
+    expect(tap(105, 98)).toBe("stop");
+    expect(tap(310, 95)).toBe("board");
+    expect(tap(495, 105)).toBe("follow");
+    expect(tap(120, 320)).toBe("dock");
+    expect(tap(340, 300)).toBe("storm");
+    expect(tap(700, 400)).toBe("go");
+    expect(orderFor(null, null)).toBeNull();
+    // Overlapping reaches: the one whose middle is nearer, for its size, wins.
+    expect(tappedAt(300, 330, items)?.kind).toBe("fort");
   });
 });

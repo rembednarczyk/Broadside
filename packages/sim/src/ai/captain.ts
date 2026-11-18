@@ -169,7 +169,7 @@ const nextPort = (c: CaptainState, w: World2D): void => {
  * a point astern and abeam of the leader, and match its canvas.
  */
 const STATION_ASTERN = 140;
-const keepStation = (me: Entity, leader: Entity, w: World2D): GameCommand[] => {
+export const keepStation = (me: Entity, leader: Entity, w: Pick<World2D, "bed" | "windDirection">): GameCommand[] => {
   const b = me.body!;
   const lb = leader.body!;
   const lh = yawOf(lb.rot);

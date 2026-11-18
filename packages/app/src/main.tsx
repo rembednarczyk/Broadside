@@ -17,6 +17,8 @@ import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHE
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse } from "./presenters/course-presenter";
+import { orderFor, tappedAt } from "./controllers/tap-targets";
+import { presentTappables } from "./presenters/tappables";
 // Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
 // EB Garamond for the text (SIL Open Font License).
 import "@fontsource/cinzel/600.css";
@@ -107,7 +109,7 @@ const setSteering = (steering: "simple" | "classic") => {
 };
 
 const intents: UiIntents = {
-  helm: { steer: (d) => session.steer(d) },
+  helm: { steer: (d) => session.helm.steer(d) },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
   port: {
     trade: (service, qty, ammo) => {
@@ -174,7 +176,18 @@ bindCourseGestures(canvas, {
   enabled: () => useHud.getState().steering === "simple",
   pick: (x, y) => renderer.pickWater(x, y),
   showStroke: (points) => renderer.course.setStroke(points),
-  navigate: (route, hold) => session.navigate(route, hold),
+  tap: (x, y) => {
+    const rect = canvas.getBoundingClientRect();
+    const project = (wx: number, wy: number, wz: number) => {
+      const p = renderer.project(wx, wy, wz);
+      return { x: rect.left + p.x * rect.width, y: rect.top + p.y * rect.height };
+    };
+    const order = orderFor(tappedAt(x, y, presentTappables(session.sim, session.playerId, project)), renderer.pickWater(x, y));
+    if (!order) return;
+    session.helm.order(order);
+    renderer.course.ripple(order.at.x, order.at.z, order.kind === "stop" ? "go" : order.kind);
+  },
+  draw: (route) => session.helm.navigate(route, true),
 });
 const audio = new SynthAudio("assets/audio/");
 addEventListener("pointerdown", () => audio.unlock());

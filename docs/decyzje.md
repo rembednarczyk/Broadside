@@ -551,3 +551,25 @@ czcionkę pasującą do gry i uatrakcyjnij HUD”).**
   polerowany), przyciski ognia w czerwonym laku z mosiężnym rantem, kompas z mosiężnym pierścieniem i różą 32
   kierunków, komunikaty na pasku pergaminu. Przyciski żagli w dwóch rzędach (pełne nazwy w obu językach), wiersze
   masztów zwinięte pod przyciskiem na każdym ekranie.
+
+**18.11, rozkazy po tapnięciu i efekt kursu (D5; właściciel: „fajny efekt na rysowanie w wodzie; interakcje przez
+tapnięcie, np. abordaż po podpłynięciu; całość wydziel ładnie SRP i deterministycznie”).**
+- Tapnięcie to rozkaz zależny od kontekstu (wzorzec z gier strategicznych: ten sam gest idzie na wolny teren i atakuje
+  wroga): wrogi statek: abordaż; inny statek: płynięcie w jego szyku; port: wejście na redę i stop (panel portu); fort:
+  dojście na odległość szturmu, desant, jeśli działa uciszone, inaczej dryf na pozycji ostrzału; własny statek: stop
+  (koniec trasy, żagle zwinięte); woda: płyń tam. Cel z najbliższego obiektu w zasięgu palca na ekranie (statek: pół
+  długości na ekranie, min. 28 px), czysta funkcja `tap-targets.ts`, dane z `presenters/tappables.ts`.
+- Symulacja (deterministyczna, bez losowania): komenda `pilot` (abordaż, eskorta, szturm) obok `navigate` (trasa).
+  Pilot podzielony według odpowiedzialności w `sim/ai/pilot/`: `state.ts` (rozkazy jako dane, zapisywane z grą, stare
+  zapisy tłumaczone `upgradePilot`), `seamanship.ts` (jedyna umiejętność: kurs na punkt z laylinią i dryfem), `route.ts`,
+  `board.ts` (pościg z wyprzedzeniem jak „pursuit” Reynoldsa, żagle zmniejszane z odległością, żeby zrównać prędkość;
+  abordaż istniejącą komendą, gdy `canBoard`), `follow.ts` (trzymanie pozycji z konwojów AI, ale z pełnymi żaglami,
+  gdy statek zostaje za daleko w tyle), `assault.ts`, `pilot.ts` (wybór modułu według rodzaju rozkazu: Strategy przez
+  dane). System pilota tylko wykonuje wynik: kurs, żagle, komendy. Złoty hash bez zmian.
+- Aplikacja: sterowanie gracza wydzielone z `GameSession` do `PlayerHelm` (klasyczny ster, trasy, rozkazy; sesja miała
+  21 metod przy limicie 20). Gesty (`course-gestures.ts`) nie znają rozkazów: dają tapnięcie albo narysowaną linię.
+- Efekt na wodzie (`course-view.ts`, `shaders/course.ts`): kurs jako świetlista nić z jasnym rdzeniem, impulsami
+  płynącymi wzdłuż drogi i iskrami jak słońce na pianie; rysowana linia jaśniejsza, po puszczeniu rozpływa się (0,8 s);
+  tapnięcie puszcza kręgi na wodzie; cel ma oddychający pierścień z echem w kolorze rozkazu (biały: płyń, złoty: port,
+  czerwony: abordaż i szturm, morska zieleń: eskorta). Animacja z czasu symulacji (zrzuty powtarzalne).
+- Propozycje dalszego sterowania zapisane w backlogu jako D6, do decyzji właściciela.

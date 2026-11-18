@@ -1,6 +1,8 @@
 import { clamp, wrapAngle } from "@broadside/core";
 import { type HandlerTable } from "./handler";
-import { CRUISING, createPilot } from "../ai/pilot";
+import { type PilotOrder } from "../ai/pilot/state";
+import { type ShipEntity } from "./handler";
+import { type SimContext } from "../systems/context";
 
 export const sailingHandlers: HandlerTable = {
   // The helm or a course from the player takes the wheel back from the pilot (simple steering).
@@ -14,11 +16,14 @@ export const sailingHandlers: HandlerTable = {
     if (e.pilot) ctx.world.removeComponent(e, "pilot");
   },
   navigate: (e, cmd, ctx) => {
-    if (e.pilot) ctx.world.removeComponent(e, "pilot");
-    if (cmd.route.length === 0) return;
-    ctx.world.addComponent(e, "pilot", createPilot(cmd.route, cmd.hold, e.ship.course ?? 0, e.body.pos));
-    // With no canvas spread the crew makes sail to get under way.
-    if (e.ship.sailTarget.every((l) => l === 0)) e.ship.sailTarget = e.ship.sailTarget.map(() => CRUISING);
+    if (cmd.route.length === 0) {
+      if (e.pilot) ctx.world.removeComponent(e, "pilot");
+      return;
+    }
+    givePilot(e, ctx, { kind: "route", route: cmd.route.map((p) => ({ x: p.x, z: p.z })), hold: cmd.hold, heading: e.ship.course ?? 0, from: { x: e.body.pos.x, z: e.body.pos.z } });
+  },
+  pilot: (e, cmd, ctx) => {
+    givePilot(e, ctx, cmd.order.kind === "assault" ? { kind: "assault", fort: cmd.order.fort } : { kind: cmd.order.kind, target: cmd.order.target });
   },
   sails: (e, cmd) => {
     if (cmd.mast === "all") e.ship.sailTarget = e.ship.sailTarget.map(() => cmd.level);
@@ -27,4 +32,15 @@ export const sailingHandlers: HandlerTable = {
   oars: (e, cmd) => {
     e.ship.oars = cmd.on;
   },
+};
+
+/** Sail made when an order is given to a ship with none set: full sail, the AI's cruising plan. */
+const CRUISING = 3;
+
+/** Hands the ship to the pilot with a new order (simple steering, ai/pilot). */
+const givePilot = (e: ShipEntity, ctx: SimContext, order: PilotOrder): void => {
+  if (e.pilot) ctx.world.removeComponent(e, "pilot");
+  ctx.world.addComponent(e, "pilot", { order, think: 0 });
+  // With no canvas spread the crew makes sail to get under way.
+  if (e.ship.sailTarget.every((l) => l === 0)) e.ship.sailTarget = e.ship.sailTarget.map(() => CRUISING);
 };

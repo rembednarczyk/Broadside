@@ -18,7 +18,7 @@ it("the sandbox stays bounded and finite (report, gated by ADR-0005)", () => {
     const t0 = process.hrtime.bigint();
     for (let i = 0; i < 60 * 60; i++) {
       if (i % 120 === 0) {
-        s.steer(m % 4 === 0 ? 1 : 0);
+        s.helm.steer(m % 4 === 0 ? 1 : 0);
         s.fire("broadside", "port");
         s.fire("broadside", "starboard");
       }

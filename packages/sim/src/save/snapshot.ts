@@ -1,7 +1,7 @@
 import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, createRng, seaWaves } from "@broadside/core";
 import { Simulation, type SimulationOptions } from "../simulation";
 import { type CaptainState } from "../ai/captain-state";
-import { type PilotState } from "../ai/pilot-state";
+import { type PilotState, upgradePilot } from "../ai/pilot/state";
 import { type Castaway, type Floater, type FortState } from "../world/components";
 import { type ShipState } from "../ship/ship-state";
 import { shipModel } from "../ship/ship-model";
@@ -102,7 +102,7 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     // Fields added after a save was written get their defaults (refits, standing orders).
     const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades">;
     const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [] };
-    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: clone(s.pilot) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
+    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
   for (const f of snap.forts) {
     const e = sim.spawnFort(f.site);
