@@ -163,7 +163,7 @@ export class BabylonRenderer {
     // dark ground would.
     this.ambient.groundColor = new Color3(look.ambient.r * 0.8, look.ambient.g * 0.95, look.ambient.b * 1.05);
     this.ambient.intensity = 1;
-    setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8));
+    setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8), look.sunDir.y);
     // Eyes adjust to the night: up to 2.2 times the exposure once the sun is down (post-stack);
     // a storm by day stays dark, as it should.
     this.post.adapt(1 + 1.2 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));

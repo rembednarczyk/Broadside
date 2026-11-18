@@ -157,7 +157,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       if (!c.ports.some((port) => Math.hypot(port.at[0] - at.x, port.at[2] - at.z) < 1.1)) windows.push({ at, n: run.normal(i) });
     }
   });
-  transom(c, { wp, wu, wi, mouldings }, pw, ph, hash);
+  transom(c, { wp, wu, wi, mouldings, windows }, pw, ph, hash);
   const walls = meshOf(scene, `castle-${parent.name}`, wp, wu, wi);
   walls.material = wallMaterial(scene, mats.castle, planks?.texture ?? null, key);
   const trims = mouldings.map((path, i) => MeshBuilder.CreateTube(`castle-moulding-${i}`, { path, radius: 0.075, tessellation: 6, cap: Mesh.CAP_ALL }, scene));
@@ -192,7 +192,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       posts.push(Matrix.Compose(new Vector3(1, BALUSTRADE, 1), Quaternion.Identity(), new Vector3(p.x, c.top + BALUSTRADE / 2, p.z)));
     }
   }
-  const gallery = sternGallery(scene, parent.name, c, windows.filter((w) => w.n.z < -0.9), mats.wood);
+  const gallery = sternGallery(scene, parent.name, c, windows.filter((w) => w.n.z < -0.9 && w.at.y > c.base), mats.wood);
   posts.push(...gallery.posts);
   instances(baluster, posts);
   // Stairs from the waist up to the castle's deck, one a side.
@@ -302,8 +302,8 @@ const shipWheel = (scene: Scene, name: string, deckY: number, z: number, wood: S
  * floor down towards the water, narrowing to the breadth of the hull's run, and mouldings across
  * it as the wales run round a hull. Added to the castle walls' arrays (one mesh, one draw).
  */
-const transom = (c: CastleLayout, out: { wp: number[]; wu: number[]; wi: number[]; mouldings: Vector3[][] }, pw: number, ph: number, hash: (j: number, salt: number) => number): void => {
-  const { wp, wu, wi, mouldings } = out;
+const transom = (c: CastleLayout, out: { wp: number[]; wu: number[]; wi: number[]; mouldings: Vector3[][]; windows: { at: Vector3; n: Vector3 }[] }, pw: number, ph: number, hash: (j: number, salt: number) => number): void => {
+  const { wp, wu, wi, mouldings, windows } = out;
   const stern = c.ring[0]!;
   const rows = Math.max(3, Math.round((c.base - c.transom.foot) / 0.3));
   for (let j = 0; j < rows; j++) {
@@ -322,4 +322,11 @@ const transom = (c: CastleLayout, out: { wp: number[]; wu: number[]; wi: number[
     const h = c.transom.half + (stern.half - c.transom.half) * k;
     mouldings.push([new Vector3(-h, y, stern.z - 0.07), new Vector3(h, y, stern.z - 0.07)]);
   }
+  // The lower stern lights, the windows of the gunroom between the two upper mouldings (ref_090
+  // shows two rows across the stern): wider spaced than the gallery's, clear of the corners.
+  const k = 0.58;
+  const y = c.transom.foot + (c.base - c.transom.foot) * k;
+  const h = c.transom.half + (stern.half - c.transom.half) * k;
+  const n = Math.max(0, Math.floor((2 * h - 1) / (GALLERY_PITCH * 1.4)));
+  for (let w = 0; w < n; w++) windows.push({ at: new Vector3(-h + 0.5 + ((2 * h - 1) * (w + 0.5)) / n, y, stern.z - 0.02), n: new Vector3(0, 0, -1) });
 };

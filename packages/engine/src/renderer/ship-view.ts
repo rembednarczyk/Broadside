@@ -153,8 +153,11 @@ const sailMaterial = (scene: Scene, base: StandardMaterial, faction: FactionId, 
  * Night lighting of the ships: emblem sails and gallery windows glow as the daylight goes
  * (emissive scaled by darkness, so they stay invisible by day as in the reference).
  */
-export const setNightGlow = (scene: Scene, darkness: number): void => {
+export const setNightGlow = (scene: Scene, darkness: number, sunHeight = 1): void => {
   const k = Math.max(0, Math.min(1, darkness));
+  // Lamps in the cabins and the stern lanterns are lit before dark: once the sun is low the
+  // windows of the stern gallery show warm (ref_090, late afternoon); the emblems wait for night.
+  const lamps = Math.max(k, 0.45 * Math.max(0, Math.min(1, (0.45 - sunHeight) / 0.35)));
   for (const m of scene.materials) {
     // StandardMaterial adds the emissive colour everywhere and the emissive texture on top:
     // the colour stays black, the glow map's level carries the strength.
@@ -163,9 +166,9 @@ export const setNightGlow = (scene: Scene, darkness: number): void => {
     // Strong enough to bloom but short of white, so the warm colour survives the toning (grade.ts).
     if (m.name.startsWith("sail-") && m.name.endsWith("-e") && m.emissiveTexture) m.emissiveTexture.level = 2.4 * k;
     // Lanterns are lit at dusk: by day the glass only catches a little light.
-    if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * k), 1.1 * (0.18 + 0.82 * k), 0.55 * (0.18 + 0.82 * k));
-    if (m.name === "castle-glass") m.emissiveColor.set(1.1 * k, 0.72 * k, 0.32 * k);
-    if ((m.name.startsWith("castle")) && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * k;
+    if (m.name === "detail-lantern") m.emissiveColor.set(1.6 * (0.18 + 0.82 * lamps), 1.1 * (0.18 + 0.82 * lamps), 0.55 * (0.18 + 0.82 * lamps));
+    if (m.name === "castle-glass") m.emissiveColor.set(1.1 * lamps, 0.72 * lamps, 0.32 * lamps);
+    if ((m.name.startsWith("castle")) && m.emissiveTexture) m.emissiveTexture.level = 0.25 + 1.6 * lamps;
   }
 };
 

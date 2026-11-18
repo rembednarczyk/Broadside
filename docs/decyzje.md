@@ -646,3 +646,11 @@ rozjaśniła czerń wichury ponad klatkę, więc odrzucona. Ekspozycja looku sep
 klatką (56 przy 46). Ujęcie rufy pod słońce (ref_090) jest dalej czarne tam, gdzie klatka pokazuje okna i galerię:
 następny krok to światło na pawęży (latarnie, okna), bo samo rozproszone niebo daje tam ok. 1/4 światła słońca.
 Narzędzie: `SHOT_INSPECT` z kątem „@a” względem kursu (ujęcie rufy z wiatrem).
+
+## 18.11 Dolny rząd okien rufowych, lampy zapalane o zmierzchu (orkiestrator, M9 C4)
+Na ref_090 rufa ma dwa rzędy okien i świeci od środka, zanim zapadnie noc. U nas pawęż pod kasztelem była gładka, a
+szyby i latarnie zapalały się dopiero razem z godłami żagli. Zmiany: na pawęży między dwiema górnymi listwami rząd okien
+mesy oficerskiej (rozstaw 1,4 rozstawu galerii, bez balkonu; galeria dalej tylko przy oknach kasztelu); `setNightGlow`
+dostaje wysokość słońca i lampy (szyby kasztelu, latarnie) rozjaśnia już od wysokości 0,45 do 45% przy 0,1, godła żagli
+dalej tylko nocą. Scena `stern-castle` z kamerą 52 m za rufą. Zostaje: rufa na klatce jest szersza względem rej niż u nas,
+piana kilwateru przy skręcie układa się w grube komórki.
