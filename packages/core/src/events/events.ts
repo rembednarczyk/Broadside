@@ -21,6 +21,8 @@ export type DomainEvent =
   | { readonly type: "fireOut"; readonly ship: EntityId; readonly section: number }
   | { readonly type: "magazineExploded"; readonly ship: EntityId; readonly at: Vec3 }
   | { readonly type: "mastFell"; readonly ship: EntityId; readonly mast: number }
+  /** The crew reefed a mast's canvas in a squall (`up`: made sail again once it eased). */
+  | { readonly type: "reefed"; readonly ship: EntityId; readonly mast: number; readonly up: boolean }
   | { readonly type: "crewOverboard"; readonly ship: EntityId; readonly count: number; readonly at: Vec3 }
   | { readonly type: "crewRescued"; readonly ship: EntityId; readonly count: number }
   | { readonly type: "shipSinking"; readonly ship: EntityId }

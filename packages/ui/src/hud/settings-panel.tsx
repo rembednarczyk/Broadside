@@ -10,6 +10,7 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
   const g = useHud((h) => h.graphics);
   const lang = useHud((h) => h.language);
   const steering = useHud((h) => h.steering);
+  const reef = useHud((h) => h.reef);
   if (!open) return null;
   const custom = `gfx.${g.preset}`;
   return (
@@ -40,6 +41,14 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
         {(["simple", "classic"] as const).map((m) => (
           <button key={m} className={steering === m ? "on" : ""} onPointerDown={() => intents.setSteering(m)} data-testid={`steering-${m}`}>
             {text(lang, `steering.${m}`)}
+          </button>
+        ))}
+      </div>
+      <div className="label">{text(lang, "settings.reef")}</div>
+      <div className="presets">
+        {([true, false] as const).map((on) => (
+          <button key={String(on)} className={reef === on ? "on" : ""} onPointerDown={() => intents.setReef(on)} data-testid={`reef-${on ? "on" : "off"}`}>
+            {text(lang, on ? "settings.on" : "settings.off")}
           </button>
         ))}
       </div>

@@ -144,3 +144,27 @@ describe("simple steering: waypoints and the attack", () => {
     expect(me.pilot?.order.kind).toBe("engage");
   });
 });
+
+describe("the crew reefs in squalls by itself", () => {
+  it("takes in a step of canvas when a mast strains, and makes sail again once the wind eases, never above the captain's", () => {
+    const sim = new Simulation({ seed: 7, windDirection: WIND, windSpeed: 8 });
+    const me = sim.spawnShip({ classId: "sloop", faction: "player", x: 0, z: 0, heading: WIND + 1.4, player: true });
+    sim.command({ type: "crew", ship: me.id, reef: true });
+    sim.command({ type: "sails", ship: me.id, mast: "all", level: 3 });
+    sim.step();
+    me.ship!.mastLoad = me.ship!.mastLoad.map(() => 1.2);
+    for (let i = 0; i < 70; i++) {
+      sim.step();
+      me.ship!.mastLoad = me.ship!.mastLoad.map(() => 1.2);
+    }
+    expect(me.ship!.sailTarget[0]).toBe(2);
+    for (let i = 0; i < 60 * 30; i++) {
+      sim.step();
+      me.ship!.mastLoad = me.ship!.mastLoad.map(() => 0.2);
+    }
+    expect(me.ship!.sailTarget[0]).toBe(3);
+    sim.command({ type: "crew", ship: me.id, reef: false });
+    sim.step();
+    expect(me.reefing).toBeUndefined();
+  });
+});

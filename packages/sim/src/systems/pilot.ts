@@ -27,7 +27,10 @@ export const pilotSystem: System = (ctx, dt) => {
     e.pilot.think = PILOT_THINK;
     const c = conning(e, e.pilot, { windDirection: ctx.env.windDirection, fog: ctx.env.weather?.fog ?? 0, bed, ships, rng: () => ctx.rng.next(), ports: ctx.ports, relations: ctx.relations, screens: smoke, forts });
     if (c.course !== null) e.ship.course = c.course;
-    if (c.sails !== null) e.ship.sailTarget = e.ship.sailTarget.map(() => c.sails!);
+    if (c.sails !== null) {
+      e.ship.sailTarget = e.ship.sailTarget.map(() => c.sails!);
+      if (e.reefing) e.reefing.wanted = [...e.ship.sailTarget];
+    }
     if (c.done) ctx.world.removeComponent(e, "pilot");
     for (const cmd of c.commands) applyCommand(e, cmd, ctx);
   }

@@ -95,6 +95,11 @@ export class GameSession {
     return n;
   }
 
+  /** Standing orders to the crew: reef in squalls without being told. */
+  crewOrders(reef: boolean): void {
+    this.send({ type: "crew", ship: this.playerId, reef });
+  }
+
   setMastSails(mast: number, level: number): void {
     this.send({ type: "sails", ship: this.playerId, mast, level: clamp(Math.round(level), 0, 4) as SailLevel });
   }

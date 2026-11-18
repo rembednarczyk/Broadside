@@ -98,6 +98,26 @@ patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, r
 if (!helpSeen) patchHud({ helpOpen: true });
 patchHud({ steering: storedSteering });
 renderer.camera.drawGestures = storedSteering === "simple";
+// The crew's standing order to reef in squalls: on unless the player turned it off on this device.
+const REEF_KEY = "broadside.reef";
+const storedReef = ((): boolean => {
+  try {
+    return localStorage.getItem(REEF_KEY) !== "0";
+  } catch {
+    return true;
+  }
+})();
+patchHud({ reef: storedReef });
+session.crewOrders(storedReef);
+const setReef = (on: boolean) => {
+  patchHud({ reef: on });
+  session.crewOrders(on);
+  try {
+    localStorage.setItem(REEF_KEY, on ? "1" : "0");
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
 const setSteering = (steering: "simple" | "classic") => {
   patchHud({ steering });
   renderer.camera.drawGestures = steering === "simple";
@@ -150,6 +170,7 @@ const intents: UiIntents = {
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setSteering,
+    setReef,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
     toggleHelp: () => {
@@ -165,6 +186,7 @@ const intents: UiIntents = {
     },
     newGame: () => {
       session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
+      session.crewOrders(useHud.getState().reef);
       applyGraphics(graphics);
       patchHud({ settingsOpen: false });
     },

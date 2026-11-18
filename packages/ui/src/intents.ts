@@ -49,6 +49,8 @@ export interface SettingsIntents {
   setColorMode(mode: string): void;
   /** Simple steering (tap or draw a course, the crew sails it) or the classic helm. */
   setSteering(mode: "simple" | "classic"): void;
+  /** Standing order: the crew reefs in squalls by itself. */
+  setReef(on: boolean): void;
   toggleSettings(): void;
   toggleHelp(): void;
   newGame(): void;

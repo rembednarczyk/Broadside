@@ -1,6 +1,7 @@
-import { clamp, wrapAngle } from "@broadside/core";
+import { clamp, terrainHeight, wrapAngle } from "@broadside/core";
 import { type HandlerTable } from "./handler";
 import { type PilotOrder } from "../ai/pilot/state";
+import { planRoute } from "../ai/pilot/plan";
 import { type ShipEntity } from "./handler";
 import { type SimContext } from "../systems/context";
 
@@ -18,7 +19,8 @@ export const sailingHandlers: HandlerTable = {
   navigate: (e, cmd, ctx) => {
     const o = e.pilot?.order;
     if (cmd.append && o?.kind === "route" && cmd.route.length > 0) {
-      o.route.push(...cmd.route.map((p) => ({ x: p.x, z: p.z })));
+      const last = o.route[o.route.length - 1] ?? { x: e.body.pos.x, z: e.body.pos.z };
+      o.route.push(...planRoute(bedOf(ctx), last, cmd.route, keelOf(e)));
       o.hold = cmd.hold;
       return;
     }
@@ -26,7 +28,10 @@ export const sailingHandlers: HandlerTable = {
       if (e.pilot) ctx.world.removeComponent(e, "pilot");
       return;
     }
-    givePilot(e, ctx, { kind: "route", route: cmd.route.map((p) => ({ x: p.x, z: p.z })), hold: cmd.hold, heading: e.ship.course ?? 0, from: { x: e.body.pos.x, z: e.body.pos.z } });
+    // Round the islands where a leg runs over land or a shoal (A*, ai/pilot/plan).
+    const from = { x: e.body.pos.x, z: e.body.pos.z };
+    const route = planRoute(bedOf(ctx), from, cmd.route, keelOf(e));
+    givePilot(e, ctx, { kind: "route", route, hold: cmd.hold, heading: e.ship.course ?? 0, from });
   },
   pilot: (e, cmd, ctx) => {
     const o = cmd.order;
@@ -35,6 +40,15 @@ export const sailingHandlers: HandlerTable = {
   sails: (e, cmd) => {
     if (cmd.mast === "all") e.ship.sailTarget = e.ship.sailTarget.map(() => cmd.level);
     else if (cmd.mast >= 0 && cmd.mast < e.ship.sailTarget.length) e.ship.sailTarget[cmd.mast] = cmd.level;
+    // The captain's own order is what a reefing crew makes sail back up to.
+    if (e.reefing) e.reefing.wanted = [...e.ship.sailTarget];
+  },
+  crew: (e, cmd, ctx) => {
+    if (!cmd.reef) {
+      if (e.reefing) ctx.world.removeComponent(e, "reefing");
+      return;
+    }
+    if (!e.reefing) ctx.world.addComponent(e, "reefing", { wanted: [...e.ship.sailTarget], easy: e.ship.sailTarget.map(() => 0), think: 0 });
   },
   oars: (e, cmd) => {
     e.ship.oars = cmd.on;
@@ -54,3 +68,12 @@ const givePilot = (e: ShipEntity, ctx: SimContext, order: PilotOrder): void => {
   // With no canvas spread the crew makes sail to get under way.
   if (e.ship.sailTarget.every((l) => l === 0)) e.ship.sailTarget = e.ship.sailTarget.map(() => CRUISING);
 };
+
+/** The seabed of the archipelago (null: open sea). */
+const bedOf = (ctx: SimContext): ((x: number, z: number) => number) | null => {
+  const a = ctx.env.archipelago;
+  return a ? (x, z) => terrainHeight(a, x, z) : null;
+};
+
+/** The seabed must lie below this for the ship to pass: her draught and two metres under the keel (as captain.clearHeading). */
+const keelOf = (e: ShipEntity): number => -e.ship.model.def.hull.draft - 2;
