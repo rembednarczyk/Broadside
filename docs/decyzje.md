@@ -654,3 +654,8 @@ mesy oficerskiej (rozstaw 1,4 rozstawu galerii, bez balkonu; galeria dalej tylko
 dostaje wysokość słońca i lampy (szyby kasztelu, latarnie) rozjaśnia już od wysokości 0,45 do 45% przy 0,1, godła żagli
 dalej tylko nocą. Scena `stern-castle` z kamerą 52 m za rufą. Zostaje: rufa na klatce jest szersza względem rej niż u nas,
 piana kilwateru przy skręcie układa się w grube komórki.
+
+## 18.11 Drobniejsza piana kilwateru (orkiestrator, M9 C3)
+Koronka piany kilwateru miała komórki ok. 1,1 m: z 40–50 m za rufą układała się w siatkę z dziurami. Teraz komórki
+kilwateru są 2,6 raza mniejsze od komórek grzbietów fal i leżą na miękkim mlecznym podkładzie z szumu fbm (do 0,55
+krycia), więc z daleka piana czyta się jako biały pas, z bliska jako pęcherzyki.

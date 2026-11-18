@@ -370,7 +370,11 @@ void main() {
   // The wake's and the crests' foam drawn as lace that drifts and opens as it ages.
   vec2 fp = vWorld.xz * 0.9 + vec2(time * 0.12, -time * 0.05);
   float foam = lace(fp, clamp(caps * 1.2, 0.0, 1.0)) * 0.75;
-  foam = max(foam, lace(fp * 1.15 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0)) * (0.35 + 0.4 * wk.x));
+  // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
+  // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
+  float wakeLace = lace(fp * 2.6 + 3.7, clamp(wk.x * 1.3, 0.0, 1.0));
+  float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
+  foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
