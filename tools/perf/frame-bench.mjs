@@ -84,10 +84,23 @@ const result = await page.evaluate((n) => {
     out[name] = out.full - time();
     set(true);
   }
+  // The ships by kind of part: their meshes grouped by the first word of the material's name.
+  const groups = new Map();
+  for (const root of ships) for (const m of root.getChildMeshes(false)) {
+    if (!m.isVisible || !m.material) continue;
+    const key = "ship:" + m.material.name.split(/[-_ ]/)[0];
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(m);
+  }
+  for (const [key, meshes] of groups) {
+    for (const m of meshes) m.isVisible = false;
+    out[key] = out.full - time();
+    for (const m of meshes) m.isVisible = true;
+  }
   return { ...out, drawCalls: r.drawCalls(), pixels: scene.getEngine().getRenderWidth() * scene.getEngine().getRenderHeight() };
 }, Number(frames));
 await browser.close();
 server.close();
 console.log(`frame ${result.full.toFixed(0)} ms at ${result.pixels} px, ${result.drawCalls} draw calls`);
-for (const k of ["sky", "ocean", "ships", "shadows", "post"]) console.log(`  ${k.padEnd(8)} ${result[k].toFixed(0).padStart(6)} ms  ${((100 * result[k]) / result.full).toFixed(0).padStart(3)}%`);
+for (const k of Object.keys(result).filter((k) => !["full", "drawCalls", "pixels"].includes(k))) console.log(`  ${k.padEnd(16)} ${result[k].toFixed(0).padStart(6)} ms  ${((100 * result[k]) / result.full).toFixed(0).padStart(3)}%`);
 console.log(JSON.stringify(result));

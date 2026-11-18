@@ -733,3 +733,13 @@ MSAA liczy w nim każdą próbkę osobno, więc jego koszt jest tu zawyżony wzg
   0,45), jak krok wyostrzania w FSR i DLSS. Gęstość pikseli ograniczona do 2: ekran 3x liczył 2,25 raza więcej pikseli
   niż 2x przy różnicy niewidocznej z odległości ręki (tak samo robią three.js i większość gier w przeglądarce).
 Nie sprawdzone: czasy na prawdziwym telefonie i GPU.
+
+## 18.11 Poziomy szczegółów dział i kadłubów po odległości (orkiestrator, optymalizacja)
+Podział kosztu statków w `frame-bench` (grupy materiałów) pokazał dwa duże koszty na high przy kamerze pościgowej
+(ok. 73 m): skany dział (14% klatki; 12 tys. trójkątów na działo, ok. 300 tys. na galeon, rysowane do 140 m i bez
+odrzucania poza kadrem) i pełny kadłub z modelu (12%; ok. 250 tys. trójkątów). Zmiany: skan dział do 45 m (kamera
+pokładowa i zbliżenia; dalej toczona lufa z tego samego profilu); kadłub z modelu w dwóch poziomach, pełny do 50 m, dalej
+lekki (ok. 80 tys., plik `-lite` już budowany dla presetu low), oba wczytywane razem, zanim klasa liczy się jako gotowa
+(widok statku powstaje od razu); brak pliku lekkiego zostawia pełny na każdej odległości (przeglądarka statku).
+Zrzut A/B z kamery pościgowej: kadłuby nie do odróżnienia. Wynik high w dniu (SwiftShader, 640×360): 2,9 → 1,9 s na
+klatkę (−34%), statki 1,19 → 0,32 s.
