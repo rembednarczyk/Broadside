@@ -743,3 +743,9 @@ lekki (ok. 80 tys., plik `-lite` już budowany dla presetu low), oba wczytywane 
 (widok statku powstaje od razu); brak pliku lekkiego zostawia pełny na każdej odległości (przeglądarka statku).
 Zrzut A/B z kamery pościgowej: kadłuby nie do odróżnienia. Wynik high w dniu (SwiftShader, 640×360): 2,9 → 1,9 s na
 klatkę (−34%), statki 1,19 → 0,32 s.
+Dalej ocean (na ultra ok. 45% klatki): pętle po statkach w shaderze wierzchołków (`hullWater`, trzy wywołania na
+wierzchołek do normalnej) i pikseli (`wakes`, `hullOcclusion`) pomijają statek, gdy punkt leży poza zasięgiem jego
+wyrazów (rufa: e^-6 na 25 m, grzbiet fali dziobowej: trzy długości zaniku), a drobne skale detalu powierzchni (trzy
+trójki fbm po cztery oktawy) liczą się tylko tam, gdzie ich waga od rozmiaru piksela jest niezerowa. Wynik bez zmiany w
+obrazie (pominięte wyrazy są zerowe). Ultra: 2,56 → 2,23 s, ocean 1,23 → 0,93 s. SwiftShader cieniuje każdą próbkę MSAA
+osobno, więc koszt pikseli na ultra jest tu zawyżony względem GPU.

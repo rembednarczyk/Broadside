@@ -44,9 +44,12 @@ float hullWater(vec2 p) {
     vec4 a = shipA[i];
     vec4 b = shipB[i];
     vec2 d = p - a.xy;
+    float halfLen = b.y * 0.5;
+    // Beyond the stern trough's reach (e^-6 at 25 m astern) every term below is nil: most of the
+    // sea's vertices skip the ship (three calls a vertex, for the normal).
+    if (dot(d, d) > (halfLen + 25.0) * (halfLen + 25.0)) continue;
     float along = dot(d, a.zw);
     float across = d.x * a.w - d.y * a.z;
-    float halfLen = b.y * 0.5;
     float halfBeam = b.z * 0.5;
     float speed = b.x;
     float u = along / halfLen;
@@ -241,6 +244,9 @@ float hullOcclusion(vec2 p) {
     vec4 a = shipA[i];
     vec4 b = shipB[i];
     vec2 d = p - a.xy;
+    // Past 1.25 of the hull's ellipse the factor is 1: far water skips the ship.
+    float reach = max(b.y * 0.55, b.z * 0.5) * 1.3;
+    if (dot(d, d) > reach * reach) continue;
     float along = dot(d, a.zw) / (b.y * 0.55);
     float across = abs(d.x * a.w - d.y * a.z) / (b.z * 0.5);
     float r = length(vec2(along, across));
@@ -257,10 +263,14 @@ vec2 wakes(vec2 p) {
     vec4 a = shipA[i];
     vec4 b = shipB[i];
     vec2 d = p - a.xy;
-    float along = dot(d, a.zw);
-    float across = abs(d.x * a.w - d.y * a.z);
     float halfLen = b.y * 0.5;
     float speed = b.x;
+    // The bow crest fades over 5 + 4 v metres from the stem: beyond three of those (and the hull's
+    // own foam) nothing of this ship remains.
+    float reach = halfLen + 5.0 + 3.0 * (5.0 + speed * 4.0);
+    if (dot(d, d) > reach * reach) continue;
+    float along = dot(d, a.zw);
+    float across = abs(d.x * a.w - d.y * a.z);
     // Waterline foam: water churning against the hull all around its outline, more with speed.
     float u = along / halfLen;
     float w = across / (b.z * 0.5);
@@ -336,15 +346,18 @@ void main() {
   vec2 q1 = vWorld.xz * 0.7 + wind * time * 0.35;
   vec2 q2 = vWorld.xz * 2.4 - wind.yx * time * 0.6;
   float e = 0.15;
-  float a0 = fbm(q1); float ax = fbm(q1 + vec2(e, 0.0)); float az = fbm(q1 + vec2(0.0, e));
-  float b0 = fbm(q2); float bx = fbm(q2 + vec2(e, 0.0)); float bz = fbm(q2 + vec2(0.0, e));
   vec2 q0 = vWorld.xz * 0.22 + wind * time * 0.25;
-  float c0 = fbm(q0); float cx = fbm(q0 + vec2(e, 0.0)); float cz = fbm(q0 + vec2(0.0, e));
   float foot = length(fwidth(vWorld.xz));
   float detail0 = (1.0 - smoothstep(2.0, 9.0, foot)) * 0.9;
   float detail1 = (1.0 - smoothstep(0.6, 3.0, foot)) * 0.55;
   float detail2 = (1.0 - smoothstep(0.15, 0.9, foot)) * 0.35;
-  vec3 dn = vec3(-(cx - c0) / e * detail0 - (ax - a0) / e * detail1 - (bx - b0) / e * detail2, 0.0, -(cz - c0) / e * detail0 - (az - a0) / e * detail1 - (bz - b0) / e * detail2);
+  // Each scale's slope only where it still shows (its weight fades with the pixel's footprint):
+  // the far sea, much of the screen, skips the finer fbm triplets (four octaves of noise apiece).
+  vec2 g = vec2(0.0);
+  if (detail0 > 0.0) { float c0 = fbm(q0); g += vec2(fbm(q0 + vec2(e, 0.0)) - c0, fbm(q0 + vec2(0.0, e)) - c0) * detail0; }
+  if (detail1 > 0.0) { float a0 = fbm(q1); g += vec2(fbm(q1 + vec2(e, 0.0)) - a0, fbm(q1 + vec2(0.0, e)) - a0) * detail1; }
+  if (detail2 > 0.0) { float b0 = fbm(q2); g += vec2(fbm(q2 + vec2(e, 0.0)) - b0, fbm(q2 + vec2(0.0, e)) - b0) * detail2; }
+  vec3 dn = vec3(-g.x / e, 0.0, -g.y / e);
   vec3 n = normalize(vNormal + dn * 0.5);
   // From below the same surface, ripples and all (seen through it: Snell's window).
   if (underwater > 0.5) {
