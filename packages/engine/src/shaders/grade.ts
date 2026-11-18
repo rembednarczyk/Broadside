@@ -56,7 +56,9 @@ void main() {
     vec2 toSun = uv - sunScreen;
     float ang = atan(toSun.y, toSun.x);
     float rays = pow(vnoise(vec2(ang * 18.0, time * 0.3)), 3.0) * smoothstep(1.2, 0.0, length(toSun));
-    c += vec3(0.5, 0.85, 0.75) * rays * 0.2 * absorb;
+    // Shafts go down into the depths under the sun, over the dark water (not across the window).
+    rays *= smoothstep(0.02, 0.3, sunScreen.y - uv.y) * (1.0 - lit);
+    c += vec3(0.5, 0.85, 0.75) * rays * 0.3 * absorb;
     c *= mix(0.25, 1.0, smoothstep(0.0, 0.9, 1.0 - uv.y * 0.0 - length(uv - vec2(0.5, 1.1)) * 0.6));
   }
   // The meniscus: a thin dark line with a bright edge where the surface meets the glass.

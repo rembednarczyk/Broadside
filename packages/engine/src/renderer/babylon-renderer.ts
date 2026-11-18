@@ -9,6 +9,7 @@ import { Sky } from "./sky";
 import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
+import { ShipFill } from "./ship-fill";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
@@ -64,6 +65,8 @@ export class BabylonRenderer {
   private readonly sky: Sky;
   private readonly sun: DirectionalLight;
   private readonly ambient: HemisphericLight;
+  /** Fill light on the ships in the playing cameras (ship-fill.ts); `shipFill.enabled = false` for the reference shots. */
+  readonly shipFill: ShipFill;
   private readonly shadows: ShadowGenerator | null;
   private readonly materials: ShipMaterials;
   private readonly views = new Map<number, ShipView>();
@@ -101,6 +104,8 @@ export class BabylonRenderer {
     this.sun = new DirectionalLight("sun", new Vector3(-0.4, -0.8, 0.3), this.scene);
     this.ambient = new HemisphericLight("sky-light", new Vector3(0, 1, 0), this.scene);
     this.ambient.groundColor = new Color3(0.05, 0.12, 0.15);
+    // Made before the muzzle-flash lights, so it counts among the first lights of a ship's material.
+    this.shipFill = new ShipFill(this.scene);
     this.shadows = g.shadowSize > 0 ? this.createShadows(g) : null;
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves);
@@ -182,6 +187,7 @@ export class BabylonRenderer {
 
   private syncShips(sim: Simulation): void {
     const seen = new Set<number>();
+    let changed = false;
     for (const e of sim.ships()) {
       seen.add(e.id);
       let v = this.views.get(e.id);
@@ -194,6 +200,7 @@ export class BabylonRenderer {
       if (!v) {
         v = new ShipView(this.scene, e.id, e.ship!.model, e.ship!.faction, this.materials, this.shadows, this.hulls, this.gunScan, this.crewRig);
         this.views.set(e.id, v);
+        changed = true;
       }
       v.sync(e, sim.env.windDirection, sim.env.windSpeed, sim.env.time);
       const cam = this.camera.camera.position;
@@ -205,8 +212,10 @@ export class BabylonRenderer {
       if (!seen.has(id)) {
         v.dispose();
         this.views.delete(id);
+        changed = true;
       }
     }
+    if (changed) this.shipFill.track([...this.views.values()].map((x) => x.root));
   }
 
   /** Domain events of the last steps (Observer): effects react to them. */
@@ -239,6 +248,7 @@ export class BabylonRenderer {
       }
     }
     this.applyLook(look);
+    this.shipFill.frame(this.camera.camera.getForwardRay(1).direction, this.camera.mode === "cinematic", 1 - Math.min(1, look.sunIntensity / 0.8), dt);
     const cam = this.camera.camera.position;
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
     if (!this.islands && sim.env.archipelago) {
@@ -298,7 +308,9 @@ export class BabylonRenderer {
     if (this.post.screen.underwater && !under) this.dropsLeft = 4;
     this.dropsLeft = Math.max(0, this.dropsLeft - dt);
     const rain = sim.env.weather?.rain ?? 0;
-    const sun = Vector3.Project(cam.add(new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z).scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
+    // Under the water the sun is seen along its refracted ray, steeper than in the air (Snell, n = 1.33).
+    const sd = under ? new Vector3(look.sunDir.x / 1.33, Math.sqrt(Math.max(0, 1 - (look.sunDir.x ** 2 + look.sunDir.z ** 2) / 1.77)), look.sunDir.z / 1.33) : new Vector3(look.sunDir.x, Math.max(0.02, look.sunDir.y), look.sunDir.z);
+    const sun = Vector3.Project(cam.add(sd.scale(1000)), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
     // Riding the surface: the lens as a dome of radius LENS; the surface crosses it at a height
     // that rises and falls with the passing waves (mid-frame when it cuts the lens centre).
     const LENS = 0.6;

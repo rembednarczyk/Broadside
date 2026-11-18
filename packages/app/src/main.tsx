@@ -81,6 +81,8 @@ let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, prop
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
 // `inspect=1`: the orbit may close in on the ship (a viewer of the model rather than the game's framing).
 renderer.camera.closeUp = params.get("inspect") === "1";
+// `fill=0`: no fill light on the ships (the cinematic camera's look in every camera; reference shots).
+renderer.shipFill.enabled = params.get("fill") !== "0";
 const applyGraphics = (next: GraphicsSettings) => {
   graphics = next;
   try {

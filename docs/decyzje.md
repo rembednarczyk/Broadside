@@ -690,3 +690,15 @@ spada ku brzegowi (transmisja Fresnela przy kącie granicznym) i ma smugi zmarsz
 (0,5–0,82 zamiast 0,62–0,7: przy stromej fali twardy próg rozbijał okno na czarne łaty), promienie pod wodą słabsze
 (0,2). Kamera pod wodą patrzy w górę ok. 45°. Zostaje: słońce w kadrze sceny (azymut względem kamery), smugi powierzchni
 dłuższe jak na klatce.
+
+## 18.11, użytkownik: rozjaśnianie statku w grze, kinowe słońce tylko w widoku kinowym
+Właściciel: „Przyda się chyba jeszcze rozjaśnianie samego statku… żeby wygodnie się grało i zawsze było go widać. Takie
+słońce kinowe jak referencja proponuję w widoku kinowym”. Wzorzec: światło wypełniające z oświetlenia trójpunktowego,
+jak gry oświetlają postać gracza dla czytelności. `ShipFill` (`ship-fill.ts`): światło kierunkowe od strony kamery,
+lekko z góry, tylko na siatkach statków (`includedOnlyMeshes`, lista odświeżana przy zmianie statków i co sekundę),
+bez odbić i cieni; siła 0,5 za dnia, 0,9 nocą (słońce w południe ok. 1,4). Wyłączone w kamerze kinowej (twarde
+światło pod słońce jak w klipie) i parametrem `fill=0`, którego używają plansze porównawcze z klipem. Materiały statków
+biorą do 6 świateł, żeby wypełnienie nie wypchnęło świateł błysków luf. Sprawdzone zrzutami: rufa pod słońce czytelna
+(deski, galeria, żagle) zamiast sylwetki; nocą w widoku izometrycznym statek widoczny zamiast prawie czarnego.
+Przy okazji pod wodą: słońce widziane spod powierzchni wzdłuż załamanego promienia (Snell, n = 1,33), smugi światła
+tylko pod słońcem i na ciemnej wodzie, okno Snella przygaszone do 1,8 (słońce jest w kadrze sceny `underwater`, sun=97).

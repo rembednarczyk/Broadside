@@ -313,7 +313,7 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // the critical angle), and the ripples of the surface show as brighter and darker streaks.
   float rim = mix(0.55, 1.0, smoothstep(0.66, 0.97, c));
   float ripple = 0.75 + 0.5 * clamp(0.5 + dot(n.xz, vec2(0.6, 0.8)) * 5.0, 0.0, 1.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.4 * rim * ripple + sunColor * sun;
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.8 * rim * ripple + sunColor * sun;
   // Outside the window the depths, mirrored, with the waves' relief catching the light from the
   // window's side (the teal ripples round the bright disc in ref_161).
   float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
