@@ -34,10 +34,10 @@ const RINGS = [
 /**
  * The coast's own aerial perspective, thinner than the scene's fog (which leaves about 1% of a shore
  * at 3 km): the rock's colour goes to the fog's by 1 - exp(-d * density * HAZE_SCALE), Koschmieder's
- * law of the airlight with the extinction scaled down, so the shore reads as pale layers on a clear
+ * law of the airlight with the extinction halved, so the shore reads as pale layers on a clear
  * or broken day and fades out under a heavy sky.
  */
-export const HAZE_SCALE = 0.35;
+export const HAZE_SCALE = 0.5;
 export const coastHaze = (distance: number, fogDensity: number): number => Math.min(0.97, 1 - Math.exp(-distance * fogDensity * HAZE_SCALE));
 
 export class FarCoast {
@@ -82,8 +82,9 @@ export class FarCoast {
   /** The haze over each ring from the scene's fog: its colour and density (look.ts). */
   setHaze(fog: { r: number; g: number; b: number }, density: number): void {
     RINGS.forEach((ring, r) => {
-      // The rock in shadow against the light: a third of the haze's brightness, then the airlight.
-      const k = 0.35 + 0.65 * coastHaze(ring.radius, density);
+      // The rock in shadow against the light: a third of the haze's brightness, then the airlight,
+      // which at the horizon is brighter than the scene's fog colour (the sky's glowing band of haze).
+      const k = 0.35 + 0.8 * coastHaze(ring.radius, density);
       this.materials[r]!.emissiveColor.set(fog.r * k, fog.g * k, fog.b * k);
     });
   }

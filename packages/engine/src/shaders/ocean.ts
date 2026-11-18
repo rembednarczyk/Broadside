@@ -423,8 +423,10 @@ void main() {
   col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
-  float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);
-  col = mix(col, fogColor + sunColor * towardSun * 0.9, fog);
+  // Two lobes: the broad glow of the haze round a low sun and the brighter core under it.
+  float sunward = max(dot(-v, sunDirection), 0.0);
+  float towardSun = pow(sunward, 3.0) * 0.55 + pow(sunward, 12.0) * 0.6;
+  col = mix(col, fogColor + sunColor * towardSun, fog);
   gl_FragColor = vec4(col, 1.0);
 }
 `;

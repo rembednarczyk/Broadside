@@ -28,8 +28,10 @@ vec3 horizonHaze(vec3 col, vec3 d, float sunUp) {
   float e = asin(clamp(d.y, -1.0, 1.0));
   float shade = 1.0 - 0.4 * smoothstep(0.4, 0.9, cloudCover);
   float toward = pow(max(dot(normalize(d.xz + 1e-5), normalize(sunDirection.xz + 1e-5)), 0.0), 3.0);
-  vec3 haze = skyHorizon * (1.0 + 0.35 * toward * sunUp) * shade;
-  return mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
+  // Under the sun the band of haze stands taller and glows (forward scattering in the sea air,
+  // ref_020, ref_090: a bright mist over the horizon below a low sun, no hard sea line).
+  vec3 haze = skyHorizon * (1.0 + 0.6 * toward * sunUp) * shade;
+  return mix(col, haze, smoothstep(0.09 + 0.1 * toward * sunUp, 0.0, e) * (0.45 + 0.3 * toward));
 }
 `;
 

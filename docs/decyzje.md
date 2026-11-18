@@ -789,3 +789,11 @@ Szeroka rufa na `ref_090` to perspektywa bliskiej kamery. Kamera kinowa krąży 
 (kąt 0,9 rad); żeby rufa wyszła szersza od rej, musiałaby podejść na ok. 1,3 długości, a wtedy ucina wierzchołki masztów
 (potrzebny pionowy kąt ok. 41°), podczas gdy klatka pokazuje cały statek z niebem nad nim. Zostaje jak jest; wcześniej
 sprawdzony szerszy kasztel (0,95) też nie zmieniał obrazu.
+
+## 18.11 Jaśniejszy, wyższy pas mgły pod słońcem; wybrzeże bledsze (orkiestrator, M9 C2)
+Klatki `ref_020`, `ref_090`: pod nisko stojącym słońcem horyzont to szeroki, jasny pas mgły bez ostrej linii morza, a
+wybrzeże ledwo z niego wychodzi. Zmiany: pas mgiełki nieba sięga pod słońcem do ok. 11° (było stałe 5°) i świeci mocniej
+(×1,6); mgła nad morzem rozprasza słońce dwoma płatkami (szerokim `pow(·, 3)` i rdzeniem `pow(·, 12)`) zamiast jednego
+wąskiego; wybrzeże z mocniejszym zamgleniem (współczynnik 0,5) i jaśniejszym światłem powietrza (do ok. 1,1 koloru mgły,
+bo pas na horyzoncie jest jaśniejszy od mgły sceny). Trzy próby na planszy `stern-castle`: 0,65 zostawiało ciemny pas,
+0,95 chowało wybrzeże całkiem, 0,8 daje blady płaskowyż jak na klatce.
