@@ -827,3 +827,11 @@ napływająca na nią szybciej niż 1,2 m/s rzuca bryzgi w górę i na zewnątrz
 „Water interaction model for boats in video games”, 2015); wygasająca siła uderzeń bieli wodę przy linii wodnej w
 shaderze. Fizyka (opór na prędkości względem wody, człon oporu Morisona) zrobiona, ale wycofana: pełna psuje dwa audyty,
 sam pion psuje bramkę liczby statków o jeden statek (opis w backlogu). Bramki ADR-0005 nie luzuję bez decyzji.
+
+## 18.11, użytkownik („Tak”): fizyka uderzeń fal i reżyser liczący całe grupy
+Zgoda właściciela na propozycję: reżyser świata liczy przed pojawieniem się grupy cały jej skład (konwój: prowadzący,
+kupiec i dwie eskorty, czyli 4 statki) i wybiera tylko ruch, który mieści morze w budżecie + 2 (z graczem budżet + 3, jak
+bramka ADR-0005; wcześniej konwój dobierany przy pięciu statkach dawał dziesięć). Potem włączona fizyka pionowa: opór
+pionowy kadłuba liczony od prędkości względem wody w fali (człon oporu Morisona z `waterState`), więc fala unosząca się
+pod dnem i przy burcie uderza w nie, a statek kołysze się i nurkuje z martwą falą. Poziom pominięty (opis w backlogu).
+Złoty hash ręcznie: 81d3dd8a → 8cfc76e. Audyty: 5 z 5, najgorszy krok długiego przebiegu 1,05 ms (bramka 2 ms).

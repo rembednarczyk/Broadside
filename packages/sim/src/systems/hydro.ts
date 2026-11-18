@@ -1,4 +1,4 @@
-import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterHeight, DEG, refit } from "@broadside/core";
+import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterState, DEG, refit } from "@broadside/core";
 import { type System } from "./context";
 import { type RigidBody, GRAVITY_VEC, applyForce, applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -6,8 +6,8 @@ import { type GerstnerWave } from "@broadside/core";
 
 /**
  * Hydrostatics and hydrodynamics on the hull samples: buoyancy rho g V_submerged per sample, and
- * anisotropic quadratic drag (a keel resists sideways and vertical motion far more than forward
- * motion). Forward drag grows past hull speed (wave-making resistance by Froude number). The
+ * anisotropic quadratic drag, vertically on the speed relative to the water's orbital motion
+ * (Morison's drag term; a keel resists sideways and vertical motion far more than forward motion). Forward drag grows past hull speed (wave-making resistance by Froude number). The
  * rudder is a foil at the stern; oars push along the keel.
  */
 const G = 9.81;
@@ -32,11 +32,20 @@ const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], 
   const drag = refit(s.upgrades, "drag");
   for (const smp of far ? s.model.samplesFar : s.model.samples) {
     const wp = bodyToWorld(b, smp.p);
-    const wy = waterHeight(waves, wp.x, wp.z, t);
+    // The water there: its surface and how it moves round the sample (the waves' orbits, at the
+    // sample's depth below the mean sea level).
+    const water = waterState(waves, wp.x, wp.z, t, Math.max(0, -wp.y));
+    const wy = water.height;
     const f = clamp((wy - (wp.y - smp.height / 2)) / smp.height, 0, 1);
     if (f <= 0) continue;
     applyForceAt(b, vec3(0, WATER_DENSITY * G * smp.volume * f, 0), wp);
-    const v = rotateInv(b.rot, pointVelocity(b, wp));
+    // Drag on the hull's vertical motion through the water, not against a still sea (the drag
+    // term of Morison's equation): a crest rising under the bottom or against the side strikes it,
+    // and the hull heaves and pitches with the swell. The horizontal orbits are left out: in full,
+    // or at a third, they pushed the ships off their courses (the playtest audit's autopilot
+    // stopped finishing its contracts).
+    const pv = pointVelocity(b, wp);
+    const v = rotateInv(b.rot, vec3(pv.x, pv.y - water.velocity.y, pv.z));
     const k = 0.5 * WATER_DENSITY * f;
     const local = vec3(
       -k * C_SIDE * smp.areaSide * Math.abs(v.x) * v.x - LINEAR_DAMPING * k * smp.areaSide * v.x * 10,

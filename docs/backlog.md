@@ -160,11 +160,11 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### Woda wokół statku (właściciel 18.11: „maksymalny realizm… chlapanie wody o burtę, uderzanie fal i fizyka”)
 - [x] chlapanie o burtę z prędkości względnej wody i kadłuba (`effects/hull-slap.ts`, Kerner 2015), piana po uderzeniu
   przy linii wodnej (`shipB.w` w shaderze), `waterState` w `core` (wysokość i prędkość orbitalna wody w fali, test)
-- [ ] fizyka: opór kadłuba względem ruchu wody w fali (człon oporu Morisona) zrobiony i wycofany. Pełne sprzężenie psuje
-  audyt rozgrywki (autopilot nie kończy zlecenia) i bramkę liczby statków w długim przebiegu; sam pion przechodzi audyt
-  rozgrywki, ale długi przebieg ma 10 statków przy bramce 9 (budżet reżysera + 3; żaden nie tonie, dwa poddane, trzy
-  daleko: przetasowana kolejność pojawiania się). Do decyzji: bramka liczy też statki spoza budżetu reżysera (np. cele
-  zleceń) albo reżyser liczy wszystkie; potem włączyć pion (uderzenia fali w dno i burtę, kołysanie), poziom w części.
+- [x] fizyka (18.11, zgoda właściciela): opór pionowy na prędkości względem ruchu wody w fali (człon oporu Morisona):
+  uderzenia fali w dno i burtę, kołysanie i nurkowanie z martwą falą; poziomy ruch wody pominięty (wytrącał statki z kursu,
+  autopilot audytu rozgrywki nie kończył zleceń). Reżyser świata liczy cały skład grupy (konwój to 4 statki), żeby morze
+  mieściło się w budżecie + 3 z graczem (ADR-0005)
+- [ ] do rozważenia: poziomy ruch wody przy statkach gracza (z regulatorem kursu autopilota odpornym na pchnięcia fal)
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
