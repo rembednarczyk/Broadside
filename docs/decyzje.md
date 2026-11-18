@@ -710,3 +710,42 @@ piksela i aliasują w plamki. Zmiany: iskry nocą do 10% dziennych (szeroki poł
 w swoje średnie pokrycie, gdy piksel obejmuje 0,12–0,5 m wody, a drobniejsza koronka kilwateru przy 0,05–0,2 m
 (filtrowanie po rozmiarze piksela, `foot = length(fwidth(xz))`, jak przy normalnych iskier). Kilwater z daleka zostaje
 widoczny jako miękki pas (średnia 0,85 pokrycia).
+
+## 18.11, użytkownik: optymalizacje bez straty efektów, rozdzielczość na suwaku także dla ultra
+Właściciel: „Pomyśl nad jakimiś trickami optymalizacyjnymi które poprawią wydajność bez straty efektów… obniżenie
+rozdzielczości na suwaku również dla ultra”. Najpierw pomiar: `tools/perf/frame-bench.mjs` mierzy czas `scene.render()`
+z wyłączanymi po kolei częściami (niebo, ocean, statki, cienie, post-procesy), z rozgrzewką po każdym przełączeniu
+(przełączenie przebudowuje shadery). SwiftShader liczy na CPU: milisekundy nie są telefonu, udziały kosztu pikseli tak;
+MSAA liczy w nim każdą próbkę osobno, więc jego koszt jest tu zawyżony względem GPU. Wyniki 640×360, ziarno 7, 17:00:
+- Ultra nie miał wygładzania krawędzi: SSAO prowadzi scenę przez pre-pass Babylona (wiele celów renderowania) z jedną
+  próbką, a MSAA ×4 łańcucha post-procesów trafiało dopiero w gotowy obraz. Próbki ustawione na pre-passie: liny i reje
+  gładkie (zrzut A/B). Koszt klatki ultra rośnie (na SwiftShader 1,7 → 3,2 s), to cena wygładzania, które było tylko
+  w ustawieniach.
+- Niebo i chmury objętościowe w połowie rozdzielczości (`skyScale` 0,5 dla high i ultra, pełne dla cinematic i presetów
+  bez chmur objętościowych): kopuła rysowana do tekstury half-float (rdzeń słońca dalej powyżej 1 dla bloomu) i pokazana
+  jako tło (`Layer`), reszta sceny na wierzchu w pełnej rozdzielczości, więc krawędzie masztów i wybrzeża bez zmian.
+  Koszt nieba 110–330 → 31–70 ms (ok. 75% mniej); na planszach `stern-sun` i `horizon` różnicy w chmurach nie widać.
+  Wzorzec: wolumetria w obniżonej rozdzielczości z silników gier, u nas bez rzutowania czasowego.
+- Ocean: pole komórek Worleya liczone raz zamiast dwa razy na wywołanie koronki, a koronki nie liczy się tam, gdzie z
+  daleka i tak zastępuje ją średnia (ocean 693 → 565 ms przy szumie pomiaru ok. ±100 ms).
+- Suwak rozdzielczości obok presetu: zmiana samej rozdzielczości nie robi z presetu „własnego” (ultra przy 80% zostaje
+  ultra ze wszystkimi efektami). Poniżej 95% lekkie wyostrzenie po skalowaniu (`sharpen` Babylona, siła 1,2 × ubytek, do
+  0,45), jak krok wyostrzania w FSR i DLSS. Gęstość pikseli ograniczona do 2: ekran 3x liczył 2,25 raza więcej pikseli
+  niż 2x przy różnicy niewidocznej z odległości ręki (tak samo robią three.js i większość gier w przeglądarce).
+Nie sprawdzone: czasy na prawdziwym telefonie i GPU.
+
+## 18.11 Poziomy szczegółów dział i kadłubów po odległości (orkiestrator, optymalizacja)
+Podział kosztu statków w `frame-bench` (grupy materiałów) pokazał dwa duże koszty na high przy kamerze pościgowej
+(ok. 73 m): skany dział (14% klatki; 12 tys. trójkątów na działo, ok. 300 tys. na galeon, rysowane do 140 m i bez
+odrzucania poza kadrem) i pełny kadłub z modelu (12%; ok. 250 tys. trójkątów). Zmiany: skan dział do 45 m (kamera
+pokładowa i zbliżenia; dalej toczona lufa z tego samego profilu); kadłub z modelu w dwóch poziomach, pełny do 50 m, dalej
+lekki (ok. 80 tys., plik `-lite` już budowany dla presetu low), oba wczytywane razem, zanim klasa liczy się jako gotowa
+(widok statku powstaje od razu); brak pliku lekkiego zostawia pełny na każdej odległości (przeglądarka statku).
+Zrzut A/B z kamery pościgowej: kadłuby nie do odróżnienia. Wynik high w dniu (SwiftShader, 640×360): 2,9 → 1,9 s na
+klatkę (−34%), statki 1,19 → 0,32 s.
+Dalej ocean (na ultra ok. 45% klatki): pętle po statkach w shaderze wierzchołków (`hullWater`, trzy wywołania na
+wierzchołek do normalnej) i pikseli (`wakes`, `hullOcclusion`) pomijają statek, gdy punkt leży poza zasięgiem jego
+wyrazów (rufa: e^-6 na 25 m, grzbiet fali dziobowej: trzy długości zaniku), a drobne skale detalu powierzchni (trzy
+trójki fbm po cztery oktawy) liczą się tylko tam, gdzie ich waga od rozmiaru piksela jest niezerowa. Wynik bez zmiany w
+obrazie (pominięte wyrazy są zerowe). Ultra: 2,56 → 2,23 s, ocean 1,23 → 0,93 s. SwiftShader cieniuje każdą próbkę MSAA
+osobno, więc koszt pikseli na ultra jest tu zawyżony względem GPU.

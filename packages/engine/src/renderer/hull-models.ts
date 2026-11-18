@@ -34,6 +34,8 @@ export class HullModels {
   private readonly plankTextures = new Map<ShipClassId, Texture>();
   private readonly sideCache = new Map<ShipClassId, (number | null)[]>();
   private readonly loaded = new Map<ShipClassId, { container: AssetContainer; metrics: HullMetrics }>();
+  /** The light tier of the full models, for ships away from the camera (level of detail); absent where the file is. */
+  private readonly far = new Map<ShipClassId, AssetContainer>();
 
   /** `tier`: "" for the full models (high and above), "-lite" for the low preset only. */
   constructor(private readonly scene: Scene, private readonly baseUrl: string, private readonly tier: "" | "-lite" = "") {}
@@ -43,11 +45,20 @@ export class HullModels {
     await Promise.all(
       classes.map(async (id) => {
         try {
-          const [container, metrics] = await Promise.all([
+          // The full tier also takes the light one for distant ships (a quarter of the triangles: the
+          // full hull was 12% of a frame at the chase camera's distance). Optional: a missing file
+          // leaves the full hull at every distance. Both before the class counts as loaded: the
+          // ships' views are built as soon as it does.
+          const [container, metrics, far] = await Promise.all([
             LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}${this.tier}.glb`), this.scene, GLB),
             fetch(`${this.baseUrl}${id}.json`).then((res) => res.json() as Promise<HullMetrics>),
+            this.tier === "" ? LoadAssetContainerAsync(assetUrl(`${this.baseUrl}${id}-lite.glb`), this.scene, GLB).catch(() => null) : Promise.resolve(null),
           ]);
           useStandardMaterials(container, this.scene, `hull-${id}`, metrics.gain ?? HULL_GAIN, true);
+          if (far) {
+            useStandardMaterials(far, this.scene, `hull-${id}-lite`, metrics.gain ?? HULL_GAIN, true);
+            this.far.set(id, far);
+          }
           this.loaded.set(id, { container, metrics });
         } catch {
           // No model for this class (or offline): the ship keeps its generated hull.
@@ -64,11 +75,13 @@ export class HullModels {
    * A copy of the class's hull under `parent`, fitted to the physics hull: the beam to its beam, the
    * gunwale amidships to its deck plus a bulwark (models are often longer and flatter than the
    * stubby physics hulls), the length in proportion to the beam. Returns its meshes, or null without a model.
+   * `far`: the light tier (null where there is none).
    */
-  instantiate(id: ShipClassId, parent: TransformNode, hull: { beam: number; draft: number; freeboard: number }): AbstractMesh[] | null {
+  instantiate(id: ShipClassId, parent: TransformNode, hull: { beam: number; draft: number; freeboard: number }, far = false): AbstractMesh[] | null {
     const m = this.loaded.get(id);
-    if (!m) return null;
-    const inst = m.container.instantiateModelsToScene((n) => `${n}-${parent.name}`, false, { doNotInstantiate: true });
+    const container = far ? this.far.get(id) : m?.container;
+    if (!m || !container) return null;
+    const inst = container.instantiateModelsToScene((n) => `${n}-${parent.name}`, false, { doNotInstantiate: true });
     const { kx, ky } = hullFit(m.metrics, hull);
     const meshes: AbstractMesh[] = [];
     for (const root of inst.rootNodes) {

@@ -153,5 +153,21 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] D3 (właściciel 17.11). Proste sterowanie, domyślne: tapnięcie w morze wysyła tam załogę (pilot kursem jak kapitanowie AI, halsowanie z jednym zwrotem na laylinie i poprawką na dryf, zwinięcie żagli u celu), przeciągnięcie palcem rysuje kurs, po którym statek płynie i potem trzyma jego kierunek; trasa i cel widoczne na wodzie; klasyczny ster w ustawieniach (Sterowanie: Ster), A i D zawsze przejmują koło (`ai/pilot.ts`, `systems/pilot.ts`, `controllers/course-gestures.ts`, `course-view.ts`)
 - [ ] D2 (w toku, właściciel 17.11). żywy pokład: więcej postaci, animowanych (animacje z Universal Animation Library Quaterniusa wypieczone do tekstur wierzchołków, `BakedVertexAnimationManager` Babylona dla instancji), z rolami ze stanu symulacji: ludzie przy brasach przy zmianie kursu i trymu (D1), na rejach przy zmianie żagli i refowaniu, obsługa dział przy salwie i ładowaniu, sternik przy kole, obserwator na marsie, ludzie na wantach; podział z `crew` statku (straty widać), deterministycznie z czasu symulacji. Zrobione: postacie z kośćmi i 7 klipów (spoczynek, rozmowa, ciągnięcie, ster, praca na klęczkach, obsługa, obserwacja) wypieczone do tekstury macierzy kości (`crew-anim.mjs`, `CrewRig`), klip i faza na instancję; stanowiska z rolami (ster, mars, reling kasztelu, fały, brasy, działa pokładu górnego, śródokręcie; `crew-layout.ts`) i klip ze stanu statku (`crew-roles.ts`, `crew-activity.ts`): ciągnięcie przy brasowaniu i zmianie żagli, obsługa 18 s po strzale, sternik, obserwator, pobici stoją. Część 2: druga biblioteka (CC0): oparcie o reling, wołanie, skrzyżowane ręce; oficer wachtowy przy sterniku; koło sterowe na kasztelu; zbliżenie: pozy poprawne, postacie na pokładzie. Część 3: wspinaczka z Mixamo (pliki właściciela): topmani przy każdej drabince want pod marsem wchodzą po wyblinkach przy stawianiu i zwijaniu żagli, przechodzą przez krawędź marsa, stoją tam 20 s po robocie i schodzą (`crew-aloft.ts`, retargeting `tools/assets/retarget.mjs`). Zostaje: ruch między stanowiskami (chód), wyjście na reje (brak klipu chodzenia po pertach), klipy liny i ściany (wypieczone, jeszcze nieużyte: abordaż przez burtę, wejście po linie), obsługa dział niższych pokładów widoczna przez furty, latarnie wacht nocą (`Idle_Lantern_Loop`)
 
+### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
+Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
+rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu
+z wyostrzeniem, gęstość pikseli do 2, skany dział do 45 m, kadłub z modelu w dwóch poziomach (pełny do 50 m), ocean
+pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po sprawdzeniu na telefonie:
+- [ ] pomiar na prawdziwym telefonie (klatki na high i ultra po zmianach); bez niego koszt MSAA jest nieznany (SwiftShader
+  cieniuje każdą próbkę osobno, więc zawyża go)
+- [ ] ultra: MSAA ×4 → ×2 albo domyślne 80–85% rozdzielczości, jeśli telefon nie uciągnie naprawionego wygładzania
+- [ ] cienie: rzadsze odświeżanie mapy dla nieruchomych wysp (osobna mapa statyczna albo `refreshRate`), na ultra 5–15%
+- [ ] ocean (high ok. 30%, ultra ok. 40%): detal fal z tekstury zamiast szumu daje mało (detal to już ok. 5% oceanu,
+  pomiar 18.11); większe źródła do zmierzenia: `shallows` (pętla po 32 wyspach z fbm), koronka piany, gęstość siatki
+  `oceanCells` na ultra (360) i wywołania `hullWater` w shaderze wierzchołków
+- [ ] statki: załoga z animacją wierzchołkową i liny ruchome (w podziale kosztu pojawiają się po 0–8%, pomiar zaszumiony:
+  powtórzyć z większą liczbą klatek)
+- [ ] post-procesy na ultra (ok. 13%): SSAO w połowie rozdzielczości już jest; sprawdzić koszt rozmycia ruchu i bloomu
+
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

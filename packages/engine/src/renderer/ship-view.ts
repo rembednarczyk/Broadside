@@ -1,6 +1,6 @@
 import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
 import { type ShipPart, partId, rotateInv, vec3, windVector } from "@broadside/core";
-import { Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
+import { type AbstractMesh, Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
 import { type DetailMaterials, ShipDetail, createDetailMaterials } from "./ship-detail";
@@ -178,8 +178,20 @@ export const setNightGlow = (scene: Scene, darkness: number, sunHeight = 1): voi
 
 /** Within this distance of the camera a ship's canvas is simulated as fabric (sail-sim). */
 const CLOTH_SIM = 220;
-/** Within this distance of the camera a ship shows the scanned gun barrels. */
-const SCAN_GUNS = 140;
+/**
+ * Within this distance of the camera a ship shows the scanned gun barrels (12 thousand triangles
+ * each, some 300 thousand a galleon): the deck camera and close views. From the chase camera (about
+ * 70 m) a barrel is a few dozen pixels long and the lathed barrel of the same profile looks the
+ * same (frame bench: the scans were 14% of a frame at 140 m).
+ */
+const SCAN_GUNS = 45;
+
+/**
+ * Within this distance a modelled hull is the full model (about 250 thousand triangles), beyond
+ * it the light tier (about 80 thousand, same textures' look at half size): from the chase camera
+ * the two cannot be told apart, and the full one cost 12% of a frame there (frame bench).
+ */
+const HULL_FULL = 50;
 
 /** Beyond this distance a ship drops its ratlines, rails, lanterns and crew. */
 const FINE_DETAIL = 320;
@@ -196,8 +208,16 @@ export class ShipView {
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
 
+  /** The model hull in its two tiers (full near the camera, light beyond HULL_FULL), where both loaded. */
+  private hullTiers: { near: AbstractMesh[]; far: AbstractMesh[] } | null = null;
+
   /** Level of detail by distance to the camera (metres). */
   setDistance(d: number): void {
+    if (this.hullTiers) {
+      const near = d < HULL_FULL;
+      for (const m of this.hullTiers.near) m.setEnabled(near);
+      for (const m of this.hullTiers.far) m.setEnabled(!near);
+    }
     // The animated crew replace the stand-ins the first time the ship comes close after they load.
     if (d < FINE_DETAIL && this.rig?.templates) this.detail.crew.useRig(this.rig);
     this.detail.setFine(d < FINE_DETAIL);
@@ -250,6 +270,10 @@ export class ShipView {
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
     this.modelled = hullMeshes !== null;
+    if (hullMeshes) {
+      const far = hulls?.instantiate(model.def.id, hullSpace, model.def.hull, true) ?? null;
+      if (far) this.hullTiers = { near: hullMeshes, far };
+    }
     // Guns stand at the side the hull really has: the model's, where there is one.
     const sides = hullMeshes && hulls
       ? hulls.sides(model.def.id, hullMeshes, hullSpace, model.guns.map((g) => ({ y: g.pos.y + model.com.y + gunHeight(g.kind), z: g.pos.z + model.com.z, sign: Math.sign(g.dir.x) || 1 })), model.def.hull.beam)
