@@ -131,8 +131,7 @@ export class BabylonRenderer {
     this.crewRig = opts.propsUrl && opts.graphics.preset !== "low" ? new CrewRig(this.scene, `${opts.propsUrl}crew-anim.bin`) : null;
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
-    this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
-    this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);
+    this.post = new PostStack(this.scene, this.camera.camera, g);
   }
 
   /** Shadows: cascaded maps on the higher presets (sharp close up, wide range), one map below. */
@@ -159,11 +158,6 @@ export class BabylonRenderer {
   }
 
   private applyLook(look: SceneLook): void {
-    if (this.post.sunDisc) {
-      const c = this.camera.camera.position;
-      this.post.sunDisc.position.set(c.x + look.sunDir.x * 900, c.y + Math.max(0.02, look.sunDir.y) * 900, c.z + look.sunDir.z * 900);
-      this.post.sunDisc.isVisible = look.sunDir.y > -0.05;
-    }
     // The key light: the sun by day, the moon by night (look.ts).
     this.sun.direction.set(-look.keyDir.x, -Math.max(0.05, look.keyDir.y), -look.keyDir.z);
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
@@ -228,6 +222,16 @@ export class BabylonRenderer {
     if (changed) this.shipFill.track([...this.views.values()].map((x) => x.root));
   }
 
+  /**
+   * How strong the screen-space sun shafts are (grade.ts): a low sun in front of the camera, fading
+   * as it climbs, sets or goes behind heavy cloud (the reference's shafts are a low, backlit sun's).
+   */
+  private shaftStrength(look: SceneLook, toSun: Vector3): number {
+    const ahead = Vector3.Dot(this.camera.camera.getForwardRay(1).direction, toSun);
+    const low = smoothstep(-0.02, 0.08, look.sunDir.y) * (1 - smoothstep(0.35, 0.7, look.sunDir.y));
+    return 0.9 * low * smoothstep(0.2, 0.6, ahead) * (1 - 0.8 * smoothstep(0.55, 0.9, look.cloudCover));
+  }
+
   /** Domain events of the last steps (Observer): effects react to them. */
   onEvents(events: readonly DomainEvent[]): void {
     this.effects.onEvents(events);
@@ -263,9 +267,7 @@ export class BabylonRenderer {
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
     if (!this.islands && sim.env.archipelago) {
       this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
-      this.post.excludeFromShafts(this.islands.meshes);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
-      this.post.excludeFromShafts(this.towns.meshes);
       if (this.wreckUrl) void new WrecksView(this.scene, this.wreckUrl).place(wreckSites(sim.env.archipelago));
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
     }
@@ -329,7 +331,7 @@ export class BabylonRenderer {
     const LENS = 0.6;
     const h = cam.y - surface;
     const waterline = Math.abs(h) < LENS && this.camera.mode !== "isometric" ? 0.5 - h / (2 * LENS) : -1;
-    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8) });
+    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8), shafts: this.shaftStrength(look, sd) });
     this.ocean.setUnderwater(under);
     if (under) {
       this.scene.fogColor = new Color3(0.02, 0.13, 0.12);

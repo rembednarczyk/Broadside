@@ -809,3 +809,12 @@ wysokości. Test profilu; zrzuty `horizon`, `stern-sun` i szerokie ujęcie: wysp
 Wzburzona woda wzdłuż linii wodnej kadłuba błyszczy jak kilwater (pasmo szersze od piany, rośnie z prędkością). Promienie
 przez olinowanie: okazało się, że przebieg promieni od początku nic nie rysował (tarcza słońca poza warstwami kamery);
 próba naprawy dawała biały statek, więc wycofana i opisana w backlogu.
+
+## 18.11 Promienie słońca w przestrzeni ekranu zamiast VolumetricLightScattering (orkiestrator, M9 C1)
+Promienie Babylona nic nie rysowały (tarcza słońca poza warstwami kamery), a ich przebieg co klatkę renderował scenę drugi
+raz. Naprawa przez tarczę na warstwie kamery bieliła statek. Nowe promienie liczy końcowy przebieg gradacji: rozmycie
+promieniste w stronę słońca jasnych pikseli samego obrazu (maska z progu jasności 0,72–0,95, wygaszanie 0,955 na próbkę,
+GPU Gems 3 rozdz. 13; maszty, żagle i liny są w obrazie ciemne, więc same przecinają smugi). Próbek: jedna trzecia
+dawnego ustawienia `sunShafts` (8 do 32). Siła: nisko stojące słońce przed kamerą, słabnąca gdy słońce wysoko, za kamerą
+albo pod ciężkim niebem; pod wodą zostają promienie podwodne. Plansze `deck` i `stern-sun`: smugi między wantami i wokół
+masztów. Pomiar high: klatka 1,90 → 1,77 s, wywołania rysowania 243 → 176.

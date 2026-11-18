@@ -21,6 +21,10 @@ uniform float flash;
 uniform float night;
 uniform float time;
 uniform float waterline;
+uniform float shafts;
+#ifndef SHAFT_SAMPLES
+#define SHAFT_SAMPLES 16
+#endif
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vnoise(vec2 p) {
@@ -64,6 +68,23 @@ void main() {
   // The meniscus: a thin dark line with a bright edge where the surface meets the glass.
   c = mix(c, c * 0.55, smoothstep(0.006, 0.0, abs(uv.y - wl)) * step(0.0, waterline));
   c += vec3(0.25) * smoothstep(0.012, 0.004, abs(uv.y - wl - 0.008)) * step(0.0, waterline);
+  // Sun shafts in screen space (GPU Gems 3 ch. 13, Mitchell's radial blur towards the light): the
+  // bright sky round the sun smeared towards the eye, with decay; the masts, sails and rigging are
+  // dark in the image and so cut the shafts. The bright mask comes from the image itself, not an
+  // occlusion pass: one pass, no second render of the scene.
+  if (shafts > 0.0 && uw < 0.5) {
+    vec2 step = (uv - sunScreen) * (0.9 / float(SHAFT_SAMPLES));
+    vec2 q = uv;
+    float decay = 1.0;
+    vec3 acc = vec3(0.0);
+    for (int i = 0; i < SHAFT_SAMPLES; i++) {
+      q -= step;
+      vec3 s = texture2D(textureSampler, clamp(q, 0.001, 0.999)).rgb;
+      acc += s * smoothstep(0.72, 0.95, dot(s, vec3(0.2126, 0.7152, 0.0722))) * decay;
+      decay *= 0.955;
+    }
+    c += acc / float(SHAFT_SAMPLES) * shafts;
+  }
   // Droplets darken their rims slightly and catch a highlight.
   c = mix(c, c * 0.8 + vec3(0.06), d.b * drops * 0.35);
   // Lightning: a whiteout at the strike, then a cold blue cast that fades (reference s. 21).
