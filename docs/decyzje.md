@@ -866,3 +866,10 @@ zawracania tam i z powrotem na starcie, gdy cel był za rufą), żagle zwijane z
 odrzucone: zwrot przez sztag dla rejowców (statek nie przechodzi dziobem przez wiatr, po 90 s i tak zawraca przez rufę),
 zwrot, gdy cel wypada za trawers (krótkie halsy, więcej strat). Zostaje do decyzji (fizyka): dryf na gołych masztach,
 osiągi pod wiatr, stabilność kursu z wiatrem.
+
+## 18.11, użytkownik: „woda przy statku wygląda źle”
+Zbliżenia rufy i burty przy świeżym wietrze: wzdłuż linii wodnej szedł jednolity, ostry biały pas (piana na obrysie o
+stałej jasności), a za rufą koronka piany przy pełnym pokryciu wycinała ciemne oczka (biała siatka na morzu). Zmiany:
+pas przy linii wodnej węższy, przy postoju ledwo widoczny (rośnie z prędkością) i porwany szumem płynącym wzdłuż burty,
+tak samo kołnierz przy dziobie i piana po uderzeniu fali; w kilwaterze koronka jest fakturą mlecznej warstwy (od 45% do
+100% pokrycia, bez dziur), jasność warstwy faluje wolnym szumem. Zrzuty przed i po: rufa bez siatki, burta bez białego pasa.

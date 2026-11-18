@@ -275,14 +275,17 @@ vec2 wakes(vec2 p) {
     float u = along / halfLen;
     float w = across / (b.z * 0.5);
     float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
-    foam += exp(-pow((outline - 1.0) / 0.12, 2.0)) * (0.35 + clamp(speed / 6.0, 0.0, 0.5));
+    // Broken, not a painted band: patches of white that come and go along the side (a noise
+    // drifting aft), thin at rest and fuller with way on.
+    float broken = 0.3 + 0.9 * vnoise(vec2(along * 0.45 + speed * time * 0.6, across * 0.9 + float(i) * 7.0));
+    foam += exp(-pow((outline - 1.0) / 0.08, 2.0)) * (0.1 + clamp(speed / 6.0, 0.0, 0.45)) * broken;
     // Where the sea has just struck the side, the water along it is white with the broken wave.
-    foam += exp(-pow((outline - 1.0) / 0.35, 2.0)) * b.w * 0.8;
+    foam += exp(-pow((outline - 1.0) / 0.3, 2.0)) * b.w * 0.5 * broken;
     // The churned water along the side glitters too (ref_020: sparks at the hull, not only astern).
     glit += exp(-pow((outline - 1.0) / 0.3, 2.0)) * 0.6 * clamp(speed / 4.0, 0.0, 1.0);
     // Bow wave: a foam collar around the forward hull.
     float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
-    foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;
+    foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.45 * broken;
     // The bow wave breaks along its crest: foam on the ridge that runs off from the stem.
     float fromStem = halfLen - along;
     if (fromStem > 0.0) {
@@ -414,11 +417,15 @@ void main() {
   float foam = (laceFar < 1.0 ? mix(lace(fp, capCover), capCover * 0.45, laceFar) : capCover * 0.45) * 0.75;
   // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
   // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
+  // In the churned water astern the lace is the texture of a milky sheet, not holes cut in it (as
+  // full cover, the cells' dark eyes read as a net laid on the sea): the sheet is never thinner
+  // than 45% of its cover, the bubble walls whiten it the rest of the way, and a slow noise
+  // thins and thickens it in streaks.
   float wakeCover = clamp(wk.x * 1.3, 0.0, 1.0);
   float wakeFar = smoothstep(0.05, 0.2, foot);
-  float wakeLace = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), wakeCover * 0.85, wakeFar) : wakeCover * 0.85;
-  float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
-  foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
+  float wakeTex = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), 0.85, wakeFar) : 0.85;
+  float wakeFoam = wakeCover * mix(0.45, 1.0, wakeTex) * (0.4 + 0.35 * wk.x) * mix(0.7, 1.15, fbm(fp * 0.8 + 11.0));
+  foam = max(foam, wakeFoam);
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
