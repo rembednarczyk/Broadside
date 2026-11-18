@@ -18,6 +18,21 @@ void main() {
 }
 `;
 
+/**
+ * Haze over the horizon (aerial perspective of the sea air), brighter under the sun. Under a heavy
+ * sky the air at the horizon lies in the cloud's shadow, a dull grey instead of a bright band
+ * (ref_152, ref_060): the same curve as hazeShade in renderer/look.ts, which dims the scene's fog.
+ */
+const HORIZON_HAZE = /* glsl */ `
+vec3 horizonHaze(vec3 col, vec3 d, float sunUp) {
+  float e = asin(clamp(d.y, -1.0, 1.0));
+  float shade = 1.0 - 0.4 * smoothstep(0.4, 0.9, cloudCover);
+  float toward = pow(max(dot(normalize(d.xz + 1e-5), normalize(sunDirection.xz + 1e-5)), 0.0), 3.0);
+  vec3 haze = skyHorizon * (1.0 + 0.35 * toward * sunUp) * shade;
+  return mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
+}
+`;
+
 /** Sky fragment shader with the cloud noise octaves of the graphics settings (5 and up: volumetric clouds; `noiseVolume`: they read the 3D noise texture `cloudNoise`, WebGL2 only). */
 export const skyFragment = (octaves: number, noiseVolume = false): string => /* glsl */ `
 precision highp float;
@@ -51,6 +66,7 @@ float billow(vec2 p) {
   return s;
 }
 float hg(float c, float g) { return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * c, 1.5) / 12.566; }
+${HORIZON_HAZE}
 
 ${volumetricClouds(noiseVolume ? 96 : octaves >= 6 ? 72 : 56, noiseVolume)}
 void main() {
@@ -121,15 +137,12 @@ void main() {
       }
     }
   }
-  // Haze over the horizon (aerial perspective of the sea air), brighter under the sun.
-  {
-    float e = asin(clamp(d.y, -1.0, 1.0));
-    float toward = pow(max(dot(normalize(d.xz + 1e-5), normalize(sunDirection.xz + 1e-5)), 0.0), 3.0);
-    vec3 haze = skyHorizon * (1.0 + 0.35 * toward * sunUp);
-    col = mix(col, haze, smoothstep(0.09, 0.0, e) * (0.45 + 0.25 * toward));
-  }
+  col = horizonHaze(col, d, sunUp);
   // Overexposed core around the sun, through thin cloud (the reference's blown-out sky).
-  col += sunColor * pow(max(c, 0.0), 5.0) * (VOLUMETRIC ? 1.5 * (0.08 + 0.92 * through) : 1.6) * sunUp * (0.5 + 0.5 * cloudCover);
+  // Behind the volumetric heaps the blown-out disc is narrow and the broad glow weak: the sheet of
+  // stratus scatters the rest, so the sky round the sun stays grey a few degrees off.
+  float core = VOLUMETRIC ? (1.4 * pow(max(c, 0.0), 64.0) + 0.2 * pow(max(c, 0.0), 5.0)) * (0.08 + 0.92 * through) : 1.6 * pow(max(c, 0.0), 5.0);
+  col += sunColor * core * sunUp * (0.5 + 0.5 * cloudCover);
   // A lightning flash lights the whole sky a little and the clouds round the strike strongly; weak
   // terms, since the night exposure lifts them (strong ones whiten the sky and hide the channel).
   float toward = pow(max(dot(d, lightning.xyz), 0.0), 6.0);

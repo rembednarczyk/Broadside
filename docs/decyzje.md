@@ -628,3 +628,12 @@ Gęstość mgły zależy teraz od pokrycia w potędze 1,5 (`0.0006 + 0.0028·cov
 zostaje przejrzyste, a pod ciężkim niebem horyzont szarzeje. Preset high przechodzi na chmury z tekstury szumu 3D
 (`cloudOctaves` 6, jak ultra): na stanowisku `tools/sky/sky-test.mjs` (SwiftShader) wariant proceduralny z 5 oktawami
 liczył się 3,58 s, teksturowy 2,71 s, a ma drobniejszą fakturę. Na WebGL1 silnik i tak wraca do wariantu proceduralnego.
+
+## 18.11 Warstwa stratusów między kłębami, węższa poświata słońca, ciemniejsza mgiełka (orkiestrator, M9 C2)
+Plansze `horizon` (ref_152) i `side-dark` (ref_060). Pod ciężkim niebem przerwy między kłębami były czystym, prześwietlonym
+niebem, a horyzont jasnym pasem; na klatkach całe niebo jest zachmurzone, słońce przebija cienką warstwę, horyzont jest
+szary. Zmiany: za kłębami cienka warstwa stratusów na płaszczyźnie (grubość `smoothstep(0.3, 0.7, cover)`, szarpana trzema
+skalami szumu, szara od światła dnia, srebrzysta w wąskim stożku wokół słońca); prześwietlony rdzeń słońca w wariancie
+objętościowym węższy (`pow(c, 64)` zamiast `pow(c, 5)`); mgiełka horyzontu i mgła sceny przyciemnione tą samą krzywą
+(`hazeShade` w `look.ts`, `horizonHaze` w `shaders/sky.ts`, do 0,6 przy pełnym zachmurzeniu); iskry na wodzie gasną od
+pokrycia 0,5 (było 0,55) prawie do zera przy 0,85. Na stanowisku nieba wariant proceduralny (3 oktawy) bez zmian.

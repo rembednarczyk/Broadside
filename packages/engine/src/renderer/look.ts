@@ -35,6 +35,12 @@ const mix = (a: Rgb, b: Rgb, t: number): Rgb => rgb(a.r + (b.r - a.r) * t, a.g +
 const scale = (a: Rgb, s: number): Rgb => rgb(a.r * s, a.g * s, a.b * s);
 const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 
+/** Brightness of the horizon haze under the cloud deck: 1 under a broken sky, 0.6 under a full one (smoothstep 0.4 to 0.9 of the cover; the same curve as horizonHaze in shaders/sky.ts). */
+export const hazeShade = (cover: number): number => {
+  const t = clamp01((cover - 0.4) / 0.5);
+  return 1 - 0.4 * t * t * (3 - 2 * t);
+};
+
 const DAY_ZENITH = rgb(0.16, 0.36, 0.72);
 const DAY_HORIZON = rgb(0.66, 0.78, 0.9);
 const DUSK_ZENITH = rgb(0.18, 0.2, 0.42);
@@ -79,5 +85,8 @@ export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?
   // Haze thickens faster than the cover: under a heavy sky the horizon and its cliffs sink into
   // it (ref_152, ref_060), under a broken one hardly changes (cover^1.5).
   const fogDensity = 0.0006 + 0.0028 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
-  return { sunDir, sunColor, sunIntensity, keyDir: moonKey ? moonDir : sunDir, keyColor: moonKey ? MOON : sunColor, keyIntensity: moonKey ? moonIntensity : sunIntensity, ambient, skyZenith: zenith, skyHorizon: horizon, fogColor: horizon, fogDensity, cloudCover: cover };
+  // That haze lies in the shadow of the deck of cloud: a dull grey, darker than the bright band
+  // of a clear horizon (the sky shader dims its own haze by the same curve, horizonHaze in shaders/sky.ts).
+  const fogColor = scale(horizon, hazeShade(cover));
+  return { sunDir, sunColor, sunIntensity, keyDir: moonKey ? moonDir : sunDir, keyColor: moonKey ? MOON : sunColor, keyIntensity: moonKey ? moonIntensity : sunIntensity, ambient, skyZenith: zenith, skyHorizon: horizon, fogColor, fogDensity, cloudCover: cover };
 };

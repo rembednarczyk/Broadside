@@ -151,7 +151,15 @@ vec4 marchClouds(vec3 d, float sunUp) {
   // strip is closed by the far heaps (a dim haze), not a bright gap under the lid.
   float Tfar = mix(lid, T, rise);
   vec3 lightFar = mix(skyHorizon * 0.5 * (1.0 - lid), mix(skyHorizon * 0.8 * (1.0 - T), light, far), rise);
-  return vec4(lightFar, Tfar);
+  // Under a heavy sky the gaps between the heaps are not clear blue but a sheet of stratus above
+  // them (ref_152): a thin layer on a plane high over the sea, as thick as the lid, torn by noise,
+  // grey from the day around and silvered towards the sun (forward scattering through a thin cloud).
+  vec2 uv = d.xz / (d.y + 0.08) * 0.35 + windOffset * 0.0002;
+  float n = vnoise(uv * 3.0) * 0.5 + vnoise(uv * 7.3 + 4.0) * 0.3 + vnoise(uv * 17.0 + 2.0) * 0.2;
+  float sheet = clamp(smoothstep(0.3, 0.7, cloudCover) * (0.45 + 1.0 * smoothstep(0.2, 0.8, n)), 0.0, 0.96) * rise;
+  vec3 sheetCol = mix(skyHorizon, skyZenith, 0.3) * (0.5 + 0.25 * n) * (0.4 + 0.6 * sunUp)
+    + sunColor * sunUp * (pow(max(c, 0.0), 64.0) * 1.4 + pow(max(c, 0.0), 6.0) * 0.12) * (1.0 - 0.5 * sheet);
+  return vec4(lightFar + Tfar * sheet * sheetCol, Tfar * (1.0 - sheet));
 }
 
 `;

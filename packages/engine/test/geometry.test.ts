@@ -3,7 +3,7 @@ import { SHIP_CLASSES, SHIP_CLASS_IDS } from "@broadside/core";
 import { deckGeometry, hullGeometry } from "../src/renderer/hull-geometry";
 import { liveryOps, paint, type PaintTarget } from "../src/renderer/hull-livery";
 import { SAIL_COLS, SAIL_ROWS, sailIndices, sailPositions } from "../src/renderer/sail-geometry";
-import { sceneLook } from "../src/renderer/look";
+import { hazeShade, sceneLook } from "../src/renderer/look";
 import { buildOceanGrid } from "../src/renderer/ocean";
 
 describe("hull geometry", () => {
@@ -74,6 +74,10 @@ describe("scene look", () => {
     expect(noon.keyIntensity).toBe(noon.sunIntensity);
     expect(storm.sunIntensity).toBeLessThan(noon.sunIntensity);
     expect(storm.fogDensity).toBeGreaterThan(noon.fogDensity);
+    // The haze of a heavy sky is dimmer than the horizon above it; a broken sky's is not.
+    expect(hazeShade(0.3)).toBe(1);
+    expect(hazeShade(1)).toBeCloseTo(0.6);
+    expect(storm.fogColor.r).toBeLessThan(storm.skyHorizon.r);
   });
 });
 
