@@ -157,28 +157,7 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
       if (!c.ports.some((port) => Math.hypot(port.at[0] - at.x, port.at[2] - at.z) < 1.1)) windows.push({ at, n: run.normal(i) });
     }
   });
-  // The flat transom under the castle: strakes from the castle's floor down towards the water,
-  // narrowing to the breadth of the hull's run (a galleon's square tuck stern).
-  {
-    const rows = Math.max(3, Math.round((c.base - c.transom.foot) / 0.3));
-    for (let j = 0; j < rows; j++) {
-      const y0 = c.transom.foot + ((c.base - c.transom.foot) * j) / rows;
-      const y1 = c.transom.foot + ((c.base - c.transom.foot) * (j + 1)) / rows;
-      const h0 = c.transom.half + (stern.half - c.transom.half) * (j / rows);
-      const h1 = c.transom.half + (stern.half - c.transom.half) * ((j + 1) / rows);
-      const n = wp.length / 3;
-      const u0 = hash(j, 31);
-      wp.push(-h0, y0, stern.z - 0.035, h0, y0, stern.z - 0.035, -h1, y1, stern.z, h1, y1, stern.z);
-      wu.push(u0, 0, u0 + (2 * h0) / pw, 0, u0, (y1 - y0) / ph, u0 + (2 * h1) / pw, (y1 - y0) / ph);
-      wi.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
-    }
-    // Mouldings across it, as the wales run round a hull: at its foot (the counter) and two between.
-    for (const k of [0.04, 0.4, 0.75]) {
-      const y = c.transom.foot + (c.base - c.transom.foot) * k;
-      const h = c.transom.half + (stern.half - c.transom.half) * k;
-      mouldings.push([new Vector3(-h, y, stern.z - 0.07), new Vector3(h, y, stern.z - 0.07)]);
-    }
-  }
+  transom(c, { wp, wu, wi, mouldings }, pw, ph, hash);
   const walls = meshOf(scene, `castle-${parent.name}`, wp, wu, wi);
   walls.material = wallMaterial(scene, mats.castle, planks?.texture ?? null, key);
   const trims = mouldings.map((path, i) => MeshBuilder.CreateTube(`castle-moulding-${i}`, { path, radius: 0.075, tessellation: 6, cap: Mesh.CAP_ALL }, scene));
@@ -318,3 +297,29 @@ const shipWheel = (scene: Scene, name: string, deckY: number, z: number, wood: S
   return wheel;
 };
 
+/**
+ * The flat transom under the castle (a galleon's square tuck stern): strakes from the castle's
+ * floor down towards the water, narrowing to the breadth of the hull's run, and mouldings across
+ * it as the wales run round a hull. Added to the castle walls' arrays (one mesh, one draw).
+ */
+const transom = (c: CastleLayout, out: { wp: number[]; wu: number[]; wi: number[]; mouldings: Vector3[][] }, pw: number, ph: number, hash: (j: number, salt: number) => number): void => {
+  const { wp, wu, wi, mouldings } = out;
+  const stern = c.ring[0]!;
+  const rows = Math.max(3, Math.round((c.base - c.transom.foot) / 0.3));
+  for (let j = 0; j < rows; j++) {
+    const y0 = c.transom.foot + ((c.base - c.transom.foot) * j) / rows;
+    const y1 = c.transom.foot + ((c.base - c.transom.foot) * (j + 1)) / rows;
+    const h0 = c.transom.half + (stern.half - c.transom.half) * (j / rows);
+    const h1 = c.transom.half + (stern.half - c.transom.half) * ((j + 1) / rows);
+    const n = wp.length / 3;
+    const u0 = hash(j, 31);
+    wp.push(-h0, y0, stern.z - 0.035, h0, y0, stern.z - 0.035, -h1, y1, stern.z, h1, y1, stern.z);
+    wu.push(u0, 0, u0 + (2 * h0) / pw, 0, u0, (y1 - y0) / ph, u0 + (2 * h1) / pw, (y1 - y0) / ph);
+    wi.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
+  }
+  for (const k of [0.04, 0.4, 0.75]) {
+    const y = c.transom.foot + (c.base - c.transom.foot) * k;
+    const h = c.transom.half + (stern.half - c.transom.half) * k;
+    mouldings.push([new Vector3(-h, y, stern.z - 0.07), new Vector3(h, y, stern.z - 0.07)]);
+  }
+};
