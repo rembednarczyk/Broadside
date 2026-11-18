@@ -2,8 +2,8 @@
  * What a tap on the sea means (pure, tested): the nearest thing under the finger within its
  * reach on screen (a ship, a port's approach, a fort, the player's own ship), else the water;
  * and the order that follows from it. A context-sensitive command (as in real-time strategy
- * games: the same tap moves to open ground and attacks an enemy): an enemy ship is run down and
- * boarded, any other ship followed, a port put into, a fort closed and stormed, the own ship
+ * games: the same tap moves to open ground and attacks an enemy): an enemy ship is fought
+ * broadside to broadside, any other ship followed, a port put into, a fort closed and stormed, the own ship
  * stopped, open water sailed to.
  */
 type P = { x: number; z: number };
@@ -49,7 +49,9 @@ export const orderFor = (hit: Tappable | null, water: P | null): TapOrder | null
     case "self":
       return { kind: "stop", at: hit.at };
     case "ship":
-      return { kind: hit.hostile ? "board" : "follow", target: hit.id, at: hit.at };
+      // An enemy is fought broadside to broadside (the crew bring her round and fire as the guns
+      // bear); boarding is in the ship's menu (hold on her), once she is beaten or alongside.
+      return { kind: hit.hostile ? "engage" : "follow", target: hit.id, at: hit.at };
     case "port":
       return { kind: "dock", at: hit.at };
     case "fort":

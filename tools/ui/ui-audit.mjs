@@ -63,7 +63,7 @@ for (const size of SIZES) {
     if (lang === "pl") {
       await page.click('[data-testid="open-settings"]');
       await page.click('text=Polski');
-      await page.click('[data-testid="open-settings"]');
+      await page.click('[data-testid="close-settings"]');
     }
     await page.evaluate(() => document.fonts.ready);
     const found = await page.evaluate((regions) => {
@@ -100,7 +100,7 @@ for (const size of SIZES) {
     });
     if (modal.x < 0 || modal.y < 0 || modal.x + modal.w > w || modal.y + modal.h > h) issues.push("ustawienia poza ekranem");
     if (size === SIZES[0] || size === "640x360") await page.screenshot({ path: join(outDir, `${size}-${lang}-settings.png`), timeout: 120000 });
-    await page.click('[data-testid="open-settings"]');
+    await page.click('[data-testid="close-settings"]');
     problems += issues.length;
     const name = `${size}-${steering}-${lang}`;
     await page.screenshot({ path: join(outDir, `${name}.png`), timeout: 120000 });

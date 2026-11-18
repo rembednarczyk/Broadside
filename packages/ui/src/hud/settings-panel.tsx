@@ -66,6 +66,8 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
         <button className={lang === "en" ? "on" : ""} onPointerDown={() => intents.setLanguage("en")}>English</button>
         <button className={lang === "pl" ? "on" : ""} onPointerDown={() => intents.setLanguage("pl")}>Polski</button>
       </div>
+      {/* The window covers the gear that opened it on short screens: it closes itself. */}
+      <button className="wide" onPointerDown={() => intents.toggleSettings()} data-testid="close-settings">{text(lang, "order.close")}</button>
     </div>
   );
 };

@@ -873,3 +873,10 @@ stałej jasności), a za rufą koronka piany przy pełnym pokryciu wycinała cie
 pas przy linii wodnej węższy, przy postoju ledwo widoczny (rośnie z prędkością) i porwany szumem płynącym wzdłuż burty,
 tak samo kołnierz przy dziobie i piana po uderzeniu fali; w kilwaterze koronka jest fakturą mlecznej warstwy (od 45% do
 100% pokrycia, bez dziur), jasność warstwy faluje wolnym szumem. Zrzuty przed i po: rufa bez siatki, burta bez białego pasa.
+
+## 18.11, użytkownik: „jak wejść w tryb ataku burtą w pościgu”
+Atak burtą był ukryty pod gestem przeciągnięcia od własnego statku do wroga i w menu po przytrzymaniu; samo tapnięcie
+wroga oznaczało abordaż. Teraz tapnięcie wroga to atak burtą (załoga obraca statek burtą i strzela, gdy działa
+namierzą), abordaż i eskorta zostają w menu po przytrzymaniu palca na statku. Karta pomocy dostała akapit o rozkazach
+(PL i EN). Przy okazji: panel ustawień zasłaniał własny przycisk ⚙ (urósł po przełącznikach refowania i wibracji), więc
+dostał przycisk „Zamknij”; audyt interfejsu zamyka nim panel.
