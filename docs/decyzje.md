@@ -854,3 +854,15 @@ Stan (ograbione wraki, licznik postoju) w symulacji i w zapisie jako pole opcjon
 podbijania wersji schematu); system `salvageSystem` w `createSystems()` po zleceniach; stan w osobnym `salvage-state.ts`
 (bez cyklu z kontekstem systemów). Komunikat „Łup z wraku!” / „Salvage from the wreck!”. Mapy ze znacznikami w grze nie
 ma, więc znacznik wraku i rozkaz po tapnięciu w backlogu.
+
+## 18.11, użytkownik: pływanie po zaznaczeniu „dziwnie działa” (pomiar i pierwsze poprawki)
+Pomiar bez przeglądarki (statek gracza, rozkaz trasy do punktów 150–400 m w różnych kierunkach od wiatru, 10–20 minut):
+z wiatrem, w bok i ukośnie statek dociera, ale kurs z wiatrem kołysze się o ok. ±20° (sterowanie przy wietrze z rufy),
+a po zwinięciu żagli płynie jeszcze 2,5–3 m/s i mija cel o ok. 150 m (za silny napór wiatru na gołe maszty); pod wiatr
+cel jest w praktyce nieosiągalny: rejowiec ostro na wiatr (74°) ma tor ok. 80–95° od wiatru, a zwrot przez rufę kosztuje
+150–200 m, więc bilans halsowania jest bliski zera albo ujemny. Poprawione w pilocie: poprawka na dryf rośnie z sinusem
+kąta do wiatru (bez skoków znaku przy wietrze z rufy), pilot pamięta wybrany hals i trzyma go względem niego (koniec
+zawracania tam i z powrotem na starcie, gdy cel był za rufą), żagle zwijane z wyprzedzeniem drogi hamowania. Próby
+odrzucone: zwrot przez sztag dla rejowców (statek nie przechodzi dziobem przez wiatr, po 90 s i tak zawraca przez rufę),
+zwrot, gdy cel wypada za trawers (krótkie halsy, więcej strat). Zostaje do decyzji (fizyka): dryf na gołych masztach,
+osiągi pod wiatr, stabilność kursu z wiatrem.
