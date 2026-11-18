@@ -2,6 +2,7 @@ import { DOCTRINES, type AmmoId, type GameCommand, type Relations, type SailLeve
 import { type Entity } from "../world/components";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
+import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
 import { aimHeightFor, firesAtRigging, lineStation, tacticalHeading } from "./tactics";
@@ -195,7 +196,9 @@ const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
     c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
     c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
   }
-  const desired = Math.atan2(c.wx - b.pos.x, c.wz - b.pos.z);
+  // Round the islands to the waypoint (a port behind an island is reached the long way).
+  const next = wayPoint(me, c, w.bed);
+  const desired = Math.atan2(next.x - b.pos.x, next.z - b.pos.z);
   // A convoy sails at the pace of its slowest ship: shorten sail while a follower lags.
   const lagging = w.ships.some((f) => f.captain?.leader === me.id && !f.ship!.sinking && Math.hypot(f.body!.pos.x - b.pos.x, f.body!.pos.z - b.pos.z) > 320);
   const level: SailLevel = lagging ? 1 : 3;

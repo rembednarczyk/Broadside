@@ -594,3 +594,9 @@ tapnięcie, np. abordaż po podpłynięciu; całość wydziel ładnie SRP i dete
 - Wibracje: wtyczka Capacitor Haptics (na stronie Vibration API), lekki impuls przy własnej salwie, średni przy
   trafieniu i wejściu na mieliznę, mocny przy upadku masztu, wybuchu prochowni, zderzeniu; najmocniejszy z klatki,
   nie częściej niż co 0,12 s; przełącznik w ustawieniach.
+
+**18.11, AI wokół wysp.** Kapitanowie AI w patrolu i handlu sterowali prosto na punkt (z omijaniem mielizn na
+bieżąco), więc port za wyspą pod wiatr bywał nieosiągalny (seed 3). Teraz biorą drogę z tego samego planera co pilot
+gracza (A* po dnie i naciąganie sznurka), liczoną raz, gdy punkt się zmienia, i trzymaną w stanie kapitana (zapis
+gry, determinizm); punkt zwrotny uznany za minięty w 80 m. Na czystej wodzie droga to sam punkt. Złoty hash bez
+zmian (przebieg wzorcowy nie ma archipelagu); audyty liczbowe po zmianie w raporcie poniżej.

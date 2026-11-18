@@ -26,6 +26,9 @@ export interface CaptainState {
   dest: number;
   /** Ship this one keeps station on in a convoy (-1: sails alone). */
   leader: number;
+  /** The way to the waypoint round the islands (ai/waypoints), and the waypoint it was planned for. */
+  way?: { x: number; z: number }[];
+  wayFor?: string;
 }
 
 export const createCaptain = (wx: number, wz: number, range: number, role: CaptainRole = "patrol"): CaptainState => ({ mode: "patrol", target: null, think: 0, wx, wz, side: "starboard", range, role, dest: -1, leader: -1 });
