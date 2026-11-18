@@ -29,23 +29,31 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
   const camKey = `camera.${cam}`;
   return (
     <div className="hud">
-      <SailingPanel intents={intents.sails} />
-      <Compass />
-      {steering === "classic" && <HelmPad intents={intents.helm} />}
+      {/* Regions of the grid (style.css): the left and right columns, the top, the two fire
+          corners and the bottom; the middle is the sea's, the port panel apart. */}
+      <div className="col left">
+        <SailingPanel intents={intents.sails} />
+        <JobPanel />
+      </div>
+      <div className="col right">
+        <Compass />
+        <TargetPanel />
+      </div>
       <CombatPanel intents={intents.combat} />
-      <TargetPanel />
-      <JobPanel />
+      <PortPanel intents={intents.port} />
+      <div className="bottom">
+        {steering === "classic" && <HelmPad intents={intents.helm} />}
+        <div className="corner">
+          <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>
+          <button className="lang" onPointerDown={() => intents.settings.toggleHud()} data-testid="hide-hud">◎</button>
+          <button className="lang" onPointerDown={() => intents.settings.toggleSettings()} data-testid="open-settings">⚙</button>
+          <span className="fps">{fps.toFixed(0)} fps</span>
+        </div>
+      </div>
       <EnemyMarker />
       <Notices />
-      <PortPanel intents={intents.port} />
       <SettingsPanel intents={intents.settings} />
       <HelpCard intents={intents.settings} />
-      <div className="corner">
-        <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>
-        <button className="lang" onPointerDown={() => intents.settings.toggleHud()} data-testid="hide-hud">◎</button>
-        <button className="lang" onPointerDown={() => intents.settings.toggleSettings()} data-testid="open-settings">⚙</button>
-        <span className="fps">{fps.toFixed(0)} fps</span>
-      </div>
     </div>
   );
 };

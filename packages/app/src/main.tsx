@@ -17,6 +17,13 @@ import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHE
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse } from "./presenters/course-presenter";
+// Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
+// EB Garamond for the text (SIL Open Font License).
+import "@fontsource/cinzel/600.css";
+import "@fontsource/cinzel/700.css";
+import "@fontsource/eb-garamond/400.css";
+import "@fontsource/eb-garamond/400-italic.css";
+import "@fontsource/eb-garamond/600.css";
 import "./style.css";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */

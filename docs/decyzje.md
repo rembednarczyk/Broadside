@@ -531,3 +531,23 @@ przed sobą białą kreskę, statek płynie w tym kierunku; oryginalne sterowani
   steru. Ustawienie w ustawieniach (Sterowanie: Wskaż i płyń / Ster), pamiętane na urządzeniu.
 - Trasa w zapisie gry (pole opcjonalne, stare zapisy bez niej się wczytują). Złoty hash bez zmian (bez trasy system
   nic nie robi).
+
+**18.11, HUD: skalowanie i wygląd (właściciel: „zrób skalowanie interfejsu, aby nic na siebie nie nachodziło; wybierz
+czcionkę pasującą do gry i uatrakcyjnij HUD”).**
+- Układ: zamiast paneli ustawianych bezwzględnie z kilkoma progami szerokości, siatka CSS z obszarami (lewa kolumna:
+  żagle i zlecenie, góra: walka, prawa kolumna: kompas i cel, dolne rogi: ogień, dół: ster, kamera i ustawienia, środek
+  wolny dla morza, panel portu u dołu środka). Wszystkie wymiary w jednostce `--u` = mniejsze z szerokość/960
+  i wysokość/540 (ograniczone do 0,55–1,7 px): projekt zawsze mieści się w ekranie, więc obszary nie mogą się spotkać.
+  Wzorzec: skalowanie interfejsu do rozdzielczości odniesienia, jak Canvas Scaler w Unity („Scale With Screen Size”,
+  dopasowanie do mniejszego boku); od wzorca różni się drugą ramką dla niskich ekranów (760 × 430), bo przy jednej
+  ramce pismo na telefonie spadało do 5,6 px.
+- Sprawdzanie: `tools/ui/ui-audit.mjs` (Playwright) dla 15 rozmiarów od 568 × 320 do 2560 × 1440, w angielskim z prostym
+  sterowaniem i w polskim z klasycznym: nakładanie obszarów, wyjście poza ekran, przewijanie kolumn, pismo poniżej 8 px,
+  okno ustawień w ekranie; zrzuty i raport.
+- Czcionki: Cinzel (kapitaliki z rzymskich inskrypcji) w tytułach i przyciskach, EB Garamond (antykwa Garamonda z XVI w.)
+  w tekście. IM Fell English SC odpadł, bo nie ma polskich znaków. Obie na licencji OFL, wbudowane przez `@fontsource`
+  (APK działa bez sieci).
+- Wygląd: panele z ciemnego drewna z mosiężnym obramowaniem i nitami, przyciski jak grawerowany mosiądz (wybrany:
+  polerowany), przyciski ognia w czerwonym laku z mosiężnym rantem, kompas z mosiężnym pierścieniem i różą 32
+  kierunków, komunikaty na pasku pergaminu. Przyciski żagli w dwóch rzędach (pełne nazwy w obu językach), wiersze
+  masztów zwinięte pod przyciskiem na każdym ekranie.
