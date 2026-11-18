@@ -779,3 +779,7 @@ Plansza `underwater` (ref_161): okno Snella rozpadało się na czarne łaty cał
 spodu brał pełne nachylenie fal i detalu. Teraz do widoku spod wody normalna jest spłaszczona w połowie ku pionowi (przez
 kilka metrów wody zbocza czyta się łagodniej): okno jest okrągłe, z błądzącym brzegiem. Jasność okna dostaje smugi z szumu
 rozciągniętego 8 razy wzdłuż wiatru, niebo w oknie przygaszone do 1,4, scena z kamerą pochyloną mniej (0,6), jak na klatce.
+
+## 18.11 Nocne dostosowanie oka do ×2 (orkiestrator, M9 C1)
+Po podniesieniu ekspozycji sepii (1,15) jasne partie nocy wyszły ponad klatkę `ref_075` (75. percentyl 56 przy 46).
+Dostosowanie oka w nocy z ×2,2 do ×2,0: 75. percentyl 48 przy 46, 95. percentyl 64 przy 67.
