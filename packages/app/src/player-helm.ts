@@ -37,6 +37,12 @@ export class PlayerHelm {
     this.steering = direction;
   }
 
+  /** Assisted sailing: the rudder straight from the pad (-1 hard to port, 1 hard to starboard). */
+  rudder(x: number): void {
+    this.steering = 0;
+    this.sim.command({ type: "helm", ship: this.playerId, rudder: clamp(x, -1, 1) });
+  }
+
   /** Simple steering: the crew sails the ship through these points (`hold`: then keeps on; `append`: after the route in hand). */
   navigate(route: readonly { x: number; z: number }[], hold: boolean, append = false): void {
     this.steering = 0;

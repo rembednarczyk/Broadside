@@ -50,6 +50,14 @@ export const sailingHandlers: HandlerTable = {
     }
     if (!e.reefing) ctx.world.addComponent(e, "reefing", { wanted: [...e.ship.sailTarget], easy: e.ship.sailTarget.map(() => 0), think: 0 });
   },
+  assist: (e, cmd, ctx) => {
+    if (!cmd.on) {
+      if (e.assist) ctx.world.removeComponent(e, "assist");
+      return;
+    }
+    if (e.assist) e.assist.astern = !!cmd.astern;
+    else ctx.world.addComponent(e, "assist", { astern: !!cmd.astern });
+  },
   oars: (e, cmd) => {
     e.ship.oars = cmd.on;
   },

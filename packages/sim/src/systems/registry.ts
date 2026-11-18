@@ -1,6 +1,7 @@
 import { type System } from "./context";
 import { helmSystem } from "./helm";
 import { sailSystem } from "./sails";
+import { assistSystem } from "./assist";
 import { hydroSystem } from "./hydro";
 import { integrateSystem } from "./integrate";
 import { gunsSystem } from "./guns";
@@ -35,6 +36,7 @@ export const createSystems = (): readonly System[] => [
   reefingSystem,
   helmSystem,
   sailSystem,
+  assistSystem,
   hydroSystem,
   groundingSystem,
   integrateSystem,

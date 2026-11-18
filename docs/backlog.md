@@ -170,6 +170,11 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
   mieściło się w budżecie + 3 z graczem (ADR-0005)
 - [ ] do rozważenia: poziomy ruch wody przy statkach gracza (z regulatorem kursu autopilota odpornym na pchnięcia fal)
 
+### Sterowanie „Akcja” (właściciel 18.11: pad jak w Black Flag)
+- [x] Żeglowanie wspomagane w symulacji (prędkość kadłubowa na każdym kursie, skręt po kole, wstecz), pad w HUD, klawiatura, pomoc PL i EN.
+- [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
+- [ ] Kamera w tym trybie bliżej i za rufą (jak w Black Flag), jeśli właściciel zechce.
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu

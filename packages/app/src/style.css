@@ -160,6 +160,15 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 /* --- bottom: helm (classic steering), camera and settings --- */
 .helm-pad { display: flex; gap: calc(24 * var(--u)); }
 .helm { width: calc(64 * var(--u)); height: calc(64 * var(--u)); border-radius: 50%; font-size: calc(24 * var(--u)); background: radial-gradient(circle at 40% 35%, rgba(110, 82, 44, 0.9), rgba(30, 21, 14, 0.92)); border: calc(2 * var(--u)) solid var(--brass); }
+/* Assisted sailing's thumbstick (drive-pad.tsx): a brass ring with a knob that follows the thumb. */
+.drive-pad { position: relative; width: calc(112 * var(--u)); height: calc(112 * var(--u)); border-radius: 50%; touch-action: none; background: radial-gradient(circle, rgba(30, 21, 14, 0.35), rgba(30, 21, 14, 0.7)); border: calc(2 * var(--u)) solid var(--brass); }
+.drive-knob { position: absolute; left: 30%; top: 30%; width: 40%; height: 40%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 40% 35%, rgba(150, 114, 62, 0.95), rgba(46, 32, 20, 0.95)); border: calc(2 * var(--u)) solid var(--brass); }
+.drive-arrow { position: absolute; font-size: calc(12 * var(--u)); color: var(--brass); pointer-events: none; transform: translate(-50%, -50%); }
+.drive-arrow.up { left: 50%; top: 11%; }
+.drive-arrow.down { left: 50%; top: 89%; }
+.drive-arrow.left { left: 11%; top: 50%; }
+.drive-arrow.right { left: 89%; top: 50%; }
+.drive-astern { position: absolute; left: 50%; bottom: 102%; transform: translateX(-50%); white-space: nowrap; font-size: calc(11 * var(--u)); padding: calc(2 * var(--u)) calc(6 * var(--u)); background: rgba(30, 21, 14, 0.85); border: calc(1 * var(--u)) solid var(--brass); border-radius: calc(4 * var(--u)); pointer-events: none; }
 .corner { display: flex; gap: calc(6 * var(--u)); align-items: center; margin-left: auto; }
 .corner .lang, .lang { min-width: calc(34 * var(--u)); padding: calc(5 * var(--u)) calc(7 * var(--u)); }
 .fps { font-size: calc(10 * var(--u)); color: var(--ink-soft); opacity: 0.75; }

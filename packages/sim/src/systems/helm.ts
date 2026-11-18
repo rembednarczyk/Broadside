@@ -45,7 +45,8 @@ export const helmSystem: System = (ctx, dt) => {
     const s = e.ship;
     if (s.sinking) continue;
     const sternIntact = s.sections[4]!.hp > 0 || s.sections[5]!.hp > 0;
-    const rate = RUDDER_RATE * (sternIntact ? 1 : 0.3) * Math.max(0.3, crewShare(s));
+    // Assisted sailing (systems/assist) answers the pad at once: the wheel turns twice as fast.
+    const rate = RUDDER_RATE * (e.assist ? 2 : 1) * (sternIntact ? 1 : 0.3) * Math.max(0.3, crewShare(s));
     s.rudder = approach(s.rudder, steer(s, e.body, dt, ctx.env.windDirection), rate * dt);
   }
 };

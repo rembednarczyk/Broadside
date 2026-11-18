@@ -1,6 +1,7 @@
 import { type UiIntents } from "../intents";
 import { Compass } from "./compass";
 import { HelmPad } from "./helm-pad";
+import { DrivePad } from "./drive-pad";
 import { SailingPanel } from "./sailing-panel";
 import { CombatPanel } from "./combat-panel";
 import { TargetPanel } from "./target-panel";
@@ -44,6 +45,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       <PortPanel intents={intents.port} />
       <div className="bottom">
         {steering === "classic" && <HelmPad intents={intents.helm} />}
+        {steering === "arcade" && <DrivePad intents={intents.helm} />}
         <CancelCourse intents={intents.orders} />
         <div className="corner">
           <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>

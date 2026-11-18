@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { type ColorMode, CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
-import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
+import { Hud, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
@@ -13,7 +13,7 @@ import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
+import { type AmmoId, clamp, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse, presentWind } from "./presenters/course-presenter";
@@ -70,9 +70,10 @@ const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
 // Steering: simple (tap or draw a course, the crew sails it) by default, the classic helm on request.
 const STEER_KEY = "broadside.steering";
-const storedSteering = ((): "simple" | "classic" => {
+const storedSteering = ((): SteeringMode => {
   try {
-    return localStorage.getItem(STEER_KEY) === "classic" ? "classic" : "simple";
+    const m = localStorage.getItem(STEER_KEY);
+    return m === "classic" || m === "arcade" ? m : "simple";
   } catch {
     return "simple";
   }
@@ -140,8 +141,30 @@ const setHaptics = (on: boolean) => {
     // Storage unavailable: the choice lasts for this run only.
   }
 };
-const setSteering = (steering: "simple" | "classic") => {
+/** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
+const applySteering = (steering: SteeringMode) => {
+  session.assist(steering === "arcade");
+  session.helm.steer(0);
+  if (steering !== "simple") session.helm.navigate([], false);
+  if (steering !== "arcade") session.helm.rudder(0);
+  patchHud({ astern: false });
+};
+applySteering(storedSteering);
+/** One gear of sail more or less (pad, W and S); below furled under assisted sailing: astern with the sails backed. */
+const gear = (step: 1 | -1) => {
+  const h = useHud.getState();
+  const sail = h.sailing?.sailTargets[0] ?? 3;
+  if (h.steering === "arcade" && step < 0 && sail === 0 && !h.astern) {
+    session.assist(true, true);
+    patchHud({ astern: true });
+  } else if (h.astern && step > 0) {
+    session.assist(true, false);
+    patchHud({ astern: false });
+  } else session.setSails(clamp(sail + step, 0, 4));
+};
+const setSteering = (steering: SteeringMode) => {
   patchHud({ steering });
+  applySteering(steering);
   renderer.camera.drawGestures = steering === "simple";
   try {
     localStorage.setItem(STEER_KEY, steering);
@@ -151,7 +174,12 @@ const setSteering = (steering: "simple" | "classic") => {
 };
 
 const intents: UiIntents = {
-  helm: { steer: (d) => session.helm.steer(d) },
+  helm: {
+    // Under assisted sailing the keys put the helm over like the pad; otherwise they turn the course.
+    steer: (d) => (useHud.getState().steering === "arcade" ? session.helm.rudder(d) : session.helm.steer(d)),
+    rudder: (x) => session.helm.rudder(x),
+    gear,
+  },
   orders: {
     board: (t) => shipOrder("board")(t),
     follow: (t) => shipOrder("follow")(t),
@@ -210,6 +238,7 @@ const intents: UiIntents = {
     newGame: () => {
       session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
       session.crewOrders(useHud.getState().reef);
+      applySteering(useHud.getState().steering);
       applyGraphics(graphics);
       patchHud({ settingsOpen: false });
     },
@@ -222,7 +251,7 @@ const intents: UiIntents = {
   },
 };
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
-bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
+bindKeyboard(window, intents);
 addEventListener("resize", () => renderer.resize());
 // Simple steering: what a tap, a long press or a drawn line on the canvas means (tap-targets), as orders to the crew.
 const tappables = () => {

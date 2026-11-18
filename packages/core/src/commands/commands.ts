@@ -31,6 +31,8 @@ export type GameCommand =
   | { readonly type: "navigate"; readonly ship: EntityId; readonly route: readonly { readonly x: number; readonly z: number }[]; readonly hold: boolean; readonly append?: boolean }
   /** Simple steering: run down and board a ship, keep station on one, fight her broadside to broadside, or close and storm a fort. */
   | { readonly type: "pilot"; readonly ship: EntityId; readonly order: { readonly kind: "board" | "follow" | "engage"; readonly target: EntityId } | { readonly kind: "assault"; readonly fort: EntityId } }
+  /** Assisted sailing (the arcade steering mode, sim/systems/assist): on or off, and going astern with the sails backed. */
+  | { readonly type: "assist"; readonly ship: EntityId; readonly on: boolean; readonly astern?: boolean }
   /** Standing orders to the crew: reef in a squall without being told (and make sail again after). */
   | { readonly type: "crew"; readonly ship: EntityId; readonly reef: boolean }
   /** Sail plan of one mast, or of every mast. */

@@ -100,6 +100,11 @@ export class GameSession {
     this.send({ type: "crew", ship: this.playerId, reef });
   }
 
+  /** Assisted sailing (the Action steering mode): on or off, and astern with the sails backed. */
+  assist(on: boolean, astern = false): void {
+    this.send({ type: "assist", ship: this.playerId, on, astern });
+  }
+
   setMastSails(mast: number, level: number): void {
     this.send({ type: "sails", ship: this.playerId, mast, level: clamp(Math.round(level), 0, 4) as SailLevel });
   }

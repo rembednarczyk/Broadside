@@ -39,7 +39,7 @@ export const SettingsPanel = ({ intents }: { intents: SettingsIntents }) => {
       <button className="wide" onPointerDown={() => intents.newGame()} data-testid="new-game">{text(lang, "settings.newGame")}</button>
       <div className="label">{text(lang, "settings.steering")}</div>
       <div className="presets">
-        {(["simple", "classic"] as const).map((m) => (
+        {(["simple", "classic", "arcade"] as const).map((m) => (
           <button key={m} className={steering === m ? "on" : ""} onPointerDown={() => intents.setSteering(m)} data-testid={`steering-${m}`}>
             {text(lang, `steering.${m}`)}
           </button>

@@ -880,3 +880,20 @@ wroga oznaczało abordaż. Teraz tapnięcie wroga to atak burtą (załoga obraca
 namierzą), abordaż i eskorta zostają w menu po przytrzymaniu palca na statku. Karta pomocy dostała akapit o rozkazach
 (PL i EN). Przy okazji: panel ustawień zasłaniał własny przycisk ⚙ (urósł po przełącznikach refowania i wibracji), więc
 dostał przycisk „Zamknij”; audyt interfejsu zamyka nim panel.
+
+## 18.11: trzeci tryb sterowania „Akcja” (pad, żeglowanie wspomagane)
+Właściciel zaproponował tryb jak w Black Flag: dotykowy pad (przód, tył, lewo, prawo), przyciski akcji po prawej, statek
+płynie swoją największą prędkością i odczuwa pogodę kosztem realizmu. Decyzja (wariant rekomendowany):
+- Reguła symulacji `sim/systems/assist.ts` (komponent `assist`, komenda `assist`), dane w `core/data/assist.ts`. Wzorzec:
+  zachowania sterujące Reynoldsa (1999), siła = prędkość pożądana minus obecna, obcięta do maksimum; u nas tylko wzdłuż
+  kilu i wokół osi pionowej. Prędkość docelowa to prędkość kadłubowa z liczby Froude'a 0,35 (v = Fr·√(gL); galeon ok.
+  12,5 węzła) razy udział postawionego płótna (zrefowane 0,35, bojowe 0,65, pełne 1, lizele 1,25) i udział wiatru
+  (55% w ciszy, pełna od 6 m/s). Kurs względem wiatru nie ma znaczenia: pod wiatr płynie tak samo jak z wiatrem.
+- Pogoda nadal działa: fale ruszają kadłubem, 40% bocznej siły żagli daje przechył i trochę dryfu, maszty niosą pełne
+  obciążenie wiatru (za dużo płótna w szkwale nadal łamie maszt), załoga sama refuje w szkwale (stały rozkaz).
+- Skręt: koło o promieniu 1,2 długości kadłuba przy pełnym wychyleniu (liczone od co najmniej 2,5 m/s, więc wolny statek
+  też się obraca), ster przekłada się dwa razy szybciej niż zwykle.
+- Pad (`ui/hud/drive-pad.tsx`, wirtualna gałka): w lewo i w prawo wychyla ster proporcjonalnie, puszczenie wraca na
+  środek; ruch w górę lub w dół zmienia „bieg” żagli o jeden; poniżej zwiniętych żagli statek wybiera je na wstecz i cofa
+  się 1,6 m/s. Klawiatura w tym trybie: A i D wychylają ster, W i S biegi. Przyciski ognia zostają w rogach.
+- Tryb tylko dla gracza i tylko na życzenie (ustawienia, Sterowanie: Akcja); AI płynie po staremu. Złoty hash bez zmian.

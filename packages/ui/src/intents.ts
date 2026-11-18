@@ -1,3 +1,5 @@
+import { type SteeringMode } from "./store/hud-store";
+
 /**
  * Narrow intent interfaces (Interface Segregation; SpinalTap ADR-0031 split of UiIntents): each
  * HUD part depends only on the intents it raises. The app implements them.
@@ -5,6 +7,10 @@
 export interface HelmIntents {
   /** Starts or stops turning the course: -1 to port, 1 to starboard, 0 to hold. */
   steer(direction: -1 | 0 | 1): void;
+  /** Assisted sailing: the rudder straight from the pad, -1 hard to port to 1 hard to starboard. */
+  rudder(x: number): void;
+  /** One step more or less canvas; below furled, under assisted sailing, the sails are backed to go astern. */
+  gear(step: 1 | -1): void;
 }
 
 /** Simple steering: orders about a ship (from the menu of a ship held down on) and the course. */
@@ -47,8 +53,8 @@ export interface SettingsIntents {
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
   setColorMode(mode: string): void;
-  /** Simple steering (tap or draw a course, the crew sails it) or the classic helm. */
-  setSteering(mode: "simple" | "classic"): void;
+  /** Simple steering (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad. */
+  setSteering(mode: SteeringMode): void;
   /** Standing order: the crew reefs in squalls by itself. */
   setReef(on: boolean): void;
   /** Vibration on hits and broadsides (phones). */
