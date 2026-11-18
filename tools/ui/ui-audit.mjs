@@ -1,6 +1,6 @@
 /* global document, getComputedStyle -- the page.evaluate callbacks run in the browser */
 // Audit of the HUD layout (as podrcr's ui-audit): the built game (packages/app/dist) opened at
-// screen sizes from small phones in landscape to large monitors, with simple and classic
+// screen sizes from small phones in landscape to large monitors, with simple, classic and action
 // steering, in English and in Polish (the longer words); for each, the boxes of the HUD's regions are measured and every overlap between
 // two of them, every box outside the screen, every column that has to scroll and every type
 // smaller than MIN_FONT is reported, with a screenshot. Exit code 1 if anything is reported.
@@ -46,6 +46,7 @@ const REGIONS = [
   ["fire-port", ".fire.port"],
   ["fire-starboard", ".fire.starboard"],
   ["helm", ".helm-pad"],
+  ["drive", ".drive-pad"],
   ["corner", ".corner"],
   ["harbour", ".harbour"],
 ];
@@ -54,7 +55,7 @@ const report = [];
 let problems = 0;
 for (const size of SIZES) {
   const [w, h] = size.split("x").map(Number);
-  for (const [steering, lang] of [["simple", "en"], ["classic", "pl"]]) {
+  for (const [steering, lang] of [["simple", "en"], ["classic", "pl"], ["arcade", "pl"]]) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     await page.addInitScript(`localStorage.setItem("broadside.help", "1"); localStorage.setItem("broadside.steering", "${steering}");`);
     await page.goto(`http://localhost:${port}/index.html?seed=7&quality=low&hours=12:00&clock=stop`);
