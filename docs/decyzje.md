@@ -679,3 +679,14 @@ cieniu nadburć; jasne plamy z `ref_112` wymagają jeszcze światła przez szcze
 Drugi wniosek tej rundy: jasna przerwa przy słońcu na `horizon` nie pochodzi z promieni (`VolumetricLightScattering`
 wyłączony daje prawie ten sam obraz), tylko z samego nieba z ekspozycją i bloomem; zostawiona, bo klip też ma tam
 prześwietlenie.
+
+## 18.11 Okno Snella jaśniejsze, scena podwodna na planszach (orkiestrator, M9 C5)
+Pozycja „jaśniejsze okno Snella przy wysokim słońcu (`ref_161`)”. Nowa scena `underwater`: kamera filmowa przypięta w
+chwili zanurzenia (czas, kąt orbity, głębokość 2,5 m i pochylenie przez `before`, czyli `SHOT_BEFORE` z 15 s klatek po
+nim, `SHOT_BEFORE_WAIT` w `shot.mjs`); bez przypięcia kadr zmieniał się między przebiegami, bo kamera jedzie w czasie
+rzeczywistym. Zmiany: gradacja pod wodą przepuszcza jasne partie prawie w pełni (wcześniej cały obraz szedł do 55% i
+turkusu, więc okno było szarozielone), słońce w oknie ma twardy rdzeń i szeroką poświatę (`pow(·, 6)`), jasność okna
+spada ku brzegowi (transmisja Fresnela przy kącie granicznym) i ma smugi zmarszczek z normalnej, brzeg okna miękki
+(0,5–0,82 zamiast 0,62–0,7: przy stromej fali twardy próg rozbijał okno na czarne łaty), promienie pod wodą słabsze
+(0,2). Kamera pod wodą patrzy w górę ok. 45°. Zostaje: słońce w kadrze sceny (azymut względem kamery), smugi powierzchni
+dłuższe jak na klatce.

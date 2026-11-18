@@ -27,7 +27,7 @@ const H = 480;
 for (const [name, s] of Object.entries(scenes)) {
   if (name.startsWith("_") || (only.length > 0 && !only.includes(name))) continue;
   const dir = join(out, `shot-${name}`);
-  const env = { ...process.env, SHOT_WAIT: "24000", ...(s.inspect ? { SHOT_INSPECT: s.inspect } : {}), ...(s.script ? { SHOT_SCRIPT: s.script } : {}) };
+  const env = { ...process.env, SHOT_WAIT: "24000", ...(s.inspect ? { SHOT_INSPECT: s.inspect } : {}), ...(s.script ? { SHOT_SCRIPT: s.script } : {}), ...(s.before ? { SHOT_BEFORE: s.before, SHOT_BEFORE_WAIT: "15000" } : {}) };
   const query = `${s.query}&hours=${s.hours}&clock=stop&color=sepia`;
   const r = spawnSync(process.execPath, [join(here, "shot.mjs"), dir, query, String(s.seconds), "512", "412", ""], { stdio: "ignore", env, timeout: 560000 });
   if (r.status !== 0) {

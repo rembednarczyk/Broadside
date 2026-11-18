@@ -302,9 +302,18 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // up: the ray from the eye to the surface; its angle from the surface's (upward) normal.
   vec3 up = -v;
   float c = dot(up, n);
-  float window = smoothstep(0.62, 0.7, c);
-  float sun = pow(max(dot(refract(up, -n, 1.33), sunDirection), 0.0), 40.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.6 + sunColor * sun * 5.0;
+  // A soft edge: the waves tilt the surface, and a hard one breaks the window into black patches.
+  float window = smoothstep(0.5, 0.82, c);
+  // The sun through the window: a hard core and a broad blown-out glow round it (ref_161: the
+  // disc is a quarter of the frame wide, white at its heart), the light scattered forward by the
+  // water and the ripples of the surface.
+  float toSun = max(dot(refract(up, -n, 1.33), sunDirection), 0.0);
+  float sun = pow(toSun, 40.0) * 5.0 + pow(toSun, 6.0) * 1.6;
+  // Less light comes through towards the window's rim (Fresnel transmission falls to nothing at
+  // the critical angle), and the ripples of the surface show as brighter and darker streaks.
+  float rim = mix(0.55, 1.0, smoothstep(0.66, 0.97, c));
+  float ripple = 0.75 + 0.5 * clamp(0.5 + dot(n.xz, vec2(0.6, 0.8)) * 5.0, 0.0, 1.0);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 2.4 * rim * ripple + sunColor * sun;
   // Outside the window the depths, mirrored, with the waves' relief catching the light from the
   // window's side (the teal ripples round the bright disc in ref_161).
   float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);

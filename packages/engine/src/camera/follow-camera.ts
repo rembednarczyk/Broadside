@@ -148,8 +148,8 @@ export class FollowCamera {
       this.cine ??= { angle: this.camera.alpha, t: 0, y: surface(p.x, p.z) + 1.3 };
       const eye = rideStep(this.cine, p, surface, dt);
       this.follow(p.x, p.y - this.lift * 0.4, p.z, dt);
-      // Under the surface the aim rises to look up at it (about 40 degrees).
-      const up = tiltStep(this.cine, surface(eye.x, eye.z) - eye.y, dt) * orbitRadius(p.length) * 0.85;
+      // Under the surface the aim rises to look up at it (about 45 degrees, as in ref_161).
+      const up = tiltStep(this.cine, surface(eye.x, eye.z) - eye.y, dt) * orbitRadius(p.length) * 0.95;
       this.camera.setTarget(new Vector3(this.target.x, this.target.y + up, this.target.z));
       this.camera.setPosition(new Vector3(eye.x, eye.y, eye.z));
       return;

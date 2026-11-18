@@ -49,11 +49,14 @@ void main() {
   if (uw > 0.5) {
     float absorb = exp(-depth * 0.08);
     vec3 teal = vec3(0.04, 0.22, 0.2);
-    c = mix(teal * 0.35, c * vec3(0.55, 0.95, 0.9), 0.55 * absorb);
+    // The bright window and the sun through it keep their light (ref_161: blown out at the
+    // heart); the water's teal absorption takes the dim rest.
+    float lit = smoothstep(0.35, 0.85, dot(c, vec3(0.2126, 0.7152, 0.0722)));
+    c = mix(teal * 0.35, c * mix(vec3(0.55, 0.95, 0.9), vec3(0.85, 1.0, 0.95), lit), mix(0.55, 0.95, lit) * absorb);
     vec2 toSun = uv - sunScreen;
     float ang = atan(toSun.y, toSun.x);
     float rays = pow(vnoise(vec2(ang * 18.0, time * 0.3)), 3.0) * smoothstep(1.2, 0.0, length(toSun));
-    c += vec3(0.5, 0.85, 0.75) * rays * 0.35 * absorb;
+    c += vec3(0.5, 0.85, 0.75) * rays * 0.2 * absorb;
     c *= mix(0.25, 1.0, smoothstep(0.0, 0.9, 1.0 - uv.y * 0.0 - length(uv - vec2(0.5, 1.1)) * 0.6));
   }
   // The meniscus: a thin dark line with a bright edge where the surface meets the glass.
