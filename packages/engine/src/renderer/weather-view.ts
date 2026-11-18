@@ -10,6 +10,13 @@ import { type Sprites } from "../effects/sprite-textures";
  * standard trick for local precipitation), lightning as branched glowing channels that flicker
  * with their return strokes (lightning-bolt), and waterspouts as tapered rotating funnels.
  */
+/** Share of the bank budget that drifts over a sea under broken cloud, whatever the weather's fog. */
+const STRAY_BANKS = 0.06;
+const smoothstep01 = (x: number): number => {
+  const t = Math.max(0, Math.min(1, x));
+  return t * t * (3 - 2 * t);
+};
+
 export class WeatherView {
   private readonly rain: ParticleSystem;
   private readonly fogBanks: ParticleSystem;
@@ -128,7 +135,9 @@ export class WeatherView {
     const wz = Math.cos(sim.env.windDirection) * sim.env.windSpeed;
     this.rain.direction1.set(wx * 0.04, -1, wz * 0.04);
     this.rain.direction2.set(wx * 0.05, -1, wz * 0.05);
-    const fogAmount = Math.max(w?.fog ?? 0, rainAmount * 0.08);
+    // Besides the fog of the weather, a few stray banks drift over a damp sea now and then (the
+    // reference's sunset with broken cloud, s. 8-9: a bank crosses and whitens the ship for a moment).
+    const fogAmount = Math.max(w?.fog ?? 0, rainAmount * 0.08, STRAY_BANKS * smoothstep01((w?.overcast ?? 0) / 0.6));
     // Keep a target number of banks alive (top up a few per frame) rather than a rate: the fog
     // is there as soon as the weather says so, and thins as it clears.
     const target = Math.round(fogAmount * this.fogBanks.getCapacity());
@@ -136,6 +145,9 @@ export class WeatherView {
     this.fogBanks.manualEmitCount = missing > 0 ? Math.min(5, missing) : 0;
     (this.fogBanks.emitter as Vector3).set(t.x, 0, t.z);
     this.fogBanks.gravity.set(wx * 0.06, 0, wz * 0.06);
+    // Lit by the sky like the scene's haze: warm at sunset, a dull grey at night (not a white glow).
+    const fc = this.scene.fogColor;
+    for (const g of this.fogBanks.getColorGradients() ?? []) g.color1.set(Math.min(1, fc.r * 1.15), Math.min(1, fc.g * 1.15), Math.min(1, fc.b * 1.15), g.color1.a);
     // The flash flickers with the return strokes; the channel shows only while a stroke is bright.
     if (this.strikeAt) {
       this.strikeAge += dt;

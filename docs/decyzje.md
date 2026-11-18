@@ -758,3 +758,10 @@ raza wyższy, inne ziarno), bez oświetlenia i bez mgły sceny, z własną persp
 koloru mgły) przechodzi w kolor mgły według `1 - exp(-d * gęstość * 0,35)` (prawo Koschmiedera ze zmniejszonym
 wygaszaniem, `coastHaze`, test). Dalsza warstwa wychodzi jaśniejsza, pod ciężkim niebem obie znikają. Plansze
 `stern-castle`, `horizon`, `stern-sun`.
+
+## 18.11 Zabłąkane ławice mgły w kolorze nieba (orkiestrator, M9 C1)
+Ławice mgły pojawiały się tylko przy pogodzie z mgłą i deszczem i miały stały, jasny kolor (nocą świeciłyby na biało).
+Teraz przy zachmurzeniu dryfuje kilka zabłąkanych ławic (6% budżetu przy pokryciu od 0,6; na klipie s. 8–9 ławica
+przechodzi przez kadr przy zachodzie z rozbitymi chmurami), a kolor ławic co klatkę idzie za kolorem mgły sceny (ciepły
+o zachodzie, szary nocą). Zostawione rzadkie, żeby nie zasłaniały widoku do grania. Tabela stanu w
+`docs/reference/README.md` uaktualniona (wiele pozycji ✘ było już zrobionych).

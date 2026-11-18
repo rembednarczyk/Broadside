@@ -37,31 +37,31 @@ To jest punkt odniesienia dla każdej zmiany wizualnej: zrzut przed/po zestawiam
 - ◐ silny bloom wokół słońca, mgiełka obiektywu
 - ◐ promienie słońca przez omasztowanie i chmury
 - ◐ błysk pioruna: zbielenie, potem niebieskawy odcień ok. 0,5 s, rozgałęziona błyskawica do wody z rozbłyskiem
-- ✘ ławice mgły przesuwające się przez scenę
+- ◐ ławice mgły przesuwające się przez scenę (przy mgle i deszczu gęsto, przy zachmurzeniu kilka zabłąkanych, w kolorze mgły sceny; 18.11)
 
 ### Niebo i atmosfera
 - ✔ chmury kłębiaste o ciemnych podstawach i jasnych krawędziach, jasne jądro słońca, dziury w chmurach (objętościowe od presetu high, pełny detal z tekstury szumu 3D na ultra i cinematic; plansza `stern-castle` kontra `ref_090`, 17.11)
 - ◐ gęsty pas mgły przy horyzoncie, rozświetlony od słońca
-- ◐ wybrzeże: urwiste klify o płaskich szczytach, warstwy coraz jaśniejsze w mgle (dziś łagodne wzgórza)
+- ◐ wybrzeże: płaskowyże w dwóch warstwach z własną perspektywą powietrzną (18.11); bliskie wyspy archipelagu dalej łagodnymi wzgórzami (kształt z generatora świata)
 
 ### Woda
 - ◐ bardzo ciemne morze, krótka fala wiatrowa na długiej martwej fali, ostre grzbiety
 - ◐ gęsta ścieżka iskier (glitter) od słońca, również w kilwaterze i przy burcie
-- ✘ kilwater i piana przy dziobie (subtelne, z iskrami)
-- ✘ widok spod wody: turkus, okno Snella, promienie (god rays) w toni, zanik w głębi, rozmyta linia wody
-- ✘ rozmycie ruchu przy szybkiej kamerze
+- ✔ kilwater po przebytej drodze, piana przy dziobie i burcie, iskry w kilwaterze (17.11–18.11)
+- ◐ widok spod wody: okno Snella z poświatą słońca, smugi światła pod słońcem, zanik w głębi, linia wody (scena `underwater`, 18.11); smugi powierzchni krótsze niż w klipie
+- ◐ rozmycie ruchu przy szybkiej kamerze (ultra i cinematic)
 
 ### Statek (galeon)
 - ✔ trzy maszty, trzy piętra żagli rejowych z rejami, ciemne płótno z godłem słońca
 - ✔ stromy bukszprytem z blindą i fokiem, wanty z drabinkami, marsy
 - ◐ wysoki, płaski kasztel rufowy z balustradą i postaciami na relingu, latarnia na rufie
 - ◐ żagle częściowo podwinięte i postrzępione na brzegach, bocianie gniazda
-- ✘ godła i okna świecące ciepło nocą (emisja zależna od pory)
+- ✔ godła i okna świecące ciepło nocą, lampy w kabinach od zmierzchu, dwa rzędy okien rufowych (17.11–18.11)
 
 ### Kamera i obiektyw
 - ◐ kamera nisko nad wodą, szeroki kąt, lekki przechył; płynne podążanie
-- ✘ krople wody na obiektywie w deszczu i po zanurzeniu
-- ✘ tryb ujęcia z pokładu (pierwsza osoba przy maszcie)
+- ✔ krople wody na obiektywie w deszczu i po zanurzeniu
+- ✔ tryb ujęcia z pokładu (kamera pokładowa, 17.11)
 
 ## Kolejność prac (wpisana do backlogu)
 1. Woda pod spodem: tryb podwodny z oknem Snella, promieniami i mgłą wodną.
