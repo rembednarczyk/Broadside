@@ -512,3 +512,22 @@ shaderze wierzchołków. Przy kadłubie bez zmian: fala dziobowa, woda przy burt
 3 statki najbliżej kamery × 16 punktów (52 wektory), z testem odległości od środka śladu, żeby piksele daleko od
 śladów nie liczyły odcinków. Ślad jest widokiem (silnik), symulacja i złoty hash bez zmian. Niesprawdzone na
 telefonie: limit uniformów fragment shadera (WebGL2 gwarantuje 224 wektory, telefony zwykle mają więcej).
+
+**18.11, proste sterowanie (D3; właściciel: „gracz zaznacza, gdzie chce płynąć, a marynarze ustawiają wszystko; rysuję
+przed sobą białą kreskę, statek płynie w tym kierunku; oryginalne sterowanie zostaje, ale nie domyślnie”).**
+- Komenda `navigate` (trasa punktów, `hold`) i system pilota w `createSystems()` po kapitanach, przed sterem. Pilot to
+  ta sama sztuka żeglarska co patrole AI: kurs na punkt zamieniony na możliwy do żeglugi i ominięcie mielizn
+  (`clearHeading`, teraz eksportowany), kurs dla sternika; zwroty i zwroty przez rufę robi istniejący system steru.
+- Pod wiatr inaczej niż AI: AI zmienia hals z zapasem 23°, co przy zwrotach przez rufę (każdy to 70–100 m straty z
+  wiatrem) dawało ujemny postęp. Pilot płynie jednym halsem do laylinii i robi jeden zwrot (zasada regatowa), z
+  poprawką na dryf (mierzony kąt między kursem a drogą, wygładzony) i 0,1 rad zapasu na stratę przy zwrocie. Statek
+  rejowy idzie realnie ok. 82° od wiatru, więc 200 m pod wiatr to ponad kilometr halsowania (test: do 700 s).
+- Tapnięcie: cel; u celu załoga zwija żagle (statek wytraca prędkość). Narysowana linia: punkty co 15 m (najwyżej 24),
+  po ostatnim statek trzyma kierunek ostatniego odcinka pod żaglami. Bez postawionych żagli załoga stawia pełne.
+  Żagle gracz dalej ustawia sam (szybciej, wolniej); ster (A i D albo przyciski w trybie klasycznym) kasuje trasę.
+- Gesty: w trybie prostym przeciągnięcie jednym palcem lub lewym przyciskiem rysuje, a kamera obraca się prawym
+  przyciskiem; przybliżanie dwoma palcami i kółkiem bez zmian; drugi palec przerywa rysowanie. Tapnięcie: ruch do
+  10 px i do 0,5 s. Punkt na wodzie z promienia kamery (`pickWater`, poziom morza). W trybie prostym znikają przyciski
+  steru. Ustawienie w ustawieniach (Sterowanie: Wskaż i płyń / Ster), pamiętane na urządzeniu.
+- Trasa w zapisie gry (pole opcjonalne, stare zapisy bez niej się wczytują). Złoty hash bez zmian (bez trasy system
+  nic nie robi).

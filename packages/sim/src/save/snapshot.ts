@@ -1,6 +1,7 @@
 import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, createRng, seaWaves } from "@broadside/core";
 import { Simulation, type SimulationOptions } from "../simulation";
 import { type CaptainState } from "../ai/captain-state";
+import { type PilotState } from "../ai/pilot-state";
 import { type Castaway, type Floater, type FortState } from "../world/components";
 import { type ShipState } from "../ship/ship-state";
 import { shipModel } from "../ship/ship-model";
@@ -26,6 +27,8 @@ export interface ShipSnap {
   readonly body: { pos: Vec3; vel: Vec3; rot: Quat; angVel: Vec3 };
   readonly ship: ShipFields;
   readonly captain: CaptainState | null;
+  /** Route under simple steering (absent in saves written before it). */
+  readonly pilot?: PilotState | null;
   readonly ttl: number | null;
 }
 
@@ -61,7 +64,7 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
   ships: sim.ships().map((e) => {
     const { model: _model, ...fields } = e.ship!;
     const b = e.body!;
-    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ttl: e.ttl ?? null };
+    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ...(e.pilot ? { pilot: clone(e.pilot) } : {}), ttl: e.ttl ?? null };
   }),
   forts: sim.forts().map((e) => {
     const { def: _def, site, ...state } = e.fort!;
@@ -99,7 +102,7 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     // Fields added after a save was written get their defaults (refits, standing orders).
     const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades">;
     const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [] };
-    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
+    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: clone(s.pilot) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
   for (const f of snap.forts) {
     const e = sim.spawnFort(f.site);

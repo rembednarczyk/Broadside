@@ -10,6 +10,7 @@ import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
+import { CourseView } from "./course-view";
 import { HullModels } from "./hull-models";
 import { WeatherView } from "./weather-view";
 import { FarCoast } from "./far-coast";
@@ -74,6 +75,8 @@ export class BabylonRenderer {
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
   readonly salvo: SalvoMarks;
+  /** Simple steering: the course drawn and the route sailed, on the water. */
+  readonly course: CourseView;
   /** Nearest enemy the isometric camera keeps in frame (the app sets it each frame). */
   focus: { x: number; z: number } | null = null;
   private coast: FarCoast | null = null;
@@ -105,6 +108,7 @@ export class BabylonRenderer {
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
     this.effects.hullLength = (id, physical) => this.hulls?.fitted(id as ShipClassId, SHIP_CLASSES[id as ShipClassId].hull)?.length ?? physical;
     this.salvo = new SalvoMarks(this.scene);
+    this.course = new CourseView(this.scene);
     this.weather = new WeatherView(this.scene, this.effects.sprites, this.camera.camera, g.particles);
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
@@ -269,6 +273,7 @@ export class BabylonRenderer {
     this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
     this.weather.frame(sim, dt);
     this.salvo.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
+    this.course.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
     if (this.weather.flash > 0) {
       this.ambient.intensity = 1 + this.weather.flash * 3;
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
@@ -305,6 +310,21 @@ export class BabylonRenderer {
   project(x: number, y: number, z: number): { x: number; y: number } {
     const p = Vector3.Project(new Vector3(x, y, z), Matrix.Identity(), this.scene.getTransformMatrix(), this.camera.camera.viewport.toGlobal(1, 1));
     return { x: p.x, y: p.y };
+  }
+
+  /**
+   * The point of the sea under a screen point (client pixels), or null above the horizon: the
+   * picking ray (perspective or orthographic) met with the mean sea level.
+   */
+  pickWater(clientX: number, clientY: number): { x: number; z: number } | null {
+    const rect = this.engine.getRenderingCanvasClientRect();
+    if (!rect) return null;
+    const scale = this.engine.getRenderWidth() / Math.max(1, rect.width);
+    const ray = this.scene.createPickingRay((clientX - rect.left) * scale, (clientY - rect.top) * scale, Matrix.Identity(), this.camera.camera);
+    if (ray.direction.y > -1e-4) return null;
+    const t = -ray.origin.y / ray.direction.y;
+    if (t < 0 || t > 5000) return null;
+    return { x: ray.origin.x + ray.direction.x * t, z: ray.origin.z + ray.direction.z * t };
   }
 
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */

@@ -114,6 +114,12 @@ export class GameSession {
     this.steering = direction;
   }
 
+  /** Simple steering: the crew sails the ship through these points (`hold`: then keeps on). */
+  navigate(route: readonly { x: number; z: number }[], hold: boolean): void {
+    this.steering = 0;
+    this.send({ type: "navigate", ship: this.playerId, route, hold });
+  }
+
   setMastSails(mast: number, level: number): void {
     this.send({ type: "sails", ship: this.playerId, mast, level: clamp(Math.round(level), 0, 4) as SailLevel });
   }

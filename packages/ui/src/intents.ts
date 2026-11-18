@@ -38,6 +38,8 @@ export interface SettingsIntents {
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
   setColorMode(mode: string): void;
+  /** Simple steering (tap or draw a course, the crew sails it) or the classic helm. */
+  setSteering(mode: "simple" | "classic"): void;
   toggleSettings(): void;
   toggleHelp(): void;
   newGame(): void;

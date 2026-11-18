@@ -14,17 +14,18 @@ export const closeHauled = (s: ShipState): number => {
 /**
  * `windDirection` is where the wind blows towards; heading into the wind is PI off it. Beating to
  * windward, the captain keeps his present tack until the other one is clearly better (a margin of
- * about 23 deg), so he sails long boards instead of tacking at every gust of the bearing.
+ * about 23 deg), so he sails long boards instead of tacking at every gust of the bearing. A
+ * `margin` of PI keeps the tack until the point itself can be laid (tacking on the layline).
  */
 const TACK_MARGIN = 0.4;
-export const sailableHeading = (desired: number, windDirection: number, s: ShipState, current?: number): number => {
+export const sailableHeading = (desired: number, windDirection: number, s: ShipState, current?: number, margin = TACK_MARGIN): number => {
   if (s.oars && s.model.def.oars > 0) return wrapAngle(desired);
   const limit = Math.PI - closeHauled(s);
   if (angleOffWind(desired, windDirection) <= limit) return wrapAngle(desired);
   const upwind = windDirection + Math.PI;
   const a = wrapAngle(upwind + closeHauled(s));
   const b = wrapAngle(upwind - closeHauled(s));
-  const cost = (h: number): number => Math.abs(wrapAngle(h - desired)) - (current !== undefined && Math.abs(wrapAngle(h - current)) < 0.6 ? TACK_MARGIN : 0);
+  const cost = (h: number): number => Math.abs(wrapAngle(h - desired)) - (current !== undefined && Math.abs(wrapAngle(h - current)) < 0.6 ? margin : 0);
   return cost(a) <= cost(b) ? a : b;
 };
 

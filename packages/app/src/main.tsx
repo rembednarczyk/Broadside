@@ -15,6 +15,8 @@ import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
 import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
+import { bindCourseGestures } from "./controllers/course-gestures";
+import { presentCourse } from "./presenters/course-presenter";
 import "./style.css";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */
@@ -55,6 +57,15 @@ const stored = parseGraphics(readStored(), touch);
 let graphics: GraphicsSettings = urlPreset && ["low", "medium", "high", "ultra", "cinematic"].includes(urlPreset) ? presetSettings(urlPreset as GraphicsPreset, stored.colorMode) : stored;
 const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
+// Steering: simple (tap or draw a course, the crew sails it) by default, the classic helm on request.
+const STEER_KEY = "broadside.steering";
+const storedSteering = ((): "simple" | "classic" => {
+  try {
+    return localStorage.getItem(STEER_KEY) === "classic" ? "classic" : "simple";
+  } catch {
+    return "simple";
+  }
+})();
 const urlCamera = params.get("camera");
 let renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
 if (urlCamera && (CAMERA_MODES as readonly string[]).includes(urlCamera)) renderer.camera.mode = urlCamera as (typeof CAMERA_MODES)[number];
@@ -71,10 +82,22 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer.dispose();
   renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
   renderer.camera.mode = mode;
+  renderer.camera.drawGestures = useHud.getState().steering === "simple";
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
 if (!helpSeen) patchHud({ helpOpen: true });
+patchHud({ steering: storedSteering });
+renderer.camera.drawGestures = storedSteering === "simple";
+const setSteering = (steering: "simple" | "classic") => {
+  patchHud({ steering });
+  renderer.camera.drawGestures = steering === "simple";
+  try {
+    localStorage.setItem(STEER_KEY, steering);
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
+};
 
 const intents: UiIntents = {
   helm: { steer: (d) => session.steer(d) },
@@ -110,6 +133,7 @@ const intents: UiIntents = {
     setLanguage: (language) => patchHud({ language }),
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
+    setSteering,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
     toggleHelp: () => {
@@ -139,6 +163,12 @@ const intents: UiIntents = {
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
 bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
 addEventListener("resize", () => renderer.resize());
+bindCourseGestures(canvas, {
+  enabled: () => useHud.getState().steering === "simple",
+  pick: (x, y) => renderer.pickWater(x, y),
+  showStroke: (points) => renderer.course.setStroke(points),
+  navigate: (route, hold) => session.navigate(route, hold),
+});
 const audio = new SynthAudio("assets/audio/");
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
@@ -190,6 +220,9 @@ const frame = (now: number) => {
   if (aboard) audio.setShip(aboard);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
+  const course = presentCourse(session.sim, session.playerId);
+  renderer.course.visible = !useHud.getState().hudHidden;
+  renderer.course.setRoute(course.path, course.goal);
   const focus = combatFocus(session.sim, session.playerId);
   renderer.focus = focus;
   renderer.frame(session.sim, { hours: hoursNow(), ...(sunAzimuth === undefined ? {} : { sunAzimuth }), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);

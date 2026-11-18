@@ -68,7 +68,21 @@ export class FollowCamera {
     this.camera.fov = FOV;
     this.camera.panningSensibility = 0;
     if (canvas) this.camera.attachControl(canvas, true);
+    // Simple steering draws courses with a one-finger (or left-button) drag: the orbit then turns
+    // only with the right button; pinch and wheel zoom as before (Babylon's pointer input routes
+    // single-pointer drags to onTouch, and buttonsPressed tells the left button from the right).
+    const pointers = this.camera.inputs.attached["pointers"] as unknown as { onTouch: (p: unknown, x: number, y: number) => void; _buttonsPressed?: number } | undefined;
+    if (pointers) {
+      const orbit = pointers.onTouch.bind(pointers);
+      pointers.onTouch = (p, x, y) => {
+        if (this.drawGestures && (pointers._buttonsPressed ?? 1) === 1) return;
+        orbit(p, x, y);
+      };
+    }
   }
+
+  /** A one-finger or left-button drag draws a course instead of turning the view (simple steering). */
+  drawGestures = false;
 
   /** Frames a ship of the given length on first use. */
   frameShip(length: number, rigHeight = 10): void {

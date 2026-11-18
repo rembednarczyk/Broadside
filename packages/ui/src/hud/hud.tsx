@@ -18,6 +18,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
   const hidden = useHud((h) => h.hudHidden);
   const cam = useHud((h) => h.cameraMode);
   const lang = useHud((h) => h.language);
+  const steering = useHud((h) => h.steering);
   if (hidden) {
     return (
       <div className="hud">
@@ -30,7 +31,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
     <div className="hud">
       <SailingPanel intents={intents.sails} />
       <Compass />
-      <HelmPad intents={intents.helm} />
+      {steering === "classic" && <HelmPad intents={intents.helm} />}
       <CombatPanel intents={intents.combat} />
       <TargetPanel />
       <JobPanel />

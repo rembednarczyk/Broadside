@@ -45,7 +45,7 @@ const ARC = 0.28;
  * out to either side until one is clear.
  */
 const LOOKAHEAD = [60, 130, 250];
-const clearHeading = (me: Entity, heading: number, w: World2D): number => {
+export const clearHeading = (me: Entity, heading: number, w: Pick<World2D, "bed" | "windDirection">): number => {
   if (!w.bed) return heading;
   const b = me.body!;
   const keel = -me.ship!.model.def.hull.draft - 2;
