@@ -190,7 +190,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
 3. [~] (19.11: przestrzeliny i dym przy ciężkich uszkodzeniach zrobione; osmalenia i wyrwany reling czekają; trafienia sprzed doczytania modelu kadłuba giną przy przebudowie widoku) **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
    naklejki na kadłubie modelu, limit na statek), w stanie ciężkim osmalenia, wyrwane fragmenty relingu i nadburcia, dym
    z kadłuba, przechył z zalania (fizyka już jest).
-4. [~] (19.11: maszt przewraca się za burtę na zawietrzną, leży i tonie, tylko widok; reszta czeka) **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym
+4. [~] (19.11: maszt przewraca się za burtę i jako wrak hamuje i skręca statek, dopóki załoga go nie odetnie (40 s przy pełnej załodze); przestrzelone liny zwisają; żagiel w strzępach wisi z rogu; reje z własnym HP i łańcuch celujący w olinowanie czekają) **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym
    HP, łańcuch trafia głównie w nie; w widoku przecięte liny zwisają i kołyszą się (wahadło), porwany żagiel wisi z jednego
    rogu i łopocze (zerwane więzy w tkaninie XPBD), reja spada na pokład albo za burtę, maszt łamie się i przewraca za burtę
    (animacja obrotu wokół pnia), wrak masztu wleczony przy burcie hamuje i skręca statek, dopóki załoga go nie odetnie.

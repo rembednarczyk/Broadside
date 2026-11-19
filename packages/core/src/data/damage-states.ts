@@ -47,3 +47,16 @@ export const damageState = (c: ShipCondition): DamageState => {
   if (c.hull < d.damaged || c.canvas < d.damaged || c.rigging < d.damaged) return "damaged";
   return "sound";
 };
+
+/**
+ * A mast gone by the board stays fast to the ship by its rigging and drags alongside (the period's
+ * wreckage of spars "hanging over the side", which crews cut away with axes): it brakes her and
+ * turns her towards that side until it is cut free, `cut` seconds with a full crew (longer with
+ * fewer hands). The drag is a quadratic drag of the wreck's wetted area, `area` square metres per
+ * metre of mast, at the waterline abeam.
+ */
+export const WRECKAGE = {
+  cut: 40,
+  area: 0.35,
+  drag: 1.0,
+} as const;

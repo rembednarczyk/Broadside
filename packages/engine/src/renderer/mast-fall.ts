@@ -33,9 +33,10 @@ export class MastFall {
     return this.lying >= MAST_FALL.rest + MAST_FALL.sink;
   }
 
-  step(dt: number): void {
+  /** `hold`: still fast to the ship by its rigging (sim WRECKAGE): it stays alongside, not sinking yet. */
+  step(dt: number, hold = false): void {
     if (this.angle >= MAST_FALL.lie) {
-      this.lying += dt;
+      this.lying = hold ? Math.min(this.lying + dt, MAST_FALL.rest) : this.lying + dt;
       return;
     }
     // A few substeps: the fall quickens fast near the end.

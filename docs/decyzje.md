@@ -955,3 +955,11 @@ masztu albo z olinowaniem poniżej 20% nie ucieka (kapitan AI nie przechodzi w u
 a jego załoga jest liczniejsza niż 1,3 załogi unieruchomionego, opuszcza banderę. Przy abordażu unieruchomiony broni
 się mnożnikiem 0,85 zamiast 1,15. Złoty hash bez zmian (scenariusz determinizmu nikogo nie unieruchamia), audyty bitew
 w progach ADR-0005.
+
+## 19.11: wrak masztu przy burcie (M11.4)
+Złamany maszt spada na zawietrzną i wisi przy burcie na olinowaniu (`core WRECKAGE`, `sim/systems/wreckage.ts`, nowe pole
+stanu `wrecks` z domyślną pustą listą dla starych zapisów). Opór kwadratowy wraku (0,35 m² na metr masztu, współczynnik 1)
+przyłożony na linii wody przy burcie: statek zwalnia (test: brig o ponad 25%) i skręca w stronę wraku, aż załoga go
+odetnie, 40 s przy pełnej załodze, dłużej przy mniejszej. Widok trzyma maszt przy burcie do odcięcia, potem tonie.
+Przestrzelone liny stałe zwisają z górnego końca (każda pęka przy swoim progu stanu olinowania), żagiel z płótnem
+poniżej 30% odrywa się i wisi z jednego rogu (tylko w symulacji tkaniny z bliska). Złoty hash bez zmian, audyty w progach.

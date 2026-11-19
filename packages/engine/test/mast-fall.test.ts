@@ -32,3 +32,14 @@ describe("a mast going by the board", () => {
     expect(f.gone).toBe(true);
   });
 });
+
+describe("a wreck held alongside", () => {
+  it("does not sink while it is still fast to the ship", () => {
+    const f = new MastFall(30);
+    for (let i = 0; i < 60 * 40; i++) f.step(1 / 60, true);
+    expect(f.drop).toBe(0);
+    expect(f.gone).toBe(false);
+    for (let i = 0; i < 60 * (MAST_FALL.sink + 1); i++) f.step(1 / 60, false);
+    expect(f.gone).toBe(true);
+  });
+});

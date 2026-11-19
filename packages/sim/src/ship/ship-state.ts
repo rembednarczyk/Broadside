@@ -72,6 +72,8 @@ export interface ShipState {
   sunkFor: number;
   lastHitBy: number | null;
   struck: boolean;
+  /** Masts gone by the board (core WRECKAGE): to which side the wreck went and how long until it is cut free (0: cut away). */
+  wrecks: { mast: number; side: number; left: number }[];
 }
 
 export const setFactor = (level: SailLevel, studding: boolean): number => [0, 0.35, 0.65, 1, studding ? 1.25 : 1][level] ?? 0;
@@ -107,6 +109,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     sunkFor: 0,
     lastHitBy: null,
     struck: false,
+    wrecks: [],
   };
 };
 

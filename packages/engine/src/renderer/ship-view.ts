@@ -419,7 +419,7 @@ export class ShipView {
   }
 
   /** A mast shot away goes over the side to leeward (mast-fall), lies there, sinks and is gone. */
-  private fallMast(mesh: Mesh, i: number, leeward: number, dt: number): void {
+  private fallMast(mesh: Mesh, i: number, leeward: number, dt: number, hold: boolean): void {
     let f = this.falls.get(i);
     if (!f) {
       const bounds = mesh.getBoundingInfo().boundingBox;
@@ -428,7 +428,7 @@ export class ShipView {
       f = { fall: new MastFall(Math.max(4, bounds.maximum.y - bounds.minimum.y)), side: Math.sign(leeward) || 1 };
       this.falls.set(i, f);
     }
-    f.fall.step(dt);
+    f.fall.step(dt, hold);
     mesh.setEnabled(!f.fall.gone);
     mesh.rotationQuaternion = Quaternion.RotationAxis(new Vector3(0, 0, 1), -f.side * f.fall.angle);
     mesh.position.y = -f.fall.drop;
@@ -513,7 +513,8 @@ export class ShipView {
         if (bend) m.apply(bend);
         return;
       }
-      this.fallMast(m.mesh, i, aw.x, dt);
+      const wreck = s.wrecks.find((w) => w.mast === i);
+      this.fallMast(m.mesh, i, wreck?.side ?? aw.x, dt, (wreck?.left ?? 0) > 0);
     });
     this.updateStays(bends, s.mastLoad, s, time);
     const fb = bends[this.flagMast];
