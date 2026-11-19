@@ -48,7 +48,8 @@ const result = await page.evaluate((n) => {
   const px = new Uint8Array(4);
   scene.render();
   // Switching a part recompiles shaders on the next frames: those are rendered, not timed.
-  const time = () => {
+  // The median by default; the mean where frames alternate in cost (the sky redrawn every other frame).
+  const time = (mean = false) => {
     for (let i = 0; i < 3; i++) {
       scene.render();
       gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -61,7 +62,7 @@ const result = await page.evaluate((n) => {
       t.push(performance.now() - t0);
     }
     t.sort((a, c) => a - c);
-    return t[t.length >> 1];
+    return mean ? t.reduce((a, c) => a + c, 0) / t.length : t[t.length >> 1];
   };
   const ships = [...r.views.values()].map((v) => v.root);
   const parts = {
@@ -93,8 +94,9 @@ const result = await page.evaluate((n) => {
   if (backdrop) backdrop.refreshRate = 1;
   const out = { full: time() };
   if (backdrop) {
+    const every = time(true);
     backdrop.refreshRate = 2;
-    out["sky:half-rate saves"] = out.full - time();
+    out["sky:half-rate saves"] = every - time(true);
     backdrop.refreshRate = 1;
   }
   for (const [name, set] of Object.entries(parts)) {
