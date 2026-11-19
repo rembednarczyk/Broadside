@@ -195,6 +195,8 @@ export class SailCloth {
           const plan = g.indexOf[k]!;
           const sim = (this.sims[plan] ??= new SailSim(p));
           if (starting) sim.reset(st.set);
+          // Canvas shot to rags (seven tenths and more gone): the sail tears loose and hangs from one corner.
+          if ((this.torn[plan] ?? 0) >= 7) sim.tear();
           sim.advance(cloth.dt, st.set, st.billow, cloth.wind, st.flutter, p.shape === "square" ? -foreSide(st.angle) * YARD_CLEAR : null);
           this.local.set(sim.positions);
         } else sailPositions(p, st.set, st.billow, this.local);
