@@ -980,3 +980,9 @@ obraca się mniej niż 0,003 rad na klatkę i nie ma błyskawicy (`Sky.refresh`,
 Chmury dryfują wolno, więc przeskok o klatkę nie jest widoczny; obrót widoku odświeża od razu, żeby niebo nie zostawało
 za masztami. Pomiar: high 18% klatki mniej przy nieruchomym widoku. Na telefonie przy kamerze śledzącej kołyszący się
 statek zysk będzie mniejszy (część klatek z obrotem).
+
+## 19.11: rozświetlona mgiełka nad lądem (C2)
+Plansze porównawcze: w referencji (ref_152, ref_060) dalekie lądy pod słońce giną w jasnej mgle, w grze stały ciemne
+i ostre, bo mgła Babylona barwi je jednym kolorem. Wtyczka materiału `sun-haze.ts` dodaje wyspom i dalekiemu
+wybrzeżu ten sam człon rozpraszania w stronę słońca co ocean (dwa płaty: potęgi 3 i 12), razy udział mgły przed
+powierzchnią (czynnik mgły Babylona albo zamglenie pierścienia wybrzeża). Z dala od słońca bez zmian.

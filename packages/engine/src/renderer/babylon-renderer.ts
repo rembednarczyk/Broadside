@@ -11,6 +11,7 @@ import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from 
 import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
 import { ShipFill } from "./ship-fill";
 import { wetSkyOf } from "./wet-deck";
+import { hazeSunOf } from "./sun-haze";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
@@ -172,6 +173,11 @@ export class BabylonRenderer {
     const wet = wetSkyOf(this.scene);
     wet.horizon = look.skyHorizon;
     wet.zenith = look.skyZenith;
+    // The lit haze over the land glows towards the key light as the ocean's does (sun-haze.ts).
+    const haze = hazeSunOf(this.scene);
+    haze.dir = look.keyDir;
+    const hk = Math.min(1, look.keyIntensity / 2.2);
+    haze.color = { r: look.keyColor.r * hk, g: look.keyColor.g * hk, b: look.keyColor.b * hk };
     // The same key light, through the canvas of the sails (sail-translucency.ts).
     const through = sailLightOf(this.scene);
     through.dir = { x: look.keyDir.x, y: Math.max(0.05, look.keyDir.y), z: look.keyDir.z };

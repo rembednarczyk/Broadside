@@ -1,5 +1,6 @@
 import { fbm2, noise1 } from "@broadside/core";
 import { Color3, Mesh, type Scene, StandardMaterial, VertexData } from "../babylon";
+import { SunHaze, hazeSunOf } from "./sun-haze";
 
 /**
  * Distant coast as a backdrop: two rings of headlands far out, their skylines from fractal noise
@@ -43,6 +44,7 @@ export const coastHaze = (distance: number, fogDensity: number): number => Math.
 export class FarCoast {
   readonly meshes: Mesh[] = [];
   private readonly materials: StandardMaterial[] = [];
+  private readonly hazes: SunHaze[] = [];
 
   constructor(scene: Scene, seed: number) {
     RINGS.forEach((ring, r) => {
@@ -72,6 +74,7 @@ export class FarCoast {
       m.specularColor = Color3.Black();
       m.backFaceCulling = false;
       mesh.material = m;
+      this.hazes.push(new SunHaze(m, hazeSunOf(scene)));
       mesh.applyFog = false;
       mesh.isPickable = false;
       this.meshes.push(mesh);
@@ -86,6 +89,7 @@ export class FarCoast {
       // which at the horizon is brighter than the scene's fog colour (the sky's glowing band of haze).
       const k = 0.35 + 0.8 * coastHaze(ring.radius, density);
       this.materials[r]!.emissiveColor.set(fog.r * k, fog.g * k, fog.b * k);
+      this.hazes[r]!.haze = coastHaze(ring.radius, density);
     });
   }
 

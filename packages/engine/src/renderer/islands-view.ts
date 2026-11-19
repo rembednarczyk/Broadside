@@ -1,6 +1,7 @@
 import { type Archipelago } from "@broadside/core";
 import { Color3, Matrix, Mesh, MeshBuilder, type Scene, StandardMaterial, VertexData, type ShadowGenerator } from "../babylon";
 import { islandGeometry, treeSpots } from "./island-geometry";
+import { SunHaze, hazeSunOf } from "./sun-haze";
 
 /**
  * The islands of the archipelago: one terrain mesh each (vertex colours), trees as thin
@@ -20,6 +21,8 @@ export class IslandsView {
     const crownMat = new StandardMaterial("crown", scene);
     crownMat.diffuseColor = new Color3(0.12, 0.18, 0.09);
     crownMat.specularColor = Color3.Black();
+    // Lit haze towards the sun over the land, as over the sea (sun-haze).
+    for (const m of [ground, trunkMat, crownMat]) new SunHaze(m, hazeSunOf(scene));
     const trunk = MeshBuilder.CreateCylinder("tree-trunk", { height: 1, diameterTop: 0.25, diameterBottom: 0.45, tessellation: 5 }, scene);
     trunk.material = trunkMat;
     const crown = MeshBuilder.CreateSphere("tree-crown", { diameter: 1, segments: 4 }, scene);
