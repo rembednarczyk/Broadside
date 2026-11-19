@@ -179,7 +179,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie
 `mastFell`; widok ma dziury w żaglach, drzazgi jako płaskie iskry, maszt po upadku po prostu znika; AI poddaje się tylko
 przy załodze lub kadłubie poniżej 15%. Kolejność:
-1. [ ] **Stany zdrowia** (tabela w `core/data`, wzorzec Type Object): nienaruszony, uszkodzony, ciężko uszkodzony,
+1. [x] (19.11, bez zdarzenia zmiany stanu: dojdzie z punktem 5) **Stany zdrowia** (tabela w `core/data`, wzorzec Type Object): nienaruszony, uszkodzony, ciężko uszkodzony,
    unieruchomiony, tonący; liczone z sekcji kadłuba, masztów i olinowania; zdarzenie przy zmianie stanu; pasek celu w HUD
    podzielony na odcinki, nazwa stanu (EN, PL).
 2. [ ] **Lecące deski**: modele desek z folderu właściciela (`double_dutch_outer_pinewood_plank`,

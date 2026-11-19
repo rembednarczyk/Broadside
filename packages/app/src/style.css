@@ -126,6 +126,8 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .target { width: 100%; }
 .target .bar, .gauge { display: block; height: calc(5 * var(--u)); background: rgba(0, 0, 0, 0.5); border: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.35); border-radius: calc(3 * var(--u)); overflow: hidden; margin: calc(4 * var(--u)) 0; }
 .target .bar span { display: block; height: 100%; background: linear-gradient(180deg, #e2553a, #8e2a1c); }
+.target .bar.segmented { position: relative; height: calc(7 * var(--u)); }
+.target .bar.segmented::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(0, 0, 0, 0.85) calc(25% - 1px) 25%); pointer-events: none; }
 
 /* --- combat (top) and the broadside buttons (bottom corners) --- */
 .combat { grid-area: top; justify-self: center; width: min(100%, calc(480 * var(--u))); font-size: calc(11 * var(--u)); }

@@ -1,6 +1,6 @@
 import { DOCTRINES, type AmmoId, type GameCommand, type Relations, type SailLevel, angleOffWind, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
 import { type Entity } from "../world/components";
-import { type ShipState, crewShare } from "../ship/ship-state";
+import { type ShipState, crewShare, hullShare } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
@@ -64,7 +64,6 @@ export const clearHeading = (me: Entity, heading: number, w: Pick<World2D, "bed"
   return wrapAngle(w.windDirection);
 };
 
-const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp, 0) / (s.model.def.sectionHp * s.sections.length);
 
 export const hostileTo = (a: ShipState, b: ShipState, rel: Relations | null = null): boolean => isHostile(standing(a.faction, b.faction, rel));
 

@@ -1,4 +1,4 @@
-import { type AmmoId, type Faction, type MountKind, type SailLevel, type UpgradeId } from "@broadside/core";
+import { type AmmoId, type Faction, type MountKind, type SailLevel, type ShipCondition, type UpgradeId } from "@broadside/core";
 import { type ShipModel } from "./ship-model";
 
 /**
@@ -111,3 +111,16 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
 };
 
 export const crewShare = (s: ShipState): number => s.crew / s.model.def.crew;
+
+/** Share of the hull's strength left over all its sections. */
+export const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp, 0) / (s.model.def.sectionHp * s.sections.length);
+
+/** The measures core's `damageState` names (hull, masts standing, rigging, canvas, struck, sinking). */
+export const shipCondition = (s: ShipState): ShipCondition => ({
+  hull: hullShare(s),
+  mastsStanding: s.mastHp.filter((h) => h > 0).length / Math.max(1, s.mastHp.length),
+  rigging: s.rigging,
+  canvas: s.sailCloth.reduce((a, x, i) => a + (s.mastHp[i]! > 0 ? x : 0), 0) / Math.max(1, s.sailCloth.length),
+  struck: s.struck,
+  sinking: s.sinking,
+});

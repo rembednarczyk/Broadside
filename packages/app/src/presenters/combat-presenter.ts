@@ -1,5 +1,5 @@
-import { type MountKind, canFire, AMMO_IDS, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm } from "@broadside/sim";
+import { type MountKind, canFire, AMMO_IDS, damageState, wrapAngle, yawOf } from "@broadside/core";
+import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm, hullShare, shipCondition } from "@broadside/sim";
 import { type BatteryHud, type CombatHud, type TargetHud } from "@broadside/ui";
 
 /** Reads the player's guns, stores and condition, and the current target (Presenter). */
@@ -63,9 +63,10 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     classId: t.model.def.id,
     faction: t.faction,
     range: aim.range,
-    hull: t.sections.reduce((a, x) => a + x.hp, 0) / (t.model.def.sectionHp * t.sections.length),
+    hull: hullShare(t),
     crew: t.crew,
     struck: t.struck,
+    state: damageState(shipCondition(t)),
     side,
   };
 };

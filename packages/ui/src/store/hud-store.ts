@@ -71,6 +71,8 @@ export interface TargetHud {
   readonly hull: number;
   readonly crew: number;
   readonly struck: boolean;
+  /** Ships: the condition's name (core damageState: sound, damaged, battered, disabled, struck, sinking). */
+  readonly state?: string;
   /** Side of the player's ship the target is on. */
   readonly side: "port" | "starboard" | "ahead" | "astern";
 }
