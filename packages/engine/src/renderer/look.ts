@@ -85,7 +85,7 @@ export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?
   const moonKey = moonIntensity > sunIntensity;
   // Haze thickens faster than the cover: under a heavy sky the horizon and its cliffs sink into
   // it (ref_152, ref_060), under a broken one hardly changes (cover^1.5).
-  const fogDensity = 0.0006 + 0.0028 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
+  const fogDensity = 0.0006 + 0.0042 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
   // That haze lies in the shadow of the deck of cloud: a dull grey, darker than the bright band
   // of a clear horizon (the sky shader dims its own haze by the same curve, horizonHaze in shaders/sky.ts).
   const fogColor = scale(horizon, hazeShade(cover));

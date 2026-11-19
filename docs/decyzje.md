@@ -989,3 +989,6 @@ powierzchnią (czynnik mgły Babylona albo zamglenie pierścienia wybrzeża). Z 
 Tego samego dnia: iskry odblasków (szkliste fasetki) tylko w ścieżce słońca, gdzie sama fala prawie odbija słońce
 (kąt normalnej fali do wektora połówkowego poniżej ok. 40°); dalej morze zostaje ciemne jak na klatkach referencji,
 kilwater zachowuje swoje błyski.
+Tego samego dnia: mgła pod chmurami gęstsza (składnik zachmurzenia 0,0028 → 0,0042 · pokrycie^1,5): przy szkwałach wybrzeże
+za statkiem rozpływa się w mgle jak na ref_124, statek gracza w kamerze izometrycznej zostaje czytelny (sprawdzone
+zrzutem przy szkwałach). Burzowa noc: odcień burzy 45% jasności dnia zamiast 25% (ref_075).
