@@ -198,7 +198,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
    nie ucieknie; kapitan AI poddaje się, gdy wróg jest blisko, a jego załoga słabsza; abordaż unieruchomionego łatwiejszy;
    w HUD przycisk abordażu przy unieruchomionym celu w zasięgu; złoty hash ręcznie z nazwą reguły, `pnpm run audit`
    (bitwy) w progach ADR-0005.
-6. [ ] **Dźwięk**: trzask belek, pękający maszt, plusk spadającej rei.
+6. [x] (19.11: trzask, jęk olinowania i plusk przy upadku masztu z nagrań ram, creak, splash; mocniejsze trafienia głośniejsze; plusk rei czeka na reje z HP) **Dźwięk**: trzask belek, pękający maszt, plusk spadającej rei.
 Weryfikacja: testy reguł (stany, łańcuch na olinowaniu, poddanie), zrzuty salwy łańcuchowej z bliska (`SHOT_SCRIPT`)
 przed i po, audyt bitew, przeglądarka statku i APK.
 

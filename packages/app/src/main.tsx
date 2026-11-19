@@ -363,7 +363,10 @@ const frame = (now: number) => {
   haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
-    const cue = cueFor(e, session.playerId);
+    const cue = cueFor(e, session.playerId, (id) => {
+      const b = session.sim.byId(id)?.body;
+      return b ? { x: b.pos.x, z: b.pos.z } : null;
+    });
     if (cue) audio.play(cue, listener);
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);

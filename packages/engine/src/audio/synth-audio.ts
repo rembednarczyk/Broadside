@@ -21,6 +21,8 @@ export type Cue =
   | { readonly kind: "splash"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "wood"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "boom"; readonly x: number; readonly z: number; readonly size: number }
+  /** A mast going by the board (M11): the crack, the groan of the rigging as it goes over, the splash. */
+  | { readonly kind: "mast"; readonly x: number; readonly z: number }
   | { readonly kind: "bell" }
   /** Coins counted into the chest (prize money, pay, sales). */
   | { readonly kind: "coins" }
@@ -181,6 +183,10 @@ export class SynthAudio {
     if (cue.kind === "gun") this.burst(at, "lowpass", 900 + 600 / cue.size, 1.1 + cue.size * 0.5, 0.9, 0.9 * cue.size);
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
+    else if (cue.kind === "mast") {
+      this.burst(at, "highpass", 1200, 0.6, 0.9, 0.5);
+      this.burst(at, "bandpass", 1000, 1.4, 0.4, 0);
+    }
     else this.burst(at, "lowpass", 600, 2.2 * cue.size, 1, 1.2);
   }
 
@@ -234,8 +240,17 @@ export class SynthAudio {
   /** Recorded version of a placed cue, if its clip is loaded (pitch varied per shot, lower for bigger guns). */
   private playRecorded(cue: Cue, at: { gain: number; pan: number; delay: number }): boolean {
     const s = this.scape;
-    if (!s || !("size" in cue)) return false;
+    if (!s) return false;
     const jitter = 0.94 + Math.random() * 0.12;
+    if (cue.kind === "mast") {
+      if (!s.has("ram")) return false;
+      // Mast-fall's few seconds: the crack, the rigging groaning (a slowed creak), the wreck striking the water.
+      s.oneShot("ram", at.gain, at.pan, 0.8 * jitter, at.delay);
+      if (s.has("creak")) s.oneShot("creak", at.gain * 0.8, at.pan, 0.6, at.delay + 0.5);
+      if (s.has("splash")) s.oneShot("splash", at.gain, at.pan, 0.7, at.delay + 4.2);
+      return true;
+    }
+    if (!("size" in cue)) return false;
     if (cue.kind === "gun" && s.has("gun")) s.oneShot("gun", at.gain * Math.min(1.2, 0.5 + cue.size * 0.5), at.pan, jitter / Math.pow(Math.max(0.3, cue.size), 0.25), at.delay);
     else if (cue.kind === "splash" && s.has("splash")) s.oneShot("splash", at.gain * Math.min(1, 0.3 + cue.size * 0.3), at.pan, jitter, at.delay);
     else if (cue.kind === "wood" && s.has("hit")) s.oneShot(cue.size > 1.5 ? "ram" : "hit", at.gain * Math.min(1, 0.4 + cue.size * 0.3), at.pan, jitter, at.delay);
