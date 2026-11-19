@@ -288,7 +288,10 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
   if (disabled) {
     const foe = nearestHostile(me, w.ships, w.fog, w.relations, w.screens);
     const near = foe && Math.hypot(foe.body!.pos.x - me.body!.pos.x, foe.body!.pos.z - me.body!.pos.z) < DISABLED.strikeRange;
-    if (foe && near && s.crew * DISABLED.outnumbered < foe.ship!.crew) {
+    // ...once she has bled for it: a ship crippled aloft with her hull and people whole fought on
+    // (one salvo of chain made a sound schooner strike within two seconds, beta test 19.11).
+    const bled = hullShare(s) < 0.8 || crewShare(s) < 0.8;
+    if (foe && near && bled && s.crew * DISABLED.outnumbered < foe.ship!.crew) {
       c.mode = "struck";
       s.struck = true;
       return [{ type: "sails", ship: me.id, mast: "all", level: 0 }];

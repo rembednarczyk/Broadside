@@ -227,6 +227,16 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Zasięg wzroku obserwatora we mgle krótszy (do 30% przy gęstej, reguła wykrywania kapitanów AI).
 - [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku nocą (symulacja nie zna dziś pory dnia: godzina żyje w app).
 
+### Po beta-teście (19.11, trzech testerów; raporty w scratchpadzie sesji, poprawki w decyzjach)
+- [ ] Samoobrona załogi w prostym sterowaniu (działa strzelają same do wroga w zasięgu, jeśli gracz nie wydał rozkazu).
+- [ ] Pilot ratujący wrak i halsujący nie wypływa poza mapę (granica morza w nawigacji).
+- [ ] Zlecenia: zdanie, co trzeba zrobić, i znacznik celu na krawędzi ekranu (także eskortowanego statku).
+- [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
+- [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
+- [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.
+- [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
+- [ ] Pogoda: wiatr rośnie od świeżego do sztormu w ok. 80 s, sztorm trwa 2–4 min (wolniejsze przejścia, zapowiedź).
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu

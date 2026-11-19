@@ -9,7 +9,7 @@ import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
-import { presentChart } from "./presenters/chart-presenter";
+import { chartTarget, presentChart } from "./presenters/chart-presenter";
 import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
 import { presentAmbience } from "./presenters/ambience-presenter";
@@ -291,7 +291,7 @@ const intents: UiIntents = {
   chart: {
     // A course from the chart: the crew sails there round the islands (A*, sim/ai/pilot/plan).
     sailTo: (x, z) => {
-      session.helm.navigate([{ x, z }], false);
+      session.helm.navigate([chartTarget(session.sim, x, z)], false);
       showMenu(null);
     },
   },
@@ -431,8 +431,8 @@ const frame = (now: number) => {
   if (!pacer.due(now)) return void requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  // The game stands still while the menu is up (the sea and the ships are drawn as they are).
-  if (!useHud.getState().menu) session.advance(dt);
+  // The game stands still while the menu or the how-to-play card is up (the sea and ships drawn as they are).
+  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt);
   const scale = autoResolution ? dynres.update(dt) : null;
   if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();

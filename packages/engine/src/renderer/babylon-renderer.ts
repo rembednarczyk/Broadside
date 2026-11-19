@@ -388,8 +388,10 @@ export class BabylonRenderer {
   pickWater(clientX: number, clientY: number): { x: number; z: number } | null {
     const rect = this.engine.getRenderingCanvasClientRect();
     if (!rect) return null;
-    const scale = this.engine.getRenderWidth() / Math.max(1, rect.width);
-    const ray = this.scene.createPickingRay((clientX - rect.left) * scale, (clientY - rect.top) * scale, Matrix.Identity(), this.camera.camera);
+    // CSS pixels from the canvas corner: Babylon divides by the hardware scaling itself (device
+    // pixel ratio and render scale). Scaled here again, a tap landed 1.5 times as far from the
+    // corner on a phone at DPR 2 and the medium preset (beta test 19.11).
+    const ray = this.scene.createPickingRay(clientX - rect.left, clientY - rect.top, Matrix.Identity(), this.camera.camera);
     if (ray.direction.y > -1e-4) return null;
     const t = -ray.origin.y / ray.direction.y;
     if (t < 0 || t > 5000) return null;

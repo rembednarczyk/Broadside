@@ -1112,8 +1112,11 @@ w scratchpadzie sesji. Poprawki z raportu weterana (klasyczny ster):
   abordaż nigdy własnej strony.
 - Statek, który opuścił banderę, staje w dryfie: opór wzdłużny ×8 (`HOVE_TO`), traci drogę w niespełna minutę;
   w panelu celu przycisk „Bandera opuszczona: abordaż”.
-- Uszkodzenia olinowania i płótna skalowane wytrzymałością masztów klasy (bryg 240 jako miara), współczynniki
-  0,0004 i 0,0013: salwa łańcuchowa galeonu zabiera szkunerowi ok. 30% olinowania zamiast 83%.
+- Uszkodzenia olinowania i płótna skalowane wytrzymałością masztów klasy (bryg 240 jako miara, przy brygu dawne
+  stawki 0,0012 i 0,0035): większe statki tracą mniej (galeon 0,63, okręt liniowy 0,37), mniejsze więcej. Niższe
+  stawki dla wszystkich (0,0004) łamały bramkę bitew ADR-0005 (bryg wygrywał z brygiem prawie bez strat), więc
+  wycofane. Kapitulacja unieruchomionego statku wymaga strat (kadłub albo załoga poniżej 80%): salwa łańcuchowa
+  nie kończy już walki ze zdrowym szkunerem po dwóch sekundach.
 - Zapasy amunicji według dział jednej burty: kule pełne 12 salw (co najmniej 60), łańcuchowa i kartacze po 3,
   ciężka 2, rozżarzona 1 salwa; po wyczerpaniu specjalnej amunicji działa same ładują kule pełne, z komunikatem.
 - Opór kadłuba przy ruchu wstecz ×4 (`ASTERN_DRAG`): w linii wiatru statek cofa się ok. połowę wolniej.
@@ -1137,3 +1140,21 @@ Poprawki z raportu gracza zręcznościowego (tryb Akcja, telefon):
 - Krótsze polskie etykiety: „Refy”, „Łańcuch”, „Osłona” (ucinały się na 915 × 412).
 - Do backlogu: większe cele dotykowe przycisków amunicji i żagli (21–24 px), kamera pościgowa odsuwająca się
   w walce, cel z mapy w trybie Akcja i klasycznym (strzałka bez autopilota).
+
+Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski):
+- Stuknięcie w wodę: `pickWater` podaje Babylonowi piksele CSS (Babylon sam dzieli przez skalowanie sprzętowe);
+  wcześniej punkt wypadał 1,5 raza dalej od rogu ekranu przy DPR 2 i presecie medium (zwykły telefon), a przy
+  DPR 1 i low przy samym statku. Sprawdzone: DPR 1, 2 i 2,5 z low, medium i high trafiają co do piksela.
+- Zapis po „Nowej grze” wczytuje się na archipelagu ziarna zapisu (wcześniej ziarna z adresu albo 1797).
+- Statek ratunkowy po zatonięciu nie dziedziczy rozkazu pilota ani kotwicy.
+- Stuknięcie portu na mapie prowadzi do jego kotwicowiska, stuknięcie lądu lub płycizny do najbliższej otwartej wody
+  (wcześniej kurs na ląd, który się nie kończył).
+- Gra stoi pod kartą pomocy, jak pod menu; karta pokazuje tylko akapity dla bieżącego sterowania i bez listy
+  klawiszy na ekranie dotykowym.
+- Spotkanie otwierające: piracki szkuner i slup startują ok. 1,5 km od gracza (było 560 i 830 m: bierny gracz
+  tracił galeon w 4–7 minut na każdym ziarnie).
+- Okno opcji zawieszone od stałej góry (pasek zakładek nie skacze między zakładkami).
+- Zlecenie „bounty” płatne tylko, gdy cel padł od ognia gracza (ostatnie trafienie gracza).
+- Ostrzeżenie o mieliźnie tylko w ruchu (powyżej 1 m/s), nie przy nabrzeżu; legenda mapy z wrogim portem.
+- Do backlogu: samoobrona załogi w prostym sterowaniu, ratowanie wraku wypływające poza mapę (pilot bez granicy
+  mapy), opis i znacznik celu zlecenia, stocznia ucięta w panelu portu, większe cele dotykowe.

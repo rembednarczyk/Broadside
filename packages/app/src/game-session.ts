@@ -29,7 +29,10 @@ export class GameSession {
 
   /** A new game from a seed, or a saved one continued from its snapshot. */
   constructor(opts: SessionOptions, saved?: SimSnapshot) {
-    this.options = { seed: opts.seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(opts.seed), traffic: true };
+    // A saved game is in the world of its own seed (a new game drew a fresh one: the address's or
+    // the default seed would put her on another map, beta test 19.11).
+    const seed = saved?.options.seed ?? opts.seed;
+    this.options = { seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(seed), traffic: true };
     if (saved) {
       this.sim = restore(saved, this.options.archipelago ?? null);
       this.playerId = this.sim.player()!.id;
@@ -46,8 +49,10 @@ export class GameSession {
     const map = this.sim.env.archipelago!;
     for (const site of fortSites(map)) this.sim.spawnFort(site);
     const at = (x: number, z: number) => openWater(map, x, z);
-    this.sim.spawnShip({ classId: "schooner", faction: "pirates", ...at(-380, 420), heading: 2.2, speed: 3, ai: true });
-    this.sim.spawnShip({ classId: "sloop", faction: "pirates", ...at(520, 650), heading: 3.6, speed: 3, ai: true });
+    // The pirates start some 1.5 km off: a new captain has a few minutes to find the helm and the
+    // guns (at 560 and 830 m they sank a galleon left to herself in 4-7 minutes, beta test 19.11).
+    this.sim.spawnShip({ classId: "schooner", faction: "pirates", ...at(-1050, 1100), heading: 2.2, speed: 3, ai: true });
+    this.sim.spawnShip({ classId: "sloop", faction: "pirates", ...at(1250, 1150), heading: 3.6, speed: 3, ai: true });
     this.sim.spawnShip({ classId: "frigate", faction: "crown", ...at(1500, -300), heading: 4.2, speed: 3, ai: true });
     this.sim.spawnShip({ classId: "brig", faction: "republic", ...at(1700, 900), heading: 3.4, speed: 3, ai: true });
   }

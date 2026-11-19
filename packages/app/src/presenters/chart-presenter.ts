@@ -1,4 +1,4 @@
-import { type Archipelago, SURVEY, contourLoops, fortSites, heightGrid, isHostile, lookoutRange, standing, surveyIndex, surveySide, wreckSites, yawOf } from "@broadside/core";
+import { type Archipelago, DEEP_SEA, SURVEY, contourLoops, openWater, terrainHeight, fortSites, heightGrid, isHostile, lookoutRange, standing, surveyIndex, surveySide, wreckSites, yawOf } from "@broadside/core";
 import { type Simulation, hostileTo, portOwner } from "@broadside/sim";
 import { type ChartHud } from "@broadside/ui";
 import { presentCourse } from "./course-presenter";
@@ -86,4 +86,20 @@ export const presentChart = (sim: Simulation, playerId: number): ChartHud | null
     route: course.path,
     goal: course.goal ? { x: course.goal.x, z: course.goal.z } : null,
   };
+};
+
+/** A tap on the chart this close to a port (m) is a course for her anchorage. */
+const PORT_TAP = 300;
+
+/**
+ * Where a tap on the chart sends the ship: a port's anchorage when the tap is by a port (a port's
+ * mark lies on its landing, ashore: the course ran onto the land and never ended, beta test
+ * 19.11), the nearest open water when the tap is on land or a shoal, else the point itself.
+ */
+export const chartTarget = (sim: Simulation, x: number, z: number): { x: number; z: number } => {
+  const port = sim.ports.find((p) => Math.hypot(p.x - x, p.z - z) < PORT_TAP || Math.hypot(p.ax - x, p.az - z) < PORT_TAP);
+  if (port) return { x: port.ax, z: port.az };
+  const a = sim.env.archipelago;
+  if (a && terrainHeight(a, x, z) > DEEP_SEA + 30) return openWater(a, x, z, 40);
+  return { x, z };
 };

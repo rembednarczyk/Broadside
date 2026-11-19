@@ -98,6 +98,7 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
             <span><i className="key player" />{t("chart.you")}</span>
             <span><i className="key hostile" />{t("chart.hostile")}</span>
             <span><i className="key port" />{t("chart.ports")}</span>
+            <span><i className="key port hostile" />{t("chart.hostilePorts")}</span>
             <span><i className="key fort" />{t("chart.forts")}</span>
             <span><i className="key wreck">✕</i>{t("chart.wrecks")}</span>
           </div>
