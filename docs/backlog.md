@@ -220,7 +220,10 @@ pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po spra
   `oceanCells` na ultra (360) i wywołania `hullWater` w shaderze wierzchołków
 - [ ] statki: załoga z animacją wierzchołkową i liny ruchome (w podziale kosztu pojawiają się po 0–8%, pomiar zaszumiony:
   powtórzyć z większą liczbą klatek)
-- [ ] post-procesy na ultra (ok. 13%): SSAO w połowie rozdzielczości już jest; sprawdzić koszt rozmycia ruchu i bloomu
+- [x] post-procesy na ultra, pomiar 19.11 (12 klatek, `frame-bench` z podziałem): razem 8%, z tego SSAO 8%, bloom 2%,
+  rozmycie ruchu i gradacja ok. 0%; jedyny kandydat to SSAO (już w połowie rozdzielczości)
+- [ ] płycizny na ultra nadal 7% po przyboju liczonym tylko przy brzegu; skrócenie listy wysp do 2,2 km od kamery nie
+  zmieniło kosztu w scenie pomiaru (wycofane): koszt siedzi w fbm najbliższych wysp, kandydat to maska z tekstury
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)
