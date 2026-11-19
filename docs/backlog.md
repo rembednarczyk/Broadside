@@ -187,7 +187,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
    do kilkuset trójkątów, pula instancji (Object Pool, thin instances), lot balistyczny z obrotem tylko w widoku (bez
    wpływu na symulację i złoty hash), plusk i dryf na fali z `core/ocean`, znikanie po kilkunastu sekundach; liczba
    desek rośnie z obrażeniami trafienia; obecne iskry zostają jako drobne drzazgi.
-3. [~] (19.11: przestrzeliny i dym przy ciężkich uszkodzeniach zrobione; osmalenia i wyrwany reling czekają; trafienia sprzed doczytania modelu kadłuba giną przy przebudowie widoku) **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
+3. [~] (19.11: przestrzeliny, dym przy ciężkich uszkodzeniach i osmalenia sekcji po pożarze albo poniżej 1/3 wytrzymałości zrobione; wyrwany reling czeka; trafienia sprzed doczytania modelu kadłuba giną przy przebudowie widoku) **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
    naklejki na kadłubie modelu, limit na statek), w stanie ciężkim osmalenia, wyrwane fragmenty relingu i nadburcia, dym
    z kadłuba, przechył z zalania (fizyka już jest).
 4. [~] (19.11: maszt przewraca się za burtę i jako wrak hamuje i skręca statek, dopóki załoga go nie odetnie (40 s przy pełnej załodze); przestrzelone liny zwisają; żagiel w strzępach wisi z rogu; gracz celuje łańcuchami w maszty (40% wysokości), kartaczami w pokład; reje z własnym HP czekają) **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym

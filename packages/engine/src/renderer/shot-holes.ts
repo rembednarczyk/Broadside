@@ -54,11 +54,44 @@ const holeTexture = (scene: Scene): DynamicTexture => {
   return t;
 };
 
-const holeMaterial = (scene: Scene): StandardMaterial => {
-  const cached = scene.getMaterialByName("shot-hole");
+/**
+ * Scorching (M11): a blotch of soot where fire has burnt the side or the timbers are shot to
+ * pieces, ragged at its rim (overlapping soft discs cut by the alpha test), darkest at its heart.
+ */
+const scorchTexture = (scene: Scene): DynamicTexture => {
+  const size = 128;
+  const t = new DynamicTexture("hull-scorch", { width: size, height: size }, scene, true);
+  const ctx = t.getContext() as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, size, size);
+  let s = 11;
+  const rnd = (): number => {
+    s = (s * 16807) % 2147483647;
+    return s / 2147483647;
+  };
+  for (let i = 0; i < 22; i++) {
+    const a = rnd() * Math.PI * 2;
+    const r = rnd() * size * 0.28;
+    const x = size / 2 + Math.cos(a) * r;
+    const y = size / 2 + Math.sin(a) * r * 0.7;
+    const rad = size * (0.1 + rnd() * 0.16);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, "rgba(14,10,8,0.95)");
+    g.addColorStop(0.6, "rgba(30,22,16,0.7)");
+    g.addColorStop(1, "rgba(40,30,22,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+  }
+  t.hasAlpha = true;
+  t.update();
+  return t;
+};
+
+const holeMaterial = (scene: Scene, kind: "hole" | "scorch"): StandardMaterial => {
+  const name = kind === "hole" ? "shot-hole" : "hull-scorch";
+  const cached = scene.getMaterialByName(name);
   if (cached) return cached as StandardMaterial;
-  const m = new StandardMaterial("shot-hole", scene);
-  m.diffuseTexture = holeTexture(scene);
+  const m = new StandardMaterial(name, scene);
+  m.diffuseTexture = kind === "hole" ? holeTexture(scene) : scorchTexture(scene);
   m.useAlphaFromDiffuseTexture = true;
   // Babylon's Material.MATERIAL_ALPHATEST: cut out, no sorting.
   m.transparencyMode = 1;
@@ -75,10 +108,11 @@ export class ShotHoles {
   private readonly holes: { p: Vector3; n: Vector3; size: number; twist: number }[] = [];
 
   /** `hull`: the meshes the holes are laid on (the hull model, or the generated hull). */
-  constructor(scene: Scene, private readonly parent: TransformNode, private readonly hull: () => readonly AbstractMesh[], private readonly beam: number) {
-    this.mesh = new Mesh(`shot-holes-${parent.name}`, scene);
+  /** `kind`: shot holes, or scorching (the same decals with a blotch of soot). */
+  constructor(scene: Scene, private readonly parent: TransformNode, private readonly hull: () => readonly AbstractMesh[], private readonly beam: number, kind: "hole" | "scorch" = "hole") {
+    this.mesh = new Mesh(`${kind === "hole" ? "shot-holes" : "scorch"}-${parent.name}`, scene);
     this.mesh.parent = parent;
-    this.mesh.material = holeMaterial(scene);
+    this.mesh.material = holeMaterial(scene, kind);
     this.mesh.isPickable = false;
   }
 

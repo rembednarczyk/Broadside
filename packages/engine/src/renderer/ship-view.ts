@@ -1,4 +1,4 @@
-import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
+import { type Entity, type FactionId, type ShipModel, type ShipState, setFactor } from "@broadside/sim";
 import { type ShipPart, partId, rotateInv, vec3, windVector } from "@broadside/core";
 import { type AbstractMesh, Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
@@ -212,6 +212,9 @@ export class ShipView {
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
   private readonly holes: ShotHoles;
+  private readonly scorch: ShotHoles;
+  /** Sections already scorched (fire, or shot to pieces). */
+  private readonly scorched = new Set<number>();
   /** Masts going by the board (mast-fall), by mast. */
   private readonly falls = new Map<number, { fall: MastFall; side: number; pivotY: number; pivotZ: number }>();
 
@@ -288,6 +291,8 @@ export class ShipView {
       ? hulls.sides(model.def.id, hullMeshes, hullSpace, model.guns.map((g) => ({ y: g.pos.y + model.com.y + gunHeight(g.kind), z: g.pos.z + model.com.z, sign: Math.sign(g.dir.x) || 1 })), model.def.hull.beam)
       : null;
     this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows, gunScan, sides);
+    const hullOf = (): readonly AbstractMesh[] => (this.modelled ? [...(this.hullTiers?.near ?? hullMeshes ?? []), ...(this.hullTiers?.far ?? [])] : [hullMesh]);
+    this.scorch = new ShotHoles(scene, hullSpace, hullOf, model.def.hull.beam, "scorch");
     this.holes = new ShotHoles(scene, hullSpace, () => (this.modelled ? [...(this.hullTiers?.near ?? hullMeshes ?? []), ...(this.hullTiers?.far ?? [])] : [hullMesh]), model.def.hull.beam);
     if (this.modelled) {
       hullMesh.setEnabled(false);
@@ -435,6 +440,27 @@ export class ShipView {
     mesh.position.y = -f.fall.drop;
   }
 
+  /**
+   * Soot on the side of a section that has burnt or is shot to pieces (below a third of its
+   * strength), once per section: a few blotches over its length, laid like shot holes.
+   */
+  private scorchSections(s: ShipState): void {
+    const h = this.model.def.hull;
+    s.sections.forEach((sec, i) => {
+      if (this.scorched.has(i) || (sec.fire <= 0 && sec.hp > this.model.def.sectionHp / 3)) return;
+      this.scorched.add(i);
+      const zone = Math.floor(i / 2);
+      const side = i % 2 === 1 ? 1 : -1;
+      const world = this.hullSpace.computeWorldMatrix(true);
+      for (let k = 0; k < 3; k++) {
+        const z = h.length * (0.3 - zone * 0.3) + (k - 1) * h.length * 0.07;
+        const y = h.freeboard * (0.35 + 0.25 * ((k + i) % 2));
+        const p = Vector3.TransformCoordinates(new Vector3(side * h.beam * 0.5, y, z), world);
+        this.scorch.add(p, 2.4 + k * 0.6);
+      }
+    });
+  }
+
   /** A ball went into the hull at a world point: a shot hole there (M11). */
   shotHit(at: { readonly x: number; readonly y: number; readonly z: number }, damage: number): void {
     this.holes.add(at, Math.min(1.7, 0.9 + damage * 0.03));
@@ -482,6 +508,7 @@ export class ShipView {
     const s = e.ship!;
     this.root.position.set(b.pos.x, b.pos.y, b.pos.z);
     this.root.rotationQuaternion!.set(b.rot.x, b.rot.y, b.rot.z, b.rot.w);
+    this.scorchSections(s);
     const tw = windVector(windDirection, windSpeed);
     const aw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
     const states: SailState[] = this.plans.map((p, i) => {
@@ -552,6 +579,7 @@ export class ShipView {
 
   dispose(): void {
     this.holes.dispose();
+    this.scorch.dispose();
     this.root.dispose();
   }
 }
