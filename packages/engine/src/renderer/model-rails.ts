@@ -11,10 +11,25 @@ import { type SideProfile } from "./side-profile";
 const RAIL = 0.075;
 const POST = 0.055;
 
-export const buildModelRails = (scene: Scene, parent: TransformNode, side: SideProfile, wood: StandardMaterial, shadows: ShadowGenerator | null): Mesh | null => {
+/** Where the rail is shot away (M11): stretches of it, by side and z (hull space), are left out. */
+export type RailGap = { readonly side: 1 | -1; readonly from: number; readonly to: number };
+
+export const buildModelRails = (scene: Scene, parent: TransformNode, side: SideProfile, wood: StandardMaterial, shadows: ShadowGenerator | null, gaps: readonly RailGap[] = []): Mesh | null => {
   const parts: Mesh[] = [];
   for (const s of [1, -1] as const) {
-    const { runs, posts } = side.railRuns(s);
+    const { runs: whole, posts: allPosts } = side.railRuns(s);
+    const gone = (z: number): boolean => gaps.some((g) => g.side === s && z >= g.from && z <= g.to);
+    // A run broken by a gap goes on as two (the splintered ends just stop).
+    const runs = whole.flatMap((run) => {
+      const out: [number, number, number][][] = [[]];
+      for (const p of run) {
+        if (gone(p[2])) {
+          if (out[out.length - 1]!.length > 0) out.push([]);
+        } else out[out.length - 1]!.push(p);
+      }
+      return out.filter((r) => r.length > 1);
+    });
+    const posts = allPosts.filter((p) => !gone(p.z));
     for (const run of runs) {
       // The rail sits on the bulwark, a hand inboard of its outer face.
       const path = run.map(([x, y, z]) => new Vector3(x - s * 0.12, y + RAIL, z));

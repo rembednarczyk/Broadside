@@ -11,7 +11,7 @@ import { type SideProfile } from "./side-profile";
 import { gunPlaces } from "./gun-layout";
 import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
-import { buildModelRails } from "./model-rails";
+import { type RailGap, buildModelRails } from "./model-rails";
 import { buildModelDecks, deckPlanks } from "./deck-planks";
 import { ShotHoles } from "./shot-holes";
 import { MastFall } from "./mast-fall";
@@ -213,6 +213,8 @@ export class ShipView {
   private readonly guns: ShipGuns;
   private readonly holes: ShotHoles;
   private readonly scorch: ShotHoles;
+  /** The cap rail of a modelled hull, rebuilt with gaps where it is shot away (M11). */
+  private rails: { side: SideProfile; wood: StandardMaterial; shadows: ShadowGenerator | null; mesh: Mesh | null; gaps: RailGap[] } | null = null;
   /** Sections already scorched (fire, or shot to pieces). */
   private readonly scorched = new Set<number>();
   /** When each yard (by sail plan) was shot down (rope-cut), in simulation time. */
@@ -278,7 +280,7 @@ export class ShipView {
       if (far) this.hullTiers = { near: hullMeshes, far };
     }
     if (side) {
-      buildModelRails(scene, hullSpace, side, mats.wood, shadows);
+      this.rails = { side, wood: mats.wood, shadows, mesh: buildModelRails(scene, hullSpace, side, mats.wood, shadows), gaps: [] };
       // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
       const places = gunPlaces(model, (_, z) => side.halfAt(z));
       const castle = sternCastle(side, places);
@@ -453,6 +455,8 @@ export class ShipView {
       this.scorched.add(i);
       const zone = Math.floor(i / 2);
       const side = i % 2 === 1 ? 1 : -1;
+      // Shot to pieces (not only burnt): a stretch of the rail over it is carried away.
+      if (sec.hp <= this.model.def.sectionHp / 3) this.breakRail(side, h.length * (0.3 - zone * 0.3));
       const world = this.hullSpace.computeWorldMatrix(true);
       for (let k = 0; k < 3; k++) {
         const z = h.length * (0.3 - zone * 0.3) + (k - 1) * h.length * 0.07;
@@ -461,6 +465,16 @@ export class ShipView {
         this.scorch.add(p, 2.4 + k * 0.6);
       }
     });
+  }
+
+  /** A stretch of the cap rail of 4-6 m about z on one side carried away: the rail is rebuilt without it. */
+  private breakRail(side: 1 | -1, z: number): void {
+    const r = this.rails;
+    if (!r) return;
+    const half = 2 + (Math.abs(z * 7.1) % 1);
+    r.gaps.push({ side, from: z - half, to: z + half });
+    r.mesh?.dispose();
+    r.mesh = buildModelRails(this.hullSpace.getScene(), this.hullSpace, r.side, r.wood, r.shadows, r.gaps);
   }
 
   /** A ball went into the hull at a world point: a shot hole there (M11). */
