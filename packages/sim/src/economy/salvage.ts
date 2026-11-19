@@ -1,4 +1,4 @@
-import { type Archipelago, SALVAGE, salvageGold, wreckSites, type WreckSite } from "@broadside/core";
+import { type Archipelago, SALVAGE, salvageCargo, salvageGold, wreckSites, type WreckSite } from "@broadside/core";
 import { type System } from "../systems/context";
 import { credit } from "./purse";
 export { type Salvage, createSalvage } from "./salvage-state";
@@ -48,4 +48,6 @@ export const salvageSystem: System = (ctx, dt) => {
   s.dwell = 0;
   s.at = -1;
   credit(ctx.purse, ctx.events, salvageGold(ctx.env.seed, near), "wreck");
+  // And her cargo, into the hold as plunder to be sold in port.
+  ctx.purse.plunder += salvageCargo(ctx.env.seed, near);
 };

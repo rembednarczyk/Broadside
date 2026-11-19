@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainEvent, SALVAGE, generateArchipelago, salvageGold, wreckSites } from "@broadside/core";
+import { type DomainEvent, SALVAGE, generateArchipelago, salvageCargo, salvageGold, wreckSites } from "@broadside/core";
 import { Simulation } from "../src/simulation";
 import { restore, snapshot } from "../src/save/snapshot";
 
@@ -28,6 +28,10 @@ describe("salvage", () => {
     const first = hauls(run(sim, SALVAGE.dwell + 1.5));
     expect(first).toHaveLength(1);
     expect(sim.purse.gold - gold).toBe(salvageGold(5, 0));
+    // Her cargo comes up too, as plunder for the port.
+    expect(sim.purse.plunder).toBe(salvageCargo(5, 0));
+    expect(salvageCargo(5, 0)).toBeGreaterThanOrEqual(SALVAGE.cargo[0]);
+    expect(salvageCargo(5, 0)).toBeLessThanOrEqual(SALVAGE.cargo[1]);
     expect(hauls(run(sim, SALVAGE.dwell + 1.5))).toHaveLength(0);
   });
 

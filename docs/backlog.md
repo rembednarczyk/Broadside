@@ -136,7 +136,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
   w migawce, test); złoty hash bez zmian (przebieg kontrolny bez archipelagu)
 - [x] (19.11) tapnięcie wraku jako rozkaz „ratuj”: podejście na głębszą wodę, kotwica, szalupy w zasięgu 150 m
 - [x] (19.11) znacznik najbliższego wraku (do 900 m, gdy nie ma wroga) na krawędzi ekranu, stuknięcie wydaje rozkaz ratowania
-- [ ] wraki dalej: ładunek (towar zamiast samego złota)
+- [x] (19.11) wraki: oprócz złota ładunek o wartości 200–1200 jako łup do sprzedania w porcie
   zamiast samego złota
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 
