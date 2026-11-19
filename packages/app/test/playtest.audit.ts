@@ -63,12 +63,15 @@ it("port, contract, pay: the core loop can be played through (report)", () => {
     const reached = tick(20 * 60, near);
     log.push(`${reached ? "reached" : "did not reach"} ${port.p.name} at ${(t / 60).toFixed(1)} min`);
     if (reached) {
-      // Heave to alongside: no captain, sails furled, until she lies still.
+      // Heave to alongside: no captain, sails furled and the anchor let go (as a player would: running
+      // in she would carry her way past the port), until she lies still.
       if (me.captain) sim.world.removeComponent(me, "captain");
       sim.command({ type: "sails", ship: me.id, mast: "all", level: 0 });
+      sim.command({ type: "anchor", ship: me.id, down: true });
       tick(90, () => Math.hypot(me.body!.vel.x, me.body!.vel.z) < 1.5);
       s.takeContract(port.i);
       tick(1, () => sim.jobs.active !== null);
+      sim.command({ type: "anchor", ship: me.id, down: false });
       const job = sim.jobs.active;
       log.push(job ? `took a ${job.offer.kind} (${job.offer.classId}, ${job.offer.reward} gold)` : "no contract taken");
       const fail = (): string => {

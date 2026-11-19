@@ -10,22 +10,28 @@ const ARRIVED = 25;
 /**
  * Salvaging a wreck (the period's way: the ship anchors off the shoal the wreck lies on and the
  * boats and divers work her): the pilot looks along the line from the wreck towards the ship for
- * the first point with water enough under the keel (two metres more than her draught), no nearer
- * than 30 m and within the boats' reach (core SALVAGE.radius); sails there under easy canvas and
+ * a point with water enough under the keel (two metres more than her draught), the outermost
+ * from 60% of the boats' reach (core SALVAGE.radius) in to 30 m, so she lies in clear water off
+ * the shoal's edge (closer in, the pilot's charted way round the shoal circled), and failing that along lines turned
+ * further and further from it round the wreck; sails there under easy canvas and
  * lets go the anchor (systems/anchor) as soon as she is within three quarters of that reach in
  * water deep enough (the spot moves as she closes, so arriving anywhere near will do). With no such
  * point the order is given up.
  */
 export const anchorageFor = (me: Entity, at: P, bed: Sea["bed"]): P | null => {
   const b = me.body!;
-  const dx = b.pos.x - at.x;
-  const dz = b.pos.z - at.z;
-  const d = Math.hypot(dx, dz) || 1;
+  const toShip = Math.atan2(b.pos.z - at.z, b.pos.x - at.x);
   const keel = -me.ship!.model.def.hull.draft - 2;
-  for (let r = 30; r <= SALVAGE.radius * 0.85; r += 10) {
-    const x = at.x + (dx / d) * r;
-    const z = at.z + (dz / d) * r;
-    if (!bed || bed(x, z) < keel) return { x, z };
+  // The line towards the ship first, then lines turned away from it either side, in 20 degree
+  // steps round to the far side (on a ragged coast the straight line may cross a spit of shoal).
+  for (let k = 0; k <= 18; k++) {
+    const a = toShip + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.349;
+    // From the boats' easy reach in towards the wreck: the outermost deep spot keeps clear of the shoal's edge.
+    for (let r = SALVAGE.radius * 0.6; r >= 30; r -= 10) {
+      const x = at.x + Math.cos(a) * r;
+      const z = at.z + Math.sin(a) * r;
+      if (!bed || bed(x, z) < keel) return { x, z };
+    }
   }
   return null;
 };

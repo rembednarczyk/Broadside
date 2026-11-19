@@ -69,7 +69,7 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "spines", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
@@ -79,11 +79,16 @@ export class Ocean {
   /** Islands in the shallows term now (the frame bench switches the term off and on). */
   islandCount = 0;
 
-  /** Islands for the shallows and surf term: (x, z, radius, shoal), at most 32 (nearest first). */
-  setIslands(list: readonly { x: number; z: number; radius: number; shoal: number }[]): void {
+  /** Landmasses for the shallows and surf term: centre, radius, shoal, spine and roughness, at most 32 (nearest first). */
+  setIslands(list: readonly { x: number; z: number; radius: number; shoal: number; spine?: { dx: number; dz: number }; rough?: number }[]): void {
     const a = new Array<number>(128).fill(0);
-    list.slice(0, 32).forEach((is, i) => a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal));
+    const b = new Array<number>(128).fill(0);
+    list.slice(0, 32).forEach((is, i) => {
+      a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal);
+      b.splice(i * 4, 4, is.spine?.dx ?? 0, is.spine?.dz ?? 0, is.rough ?? 0.5, 0);
+    });
     this.material.setArray4("islands", a);
+    this.material.setArray4("spines", b);
     this.islandCount = Math.min(32, list.length);
     this.material.setInt("islandCount", this.islandCount);
   }

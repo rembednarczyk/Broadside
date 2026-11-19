@@ -1,4 +1,4 @@
-import { CELLS, cellInfluence, rollOf } from "@broadside/core";
+import { CELLS, cellInfluence, rollOf, shoreDistance } from "@broadside/core";
 import { type Simulation, rainAt } from "@broadside/sim";
 import { type Ambience } from "@broadside/engine";
 
@@ -14,7 +14,7 @@ export const presentAmbience = (sim: Simulation, x: number, z: number, playerId:
   const storm = Math.max(kind === "storm" ? 1 : kind === "gale" ? 0.6 : kind === "squally" ? 0.3 : 0, cell > 0.5 ? cell : 0);
   let land = 0;
   for (const is of env.archipelago?.islands ?? []) {
-    const d = Math.hypot(is.x - x, is.z - z) - is.radius;
+    const d = shoreDistance(is, x, z);
     land = Math.max(land, Math.min(1, Math.max(0, 1 - d / 500)));
   }
   const me = sim.byId(playerId);

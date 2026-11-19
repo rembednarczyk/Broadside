@@ -1,4 +1,5 @@
-import { type Archipelago, type PortSite, createRng, hashString, islandHeight, range } from "@broadside/core";
+import { type Archipelago, type PortSite, createRng, hashString, range } from "@broadside/core";
+import { drawnLand } from "./island-geometry";
 
 /**
  * A harbour town behind each port: houses scattered up the slope behind the quay on gentle
@@ -22,17 +23,19 @@ export interface TownLayout {
 }
 
 export const townLayout = (a: Archipelago, port: PortSite): TownLayout => {
-  const is = a.islands[port.island]!;
   const rng = createRng(hashString(`town-${port.name}-${a.seed}`));
-  const inland = Math.atan2(is.x - port.x, is.z - port.z);
+  // Inland: from the anchorage through the landing (on any shore, the mainland's too).
+  const inland = Math.atan2(port.x - port.ax, port.z - port.az);
+  // The drawn ground (the houses stand on the land as drawn, the cliffs' profile included).
+  const ground = (x: number, z: number): number => drawnLand(a, x, z).y;
   const houses: House[] = [];
   for (let i = 0; i < 160 && houses.length < 26; i++) {
     const a2 = inland + range(rng, -0.9, 0.9);
     const d = range(rng, 25, 110);
     const x = port.x + Math.sin(a2) * d;
     const z = port.z + Math.cos(a2) * d;
-    const y = islandHeight(is, x, z);
-    const slope = Math.abs(islandHeight(is, x + 3, z) - y) + Math.abs(islandHeight(is, x, z + 3) - y);
+    const y = ground(x, z);
+    const slope = Math.abs(ground(x + 3, z) - y) + Math.abs(ground(x, z + 3) - y);
     if (y < 1.5 || y > 30 || slope > 2.5) continue;
     if (houses.some((h) => Math.hypot(h.x - x, h.z - z) < 9)) continue;
     houses.push({ x, y, z, w: range(rng, 5, 9), d: range(rng, 6, 11), h: range(rng, 3.5, 7), yaw: inland + range(rng, -0.3, 0.3) });
@@ -44,7 +47,7 @@ export const townLayout = (a: Archipelago, port: PortSite): TownLayout => {
   for (let r = 0; r < 120; r += 2) {
     const x = port.x + Math.sin(inland) * r;
     const z = port.z + Math.cos(inland) * r;
-    if (islandHeight(is, x, z) > 0.5) {
+    if (ground(x, z) > 0.5) {
       sx = x;
       sz = z;
       break;

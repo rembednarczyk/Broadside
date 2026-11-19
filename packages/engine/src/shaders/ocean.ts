@@ -158,8 +158,9 @@ uniform vec4 shipB[8];
 uniform int shipCount;
 ${WAKE_TRAIL}
 uniform float underwater;
-// Islands for shallows and surf: (x, z, radius, shoal); up to 32.
+// Landmasses for shallows and surf: (x, z, radius, shoal) and (spine half dx, dz, roughness, 0); up to 32.
 uniform vec4 islands[32];
+uniform vec4 spines[32];
 uniform int islandCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -225,9 +226,16 @@ vec2 shallows(vec2 p) {
   for (int i = 0; i < 32; i++) {
     if (i >= islandCount) break;
     vec4 is = islands[i];
-    float d = length(p - is.xy);
-    if (d > is.z * 1.4 + is.w + 60.0) continue;
-    float wob = 0.75 + 0.5 * fbm(normalize(p - is.xy) * 1.8 + 5.0);
+    vec4 sp = spines[i];
+    // Distance to the spine (a capsule; a point for a round island), as core/world/archipelago.
+    vec2 s = sp.xy;
+    float len2 = dot(s, s);
+    float k = len2 > 0.0 ? clamp(dot(p - is.xy, s) / len2, -1.0, 1.0) : 0.0;
+    float d = length(p - is.xy - s * k);
+    if (d > is.z * (1.0 + sp.z * 0.6) + is.w + 60.0) continue;
+    // The coast's wander from noise in space at the landmass's scale (the terrain's own noise is
+    // approximated: a shader noise of the same scale and amplitude).
+    float wob = 1.0 + sp.z * (fbm(p * (1.8 / is.z) + 5.0) - 0.5) * 2.0;
     float t = d / (is.z * wob);
     shallow = max(shallow, 1.0 - smoothstep(1.0, 1.0 + is.w / is.z, t));
     surf = max(surf, exp(-pow((t - 1.0) * is.z / 6.0, 2.0)));

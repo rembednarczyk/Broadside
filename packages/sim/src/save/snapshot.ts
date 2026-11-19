@@ -1,4 +1,4 @@
-import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, createRng, seaWaves } from "@broadside/core";
+import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, WORLD_VERSION, createRng, fortSites, openWater, seaWaves } from "@broadside/core";
 import { Simulation, type SimulationOptions } from "../simulation";
 import { type CaptainState } from "../ai/captain-state";
 import { type PilotState, upgradePilot } from "../ai/pilot/state";
@@ -41,7 +41,7 @@ export interface ShipSnap {
 
 export interface SimSnapshot {
   readonly version: number;
-  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean };
+  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean; /** The land's generator version (core WORLD_VERSION); absent: 1. */ world?: number };
   readonly steps: number;
   readonly nextId: number;
   readonly rng: number;
@@ -62,7 +62,7 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapshot => ({
   version: SNAPSHOT_VERSION,
-  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false },
+  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false, world: WORLD_VERSION },
   steps: sim.steps,
   nextId: sim.nextId,
   rng: sim.rngState(),
@@ -115,7 +115,23 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [], wrecks: old.wrecks ?? [] };
     sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.assist ? { assist: clone(s.assist) } : {}), ...(s.anchor ? { anchor: clone(s.anchor) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
-  for (const f of snap.forts) {
+  // A save from an older world: the land has moved under it. The ships are moved off it to the
+  // nearest open water, the forts rebuilt where the new shores have them, and what pointed at the
+  // old ports and wrecks (the contract, the salvaged list) let go; the purse, the standing with
+  // the nations and the ships themselves are kept.
+  const stale = !!archipelago && (o.world ?? 1) < WORLD_VERSION;
+  if (stale) {
+    for (const e of sim.ships()) {
+      const p = openWater(archipelago, e.body!.pos.x, e.body!.pos.z, 60);
+      e.body!.pos = { ...e.body!.pos, x: p.x, z: p.z };
+      delete e.anchor;
+      delete e.pilot;
+    }
+    for (const site of fortSites(archipelago)) sim.spawnFort(site);
+    sim.jobs.active = null;
+    sim.salvage.salvaged.length = 0;
+  }
+  for (const f of stale ? [] : snap.forts) {
     const e = sim.spawnFort(f.site);
     Object.assign(e.fort!, clone(f.state));
     e.id = f.id;

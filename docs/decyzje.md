@@ -1058,3 +1058,35 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   idzie całymi odstępami z 2 ms luzu na drgania, po przestoju liczy się od nowa (`app/src/frame-pacing.ts`). Dynamiczna
   rozdzielczość pod limitem ma progi od limitu (w dół przy klatkach o 20% spóźnionych, w górę, gdy limit się trzyma);
   ze stałymi progami zeszłaby w dół przy pierwszych spóźnionych klatkach i nie wróciła.
+
+## 19.11, użytkownik: „urealistycznij mapę: wyspy, półwyspy, kawałek kontynentu, również w grze”
+- Każdy ląd to jeden kształt: kapsuła (punkty w promieniu od odcinka, osi lądu; dla okrągłej wyspy punkt) z brzegiem
+  przesuniętym szumem fraktalnym w przestrzeni (zatoki, cyple), modelowanie odległością Quileza; nakładające się kształty
+  się łączą (wysokość to maksimum), więc półwysep wyrasta z kontynentu. Ta sama funkcja dla fizyki, rendera, płycizn
+  w shaderze i mapy.
+- Kontynent: kapsuła o promieniu 1,7 km z osią równoległą do jednej krawędzi morza (która, z ziarna), średni brzeg
+  45–55% połowy morza od środka, szorstkość 1 i sześć oktaw (zatoki do kilkudziesięciu metrów), wysokość 110–170 m
+  narastająca przez 1,2 km (przy 420 m wyrastały stożki na 280 m tuż przy brzegu). Półwyspy: 2–3 z dwóch kawałków
+  zgiętych w kolanie, zewnętrzny węższy, korzeń 300 m w głąb lądu, kolano i czubek z dala od strefy startu. Wyspy:
+  45% wydłużonych (oś do 1,8 promienia), szorstkość 0,75, z cieśniną co najmniej 150 m od kontynentu i półwyspów.
+- Porty, forty i wraki szukają brzegu marszem od punktu osi wzdłuż kierunku do pierwszej wody (`core/world/shores.ts`);
+  kontynent ma trzy porty rozłożone wzdłuż brzegu w obrębie morza. Nazwy portów bez powtórzeń.
+- Ląd rysowany w kafelkach 500 m siatki świata (Ulrich 2002, chunked LOD): rzadka siatka 50 m dla wszystkich kafelków
+  z lądem od startu, gęsta (12,5 m, od high 7,8 m) budowana na żądanie do 1,4 km od kamery, jedna na klatkę, puszczana
+  dalej niż 2,4 km; fartuchy zakrywają szczeliny między poziomami. Drzewa na kafelek (do 500 kandydatów, dżungla
+  zostawia wszystkie, plaże 45%, klify 20%), rysowane do 1,1 km. Płycizny w shaderze: odległość od osi i ten sam
+  szum brzegu w przybliżeniu; lista 32 najbliższych lądów odświeżana co 300 m ruchu kamery (wcześniej ustalona raz
+  na starcie gry).
+- Mapa morska z konturów: wysokość na siatce 40 m, izolinie metodą marching squares w zamknięte pętle (zewnętrzny
+  pierścień siatki trzymany jako głębia, więc kontur kontynentu zamyka się za krawędzią mapy), wypełnienie parzysto-
+  nieparzyste (jeziora zostają wodą), ląd w oliwkowym kolorze.
+- Zapis gry dostaje wersję świata (`WORLD_VERSION` 2). Zapis ze starszego świata: statki przeniesione na najbliższą
+  otwartą wodę, forty postawione na nowo, aktywne zlecenie i lista złupionych wraków wyzerowane; złoto, reputacja
+  i statki zostają.
+- Pilot przy ratowaniu wraku szuka kotwicowiska także na liniach obróconych od kierunku do statku (co 20°), i wybiera
+  najdalszy głęboki punkt do 60% zasięgu łodzi: na poszarpanym brzegu prosta linia przecinała cypel i rozkaz przepadał.
+  Test ratowania wybiera wrak z czystym podejściem baksztagiem (pilot słabo halsuje, decyzja 18.11).
+- Audyt rozgrywki: autopilot po dotarciu do portu rzuca kotwicę (bez niej rozpędzony statek odpływał poza 180 m od
+  kotwicowiska i port odmawiał zlecenia). Wynik: 2 zlecenia wzięte, 1 opłacone. Soak 1,50 ms na krok (próg 2 ms);
+  2,30 ms wyszło przy równoległym budowaniu i zrzutach.
+- Złoty hash bez zmian: test determinizmu nie używa archipelagu.

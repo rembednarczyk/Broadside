@@ -1,20 +1,22 @@
-import { type Archipelago, coastline, fortSites, isHostile, standing, wreckSites, yawOf } from "@broadside/core";
+import { type Archipelago, contourLoops, fortSites, heightGrid, isHostile, standing, wreckSites, yawOf } from "@broadside/core";
 import { type Simulation, hostileTo, portOwner } from "@broadside/sim";
 import { type ChartHud } from "@broadside/ui";
 import { presentCourse } from "./course-presenter";
 
-/** Points per island's waterline on the chart. */
-const COAST_POINTS = 40;
+/** Spacing of the height samples the chart's contours are traced from (m). */
+const CHART_CELL = 40;
 /** The edge of the shallows drawn on the chart (m below the surface). */
 const SHOAL_DEPTH = -4;
 
-/** The chart's fixed part, traced once per archipelago (the contours cost a few thousand height samples). */
-let traced: { a: Archipelago; islands: ChartHud["islands"]; wrecks: { x: number; z: number }[] } | null = null;
+/** The chart's fixed part, traced once per archipelago (the contours cost some forty thousand height samples). */
+let traced: { a: Archipelago; land: ChartHud["land"]; shoals: ChartHud["shoals"]; wrecks: { x: number; z: number }[] } | null = null;
 const trace = (a: Archipelago) => {
   if (traced?.a !== a) {
+    const grid = heightGrid(a, CHART_CELL);
     traced = {
       a,
-      islands: a.islands.map((is) => ({ kind: is.kind, coast: coastline(is, COAST_POINTS), shoal: coastline(is, COAST_POINTS, SHOAL_DEPTH) })),
+      land: contourLoops(grid, 0),
+      shoals: contourLoops(grid, SHOAL_DEPTH),
       wrecks: wreckSites(a).map((w) => ({ x: w.x, z: w.z })),
     };
   }
@@ -43,7 +45,8 @@ export const presentChart = (sim: Simulation, playerId: number): ChartHud | null
   const course = presentCourse(sim, playerId);
   return {
     half: a.half,
-    islands: fixed.islands,
+    land: fixed.land,
+    shoals: fixed.shoals,
     ports,
     forts,
     wrecks: fixed.wrecks.map((w, i) => ({ ...w, salvaged: sim.salvage.salvaged.includes(i) })),

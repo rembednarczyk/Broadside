@@ -24,7 +24,7 @@ import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
 import { CrewRig } from "./crew-rig";
 import { GunScan } from "./ship-guns";
-import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
+import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, shoreDistance, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -93,6 +93,8 @@ export class BabylonRenderer {
   focus: { x: number; z: number } | null = null;
   private coast: FarCoast | null = null;
   private islands: IslandsView | null = null;
+  /** Where the camera was when the shallows' landmasses were last picked. */
+  private shallowsAt: { x: number; z: number } | null = null;
   private readonly forts: FortsView;
   private towns: TownsView | null = null;
   private readonly wreckUrl: string | undefined;
@@ -292,7 +294,14 @@ export class BabylonRenderer {
       this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget, this.texturesUrl, this.fineLand);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
       if (this.wreckUrl) void new WrecksView(this.scene, this.wreckUrl).place(wreckSites(sim.env.archipelago));
-      this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
+    }
+    if (this.islands && sim.env.archipelago) {
+      this.islands.update(cam.x, cam.z);
+      // The shallows term takes the 32 landmasses nearest the camera: picked again whenever the camera has moved 300 m.
+      if (!this.shallowsAt || Math.hypot(cam.x - this.shallowsAt.x, cam.z - this.shallowsAt.z) > 300) {
+        this.shallowsAt = { x: cam.x, z: cam.z };
+        this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ is, d: shoreDistance(is, cam.x, cam.z) })).sort((p, q) => p.d - q.d).map((e) => e.is));
+      }
     }
     this.coast.follow(cam.x, cam.z);
     this.coast.setHaze(this.scene.fogColor, look.fogDensity);

@@ -212,8 +212,14 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Dalekie wybrzeże: wierzch klifu z głębią, żleby na ścianie, ton trochę ciemniejszy od mgły (ref_095, ref_176).
 - [x] Mapa morska (przycisk „Mapa” w rogu, menu, klawisz M): wyspy z płyciznami, porty, forty, wraki, statki, kurs
   i cel; dotknięcie morza w prostym sterowaniu wyznacza tam kurs.
-- [ ] Nazwy portów się powtarzają (generator losuje z listy ze zwracaniem); poprawka zmienia losowanie świata, więc
-  razem z następną zmianą generatora archipelagu (złoty hash ręcznie).
+- [x] Nazwy portów się nie powtarzają (24 nazwy losowane bez zwracania, razem ze zmianą świata 19.11).
+- [x] Świat w wersji 2 (właściciel 19.11: „wyspy, półwyspy, kawałek kontynentu, również w grze”): pas kontynentu
+  wzdłuż jednej krawędzi morza z zatokami i cyplami, 2–3 półwyspy zgięte w kolanie, wydłużone wyspy; ląd w kafelkach
+  500 m z dwoma poziomami szczegółu, drzewa na kafelek, płycizny od osi lądu, mapa z konturów (marching squares),
+  trzy porty na kontynencie, stare zapisy przenoszone na nowy ląd.
+- [ ] Etykiety portów na mapie nachodzą na siebie przy blisko leżących portach (rozsuwanie etykiet).
+- [ ] Pierścienie dalekiego wybrzeża (tło) stoją też za kontynentem: wyłączyć je w jego kierunku albo zastąpić
+  prawdziwym lądem za krawędzią mapy.
 - [ ] Mapa: przybliżanie i przesuwanie palcami, zasięg widzenia z bocianiego gniazda, mgła wojny (nieodkryte wyspy).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)

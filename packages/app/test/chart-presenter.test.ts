@@ -3,14 +3,14 @@ import { GameSession } from "../src/game-session";
 import { presentChart } from "../src/presenters/chart-presenter";
 
 describe("chart presenter", () => {
-  it("charts every island, port and wreck, with the player's ship among the ships", () => {
+  it("charts the coasts, every port and wreck, with the player's ship among the ships", () => {
     const s = new GameSession({ seed: 7 });
     const a = s.sim.env.archipelago!;
     const c = presentChart(s.sim, s.playerId)!;
     expect(c.half).toBe(a.half);
-    expect(c.islands).toHaveLength(a.islands.length);
+    expect(c.land.length).toBeGreaterThan(a.islands.length / 2);
     expect(c.ports).toHaveLength(s.sim.ports.length);
-    expect(c.islands.every((is) => is.coast.length > 8 && is.shoal.length === is.coast.length)).toBe(true);
+    expect(c.shoals.length).toBeGreaterThan(0);
     const me = c.ships.filter((v) => v.kind === "player");
     expect(me).toHaveLength(1);
     const body = s.sim.byId(s.playerId)!.body!;

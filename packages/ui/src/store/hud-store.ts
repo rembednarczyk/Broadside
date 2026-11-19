@@ -125,8 +125,9 @@ type Point = { readonly x: number; readonly z: number };
 export interface ChartHud {
   /** Half the side of the charted square, centred on the origin. */
   readonly half: number;
-  /** Each island's waterline and the edge of its shallows (closed polygons) and its kind. */
-  readonly islands: readonly { readonly kind: string; readonly coast: readonly Point[]; readonly shoal: readonly Point[] }[];
+  /** The waterline and the edge of the shallows as closed loops (filled even-odd: lakes stay water). */
+  readonly land: readonly (readonly Point[])[];
+  readonly shoals: readonly (readonly Point[])[];
   readonly ports: readonly (Point & { readonly name: string; readonly faction: string; readonly hostile: boolean })[];
   readonly forts: readonly (Point & { readonly hostile: boolean })[];
   readonly wrecks: readonly (Point & { readonly salvaged: boolean })[];

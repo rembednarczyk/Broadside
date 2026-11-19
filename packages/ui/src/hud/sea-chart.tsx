@@ -5,8 +5,6 @@ import { type ChartIntents, type SettingsIntents } from "../intents";
 
 type P = { readonly x: number; readonly z: number };
 
-/** Island fills by kind, in the chart's inks (a sepia sea chart: land washed in, water left bare). */
-const LAND: Record<string, string> = { jungle: "#8d8657", beach: "#c4ad7c", cliff: "#a28c6c" };
 /** Grid of the chart (m): squares of a kilometre. */
 const GRID = 1000;
 
@@ -14,9 +12,11 @@ const GRID = 1000;
 const anchor = (x: number, half: number): "start" | "middle" | "end" => (x > half * 0.7 ? "end" : x < -half * 0.7 ? "start" : "middle");
 
 const points = (ps: readonly P[]): string => ps.map((p) => `${p.x.toFixed(0)},${(-p.z).toFixed(0)}`).join(" ");
+/** Closed loops as one SVG path (M … Z per loop). */
+const path = (loops: readonly (readonly P[])[]): string => loops.map((l) => `M${points(l)}Z`).join("");
 
 /**
- * The sea chart: the archipelago from above, north up, as a chart of the period (land washed in,
+ * The sea chart: the mainland's coast and the islands from above, north up, as a chart of the period (land washed in,
  * the shallows dotted, a kilometre grid, a compass rose), with the ports, forts, wrecks and ships
  * in hand and the crew's course. Under simple steering a tap on the water sets a course there.
  * SVG in world metres (y = -z), so the chart scales with the screen; data from the app's chart
@@ -57,12 +57,8 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
               <line x1={-h} y1={g} x2={h} y2={g} />
             </g>
           ))}
-          {chart.islands.map((is, i) => (
-            <polygon key={`s${i}`} points={points(is.shoal)} className="chart-shoal" />
-          ))}
-          {chart.islands.map((is, i) => (
-            <polygon key={`c${i}`} points={points(is.coast)} className="chart-land" fill={LAND[is.kind] ?? LAND.beach} />
-          ))}
+          <path d={path(chart.shoals)} className="chart-shoal" fillRule="evenodd" />
+          <path d={path(chart.land)} className="chart-land" fillRule="evenodd" />
           {chart.route.length > 1 && <polyline points={points(chart.route)} className="chart-route" />}
           {chart.goal && <circle cx={chart.goal.x} cy={-chart.goal.z} r={size * 1.6} className="chart-goal" />}
           {chart.wrecks.map((w, i) => (
