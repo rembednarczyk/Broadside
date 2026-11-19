@@ -91,20 +91,38 @@ export const islandGeometry = (is: Island, rings = RINGS, segments = SEGMENTS): 
   return { positions, indices, colors };
 };
 
+/** A tree on an island: where it stands, its turn, size and tint, and which model (palm or broadleaf). */
+export interface TreeSpot {
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  yaw: number;
+  /** 0..1, the shade of its leaves (instances differ, as real stands do). */
+  tint: number;
+  palm: boolean;
+}
+
+/** Height (m) up to which jungle islands grow palms: the coconut fringe behind the beach, broadleaf forest above. */
+export const PALM_BELT = 14;
+
 /** Tree positions on an island (deterministic): only on land above the beach and not too steep. */
-export const treeSpots = (is: Island, max: number): { x: number; y: number; z: number; scale: number }[] => {
+export const treeSpots = (is: Island, max: number): TreeSpot[] => {
   if (is.kind === "cliff" && max > 0) max = Math.floor(max * 0.4);
   const rng = createRng(is.seed);
-  const out: { x: number; y: number; z: number; scale: number }[] = [];
+  const out: TreeSpot[] = [];
   for (let i = 0; i < max * 4 && out.length < max; i++) {
     const a = range(rng, 0, Math.PI * 2);
     const d = Math.sqrt(rng.next()) * is.radius;
     const x = Math.cos(a) * d;
     const z = Math.sin(a) * d;
+    const scale = range(rng, 0.7, 1.4);
+    const yaw = range(rng, 0, Math.PI * 2);
+    const tint = rng.next();
     // On the drawn land (cliffProfile), the same as the terrain's mesh.
     const y = cliffProfile(is, islandHeight(is, is.x + x, is.z + z));
     if (y < 2.5) continue;
-    out.push({ x, y, z, scale: range(rng, 0.7, 1.4) });
+    out.push({ x, y, z, scale, yaw, tint, palm: is.kind === "beach" || (is.kind === "jungle" && y < PALM_BELT) });
   }
   return out;
 };

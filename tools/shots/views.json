@@ -10,5 +10,7 @@
   "fog": { "query": "seed=7&camera=chase&hud=0&weather=fog", "seconds": 4, "cam": "-1.2,1.35,90" },
   "port": { "query": "seed=7&camera=chase&hud=0", "seconds": 2, "cam": "0.5,1.25,160", "script": "const s=b.session.sim; const me=s.player(); const p=s.ports[1]; me.body.pos.x=p.ax; me.body.pos.z=p.az; me.body.vel.x=0; me.body.vel.z=0;" },
   "wreck": { "query": "seed=7&camera=chase&hud=0", "seconds": 2, "cam": "0.2,1.2,38", "script": "const s=b.session.sim; const me=s.player(); const w=b.wrecks()[0]; me.body.pos.x=w.x+12; me.body.pos.z=w.z+26; me.body.vel.x=0; me.body.vel.z=0;" },
+  "island": { "query": "seed=7&camera=chase&hud=0", "seconds": 2, "cam": "1.57,1.2,200", "script": "const s=b.session.sim; const is=s.env.archipelago.islands.filter((i)=>i.kind==='jungle').sort((p,q)=>q.radius-p.radius)[0]; const me=s.player(); me.body.pos.x=is.x; me.body.pos.z=is.z+is.radius*1.2+60; me.body.vel.x=0; me.body.vel.z=0;" },
+  "island-close": { "query": "seed=7&camera=chase&hud=0", "seconds": 2, "cam": "1.57,1.45,70", "script": "const s=b.session.sim; const is=s.env.archipelago.islands.filter((i)=>i.kind==='jungle').sort((p,q)=>q.radius-p.radius)[0]; const me=s.player(); me.body.pos.x=is.x; me.body.pos.z=is.z+is.radius*1.2+60; me.body.vel.x=0; me.body.vel.z=0;" },
   "phone": { "query": "seed=7", "seconds": 4, "cam": "", "width": 844, "height": 390 }
 }

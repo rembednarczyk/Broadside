@@ -1,12 +1,65 @@
 import { type Archipelago } from "@broadside/core";
-import { Color3, Matrix, Mesh, MeshBuilder, type Scene, StandardMaterial, VertexData, type ShadowGenerator } from "../babylon";
-import { islandGeometry, treeSpots } from "./island-geometry";
+import { Color3, Matrix, Mesh, type Scene, StandardMaterial, VertexData, type ShadowGenerator } from "../babylon";
+import { type TerrainGeometry, islandGeometry, treeSpots, type TreeSpot } from "./island-geometry";
+import { broadleafGeometry, palmGeometry, type TreeGeometry } from "./tree-geometry";
 import { SunHaze, hazeSunOf } from "./sun-haze";
 import { TerrainSplat } from "./terrain-splat";
 
+/** Distance (m) from the camera to an island's trees beyond which they are not drawn. */
+const TREE_RANGE = 1800;
+/** Distance (m) to an island's centre beyond which its terrain is drawn from the coarse grid. */
+const LAND_DETAIL = 1400;
+/** Height (m) of a tree of scale 1: palms to the crown, broadleaf trees to the top of the canopy. */
+const PALM_HEIGHT = 13;
+const BROADLEAF_HEIGHT = 13;
+
+/** A mesh from positions, indices and vertex colours, with smooth normals. */
+const colouredMesh = (name: string, g: TerrainGeometry | TreeGeometry, scene: Scene): Mesh => {
+  const mesh = new Mesh(name, scene);
+  const data = new VertexData();
+  data.positions = g.positions;
+  data.indices = g.indices;
+  data.colors = g.colors;
+  const normals: number[] = [];
+  VertexData.ComputeNormals(g.positions, g.indices, normals);
+  data.normals = normals;
+  data.applyToMesh(mesh);
+  mesh.isPickable = false;
+  return mesh;
+};
+
+/** One island's terrain from its grid (positions relative to its centre), receiving shadows. */
+const terrainMesh = (name: string, g: TerrainGeometry, scene: Scene, material: StandardMaterial): Mesh => {
+  const mesh = colouredMesh(name, g, scene);
+  mesh.material = material;
+  mesh.receiveShadows = true;
+  return mesh;
+};
+
+/** The instances' matrices and colours: turned, scaled to metres, set a little into the ground. */
+const instanceBuffers = (spots: readonly TreeSpot[], ox: number, oz: number, height: number, widen: number) => {
+  const matrices = new Float32Array(spots.length * 16);
+  const colors = new Float32Array(spots.length * 4);
+  spots.forEach((t, i) => {
+    const h = height * t.scale;
+    Matrix.Scaling(h * widen, h, h * widen)
+      .multiply(Matrix.RotationY(t.yaw))
+      .multiply(Matrix.Translation(ox + t.x, t.y - 0.3, oz + t.z))
+      .copyToArray(matrices, i * 16);
+    // Leaves from olive to deep green, a little lighter or darker per tree.
+    const k = 0.8 + 0.4 * t.tint;
+    colors.set([k * (1.05 - 0.15 * t.tint), k, k * 0.9, 1], i * 4);
+  });
+  return { matrices, colors };
+};
+
 /**
- * The islands of the archipelago: one terrain mesh each (vertex colours), trees as thin
- * instances of a trunk and a crown (Flyweight). Built once from the world seed.
+ * The islands of the archipelago: one terrain mesh each (vertex colours, two levels of detail), trees as thin
+ * instances of two parametric models, a palm and a broadleaf tree (tree-geometry; Flyweight: the
+ * shape shared, the place, turn, size and tint per instance). The trees of each island are their
+ * own pair of meshes, so the camera's frustum culls them island by island, and a level of detail
+ * with no mesh drops them beyond TREE_RANGE, where the haze has taken them. Built once from the
+ * world seed.
  */
 export class IslandsView {
   readonly meshes: Mesh[] = [];
@@ -19,51 +72,40 @@ export class IslandsView {
     if (texturesUrl) new TerrainSplat(ground, scene, texturesUrl, !fine);
     ground.diffuseColor = Color3.White();
     ground.specularColor = new Color3(0.02, 0.02, 0.02);
-    const trunkMat = new StandardMaterial("trunk", scene);
-    trunkMat.diffuseColor = new Color3(0.25, 0.18, 0.12);
-    const crownMat = new StandardMaterial("crown", scene);
-    crownMat.diffuseColor = new Color3(0.12, 0.18, 0.09);
-    crownMat.specularColor = Color3.Black();
+    const treeMat = new StandardMaterial("tree", scene);
+    treeMat.specularColor = Color3.Black();
+    // The fronds are single sheets: both sides drawn and lit.
+    treeMat.backFaceCulling = false;
+    treeMat.twoSidedLighting = true;
     // Lit haze towards the sun over the land, as over the sea (sun-haze).
-    for (const m of [ground, trunkMat, crownMat]) new SunHaze(m, hazeSunOf(scene));
-    const trunk = MeshBuilder.CreateCylinder("tree-trunk", { height: 1, diameterTop: 0.25, diameterBottom: 0.45, tessellation: 5 }, scene);
-    trunk.material = trunkMat;
-    const crown = MeshBuilder.CreateSphere("tree-crown", { diameter: 1, segments: 4 }, scene);
-    crown.material = crownMat;
-    const trunks: number[] = [];
-    const terrain: Mesh[] = [];
-    const crowns: number[] = [];
+    for (const m of [ground, treeMat]) new SunHaze(m, hazeSunOf(scene));
+    // Each island's trees get their own copy of the model's vertices (a few hundred): thin instances
+    // keep their buffers on the geometry, so meshes sharing one would draw only the last island's.
+    const models = { palm: palmGeometry(), broadleaf: broadleafGeometry() };
     for (const is of a.islands) {
-      const g = fine ? islandGeometry(is, 72, 192) : islandGeometry(is);
-      const mesh = new Mesh(`island-${is.id}`, scene);
-      const data = new VertexData();
-      data.positions = g.positions;
-      data.indices = g.indices;
-      data.colors = g.colors;
-      const normals: number[] = [];
-      VertexData.ComputeNormals(g.positions, g.indices, normals);
-      data.normals = normals;
-      data.applyToMesh(mesh);
-      mesh.position.set(is.x, 0, is.z);
-      terrain.push(mesh);
-      for (const t of treeSpots(is, Math.round((is.kind === "jungle" ? 160 : 60) * treeBudget))) {
-        const h = 9 * t.scale;
-        trunks.push(...Matrix.Scaling(t.scale, h, t.scale).multiply(Matrix.Translation(is.x + t.x, t.y + h / 2, is.z + t.z)).m);
-        crowns.push(...Matrix.Scaling(6 * t.scale, 4.5 * t.scale, 6 * t.scale).multiply(Matrix.Translation(is.x + t.x, t.y + h, is.z + t.z)).m);
+      // Each island its own mesh (the camera's frustum culls those out of view; merged into one,
+      // the whole archipelago's grid was drawn every frame, 1.6 million triangles on high), with a
+      // coarse grid beyond LAND_DETAIL (Level of Detail): far off the haze blurs the coast anyway.
+      const mesh = terrainMesh(`island-${is.id}`, fine ? islandGeometry(is, 72, 192) : islandGeometry(is), scene, ground);
+      const far = terrainMesh(`island-${is.id}-far`, islandGeometry(is, 16, 40), scene, ground);
+      for (const m of [mesh, far]) m.position.set(is.x, 0, is.z);
+      mesh.addLODLevel(LAND_DETAIL, far);
+      for (const m of [mesh, far]) m.freezeWorldMatrix();
+      this.meshes.push(mesh, far);
+      const spots = treeSpots(is, Math.round((is.kind === "jungle" ? 600 : 110) * treeBudget));
+      for (const palm of [true, false]) {
+        const mine = spots.filter((s) => s.palm === palm);
+        if (mine.length === 0) continue;
+        const host = colouredMesh(`trees-${is.id}-${palm ? "palm" : "broadleaf"}`, palm ? models.palm : models.broadleaf, scene);
+        host.material = treeMat;
+        const b = instanceBuffers(mine, is.x, is.z, palm ? PALM_HEIGHT : BROADLEAF_HEIGHT, palm ? 1 : 1.35);
+        host.thinInstanceSetBuffer("matrix", b.matrices, 16, true);
+        host.thinInstanceSetBuffer("color", b.colors, 4, true);
+        host.thinInstanceRefreshBoundingInfo(false);
+        host.addLODLevel(TREE_RANGE, null);
+        this.meshes.push(host);
       }
     }
-    // One draw call for all the land (Batching): positions are baked in by the merge.
-    const land = Mesh.MergeMeshes(terrain, true, true);
-    if (land) {
-      land.name = "islands";
-      land.material = ground;
-      land.receiveShadows = true;
-      land.freezeWorldMatrix();
-      this.meshes.push(land);
-    }
-    trunk.thinInstanceSetBuffer("matrix", new Float32Array(trunks), 16, true);
-    crown.thinInstanceSetBuffer("matrix", new Float32Array(crowns), 16, true);
-    this.meshes.push(trunk, crown);
   }
 
   dispose(): void {
