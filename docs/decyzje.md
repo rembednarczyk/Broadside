@@ -1101,3 +1101,6 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   Na mapie nieobejrzane komórki to puste płótno (wiersze scalone w prostokąty), forty i wraki tylko w obejrzanych,
   inne statki tylko do 1,2 km, porty zawsze (ich nazwy i miejsca były powszechnie znane). Zasięg stały: od mgły
   i nocy niezależny (do backlogu). Złoty hash bez zmian (stan rozpoznania nie wchodzi do skrótu, nie wpływa na ruch).
+- Zasięg obserwatora zależy od mgły tak samo jak wykrywanie wroga przez kapitanów AI: 1,2 km × (1 − 0,7 × mgła)
+  (`lookoutRange`); dotyczy oznaczania morza i statków na mapie. Noc pominięta, bo symulacja nie zna godziny
+  (początek doby to parametr aplikacji); przeniesienie pory dnia do symulacji zmieniłoby zapis i złoty hash.

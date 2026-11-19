@@ -222,7 +222,8 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   wypełnia narysowany ląd.
 - [x] Mapa: mgła wojny (19.11): morze w komórkach 250 m, obejrzane w promieniu 1,2 km od statku gracza, zapisane w grze;
   forty i wraki tylko w obejrzanych miejscach, inne statki tylko w zasięgu wzroku, porty zawsze.
-- [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku zależny od mgły i pory dnia.
+- [x] Zasięg wzroku obserwatora we mgle krótszy (do 30% przy gęstej, reguła wykrywania kapitanów AI).
+- [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku nocą (symulacja nie zna dziś pory dnia: godzina żyje w app).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie

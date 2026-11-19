@@ -1,4 +1,4 @@
-import { type Archipelago, SURVEY, contourLoops, fortSites, heightGrid, isHostile, standing, surveyIndex, surveySide, wreckSites, yawOf } from "@broadside/core";
+import { type Archipelago, SURVEY, contourLoops, fortSites, heightGrid, isHostile, lookoutRange, standing, surveyIndex, surveySide, wreckSites, yawOf } from "@broadside/core";
 import { type Simulation, hostileTo, portOwner } from "@broadside/sim";
 import { type ChartHud } from "@broadside/ui";
 import { presentCourse } from "./course-presenter";
@@ -59,9 +59,10 @@ export const presentChart = (sim: Simulation, playerId: number): ChartHud | null
   const seen = new Set(sim.survey.seen);
   const surveyed = (x: number, z: number) => seen.has(surveyIndex(a, x, z));
   const at = me?.body?.pos;
+  const sight = lookoutRange(sim.env.weather?.fog ?? 0);
   const ships = sim.ships().flatMap((e) => {
     if (!e.body || !e.ship || e.ship.sinking) return [];
-    if (e.id !== playerId && (!at || Math.hypot(e.body.pos.x - at.x, e.body.pos.z - at.z) > SURVEY.sight)) return [];
+    if (e.id !== playerId && (!at || Math.hypot(e.body.pos.x - at.x, e.body.pos.z - at.z) > sight)) return [];
     const kind = e.id === playerId ? "player" : me?.ship && !e.ship.struck && hostileTo(me.ship, e.ship, sim.relations) ? "hostile" : "other";
     return [{ x: e.body.pos.x, z: e.body.pos.z, heading: yawOf(e.body.rot), kind } as const];
   });

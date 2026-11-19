@@ -15,6 +15,12 @@ export const SURVEY = {
   every: 1,
 } as const;
 
+/**
+ * How far the lookout sees in a fog of the given thickness (0 clear .. 1 thick): the sight cut
+ * by up to 70%, the same rule the AI captains spot an enemy by (sim captain, DETECT).
+ */
+export const lookoutRange = (fog: number): number => SURVEY.sight * (1 - 0.7 * Math.min(1, Math.max(0, fog)));
+
 /** Cells per side of the sea's square. */
 export const surveySide = (a: Archipelago): number => Math.ceil((2 * a.half) / SURVEY.cell);
 

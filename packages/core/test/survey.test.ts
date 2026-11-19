@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SURVEY, cellsInSight, generateArchipelago, surveyCentre, surveyIndex, surveySide } from "../src";
+import { SURVEY, cellsInSight, generateArchipelago, lookoutRange, surveyCentre, surveyIndex, surveySide } from "../src";
 
 describe("survey cells", () => {
   const a = generateArchipelago(7);
@@ -23,5 +23,12 @@ describe("survey cells", () => {
     }
     expect(seen).toContain(surveyIndex(a, 0, 0));
     expect(seen).not.toContain(surveyIndex(a, 2000, 0));
+  });
+
+  it("see less far in fog", () => {
+    expect(lookoutRange(0)).toBe(SURVEY.sight);
+    expect(lookoutRange(1)).toBeCloseTo(SURVEY.sight * 0.3);
+    expect(lookoutRange(0.5)).toBeLessThan(lookoutRange(0));
+    expect(cellsInSight(a, 0, 0, lookoutRange(1)).length).toBeLessThan(cellsInSight(a, 0, 0, lookoutRange(0)).length / 5);
   });
 });
