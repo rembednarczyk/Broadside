@@ -34,6 +34,8 @@ export interface SailState {
   readonly furled?: number;
   /** The mast is going by the board (mast-fall): its yards go with it, turned about z by `roll` at the pivot and lowered by `drop`; `gone`: sunk. */
   readonly fall?: { readonly roll: number; readonly y: number; readonly z: number; readonly drop: number; readonly gone: boolean };
+  /** The yard shot down (rope-cut): 0 aloft to 1 lying on deck at height `deck`, canted. */
+  readonly yardDown?: { readonly t: number; readonly deck: number };
 }
 
 /**
@@ -242,6 +244,12 @@ export class SailCloth {
       }
       let d = st.visible || p.shape === "square" ? 0.12 + p.width * 0.012 : 0;
       let yardRot = rot;
+      if (st.yardDown && st.yardDown.t > 0) {
+        // Down on deck by the mast, canted over the rail: eased in as it falls (gravity's t^2).
+        const t = st.yardDown.t * st.yardDown.t;
+        pos.y += (st.yardDown.deck - pos.y) * t;
+        yardRot = Quaternion.RotationAxis(new Vector3(1, 0, 0), 0.35 * t).multiply(rot);
+      }
       if (st.fall) {
         // Carried over the side with its mast: turned about the break, then sunk with it.
         const roll = Quaternion.RotationAxis(new Vector3(0, 0, 1), st.fall.roll);

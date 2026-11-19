@@ -36,3 +36,10 @@ export const hangingRope = (a: readonly [number, number, number], b: readonly [n
   }
   return pts;
 };
+
+/**
+ * A yard shot down (M11): with its slings and lifts cut it comes down on deck, each yard at its own
+ * threshold of the rigging, lower than the ropes' (the slings are chain and the yard is heavy), so
+ * the yards go when the rigging is in tatters. Index `k` of the yard in the ship's sail plan.
+ */
+export const yardFallsBelow = (k: number): number => 0.08 + (partsBelow(k + 101) - 0.15) * 0.4;

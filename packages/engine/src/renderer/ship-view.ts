@@ -15,7 +15,7 @@ import { buildModelRails } from "./model-rails";
 import { buildModelDecks, deckPlanks } from "./deck-planks";
 import { ShotHoles } from "./shot-holes";
 import { MastFall } from "./mast-fall";
-import { hangingRope, isParted } from "./rope-cut";
+import { hangingRope, isParted, yardFallsBelow } from "./rope-cut";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -215,6 +215,8 @@ export class ShipView {
   private readonly scorch: ShotHoles;
   /** Sections already scorched (fire, or shot to pieces). */
   private readonly scorched = new Set<number>();
+  /** When each yard (by sail plan) was shot down (rope-cut), in simulation time. */
+  private readonly yardsDown = new Map<number, number>();
   /** Masts going by the board (mast-fall), by mast. */
   private readonly falls = new Map<number, { fall: MastFall; side: number; pivotY: number; pivotZ: number }>();
 
@@ -522,9 +524,13 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
+      // A yard shot down (rope-cut): it comes down on deck over a second and a half, and its sail with it.
+      const downAt = s.rigging < yardFallsBelow(i) ? (this.yardsDown.get(i) ?? time) : null;
+      if (downAt !== null) this.yardsDown.set(i, downAt);
+      const yardDown = downAt === null ? undefined : { t: Math.min(1, (time - downAt) / 1.5), deck: this.model.def.hull.freeboard + 0.6 };
       const f = this.falls.get(p.mast);
       const fall = f ? { roll: -f.side * f.fall.angle, y: f.pivotY, z: f.pivotZ, drop: f.fall.drop, gone: f.fall.gone } : undefined;
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0, ...(fall ? { fall } : {}) };
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03 && !yardDown, flutter, furled: alive && !yardDown ? 1 - set : 0, ...(fall ? { fall } : {}), ...(yardDown ? { yardDown } : {}) };
     });
     const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
