@@ -14,6 +14,7 @@ import { buildModelCastle } from "./model-castle";
 import { buildModelRails } from "./model-rails";
 import { buildModelDecks, deckPlanks } from "./deck-planks";
 import { ShotHoles } from "./shot-holes";
+import { MastFall } from "./mast-fall";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -210,6 +211,8 @@ export class ShipView {
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
   private readonly holes: ShotHoles;
+  /** Masts going by the board (mast-fall), by mast. */
+  private readonly falls = new Map<number, { fall: MastFall; side: number }>();
 
   /** The model hull in its two tiers (full near the camera, light beyond HULL_FULL), where both loaded. */
   private hullTiers: { near: AbstractMesh[]; far: AbstractMesh[] } | null = null;
@@ -411,6 +414,22 @@ export class ShipView {
     MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
   }
 
+  /** A mast shot away goes over the side to leeward (mast-fall), lies there, sinks and is gone. */
+  private fallMast(mesh: Mesh, i: number, leeward: number, dt: number): void {
+    let f = this.falls.get(i);
+    if (!f) {
+      const bounds = mesh.getBoundingInfo().boundingBox;
+      // Broken a little above its foot; the side it goes over is the side the wind leans it to.
+      mesh.setPivotPoint(new Vector3(0, bounds.minimum.y + 1.5, this.model.def.masts[i]!.z));
+      f = { fall: new MastFall(Math.max(4, bounds.maximum.y - bounds.minimum.y)), side: Math.sign(leeward) || 1 };
+      this.falls.set(i, f);
+    }
+    f.fall.step(dt);
+    mesh.setEnabled(!f.fall.gone);
+    mesh.rotationQuaternion = Quaternion.RotationAxis(new Vector3(0, 0, 1), -f.side * f.fall.angle);
+    mesh.position.y = -f.fall.drop;
+  }
+
   /** A ball went into the hull at a world point: a shot hole there (M11). */
   shotHit(at: { readonly x: number; readonly y: number; readonly z: number }, damage: number): void {
     this.holes.add(at, Math.min(1.7, 0.9 + damage * 0.03));
@@ -483,9 +502,14 @@ export class ShipView {
     this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
     this.updateRunning((plan) => s.sailFill[this.plans[plan]!.mast]![this.plans[plan]!.sail]!);
     this.masts.forEach((m, i) => {
-      m.mesh.setEnabled(s.mastHp[i]! > 0);
-      const bend = bends[i];
-      if (bend) m.apply(bend);
+      if (s.mastHp[i]! > 0) {
+        if (this.falls.delete(i)) m.mesh.rotationQuaternion = Quaternion.Identity();
+        m.mesh.setEnabled(true);
+        const bend = bends[i];
+        if (bend) m.apply(bend);
+        return;
+      }
+      this.fallMast(m.mesh, i, aw.x, dt);
     });
     this.updateStays(bends, s.mastLoad);
     const fb = bends[this.flagMast];
