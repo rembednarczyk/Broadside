@@ -2,6 +2,7 @@ import { type Archipelago } from "@broadside/core";
 import { Color3, Matrix, Mesh, MeshBuilder, type Scene, StandardMaterial, VertexData, type ShadowGenerator } from "../babylon";
 import { islandGeometry, treeSpots } from "./island-geometry";
 import { SunHaze, hazeSunOf } from "./sun-haze";
+import { TerrainSplat } from "./terrain-splat";
 
 /**
  * The islands of the archipelago: one terrain mesh each (vertex colours), trees as thin
@@ -12,8 +13,10 @@ export class IslandsView {
 
   // Islands receive shadows but do not cast them: kilometres of casters would stretch the shadow
   // frustum over the whole sea and blur the ships' shadows.
-  constructor(scene: Scene, a: Archipelago, _shadows: ShadowGenerator | null, treeBudget: number) {
+  /** `texturesUrl`: the terrain's textures (terrain-splat; vertex colours alone without it); `fine`: a denser grid. */
+  constructor(scene: Scene, a: Archipelago, _shadows: ShadowGenerator | null, treeBudget: number, texturesUrl?: string, fine = false) {
     const ground = new StandardMaterial("terrain", scene);
+    if (texturesUrl) new TerrainSplat(ground, scene, texturesUrl, !fine);
     ground.diffuseColor = Color3.White();
     ground.specularColor = new Color3(0.02, 0.02, 0.02);
     const trunkMat = new StandardMaterial("trunk", scene);
@@ -31,7 +34,7 @@ export class IslandsView {
     const terrain: Mesh[] = [];
     const crowns: number[] = [];
     for (const is of a.islands) {
-      const g = islandGeometry(is);
+      const g = fine ? islandGeometry(is, 72, 192) : islandGeometry(is);
       const mesh = new Mesh(`island-${is.id}`, scene);
       const data = new VertexData();
       data.positions = g.positions;

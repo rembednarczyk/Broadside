@@ -99,6 +99,9 @@ export class BabylonRenderer {
   private readonly gunScan: GunScan | null;
   private readonly crewRig: CrewRig | null;
   private readonly treeBudget: number;
+  /** The islands' textures (terrain-splat) and whether their grid is the dense one (high preset and up). */
+  private readonly texturesUrl: string | undefined;
+  private readonly fineLand: boolean;
   private readonly post: PostStack;
   private dropsLeft = 0;
 
@@ -134,6 +137,8 @@ export class BabylonRenderer {
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
+    this.texturesUrl = opts.texturesUrl;
+    this.fineLand = g.preset !== "low" && g.preset !== "medium";
     this.forts = new FortsView(this.scene, this.shadows);
     this.wreckUrl = opts.propsUrl;
     this.gunScan = opts.propsUrl && opts.graphics.preset !== "low" ? new GunScan(this.scene, `${opts.propsUrl}gun.glb`) : null;
@@ -284,7 +289,7 @@ export class BabylonRenderer {
     const cam = this.camera.camera.position;
     if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
     if (!this.islands && sim.env.archipelago) {
-      this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
+      this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget, this.texturesUrl, this.fineLand);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
       if (this.wreckUrl) void new WrecksView(this.scene, this.wreckUrl).place(wreckSites(sim.env.archipelago));
       this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));

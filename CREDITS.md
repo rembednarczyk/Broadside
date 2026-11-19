@@ -49,3 +49,6 @@ właściciela projektu). Warunki Mixamo pozwalają używać animacji w grach bez
 Cinzel (Natanael Gama, https://github.com/NDISCOVER/Cinzel) i EB Garamond (Georg Duffner, Octavio Pardo,
 https://github.com/octaviopardo/EBGaramond12), z pakietów `@fontsource/cinzel` i `@fontsource/eb-garamond`, wbudowane
 w paczkę gry (działają w APK bez sieci).
+
+## Tekstury terenu (Poly Haven, CC0)
+- rock_face, aerial_grass_rock, sandy_gravel_02: https://polyhaven.com (CC0, bez wymogu uznania autorstwa; podane dla porządku).

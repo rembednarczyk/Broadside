@@ -1028,3 +1028,13 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   (sterowanie, refowanie w szkwałach, wibracje, język). Dawny panel ustawień usunięty.
 - Narzędzia (Playwright, `navigator.webdriver`) i parametr `menu=0` pomijają menu na starcie, żeby zrzuty i pomiary
   szły od razu na morze; audyt interfejsu sprawdza menu i każdą zakładkę opcji na 15 rozmiarach ekranu.
+
+## 19.11, użytkownik: „podkręć wygląd wysp i mapy”
+- Błąd: ląd wysp w ogóle się nie rysował. Trójkąty siatki wysp miały odwróconą kolejność wierzchołków, więc z góry
+  Babylon odrzucał je jako tylne ściany (widać było tylko drzewa nad wodą, a z daleka pierścienie dalekiego wybrzeża,
+  które mają wyłączone odrzucanie). Kolejność odwrócona, test pilnuje normalnych lądu skierowanych w górę.
+- Tekstury terenu (Poly Haven, CC0): `rock_face` na stromiznach rzutowana z trzech osi (GPU Gems 3 rozdz. 1),
+  `aerial_grass_rock` na wierzchach i `sandy_gravel_02` przy wodzie rzutowane z góry w dwóch skalach; wagi z wysokości
+  i nachylenia jak barwy wierzchołków, tekstura daje tylko detal (dzielona przez średnią jasność), barwy zostają
+  z `island-geometry` (`terrain-splat.ts`, wtyczka materiału).
+- Gęstsza siatka wysp od presetu high (72 × 192 zamiast 48 × 96): linia brzegu gładsza.

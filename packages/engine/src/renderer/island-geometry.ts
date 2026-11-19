@@ -55,7 +55,8 @@ export const cliffProfile = (is: Island, y: number): number => {
   return BEACH + (top - BEACH) * (1 - Math.pow(1 - u, n));
 };
 
-export const islandGeometry = (is: Island): TerrainGeometry => {
+/** `rings` and `segments`: the radial grid's density (denser from the high preset up: the coast's line reads smoother). */
+export const islandGeometry = (is: Island, rings = RINGS, segments = SEGMENTS): TerrainGeometry => {
   const reach = is.radius * 1.3 + is.shoal * 0.6;
   const positions: number[] = [];
   const colors: number[] = [];
@@ -63,10 +64,10 @@ export const islandGeometry = (is: Island): TerrainGeometry => {
   const h = (x: number, z: number): number => cliffProfile(is, islandHeight(is, is.x + x, is.z + z));
   positions.push(0, h(0, 0), 0);
   colors.push(...colour(is, h(0, 0), 0), 1);
-  for (let r = 1; r <= RINGS; r++) {
-    const rr = reach * Math.pow(r / RINGS, 0.8);
-    for (let s = 0; s < SEGMENTS; s++) {
-      const a = (s / SEGMENTS) * Math.PI * 2;
+  for (let r = 1; r <= rings; r++) {
+    const rr = reach * Math.pow(r / rings, 0.8);
+    for (let s = 0; s < segments; s++) {
+      const a = (s / segments) * Math.PI * 2;
       const x = Math.cos(a) * rr;
       const z = Math.sin(a) * rr;
       const y = h(x, z);
@@ -76,13 +77,15 @@ export const islandGeometry = (is: Island): TerrainGeometry => {
       colors.push(...colour(is, y, slope), 1);
     }
   }
-  for (let s = 0; s < SEGMENTS; s++) indices.push(0, 1 + ((s + 1) % SEGMENTS), 1 + s);
-  for (let r = 1; r < RINGS; r++) {
-    const a0 = 1 + (r - 1) * SEGMENTS;
-    const b0 = 1 + r * SEGMENTS;
-    for (let s = 0; s < SEGMENTS; s++) {
-      const s1 = (s + 1) % SEGMENTS;
-      indices.push(a0 + s, a0 + s1, b0 + s, a0 + s1, b0 + s1, b0 + s);
+  // Wound so the faces look up (Babylon's front faces): the other way round the land was culled
+  // from above and only its underside, dark, showed from below (19.11).
+  for (let s = 0; s < segments; s++) indices.push(0, 1 + s, 1 + ((s + 1) % segments));
+  for (let r = 1; r < rings; r++) {
+    const a0 = 1 + (r - 1) * segments;
+    const b0 = 1 + r * segments;
+    for (let s = 0; s < segments; s++) {
+      const s1 = (s + 1) % segments;
+      indices.push(a0 + s, b0 + s, a0 + s1, a0 + s1, b0 + s, b0 + s1);
     }
   }
   return { positions, indices, colors };
