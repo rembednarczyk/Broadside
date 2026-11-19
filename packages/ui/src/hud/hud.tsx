@@ -39,7 +39,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       </div>
       <div className="col right">
         <Compass />
-        <TargetPanel />
+        <TargetPanel intents={intents.orders} />
       </div>
       <CombatPanel intents={intents.combat} />
       <PortPanel intents={intents.port} />

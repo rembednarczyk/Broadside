@@ -194,7 +194,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
    HP, łańcuch trafia głównie w nie; w widoku przecięte liny zwisają i kołyszą się (wahadło), porwany żagiel wisi z jednego
    rogu i łopocze (zerwane więzy w tkaninie XPBD), reja spada na pokład albo za burtę, maszt łamie się i przewraca za burtę
    (animacja obrotu wokół pnia), wrak masztu wleczony przy burcie hamuje i skręca statek, dopóki załoga go nie odetnie.
-5. [~] (19.11: poddanie unieruchomionego i słabsza obrona przy abordażu zrobione; przycisk abordażu w HUD czeka) **Unieruchomienie i poddanie** (jak „disabled” w Black Flag): bez masztów albo z olinowaniem poniżej progu statek
+5. [x] (19.11: poddanie unieruchomionego, słabsza obrona przy abordażu, przycisk „Unieruchomiony: abordaż” w panelu celu wydaje rozkaz podejścia i abordażu) **Unieruchomienie i poddanie** (jak „disabled” w Black Flag): bez masztów albo z olinowaniem poniżej progu statek
    nie ucieknie; kapitan AI poddaje się, gdy wróg jest blisko, a jego załoga słabsza; abordaż unieruchomionego łatwiejszy;
    w HUD przycisk abordażu przy unieruchomionym celu w zasięgu; złoty hash ręcznie z nazwą reguły, `pnpm run audit`
    (bitwy) w progach ADR-0005.

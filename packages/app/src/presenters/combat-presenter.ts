@@ -60,6 +60,7 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
   const side = Math.abs(rel) < 0.6 ? "ahead" : Math.abs(rel) > Math.PI - 0.6 ? "astern" : rel > 0 ? "starboard" : "port";
   return {
     kind: "ship",
+    id: aim.target.id,
     classId: t.model.def.id,
     faction: t.faction,
     range: aim.range,
