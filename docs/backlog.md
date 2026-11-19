@@ -220,7 +220,9 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Etykiety portów na mapie rozsuwane: zachłanne rozmieszczanie z ośmiu miejsc wokół znaku i dwa razy dalej.
 - [x] Pierścienie dalekiego wybrzeża (tło) wygaszone w stronę kontynentu (60–90° od jego kierunku), tam horyzont
   wypełnia narysowany ląd.
-- [ ] Mapa: przybliżanie i przesuwanie palcami, zasięg widzenia z bocianiego gniazda, mgła wojny (nieodkryte wyspy).
+- [x] Mapa: mgła wojny (19.11): morze w komórkach 250 m, obejrzane w promieniu 1,2 km od statku gracza, zapisane w grze;
+  forty i wraki tylko w obejrzanych miejscach, inne statki tylko w zasięgu wzroku, porty zawsze.
+- [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku zależny od mgły i pory dnia.
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie

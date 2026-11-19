@@ -208,6 +208,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .chart-grid line { stroke: rgba(90, 70, 40, 0.18); stroke-width: 8; }
 .chart-shoal { fill: rgba(150, 140, 110, 0.35); stroke: rgba(90, 70, 40, 0.45); stroke-width: 10; stroke-dasharray: 18 26; }
 .chart-land { fill: #8c8762; stroke: #4a3826; stroke-width: 14; stroke-linejoin: round; }
+.chart-fog { stroke: url(#chart-paper); stroke-width: 2; }
 .chart-route { fill: none; stroke: #7a2a1a; stroke-width: 22; stroke-dasharray: 60 40; }
 .chart-goal { fill: none; stroke: #7a2a1a; stroke-width: 18; }
 .chart-wreck { stroke: #3a2a1a; stroke-width: 22; }

@@ -11,6 +11,7 @@ import { applyCommand } from "./commands/apply";
 import { type IdSource, type SpawnShip, spawnShip } from "./world/spawn";
 import { createFort } from "./combat/forts";
 import { type Salvage, createSalvage } from "./economy/salvage-state";
+import { type Survey, createSurvey } from "./economy/survey-state";
 import { type Purse, createPurse } from "./economy/purse";
 
 /** Fixed simulation step (60 Hz). The app accumulates frame time and steps in whole steps. */
@@ -47,6 +48,7 @@ export class Simulation {
   /** The contract the player has taken. */
   readonly jobs: Jobs = { active: null };
   readonly salvage: Salvage = createSalvage();
+  readonly survey: Survey = createSurvey();
   readonly ports: readonly PortSite[];
   private pending: GameCommand[] = [];
   steps = 0;
@@ -54,7 +56,7 @@ export class Simulation {
   constructor(opts: SimulationOptions) {
     this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null);
     this.ports = opts.archipelago ? portSites(opts.archipelago) : [];
-    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations, jobs: this.jobs, salvage: this.salvage };
+    this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations, jobs: this.jobs, salvage: this.salvage, survey: this.survey };
     watchReputation(this.world, this.events, this.relations);
   }
 

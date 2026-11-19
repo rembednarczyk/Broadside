@@ -45,7 +45,8 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
       <div className="panel chart">
         <svg viewBox={`${-h} ${-h} ${2 * h} ${2 * h}`} onPointerDown={onTap} data-testid="chart-map">
           <defs>
-            <radialGradient id="chart-paper">
+            {/* In the chart's own units, so the fog's patches carry on the paper's shading. */}
+            <radialGradient id="chart-paper" gradientUnits="userSpaceOnUse" cx={0} cy={0} r={h}>
               <stop offset="0.55" stopColor="#dccaa3" />
               <stop offset="1" stopColor="#b9a074" />
             </radialGradient>
@@ -59,6 +60,10 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
           ))}
           <path d={path(chart.shoals)} className="chart-shoal" fillRule="evenodd" />
           <path d={path(chart.land)} className="chart-land" fillRule="evenodd" />
+          {/* The unsurveyed sea: blank paper over whatever lies there (the fog of war). */}
+          {chart.fog.map((f, i) => (
+            <rect key={`u${i}`} x={f.x} y={-(f.z + f.h)} width={f.w} height={f.h} fill="url(#chart-paper)" className="chart-fog" />
+          ))}
           {chart.route.length > 1 && <polyline points={points(chart.route)} className="chart-route" />}
           {chart.goal && <circle cx={chart.goal.x} cy={-chart.goal.z} r={size * 1.6} className="chart-goal" />}
           {chart.wrecks.map((w, i) => (

@@ -1096,3 +1096,8 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
 - Nazwy portów na mapie: zachłanne rozmieszczanie etykiet punktów (Christensen, Marks i Shieber 1995, bez ich
   wyżarzania): osiem miejsc wokół znaku, potem te same dwa razy dalej, pierwsze wolne od nazw i znaków; bez wolnego
   miejsca to, które nachodzi najmniej. Szerokość liter Cinzel szacowana na 0,72 em (przy 0,62 dwie nazwy się stykały).
+- Mgła wojny na mapie (pętla, 19.11): komórki 250 m, obserwator co 1 s oznacza te, których środki są do 1,2 km od
+  statku gracza (`core/world/survey.ts`, system `surveySystem` po ratowaniu wraków, lista rosnąco, w zapisie gry).
+  Na mapie nieobejrzane komórki to puste płótno (wiersze scalone w prostokąty), forty i wraki tylko w obejrzanych,
+  inne statki tylko do 1,2 km, porty zawsze (ich nazwy i miejsca były powszechnie znane). Zasięg stały: od mgły
+  i nocy niezależny (do backlogu). Złoty hash bez zmian (stan rozpoznania nie wchodzi do skrótu, nie wpływa na ruch).

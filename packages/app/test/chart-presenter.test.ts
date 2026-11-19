@@ -28,4 +28,20 @@ describe("chart presenter", () => {
     expect(c.route.length).toBeGreaterThanOrEqual(2);
     expect(c.goal).not.toBeNull();
   });
+
+  it("leaves the unsurveyed sea blank and shows only the ships in sight", () => {
+    const s = new GameSession({ seed: 7 });
+    s.advance(2);
+    const c = presentChart(s.sim, s.playerId)!;
+    const a = s.sim.env.archipelago!;
+    const fogArea = c.fog.reduce((sum, f) => sum + f.w * f.h, 0);
+    // Most of the sea is still blank at the start, but not the water round the ship.
+    expect(fogArea / Math.pow(2 * a.half, 2)).toBeGreaterThan(0.8);
+    const me = s.sim.byId(s.playerId)!.body!.pos;
+    expect(c.fog.some((f) => me.x >= f.x && me.x < f.x + f.w && me.z >= f.z && me.z < f.z + f.h)).toBe(false);
+    for (const v of c.ships) expect(Math.hypot(v.x - me.x, v.z - me.z)).toBeLessThanOrEqual(1200);
+    // A fresh game with every cell surveyed has no fog.
+    s.sim.survey.seen = Array.from({ length: Math.pow(Math.ceil((2 * a.half) / 250), 2) }, (_, i) => i);
+    expect(presentChart(s.sim, s.playerId)!.fog).toEqual([]);
+  });
 });

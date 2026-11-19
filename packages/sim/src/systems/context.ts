@@ -5,6 +5,7 @@ import { type SimWorld } from "../world/world";
 import { type IdSource } from "../world/spawn";
 import { type Jobs } from "../economy/jobs";
 import { type Salvage } from "../economy/salvage-state";
+import { type Survey } from "../economy/survey-state";
 
 /** What every system receives (Update Method pattern, "Game Programming Patterns" ch. 10). */
 export interface SimContext {
@@ -26,6 +27,8 @@ export interface SimContext {
   readonly jobs: Jobs;
   /** The wrecks already salvaged and the one being worked. */
   readonly salvage: Salvage;
+  /** The sea cells the player's lookout has had in sight (the chart's fog of war). */
+  readonly survey: Survey;
 }
 
 export type System = (ctx: SimContext, dt: number) => void;

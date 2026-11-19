@@ -21,6 +21,7 @@ export * from "./world/archipelago";
 export * from "./world/shores";
 export * from "./world/wrecks";
 export * from "./world/contours";
+export * from "./world/survey";
 export * from "./data/forts";
 export * from "./data/population";
 export * from "./data/reputation";

@@ -136,6 +136,8 @@ export interface ChartHud {
   /** The crew's course (from the ship) and the contract's goal. */
   readonly route: readonly Point[];
   readonly goal: Point | null;
+  /** The sea the lookout has not yet had in sight (rectangles, world metres): left blank. */
+  readonly fog: readonly { readonly x: number; readonly z: number; readonly w: number; readonly h: number }[];
 }
 
 export interface HudState {
