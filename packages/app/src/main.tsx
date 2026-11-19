@@ -9,6 +9,7 @@ import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
+import { presentChart } from "./presenters/chart-presenter";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
@@ -173,7 +174,8 @@ const gear = (step: 1 | -1) => {
 };
 /** The main menu's screens (null: back to the game, which is paused while a screen is up). */
 const showMenu = (menu: MenuScreen | null) => {
-  patchHud({ menu, shipMenu: null });
+  // The chart is drawn once on opening: the game stands still behind it.
+  patchHud({ menu, shipMenu: null, chart: menu === "chart" ? presentChart(session.sim, session.playerId) : null });
   // The how-to-play card on the first start, once the player has left the menu for the sea.
   if (!menu && helpPending) {
     helpPending = false;
@@ -285,6 +287,13 @@ const intents: UiIntents = {
       const next = CAMERA_MODES[(CAMERA_MODES.indexOf(renderer.camera.mode) + 1) % CAMERA_MODES.length]!;
       renderer.camera.mode = next;
       patchHud({ cameraMode: next });
+    },
+  },
+  chart: {
+    // A course from the chart: the crew sails there round the islands (A*, sim/ai/pilot/plan).
+    sailTo: (x, z) => {
+      session.helm.navigate([{ x, z }], false);
+      showMenu(null);
     },
   },
 };

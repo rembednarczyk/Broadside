@@ -204,6 +204,18 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
 Weryfikacja: testy reguł (stany, łańcuch na olinowaniu, poddanie), zrzuty salwy łańcuchowej z bliska (`SHOT_SCRIPT`)
 przed i po, audyt bitew, przeglądarka statku i APK.
 
+### Wyspy i mapa (właściciel 19.11: „podkręć wygląd wysp i mapy”)
+- [x] Ląd wysp się rysuje (odwrócona kolejność wierzchołków), tekstury skał, trawy i piasku, gęstsza siatka od high.
+- [x] Drzewa: palmy (wygięty pień, korona wiszących liści) przy brzegu i drzewa liściaste (korona z kilku brył) w głębi
+  dżungli, instancje obrócone, w różnych odcieniach, odrzucane wyspa po wyspie i niewidoczne dalej niż 1,8 km.
+- [x] Ląd wysp z odrzucaniem poza kadrem i rzadką siatką dalej niż 1,4 km: przy wyspie 1,8 → 0,76 mln trójkątów.
+- [x] Dalekie wybrzeże: wierzch klifu z głębią, żleby na ścianie, ton trochę ciemniejszy od mgły (ref_095, ref_176).
+- [x] Mapa morska (przycisk „Mapa” w rogu, menu, klawisz M): wyspy z płyciznami, porty, forty, wraki, statki, kurs
+  i cel; dotknięcie morza w prostym sterowaniu wyznacza tam kurs.
+- [ ] Nazwy portów się powtarzają (generator losuje z listy ze zwracaniem); poprawka zmienia losowanie świata, więc
+  razem z następną zmianą generatora archipelagu (złoty hash ręcznie).
+- [ ] Mapa: przybliżanie i przesuwanie palcami, zasięg widzenia z bocianiego gniazda, mgła wojny (nieodkryte wyspy).
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu

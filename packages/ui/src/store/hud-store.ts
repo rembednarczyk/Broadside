@@ -119,6 +119,24 @@ export interface JobHud {
   readonly bearing?: number;
 }
 
+type Point = { readonly x: number; readonly z: number };
+
+/** The sea chart (world metres, +z north): islands, ports, forts, wrecks, ships and the course. */
+export interface ChartHud {
+  /** Half the side of the charted square, centred on the origin. */
+  readonly half: number;
+  /** Each island's waterline and the edge of its shallows (closed polygons) and its kind. */
+  readonly islands: readonly { readonly kind: string; readonly coast: readonly Point[]; readonly shoal: readonly Point[] }[];
+  readonly ports: readonly (Point & { readonly name: string; readonly faction: string; readonly hostile: boolean })[];
+  readonly forts: readonly (Point & { readonly hostile: boolean })[];
+  readonly wrecks: readonly (Point & { readonly salvaged: boolean })[];
+  /** Ships: the player's, hostile and other, with heading (radians from north towards east). */
+  readonly ships: readonly (Point & { readonly heading: number; readonly kind: "player" | "hostile" | "other" })[];
+  /** The crew's course (from the ship) and the contract's goal. */
+  readonly route: readonly Point[];
+  readonly goal: Point | null;
+}
+
 export interface HudState {
   readonly gold: number;
   readonly provisions: number;
@@ -156,11 +174,13 @@ export interface HudState {
   readonly courseActive: boolean;
   /** Orders for a ship held down on (screen fractions, the ship, whether she is an enemy). */
   readonly shipMenu: { readonly x: number; readonly y: number; readonly target: number; readonly hostile: boolean } | null;
+  /** The sea chart, filled while it is open (menu "chart"). */
+  readonly chart: ChartHud | null;
   readonly drawCalls: number;
   readonly fps: number;
 }
 
-export type MenuScreen = "main" | "options";
+export type MenuScreen = "main" | "options" | "chart";
 export type OptionsTab = "graphics" | "sound" | "gameplay";
 export interface SoundVolumes {
   readonly master: number;
@@ -171,6 +191,6 @@ export interface SoundVolumes {
 /** Simple (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad (the action game's controls). */
 export type SteeringMode = "simple" | "classic" | "arcade";
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, chart: null, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

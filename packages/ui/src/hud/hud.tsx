@@ -9,6 +9,7 @@ import { JobPanel } from "./job-panel";
 import { EnemyMarker } from "./enemy-marker";
 import { Notices } from "./notices";
 import { MainMenu } from "./main-menu";
+import { SeaChart } from "./sea-chart";
 import { PortPanel } from "./port-panel";
 import { HelpCard } from "./help-card";
 import { CancelCourse, ShipMenu } from "./order-controls";
@@ -26,7 +27,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
   if (menu) {
     return (
       <div className="hud">
-        <MainMenu intents={intents.settings} />
+        {menu === "chart" ? <SeaChart intents={intents.chart} settings={intents.settings} /> : <MainMenu intents={intents.settings} />}
         <HelpCard intents={intents.settings} />
       </div>
     );
@@ -59,6 +60,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
         <CancelCourse intents={intents.orders} />
         <div className="corner">
           <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>
+          <button className="lang" onPointerDown={() => intents.settings.showMenu("chart")} data-testid="open-chart">{text(lang, "chart.button")}</button>
           <button className="lang" onPointerDown={() => intents.settings.toggleHud()} data-testid="hide-hud">◎</button>
           <button className="lang" onPointerDown={() => intents.settings.toggleSettings()} data-testid="open-settings">⚙</button>
           <span className="fps">{fps.toFixed(0)} fps</span>

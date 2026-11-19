@@ -1038,3 +1038,18 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   i nachylenia jak barwy wierzchołków, tekstura daje tylko detal (dzielona przez średnią jasność), barwy zostają
   z `island-geometry` (`terrain-splat.ts`, wtyczka materiału).
 - Gęstsza siatka wysp od presetu high (72 × 192 zamiast 48 × 96): linia brzegu gładsza.
+- Drzewa z dwóch modeli parametrycznych (Weber i Penn 1995, jeden poziom liści): palma do 14 m wysokości terenu na
+  wyspach dżungli i na wyspach plażowych, drzewo liściaste wyżej i na klifach; instancje (Flyweight) z obrotem, skalą
+  i odcieniem z ziarna wyspy. Każda wyspa ma własne dwa meshe drzew (odrzucanie poza kadrem) i poziom szczegółu bez
+  siatki od 1,8 km. Kopie wierzchołków na wyspę, bo bufory instancji Babylon trzyma w geometrii: klony ze wspólną
+  geometrią rysowały drzewa tylko ostatniej wyspy.
+- Ląd wysp już nie jest scalony w jeden mesh: scalony był rysowany zawsze w całości (cały archipelag, 1,6 mln trójkątów
+  na high po zagęszczeniu siatki). Teraz mesh na wyspę z rzadką siatką 16 × 40 dalej niż 1,4 km; wywołań rysowania
+  w scenie przy wyspie nawet mniej (146 → 139), bo poza kadrem nic nie idzie.
+- Dalekie wybrzeże: pierścień ma cztery rzędy (stopa, krawędź, wierzch, spadek za nim) i barwy wierzchołków (żleby
+  z szumu na ścianie, jaśniejsza krawędź); ton skały 0,35 + 0,62 × zamglenie barwy mgły zamiast 0,8, bo jaśniejszy
+  od mgły wyglądał jak biała ściana, a na klatkach referencji brzeg jest ciut ciemniejszy od mgły.
+- Mapa morska jako ekran menu (gra stoi): SVG w metrach świata, północ w górę, kontury wysp z tej samej funkcji
+  wysokości co fizyka (`core/world/coastline.ts`, promienie i bisekcja), płycizny do 4 m. Dotknięcie morza wysyła
+  kurs przez `helm.navigate` (A* omija wyspy) tylko w prostym sterowaniu; w klasycznym i „Akcji” mapa tylko pokazuje.
+- Ujęcia `island` i `island-close` w `tools/shots/views.json` (największa wyspa dżungli z bliska).

@@ -7,7 +7,7 @@ const TABS: readonly OptionsTab[] = ["graphics", "sound", "gameplay"];
 
 /**
  * The main menu (on start and behind the ⚙ button; the game is paused while it is open) and its
- * options screen in three tabs: graphics, sound and gameplay. A modal screen over the paused sea,
+ * options screen in three tabs: graphics, sound and gameplay; the sea chart opens from it (sea-chart). A modal screen over the paused sea,
  * the HUD hidden (the menu's state machine: main ⇄ options, either back to the game).
  */
 export const MainMenu = ({ intents }: { intents: SettingsIntents }) => {
@@ -23,6 +23,7 @@ export const MainMenu = ({ intents }: { intents: SettingsIntents }) => {
         <div className="menu-sub">{t("menu.subtitle")}</div>
         <button className="wide big" onPointerDown={() => intents.showMenu(null)} data-testid="close-settings">{t("menu.resume")}</button>
         <button className="wide" onPointerDown={() => intents.newGame()} data-testid="new-game">{t("settings.newGame")}</button>
+        <button className="wide" onPointerDown={() => intents.showMenu("chart")} data-testid="menu-chart">{t("menu.chart")}</button>
         <button className="wide" onPointerDown={() => intents.showMenu("options")} data-testid="open-options">{t("menu.options")}</button>
         <button className="wide" onPointerDown={() => intents.toggleHelp()} data-testid="open-help">{t("help.open")}</button>
       </div>

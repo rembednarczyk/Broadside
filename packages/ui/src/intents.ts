@@ -73,6 +73,11 @@ export interface SettingsIntents {
   nextCamera(): void;
 }
 
+export interface ChartIntents {
+  /** A point tapped on the chart: the crew sails there (round the islands), back to the sea. */
+  sailTo(x: number, z: number): void;
+}
+
 export interface UiIntents {
   readonly helm: HelmIntents;
   readonly orders: OrderIntents;
@@ -80,4 +85,5 @@ export interface UiIntents {
   readonly combat: CombatIntents;
   readonly port: PortIntents;
   readonly settings: SettingsIntents;
+  readonly chart: ChartIntents;
 }

@@ -96,7 +96,7 @@ for (const size of SIZES) {
     }
     for (const s of found.scrolls) issues.push(`kolumna przewija się (${s})`);
     if (found.minFont < MIN_FONT) issues.push(`najmniejsze pismo ${found.minFont.toFixed(1)} px`);
-    // The main menu and every tab of the options must fit the screen (a window scrolls inside if it
+    // The main menu, every tab of the options and the sea chart must fit the screen (a window scrolls inside if it
     // must, but never off it).
     const fits = async (selector, label) => {
       const r = await page.evaluate((sel) => {
@@ -118,7 +118,10 @@ for (const size of SIZES) {
       await shoot(`options-${tab}`);
     }
     await page.click('[data-testid="options-back"]');
-    await page.click('[data-testid="close-settings"]');
+    await page.click('[data-testid="menu-chart"]');
+    await fits(".chart", "mapa");
+    await shoot("chart");
+    await page.click('[data-testid="chart-close"]');
     problems += issues.length;
     const name = `${size}-${steering}-${lang}`;
     await page.screenshot({ path: join(outDir, `${name}.png`), timeout: 120000 });

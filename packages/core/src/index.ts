@@ -19,6 +19,7 @@ export * from "./weather/weather";
 export * from "./weather/storm-cells";
 export * from "./world/archipelago";
 export * from "./world/wrecks";
+export * from "./world/coastline";
 export * from "./data/forts";
 export * from "./data/population";
 export * from "./data/reputation";

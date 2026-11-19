@@ -1,9 +1,10 @@
-import { type UiIntents } from "@broadside/ui";
+import { type UiIntents, useHud } from "@broadside/ui";
 
 /**
  * Keyboard bindings onto the same intents the touch HUD raises (one input path, two devices).
  * A/D or arrows steer while held, W/S raise and lower sail, R toggles the oars, Q/E fire the
- * port and starboard broadsides, F the bow chasers, G the mortar, B braces, 1-5 pick the shot.
+ * port and starboard broadsides, F the bow chasers, G the mortar, B braces, 1-5 pick the shot,
+ * M opens and closes the sea chart.
  */
 export const bindKeyboard = (target: Window, intents: UiIntents): (() => void) => {
   const held = new Set<string>();
@@ -25,6 +26,7 @@ export const bindKeyboard = (target: Window, intents: UiIntents): (() => void) =
     if (e.code === "KeyR") intents.sails.toggleOars();
     if (e.code === "KeyH") intents.settings.toggleHud();
     if (e.code === "Escape") intents.settings.toggleSettings();
+    if (e.code === "KeyM") intents.settings.showMenu(useHud.getState().menu === "chart" ? null : "chart");
     if (e.code === "KeyT") intents.settings.nextCamera();
     if (e.code === "KeyQ") intents.combat.fire("broadside", "port");
     if (e.code === "KeyE") intents.combat.fire("broadside", "starboard");
