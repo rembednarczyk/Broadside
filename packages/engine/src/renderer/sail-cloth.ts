@@ -32,6 +32,8 @@ export interface SailState {
   readonly flutter: number;
   /** 0..1 how much of the canvas is furled on its yard (0 when the yard is gone with its mast). */
   readonly furled?: number;
+  /** The mast is going by the board (mast-fall): its yards go with it, turned about z by `roll` at the pivot and lowered by `drop`; `gone`: sunk. */
+  readonly fall?: { readonly roll: number; readonly y: number; readonly z: number; readonly drop: number; readonly gone: boolean };
 }
 
 /**
@@ -238,8 +240,17 @@ export class SailCloth {
         const k = bendShare(bend, pos.y);
         pos.addInPlaceFromFloats(bend.dx * k, 0, bend.dz * k);
       }
-      const d = st.visible || p.shape === "square" ? 0.12 + p.width * 0.012 : 0;
-      Matrix.Compose(new Vector3(d, y.length, d), rot, pos).copyToArray(this.yardBuf, k * 16);
+      let d = st.visible || p.shape === "square" ? 0.12 + p.width * 0.012 : 0;
+      let yardRot = rot;
+      if (st.fall) {
+        // Carried over the side with its mast: turned about the break, then sunk with it.
+        const roll = Quaternion.RotationAxis(new Vector3(0, 0, 1), st.fall.roll);
+        const off = pos.subtract(new Vector3(0, st.fall.y, st.fall.z));
+        pos.copyFrom(Vector3.TransformCoordinates(off, Matrix.RotationAxis(new Vector3(0, 0, 1), st.fall.roll)).add(new Vector3(0, st.fall.y - st.fall.drop, st.fall.z)));
+        yardRot = roll.multiply(rot);
+        if (st.fall.gone) d = 0;
+      }
+      Matrix.Compose(new Vector3(d, y.length, d), yardRot, pos).copyToArray(this.yardBuf, k * 16);
       // The furled canvas sits on top of the yard, a little short of its arms.
       const f = p.shape === "square" ? furlDiameter(p, st.furled ?? 0) : 0;
       Matrix.Compose(new Vector3(f, p.width * 0.94, f), rot, pos.add(new Vector3(0, (d + f) * 0.45, 0))).copyToArray(this.furlBuf, k * 16);

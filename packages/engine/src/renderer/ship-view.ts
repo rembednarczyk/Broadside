@@ -213,7 +213,7 @@ export class ShipView {
   private readonly guns: ShipGuns;
   private readonly holes: ShotHoles;
   /** Masts going by the board (mast-fall), by mast. */
-  private readonly falls = new Map<number, { fall: MastFall; side: number }>();
+  private readonly falls = new Map<number, { fall: MastFall; side: number; pivotY: number; pivotZ: number }>();
 
   /** The model hull in its two tiers (full near the camera, light beyond HULL_FULL), where both loaded. */
   private hullTiers: { near: AbstractMesh[]; far: AbstractMesh[] } | null = null;
@@ -424,8 +424,9 @@ export class ShipView {
     if (!f) {
       const bounds = mesh.getBoundingInfo().boundingBox;
       // Broken a little above its foot; the side it goes over is the side the wind leans it to.
-      mesh.setPivotPoint(new Vector3(0, bounds.minimum.y + 1.5, this.model.def.masts[i]!.z));
-      f = { fall: new MastFall(Math.max(4, bounds.maximum.y - bounds.minimum.y)), side: Math.sign(leeward) || 1 };
+      const pivot = new Vector3(0, bounds.minimum.y + 1.5, this.model.def.masts[i]!.z);
+      mesh.setPivotPoint(pivot);
+      f = { fall: new MastFall(Math.max(4, bounds.maximum.y - bounds.minimum.y)), side: Math.sign(leeward) || 1, pivotY: pivot.y, pivotZ: pivot.z };
       this.falls.set(i, f);
     }
     f.fall.step(dt, hold);
@@ -494,13 +495,15 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0 };
+      const f = this.falls.get(p.mast);
+      const fall = f ? { roll: -f.side * f.fall.angle, y: f.pivotY, z: f.pivotZ, drop: f.fall.drop, gone: f.fall.gone } : undefined;
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0, ...(fall ? { fall } : {}) };
     });
     const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
     const awLen = Math.hypot(aw.x, aw.z) || 1;
     const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
-    this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen);
+    this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen, s.mastHp.map((h) => h <= 0));
     this.guns.update(dt);
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
