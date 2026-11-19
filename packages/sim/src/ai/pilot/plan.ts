@@ -23,6 +23,17 @@ const STEP = 10;
  * water costs a lookup. One cache per map (`key`), dropped with it.
  */
 const caches = new WeakMap<object, Bed>();
+/** How far inside the sea's edge the charted water ends for pilots and captains (m). */
+const EDGE = 150;
+
+/**
+ * The seabed as the pilots and AI captains read it: the archipelago's, and beyond the sea's square
+ * (less EDGE) a bar, as if the chart ended in shoals, so no course leads off the map (a pilot
+ * beating up to a wreck ran 1.2 km past the edge of the sea, beta test 19.11). The physics keeps
+ * the real seabed: this is only what navigation steers by.
+ */
+export const chartedBed = (half: number, raw: Bed): Bed => (x, z) => (Math.abs(x) > half - EDGE || Math.abs(z) > half - EDGE ? 0 : raw(x, z));
+
 export const gridBed = (key: object, raw: Bed): Bed => {
   let bed = caches.get(key);
   if (!bed) {

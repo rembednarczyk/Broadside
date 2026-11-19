@@ -229,7 +229,9 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 
 ### Po beta-teście (19.11, trzech testerów; raporty w scratchpadzie sesji, poprawki w decyzjach)
 - [ ] Samoobrona załogi w prostym sterowaniu (działa strzelają same do wroga w zasięgu, jeśli gracz nie wydał rozkazu).
-- [ ] Pilot ratujący wrak i halsujący nie wypływa poza mapę (granica morza w nawigacji).
+- [x] Pilot i kapitanowie AI nie wypływają poza mapę: nawigacja czyta dno z mieliznami 150 m przed krawędzią morza.
+- [ ] Cele zleceń „bounty” giną od innych (fort, inne statki) w 1–4 minuty, zanim gracz dopłynie (audyt rozgrywki
+  19.11, ziarna 3 i 21): spawn dalej od wrogich fortów i statków albo cel uciekający w stronę gracza.
 - [ ] Zlecenia: zdanie, co trzeba zrobić, i znacznik celu na krawędzi ekranu (także eskortowanego statku).
 - [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
 - [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).

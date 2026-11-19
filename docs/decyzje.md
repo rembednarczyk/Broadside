@@ -1158,3 +1158,6 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Ostrzeżenie o mieliźnie tylko w ruchu (powyżej 1 m/s), nie przy nabrzeżu; legenda mapy z wrogim portem.
 - Do backlogu: samoobrona załogi w prostym sterowaniu, ratowanie wraku wypływające poza mapę (pilot bez granicy
   mapy), opis i znacznik celu zlecenia, stocznia ucięta w panelu portu, większe cele dotykowe.
+- Nawigacja (pilot, kapitanowie AI, planer tras) czyta dno, które 150 m przed krawędzią morza kończy się mielizną
+  (`chartedBed`); fizyka ma prawdziwe dno. Zlecenie „bounty”: płatne, gdy działa gracza trafiły cel choć raz
+  (`hitByPlayer`); reguła „ostatnie trafienie gracza” odrzucała cele dobite przez fort albo inny statek.

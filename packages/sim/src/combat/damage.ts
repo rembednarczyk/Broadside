@@ -104,6 +104,7 @@ export const applyImpact = (world: SimWorld, events: EventQueue, e: Entity, imp:
   const part = imp.where === "hull" ? hullHit(s, imp, dmg, rng, events, e.id) : rigHit(s, imp, dmg, rng, events, e.id);
   if (rake > 0) s.crew = Math.max(0, s.crew - Math.floor((crewBefore - s.crew) * RAKE_CREW * rake));
   s.lastHitBy = imp.by;
+  if (!s.hitByPlayer) for (const p of world.with("player")) if (p.id === imp.by) s.hitByPlayer = true;
   events.push({ type: "hit", ship: e.id, by: imp.by, at: imp.world, part, damage: dmg });
   // A heavy hit throws men into the sea (Overboard!): some of the casualties are swimmers.
   const lost = crewBefore - s.crew;

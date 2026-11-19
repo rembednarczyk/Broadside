@@ -1,7 +1,7 @@
 import { clamp, terrainHeight, wrapAngle } from "@broadside/core";
 import { type HandlerTable } from "./handler";
 import { type PilotOrder } from "../ai/pilot/state";
-import { gridBed, planRoute } from "../ai/pilot/plan";
+import { chartedBed, gridBed, planRoute } from "../ai/pilot/plan";
 import { type ShipEntity } from "./handler";
 import { type SimContext } from "../systems/context";
 
@@ -98,7 +98,7 @@ const givePilot = (e: ShipEntity, ctx: SimContext, order: PilotOrder): void => {
 /** The seabed of the archipelago (null: open sea). */
 const bedOf = (ctx: SimContext): ((x: number, z: number) => number) | null => {
   const a = ctx.env.archipelago;
-  return a ? gridBed(a, (x, z) => terrainHeight(a, x, z)) : null;
+  return a ? gridBed(a, chartedBed(a.half, (x, z) => terrainHeight(a, x, z))) : null;
 };
 
 /** The seabed must lie below this for the ship to pass: her draught and two metres under the keel (as captain.clearHeading). */

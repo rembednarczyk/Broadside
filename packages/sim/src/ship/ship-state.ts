@@ -76,6 +76,8 @@ export interface ShipState {
   taken: boolean;
   /** Her keel was on the bottom at the last step (systems/grounding). */
   aground: boolean;
+  /** The player's shot has struck her (a bounty is earned only by taking part in her end). */
+  hitByPlayer: boolean;
   /** Masts gone by the board (core WRECKAGE): to which side the wreck went and how long until it is cut free (0: cut away). */
   wrecks: { mast: number; side: number; left: number }[];
 }
@@ -118,6 +120,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     struck: false,
     taken: false,
     aground: false,
+    hitByPlayer: false,
     wrecks: [],
   };
 };

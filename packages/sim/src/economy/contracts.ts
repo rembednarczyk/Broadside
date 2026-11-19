@@ -76,11 +76,11 @@ export const judgeContract = (ctx: SimContext): void => {
     const d = ctx.ports[c.offer.dest]!;
     if (Math.hypot(t.body.pos.x - d.ax, t.body.pos.z - d.az) < ARRIVED) return settle(ctx, c, true);
   } else if (t.ship.sinking || t.ship.struck) {
-    // A bounty is earned by the player's own guns: sunk or struck to another's fire or on a reef,
-    // the quarry earns nothing (before, a bounty paid out by itself, beta test 19.11).
-    let player = -1;
-    for (const e of ctx.world.with("player")) player = e.id;
-    return settle(ctx, c, t.ship.lastHitBy === player);
+    // A bounty is earned by taking part: the player's guns must have struck her. Sunk or struck
+    // without a shot of hers (to others' fire or on a reef), the quarry earns nothing (a bounty
+    // paid out by itself, beta test 19.11); the last shot need not be hers (a fort or another
+    // ship often fires it: the playtest's bounties then all failed).
+    return settle(ctx, c, t.ship.hitByPlayer);
   }
   if (ctx.env.time > c.deadline) settle(ctx, c, false);
 };

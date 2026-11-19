@@ -38,7 +38,7 @@ describe("contracts", () => {
       target.body!.pos = { ...target.body!.pos, x: dest.x, z: dest.z };
     } else {
       // Struck to the player's guns.
-      target.ship!.lastHitBy = me.id;
+      target.ship!.hitByPlayer = true;
       target.ship!.struck = true;
     }
     sim.step();
@@ -74,7 +74,7 @@ describe("contracts", () => {
     expect(sim.contractOffer(-1)).toBeNull();
   });
 
-  it("pays a bounty only when the player's own guns took her", () => {
+  it("pays a bounty only when the player's guns struck her", () => {
     for (let k = 0; k < 6; k++) {
       const { sim, me, index } = moored();
       sim.env.time += k * 3600;
