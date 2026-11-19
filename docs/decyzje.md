@@ -973,3 +973,10 @@ poniżej 30% odrywa się i wisi z jednego rogu (tylko w symulacji tkaniny z blis
 - Sekcja kadłuba po pożarze albo poniżej 1/3 wytrzymałości dostaje raz trzy plamy sadzy na swojej burcie.
 - Celowanie gracza zależy od załadowanej amunicji: łańcuchy na 40% wysokości masztów celu, kartacze na pokład, kula na
   linię wody (jak kanonierzy AI w `tactics.aimHeightFor`).
+
+## 19.11: niebo co drugą klatkę (M10)
+Tło nieba (połowa rozdzielczości z chmurami objętościowymi, 38–40% klatki na high) odświeżane co drugą klatkę, gdy kamera
+obraca się mniej niż 0,003 rad na klatkę i nie ma błyskawicy (`Sky.refresh`, amortyzacja czasowa jak w niebach gier).
+Chmury dryfują wolno, więc przeskok o klatkę nie jest widoczny; obrót widoku odświeża od razu, żeby niebo nie zostawało
+za masztami. Pomiar: high 18% klatki mniej przy nieruchomym widoku. Na telefonie przy kamerze śledzącej kołyszący się
+statek zysk będzie mniejszy (część klatek z obrotem).

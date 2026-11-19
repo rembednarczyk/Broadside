@@ -209,6 +209,7 @@ z wyostrzeniem, gęstość pikseli do 2, skany dział do 45 m, kadłub z modelu 
 pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po sprawdzeniu na telefonie:
 - [x] 19.11: niebo w 35% rozdzielczości na high i ultra (klatka −28% w pomiarze), dynamiczna rozdzielczość pod suwakiem
 - [x] 19.11: piana przyboju liczona tylko przy brzegu (ultra: ocean 817 → 679 ms, −17%)
+- [x] 19.11: tło nieba co drugą klatkę, gdy widok stoi (obrót powyżej 0,003 rad na klatkę albo błyskawica odświeża od razu): high oszczędza 18% klatki przy nieruchomym widoku (frame-bench, średnia z 12 klatek)
 - [ ] limit 30 kl./s jako opcja (telefon: równiej, mniej grzania)
 - [ ] chmury: rozłożenie marszu na kilka klatek z reprojekcją (Schneider 2015), jeśli niebo dalej będzie największym kosztem
 - [ ] pomiar na prawdziwym telefonie (klatki na high i ultra po zmianach); bez niego koszt MSAA jest nieznany (SwiftShader
