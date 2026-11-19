@@ -218,8 +218,8 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   500 m z dwoma poziomami szczegółu, drzewa na kafelek, płycizny od osi lądu, mapa z konturów (marching squares),
   trzy porty na kontynencie, stare zapisy przenoszone na nowy ląd.
 - [ ] Etykiety portów na mapie nachodzą na siebie przy blisko leżących portach (rozsuwanie etykiet).
-- [ ] Pierścienie dalekiego wybrzeża (tło) stoją też za kontynentem: wyłączyć je w jego kierunku albo zastąpić
-  prawdziwym lądem za krawędzią mapy.
+- [x] Pierścienie dalekiego wybrzeża (tło) wygaszone w stronę kontynentu (60–90° od jego kierunku), tam horyzont
+  wypełnia narysowany ląd.
 - [ ] Mapa: przybliżanie i przesuwanie palcami, zasięg widzenia z bocianiego gniazda, mgła wojny (nieodkryte wyspy).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)

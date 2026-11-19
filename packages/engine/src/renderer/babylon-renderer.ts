@@ -289,7 +289,10 @@ export class BabylonRenderer {
     this.applyLook(look);
     this.shipFill.frame(this.camera.camera.getForwardRay(1).direction, this.camera.mode === "cinematic", 1 - Math.min(1, look.sunIntensity / 0.8), dt);
     const cam = this.camera.camera.position;
-    if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
+    if (!this.coast) {
+      const main = sim.env.archipelago?.islands.find((is) => is.form === "mainland");
+      this.coast = new FarCoast(this.scene, sim.env.seed, main ? Math.atan2(main.x, main.z) : null);
+    }
     if (!this.islands && sim.env.archipelago) {
       this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget, this.texturesUrl, this.fineLand);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coastHaze, coastHeights, coastRing } from "../src/renderer/far-coast";
+import { backdropMask, coastHaze, coastHeights, coastRing } from "../src/renderer/far-coast";
 
 describe("far coast", () => {
   it("has flat-topped headlands with gaps of open sea between them", () => {
@@ -31,5 +31,16 @@ describe("far coast", () => {
     expect(dist(2)).toBeGreaterThan(dist(1));
     for (const c of g.colors) expect(c).toBeLessThanOrEqual(1.06);
     expect(Math.min(...g.colors)).toBeGreaterThan(0.5);
+  });
+
+  it("leaves the mainland's side of the horizon to the drawn coast", () => {
+    const east = Math.PI / 2;
+    const h = coastHeights(7, east);
+    const at = (bearing: number) => h[Math.round(((bearing / (Math.PI * 2)) * h.length + h.length) % h.length)]!;
+    expect(at(east)).toBe(0);
+    expect(at(east + 0.9)).toBe(0);
+    expect(backdropMask(east + Math.PI, east)).toBe(1);
+    expect(backdropMask(east, null)).toBe(1);
+    expect(coastHeights(7, null)).toEqual(coastHeights(7));
   });
 });

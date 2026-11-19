@@ -9,7 +9,20 @@ import { SunHaze, hazeSunOf } from "./sun-haze";
  */
 const SEGMENTS = 256;
 
-export const coastHeights = (seed: number): number[] => {
+/**
+ * Share of the backdrop left standing at a bearing (radians, from +z towards +x, as the ring's
+ * vertices): none within 60 degrees of the mainland's bearing, where the real coast (drawn land,
+ * IslandsView) fills the horizon, full beyond 90 degrees, a smooth step between.
+ */
+export const backdropMask = (bearing: number, mainland: number | null): number => {
+  if (mainland === null) return 1;
+  const off = Math.abs(Math.atan2(Math.sin(bearing - mainland), Math.cos(bearing - mainland)));
+  const u = Math.min(1, Math.max(0, (off - Math.PI / 3) / (Math.PI / 6)));
+  return u * u * (3 - 2 * u);
+};
+
+/** `mainland`: the bearing of the mainland from the sea's centre (its side of the horizon is left to it), or null. */
+export const coastHeights = (seed: number, mainland: number | null = null): number[] => {
   const h: number[] = [];
   for (let i = 0; i < SEGMENTS; i++) {
     const a = i / SEGMENTS;
@@ -19,7 +32,7 @@ export const coastHeights = (seed: number): number[] => {
     const edge = Math.min(1, Math.max(0, (mask - 0.5) / 0.06));
     const plateau = 110 + fbm2(seed + 3, Math.cos(a * Math.PI * 2) * 3 + 9, Math.sin(a * Math.PI * 2) * 3 + 9, 3) * 120;
     const crag = fbm2(seed + 11, a * 180, 0.5, 2) * 25;
-    h.push(edge * (plateau + crag * (1 - edge * 0.7)));
+    h.push(edge * (plateau + crag * (1 - edge * 0.7)) * backdropMask(a * Math.PI * 2, mainland));
   }
   return h;
 };
@@ -85,9 +98,10 @@ export class FarCoast {
   private readonly materials: StandardMaterial[] = [];
   private readonly hazes: SunHaze[] = [];
 
-  constructor(scene: Scene, seed: number) {
+  /** `mainland`: bearing of the mainland (atan2(x, z) of its centre), whose side of the horizon the backdrop leaves to the drawn coast. */
+  constructor(scene: Scene, seed: number, mainland: number | null = null) {
     RINGS.forEach((ring, r) => {
-      const { positions, indices, colors } = coastRing(coastHeights(seed + ring.salt), ring.radius, ring.height, seed + ring.salt);
+      const { positions, indices, colors } = coastRing(coastHeights(seed + ring.salt, mainland), ring.radius, ring.height, seed + ring.salt);
       const mesh = new Mesh(`far-coast-${r}`, scene);
       const data = new VertexData();
       data.positions = positions;

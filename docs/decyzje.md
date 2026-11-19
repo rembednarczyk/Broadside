@@ -1090,3 +1090,6 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   kotwicowiska i port odmawiał zlecenia). Wynik: 2 zlecenia wzięte, 1 opłacone. Soak 1,50 ms na krok (próg 2 ms);
   2,30 ms wyszło przy równoległym budowaniu i zrzutach.
 - Złoty hash bez zmian: test determinizmu nie używa archipelagu.
+- Tło dalekiego wybrzeża (pierścienie wokół kamery) nie stoi już po stronie kontynentu: wysokość pierścienia mnożona
+  przez maskę od kierunku kontynentu (zero do 60°, pełna od 90°, gładki krok); kierunek stały, liczony od środka morza,
+  bo pierścienie i tak idą za kamerą. Na ujęciu `coast` zniknął jasny płaski pas nad lasem kontynentu.
