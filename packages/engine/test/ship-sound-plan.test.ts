@@ -70,4 +70,10 @@ describe("ship sounds", () => {
     expect(count(0.2)).toBeGreaterThan(0);
     expect(count(1)).toBeGreaterThan(count(0.2));
   });
+  it("creaks at the helm as she comes round, more often in a hard turn", () => {
+    const count = (turn: number) => voices(run(Array.from({ length: 200 }, () => ({ ...calm, turn })))).filter((v) => v === "creak").length;
+    expect(count(0)).toBe(0);
+    expect(count(0.05)).toBeGreaterThan(0);
+    expect(count(0.2)).toBeGreaterThan(count(0.05));
+  });
 });

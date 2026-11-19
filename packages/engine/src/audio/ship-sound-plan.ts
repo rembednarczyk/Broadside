@@ -47,7 +47,7 @@ export interface ShipAudioState {
   readonly fire?: number;
 }
 
-export type ShipVoice = "rope1" | "rope2" | "rope3" | "step1" | "step2" | "step3" | "run1" | "run2" | "winch2" | "splash" | "flap" | "crack" | "rumble" | "bell" | "crackle";
+export type ShipVoice = "rope1" | "rope2" | "rope3" | "step1" | "step2" | "step3" | "run1" | "run2" | "winch2" | "splash" | "flap" | "crack" | "rumble" | "bell" | "crackle" | "creak";
 
 export interface ShipShot {
   readonly voice: ShipVoice;
@@ -83,11 +83,12 @@ export interface ShipSoundMemory {
   pump: number;
   runOut: number;
   burn: number;
+  helm: number;
   last: ShipAudioState | null;
   luffing: boolean;
 }
 
-export const newShipSoundMemory = (): ShipSoundMemory => ({ strain: 3, gust: 0, haul: 0, brace: 0, luff: 0, steps: 5, slap: 0, pump: 0, runOut: 0, burn: 0, last: null, luffing: false });
+export const newShipSoundMemory = (): ShipSoundMemory => ({ strain: 3, gust: 0, haul: 0, brace: 0, luff: 0, steps: 5, slap: 0, pump: 0, runOut: 0, burn: 0, helm: 0, last: null, luffing: false });
 
 const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 /** Diameter of a shroud (m) for the rigging's tone. */
@@ -108,7 +109,7 @@ export const planShipSounds = (s: ShipAudioState, m: ShipSoundMemory, dt: number
   };
   const last = m.last ?? s;
   const load = clamp01(s.load);
-  for (const k of ["strain", "gust", "haul", "brace", "luff", "steps", "slap", "pump", "runOut", "burn"] as const) m[k] = Math.max(0, m[k] - dt);
+  for (const k of ["strain", "gust", "haul", "brace", "luff", "steps", "slap", "pump", "runOut", "burn", "helm"] as const) m[k] = Math.max(0, m[k] - dt);
 
   // Ropes take the strain: regularly under load, and at once when a gust brings it on.
   const rising = dt > 0 ? (s.load - last.load) / dt : 0;
@@ -162,6 +163,12 @@ export const planShipSounds = (s: ShipAudioState, m: ShipSoundMemory, dt: number
   if (s.water > 0.5 && m.pump === 0) {
     fire("winch2", 0.25, 0.75 + rnd() * 0.1);
     m.pump = 2.6;
+  }
+  // The tiller ropes and the rudder's pintles groan as she comes round (a slow, low creak at the
+  // stern), more often the harder she turns.
+  if (s.turn > 0.03 && m.helm === 0) {
+    fire("creak", 0.12 + 0.5 * clamp01(s.turn / 0.15), 0.55 + rnd() * 0.15, 0, 0);
+    m.helm = 2.5 - 1.5 * clamp01(s.turn / 0.15) + rnd();
   }
   // Fire aboard: the dry crackle of burning timber, quicker and louder the worse it burns, with now
   // and then the low roar of a flare-up.
