@@ -1005,3 +1005,10 @@ Wraki leżą na mieliznach (1–2 m wody), a statki mają 2–6 m zanurzenia, wi
   zasięgu szalup na wodzie głębszej o 2 m od zanurzenia; stuknięcie wraku (tryb „wskaż i płyń”) wydaje ten rozkaz;
 - znane ograniczenie: wrak pod wiatr pilot osiąga słabo (decyzje 18.11), test rozkazu idzie półwiatrem.
 Złoty hash bez zmian, audyty w progach.
+
+## 19.11: „dryf bez żagli” to rozpęd, nie wiatr (pomiar)
+Ustalona prędkość statku ze zwiniętymi żaglami po 3 minutach: slup 0,08/0,15/0,32 m/s, bryg 0,03/0,08/0,53 m/s, galeon
+0,07/0,06/0,20 m/s przy wietrze 6/9,5/14 m/s. Obserwowane 3–4,5 m/s po zwinięciu żagli to rozpęd: galeon przy 4 m/s ma
+ok. 20 kN oporu kadłuba (zgodne z oporem tarcia i fali dla kadłuba tej wielkości), więc wytraca prędkość przez minuty,
+jak statki epoki niosące się długo po zrzuceniu żagli. Fizyki nie zmieniam; pilot zwija żagle wcześniej
+(CARRY_SECONDS), a do zatrzymania w miejscu jest teraz kotwica.
