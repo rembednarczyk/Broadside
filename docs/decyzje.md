@@ -924,3 +924,10 @@ Pieczenie płycizn do tekstury odłożone (mały zysk). Zrobione:
   1/42 s, wraca do suwaka (nigdy ponad). Telefon, który nadąża, nie widzi zmiany. Wyłączona w narzędziach Playwright
   (`navigator.webdriver`) i parametrem `dynres=0`, żeby zrzuty i pomiary były w zadanej rozdzielczości.
 Limit 30 kl./s jako opcja w ustawieniach czeka (wymaga przełącznika w panelu i audytu interfejsu).
+
+## 19.11, użytkownik: uszkodzenia statków jak w Black Flag (do planu)
+Zapisane jako M11 w backlogu, przed dalszą optymalizacją (M10): stany zdrowia z tabeli, lecące deski z modeli desek
+właściciela (tylko w widoku, bez wpływu na symulację), przestrzeliny i osmalenia na kadłubie, łańcuch ścinający liny,
+żagle, reje i maszty (maszt przewraca się za burtę i hamuje statek), unieruchomienie i poddanie jak „disabled” w Black
+Flag. Zmiany reguł symulacji (grupy olinowania, reje z HP, poddanie unieruchomionego) zmienią złoty hash i wymagają
+audytu bitew w progach ADR-0005.

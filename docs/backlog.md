@@ -175,6 +175,33 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
 - [ ] Kamera w tym trybie bliżej i za rufą (jak w Black Flag), jeśli właściciel zechce.
 
+### M11 uszkodzenia jak w Black Flag (właściciel 19.11: „stany zdrowia i wizualne uszkodzenia, lecące deski, łańcuchy ścinają olinowanie, żagle, reje i maszty”)
+Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie
+`mastFell`; widok ma dziury w żaglach, drzazgi jako płaskie iskry, maszt po upadku po prostu znika; AI poddaje się tylko
+przy załodze lub kadłubie poniżej 15%. Kolejność:
+1. [ ] **Stany zdrowia** (tabela w `core/data`, wzorzec Type Object): nienaruszony, uszkodzony, ciężko uszkodzony,
+   unieruchomiony, tonący; liczone z sekcji kadłuba, masztów i olinowania; zdarzenie przy zmianie stanu; pasek celu w HUD
+   podzielony na odcinki, nazwa stanu (EN, PL).
+2. [ ] **Lecące deski**: modele desek z folderu właściciela (`double_dutch_outer_pinewood_plank`,
+   `double_dutch_inner_oak_strake`, `pine_wood_double_outer_plank`, autorzy do CREDITS.md) przez `tools/assets/optimize.mjs`
+   do kilkuset trójkątów, pula instancji (Object Pool, thin instances), lot balistyczny z obrotem tylko w widoku (bez
+   wpływu na symulację i złoty hash), plusk i dryf na fali z `core/ocean`, znikanie po kilkunastu sekundach; liczba
+   desek rośnie z obrażeniami trafienia; obecne iskry zostają jako drobne drzazgi.
+3. [ ] **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
+   naklejki na kadłubie modelu, limit na statek), w stanie ciężkim osmalenia, wyrwane fragmenty relingu i nadburcia, dym
+   z kadłuba, przechył z zalania (fizyka już jest).
+4. [ ] **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym
+   HP, łańcuch trafia głównie w nie; w widoku przecięte liny zwisają i kołyszą się (wahadło), porwany żagiel wisi z jednego
+   rogu i łopocze (zerwane więzy w tkaninie XPBD), reja spada na pokład albo za burtę, maszt łamie się i przewraca za burtę
+   (animacja obrotu wokół pnia), wrak masztu wleczony przy burcie hamuje i skręca statek, dopóki załoga go nie odetnie.
+5. [ ] **Unieruchomienie i poddanie** (jak „disabled” w Black Flag): bez masztów albo z olinowaniem poniżej progu statek
+   nie ucieknie; kapitan AI poddaje się, gdy wróg jest blisko, a jego załoga słabsza; abordaż unieruchomionego łatwiejszy;
+   w HUD przycisk abordażu przy unieruchomionym celu w zasięgu; złoty hash ręcznie z nazwą reguły, `pnpm run audit`
+   (bitwy) w progach ADR-0005.
+6. [ ] **Dźwięk**: trzask belek, pękający maszt, plusk spadającej rei.
+Weryfikacja: testy reguł (stany, łańcuch na olinowaniu, poddanie), zrzuty salwy łańcuchowej z bliska (`SHOT_SCRIPT`)
+przed i po, audyt bitew, przeglądarka statku i APK.
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu
