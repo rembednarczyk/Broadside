@@ -167,6 +167,11 @@ const setSteering = (steering: SteeringMode) => {
   patchHud({ steering });
   applySteering(steering);
   renderer.camera.drawGestures = steering === "simple";
+  // The action mode's view is the chase camera astern (Black Flag's); the camera button still cycles.
+  if (steering === "arcade" && renderer.camera.mode === "isometric") {
+    renderer.camera.mode = "chase";
+    patchHud({ cameraMode: "chase" });
+  }
   try {
     localStorage.setItem(STEER_KEY, steering);
   } catch {
