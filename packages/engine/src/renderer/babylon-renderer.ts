@@ -303,6 +303,7 @@ export class BabylonRenderer {
     const strike = this.weather.strikeAt;
     const eye = this.camera.camera.position;
     const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
+    this.sky.refresh(this.camera.camera.getForwardRay(1).direction, (this.weather.flash ?? 0) > 0);
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
     const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, slap: this.effects.slap.get(e.id) ?? 0, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));

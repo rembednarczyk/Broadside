@@ -7,10 +7,17 @@ import { type SceneLook } from "./look";
 const RGBA_FORMAT = 5;
 const HALF_FLOAT = 2;
 
+/** Largest turn of the view (radians a frame) that still lets the backdrop skip a frame. */
+const STILL = 0.003;
+
 /** Sky dome drawn behind everything (depth at the far plane), centred on the camera. */
 export class Sky {
   readonly mesh: Mesh;
   private readonly material: ShaderMaterial;
+  /** The half-resolution backdrop (null when the dome is drawn in the frame). */
+  private target: RenderTargetTexture | null = null;
+  private lastLook: Vector3 | null = null;
+  private skipped = 0;
 
   /**
    * `scale` below 1: the dome is drawn into a texture of that share of the frame and shown as the
@@ -45,6 +52,9 @@ export class Sky {
 
   private backdrop(scene: Scene, scale: number): void {
     const target = new RenderTargetTexture("sky-backdrop", { ratio: scale }, scene, false, true, HALF_FLOAT);
+    this.target = target;
+    // Drawn on demand (`refresh`): every other frame while the view holds still.
+    target.refreshRate = RenderTargetTexture.REFRESHRATE_RENDER_ONCE;
     target.renderList = [this.mesh];
     target.clearColor = new Color4(0, 0, 0, 1);
     // The dome shows only in its own pass, not in the frame (the layer stands in for it there).
@@ -58,6 +68,23 @@ export class Sky {
     scene.customRenderTargets.push(target);
     const layer = new Layer("sky-backdrop", null, scene, true);
     layer.texture = target;
+  }
+
+  /**
+   * Temporal amortisation of the backdrop (the half-rate updates of game skies and far
+   * volumetrics): while the camera turns less than `STILL` radians between frames and nothing
+   * flashes, the clouds (which drift slowly) are redrawn every other frame; a turn of the view, a
+   * lightning flash or a resize redraws at once, so the sky never lags the masts in front of it.
+   * Call once a frame with the camera's forward direction.
+   */
+  refresh(forward: Vector3, flash: boolean): void {
+    if (!this.target) return;
+    const turned = !this.lastLook || Vector3.Dot(forward, this.lastLook) < Math.cos(STILL);
+    if (turned || flash || this.skipped >= 1) {
+      this.target.resetRefreshCounter();
+      this.lastLook = forward.clone();
+      this.skipped = 0;
+    } else this.skipped++;
   }
 
   /** `lightning`: unit direction from the eye to a strike and the flash's brightness (w), or none. */

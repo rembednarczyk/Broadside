@@ -83,11 +83,20 @@ const result = await page.evaluate((n) => {
     post: (on) => { scene.postProcessesEnabled = on; },
     // The post-processes one by one (default pipeline's bloom, SSAO, motion blur, the grade with the sun shafts).
     "post:bloom": (on) => { const p = scene.postProcessRenderPipelineManager.supportedPipelines.find((x) => x.name === "post"); if (p) p.bloomEnabled = on; },
-    "post:ssao": (on) => { const m = scene.postProcessRenderPipelineManager; for (const c of scene.cameras) on ? m.attachCamerasToRenderPipeline("ssao", c) : m.detachCamerasFromRenderPipeline("ssao", c); },
+    "post:ssao": (on) => { const m = scene.postProcessRenderPipelineManager; for (const c of scene.cameras) { if (on) m.attachCamerasToRenderPipeline("ssao", c); else m.detachCamerasFromRenderPipeline("ssao", c); } },
     "post:motion": (on) => { for (const pp of scene.postProcesses) if (pp.name === "motion") pp.enabled = on; },
     "post:grade": (on) => { for (const pp of scene.postProcesses) if (pp.name === "grade") pp.enabled = on; },
   };
+  // The game redraws the sky backdrop every other frame while the view holds still (Sky.refresh);
+  // timed here at every frame, as a turning view does, and the saving of the half rate apart.
+  const backdrop = scene.customRenderTargets.find((t) => t.name === "sky-backdrop");
+  if (backdrop) backdrop.refreshRate = 1;
   const out = { full: time() };
+  if (backdrop) {
+    backdrop.refreshRate = 2;
+    out["sky:half-rate saves"] = out.full - time();
+    backdrop.refreshRate = 1;
+  }
   for (const [name, set] of Object.entries(parts)) {
     set(false);
     out[name] = out.full - time();
