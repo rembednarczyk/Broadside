@@ -1012,3 +1012,9 @@ Ustalona prędkość statku ze zwiniętymi żaglami po 3 minutach: slup 0,08/0,1
 ok. 20 kN oporu kadłuba (zgodne z oporem tarcia i fali dla kadłuba tej wielkości), więc wytraca prędkość przez minuty,
 jak statki epoki niosące się długo po zrzuceniu żagli. Fizyki nie zmieniam; pilot zwija żagle wcześniej
 (CARRY_SECONDS), a do zatrzymania w miejscu jest teraz kotwica.
+
+## 19.11: pod wodą (C3) bez zmian
+Przyciemnienie nieba w oknie Snella (1,4 → 0,8 średniej nieba) i mocniejsza poświata słońca nie zmieniły planszy: okno
+pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts`), a główna różnica z ref_161 to ujęcie
+(gra patrzy w górę na całe okno, referencja pod kątem ze słońcem z boku). Wycofane; do zrobienia: ujęcie sceny
+`underwater` w `reference-scenes.json` pod kątem, potem ekspozycja pod wodą.
