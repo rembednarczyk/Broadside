@@ -67,6 +67,7 @@ export class ShipSounds {
     else if (s.voice === "crackle") this.burst(s, "highpass", 2600 * s.rate, 0.035, 0.7);
     else if (s.voice === "rumble") this.burst(s, "lowpass", 140 * s.rate, 0.8, 0.5);
     else if (s.voice === "bell") this.bell(s);
+    else if (s.voice === "pipe") this.pipe(s);
     else this.scape.oneShot(s.voice, s.gain, s.pan, s.rate, s.delay);
   }
 
@@ -87,6 +88,30 @@ export class ShipSounds {
     src.connect(f).connect(g).connect(p).connect(this.out);
     src.start(t0, Math.random() * 1.5);
     src.stop(t0 + dur + 0.05);
+  }
+
+  /**
+   * The boatswain's call: a small whistle's pure high note that swoops up, holds, and ends in a
+   * trill (the call "haul away"), a sine with its pitch ramped and then warbled.
+   */
+  private pipe(s: ShipShot): void {
+    const t0 = this.ctx.currentTime + s.delay;
+    const o = this.ctx.createOscillator();
+    const base = 2200 * s.rate;
+    o.frequency.setValueAtTime(base, t0);
+    o.frequency.exponentialRampToValueAtTime(base * 1.3, t0 + 0.25);
+    o.frequency.setValueAtTime(base * 1.3, t0 + 0.55);
+    for (let i = 0; i < 6; i++) o.frequency.setValueAtTime(base * (i % 2 ? 1.18 : 1.3), t0 + 0.55 + i * 0.05);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0005, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.001, 0.12 * s.gain), t0 + 0.05);
+    g.gain.setValueAtTime(0.12 * s.gain, t0 + 0.8);
+    g.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.95);
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = s.pan;
+    o.connect(g).connect(p).connect(this.out);
+    o.start(t0);
+    o.stop(t0 + 1);
   }
 
   /** The ship's bell: a struck bronze bell of about 30 cm, hum, prime and two upper partials. */

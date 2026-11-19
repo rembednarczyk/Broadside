@@ -47,7 +47,7 @@ export interface ShipAudioState {
   readonly fire?: number;
 }
 
-export type ShipVoice = "rope1" | "rope2" | "rope3" | "step1" | "step2" | "step3" | "run1" | "run2" | "winch2" | "splash" | "flap" | "crack" | "rumble" | "bell" | "crackle" | "creak";
+export type ShipVoice = "rope1" | "rope2" | "rope3" | "step1" | "step2" | "step3" | "run1" | "run2" | "winch2" | "splash" | "flap" | "crack" | "rumble" | "bell" | "crackle" | "creak" | "pipe";
 
 export interface ShipShot {
   readonly voice: ShipVoice;
@@ -84,11 +84,12 @@ export interface ShipSoundMemory {
   runOut: number;
   burn: number;
   helm: number;
+  pipe: number;
   last: ShipAudioState | null;
   luffing: boolean;
 }
 
-export const newShipSoundMemory = (): ShipSoundMemory => ({ strain: 3, gust: 0, haul: 0, brace: 0, luff: 0, steps: 5, slap: 0, pump: 0, runOut: 0, burn: 0, helm: 0, last: null, luffing: false });
+export const newShipSoundMemory = (): ShipSoundMemory => ({ strain: 3, gust: 0, haul: 0, brace: 0, luff: 0, steps: 5, slap: 0, pump: 0, runOut: 0, burn: 0, helm: 0, pipe: 0, last: null, luffing: false });
 
 const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 /** Diameter of a shroud (m) for the rigging's tone. */
@@ -109,7 +110,7 @@ export const planShipSounds = (s: ShipAudioState, m: ShipSoundMemory, dt: number
   };
   const last = m.last ?? s;
   const load = clamp01(s.load);
-  for (const k of ["strain", "gust", "haul", "brace", "luff", "steps", "slap", "pump", "runOut", "burn", "helm"] as const) m[k] = Math.max(0, m[k] - dt);
+  for (const k of ["strain", "gust", "haul", "brace", "luff", "steps", "slap", "pump", "runOut", "burn", "helm", "pipe"] as const) m[k] = Math.max(0, m[k] - dt);
 
   // Ropes take the strain: regularly under load, and at once when a gust brings it on.
   const rising = dt > 0 ? (s.load - last.load) / dt : 0;
@@ -121,7 +122,11 @@ export const planShipSounds = (s: ShipAudioState, m: ShipSoundMemory, dt: number
   // Sail handling: blocks run and feet pound while canvas is set or taken in.
   const working = dt > 0 && Math.abs(s.canvas - last.canvas) / dt > 0.01;
   if (working && m.haul === 0) {
-    fire(rnd() < 0.5 ? "rope3" : "rope2", 0.4, 1.1 + rnd() * 0.3);
+    // The boatswain pipes the hands to the sheets and halyards first (once a bout of sail handling).
+    const piped = m.pipe === 0;
+    if (piped) fire("pipe", 0.3, 0.95 + rnd() * 0.1, 0, 0);
+    m.pipe = 12;
+    fire(rnd() < 0.5 ? "rope3" : "rope2", 0.4, 1.1 + rnd() * 0.3, piped ? 0.9 : 0);
     for (let i = 0; i < 3; i++) fire(i % 2 ? "run1" : "run2", 0.3, 0.9 + rnd() * 0.2, 0.15 + i * 0.22);
     m.haul = 1.1 + rnd() * 0.5;
   }

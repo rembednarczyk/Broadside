@@ -76,4 +76,8 @@ describe("ship sounds", () => {
     expect(count(0.05)).toBeGreaterThan(0);
     expect(count(0.2)).toBeGreaterThan(count(0.05));
   });
+  it("pipes the hands once at the start of a bout of sail handling, not at every haul", () => {
+    const states = Array.from({ length: 60 }, (_, i) => ({ ...calm, canvas: 2 + i * 0.05 }));
+    expect(voices(run(states)).filter((v) => v === "pipe")).toHaveLength(1);
+  });
 });
