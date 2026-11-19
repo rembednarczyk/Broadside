@@ -948,3 +948,10 @@ trafienia (`scene.pickWithRay` na siatkach kadłuba: test przecięcia pojedyncze
 skalowanego modelu). Jedna zwykła siatka na statek, przebudowywana przy trafieniu, pod węzłem kadłuba; do 40 dziur na
 statek, rozmiar 0,9–1,7 m z obrażeniami. Instancje (thin instances) pod węzłem kadłuba nie rysowały się we właściwym
 miejscu, stąd zwykła siatka. Ciężko uszkodzony statek (kadłub poniżej 40%) dymi ze śródokręcia.
+
+## 19.11: unieruchomiony statek się poddaje (M11.5)
+Reguła (`core/data/damage-states.ts` `DISABLED`, `sim/ai/captain.ts`, `sim/combat/boarding.ts`): statek bez stojącego
+masztu albo z olinowaniem poniżej 20% nie ucieka (kapitan AI nie przechodzi w ucieczkę); gdy wróg jest bliżej niż 300 m,
+a jego załoga jest liczniejsza niż 1,3 załogi unieruchomionego, opuszcza banderę. Przy abordażu unieruchomiony broni
+się mnożnikiem 0,85 zamiast 1,15. Złoty hash bez zmian (scenariusz determinizmu nikogo nie unieruchamia), audyty bitew
+w progach ADR-0005.

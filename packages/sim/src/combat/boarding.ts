@@ -1,6 +1,7 @@
-import { type EventQueue, type Rng, prizeMoney } from "@broadside/core";
+import { DISABLED, type EventQueue, type Rng, damageState, prizeMoney } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type Purse, credit } from "../economy/purse";
+import { shipCondition } from "../ship/ship-state";
 
 /**
  * Boarding: grappled alongside, the attacking party (three quarters of the crew) meets the
@@ -25,7 +26,7 @@ export const board = (events: EventQueue, me: Entity, target: Entity, rng: Rng, 
   const d = target.ship!;
   const party = Math.floor(a.crew * 0.75);
   const attack = party * (0.8 + rng.next() * 0.4);
-  const defence = d.crew * (d.struck ? 0.25 : 1.15) * (0.8 + rng.next() * 0.4);
+  const defence = d.crew * (d.struck ? 0.25 : damageState(shipCondition(d)) === "disabled" ? DISABLED.boardingDefence : 1.15) * (0.8 + rng.next() * 0.4);
   if (attack > defence) {
     const lostA = Math.min(party, Math.ceil(party * 0.35 * (defence / attack)));
     a.crew -= lostA;

@@ -1,6 +1,6 @@
-import { DOCTRINES, type AmmoId, type GameCommand, type Relations, type SailLevel, angleOffWind, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
+import { DISABLED, DOCTRINES, type AmmoId, damageState, type GameCommand, type Relations, type SailLevel, angleOffWind, isHostile, standing, wrapAngle, yawOf, rotateInv } from "@broadside/core";
 import { type Entity } from "../world/components";
-import { type ShipState, crewShare, hullShare } from "../ship/ship-state";
+import { type ShipState, crewShare, hullShare, shipCondition } from "../ship/ship-state";
 import { type CaptainState } from "./captain-state";
 import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
@@ -283,7 +283,18 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
     s.struck = true;
     return [{ type: "sails", ship: me.id, mast: "all", level: 0 }];
   }
-  if (crewShare(s) < 0.3 || hullShare(s) < 0.3) {
+  // Disabled (core DISABLED): she cannot run; with an enemy close aboard and her people outnumbered, she strikes.
+  const disabled = damageState(shipCondition(s)) === "disabled";
+  if (disabled) {
+    const foe = nearestHostile(me, w.ships, w.fog, w.relations, w.screens);
+    const near = foe && Math.hypot(foe.body!.pos.x - me.body!.pos.x, foe.body!.pos.z - me.body!.pos.z) < DISABLED.strikeRange;
+    if (foe && near && s.crew * DISABLED.outnumbered < foe.ship!.crew) {
+      c.mode = "struck";
+      s.struck = true;
+      return [{ type: "sails", ship: me.id, mast: "all", level: 0 }];
+    }
+  }
+  if (!disabled && (crewShare(s) < 0.3 || hullShare(s) < 0.3)) {
     c.mode = "flee";
     return flee(me, target, w);
   }

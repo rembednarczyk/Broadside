@@ -17,6 +17,17 @@ export const DAMAGE_STATES = {
   segments: 4,
 } as const;
 
+/**
+ * A disabled ship (no mast standing or her rigging shot away) cannot run: her captain strikes when
+ * an enemy closes within `strikeRange` and his own men are fewer than `outnumbered` times hers; a
+ * disabled crew defends the deck worse (`boardingDefence` against 1.15 for a ship in fighting trim).
+ */
+export const DISABLED = {
+  strikeRange: 300,
+  outnumbered: 1.3,
+  boardingDefence: 0.85,
+} as const;
+
 /** The measures of a ship's condition, each a share of the whole (0..1). */
 export interface ShipCondition {
   readonly hull: number;
