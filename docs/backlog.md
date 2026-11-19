@@ -187,7 +187,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
    do kilkuset trójkątów, pula instancji (Object Pool, thin instances), lot balistyczny z obrotem tylko w widoku (bez
    wpływu na symulację i złoty hash), plusk i dryf na fali z `core/ocean`, znikanie po kilkunastu sekundach; liczba
    desek rośnie z obrażeniami trafienia; obecne iskry zostają jako drobne drzazgi.
-3. [ ] **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
+3. [~] (19.11: przestrzeliny i dym przy ciężkich uszkodzeniach zrobione; osmalenia i wyrwany reling czekają; trafienia sprzed doczytania modelu kadłuba giną przy przebudowie widoku) **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
    naklejki na kadłubie modelu, limit na statek), w stanie ciężkim osmalenia, wyrwane fragmenty relingu i nadburcia, dym
    z kadłuba, przechył z zalania (fizyka już jest).
 4. [ ] **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym

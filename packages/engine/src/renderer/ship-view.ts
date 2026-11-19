@@ -13,6 +13,7 @@ import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
 import { buildModelRails } from "./model-rails";
 import { buildModelDecks, deckPlanks } from "./deck-planks";
+import { ShotHoles } from "./shot-holes";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -208,6 +209,7 @@ export class ShipView {
   private readonly flagPositions: Float32Array;
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
+  private readonly holes: ShotHoles;
 
   /** The model hull in its two tiers (full near the camera, light beyond HULL_FULL), where both loaded. */
   private hullTiers: { near: AbstractMesh[]; far: AbstractMesh[] } | null = null;
@@ -282,6 +284,7 @@ export class ShipView {
       ? hulls.sides(model.def.id, hullMeshes, hullSpace, model.guns.map((g) => ({ y: g.pos.y + model.com.y + gunHeight(g.kind), z: g.pos.z + model.com.z, sign: Math.sign(g.dir.x) || 1 })), model.def.hull.beam)
       : null;
     this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows, gunScan, sides);
+    this.holes = new ShotHoles(scene, hullSpace, () => (this.modelled ? [...(this.hullTiers?.near ?? hullMeshes ?? []), ...(this.hullTiers?.far ?? [])] : [hullMesh]), model.def.hull.beam);
     if (this.modelled) {
       hullMesh.setEnabled(false);
       deck.setEnabled(false);
@@ -408,6 +411,11 @@ export class ShipView {
     MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
   }
 
+  /** A ball went into the hull at a world point: a shot hole there (M11). */
+  shotHit(at: { readonly x: number; readonly y: number; readonly z: number }, damage: number): void {
+    this.holes.add(at, Math.min(1.7, 0.9 + damage * 0.03));
+  }
+
   /** A gun fired at a world position: the nearest one recoils. */
   gunFired(at: { readonly x: number; readonly y: number; readonly z: number }): void {
     const local = Vector3.TransformCoordinates(new Vector3(at.x, at.y, at.z), this.root.computeWorldMatrix(true).clone().invert());
@@ -511,6 +519,7 @@ export class ShipView {
   }
 
   dispose(): void {
+    this.holes.dispose();
     this.root.dispose();
   }
 }

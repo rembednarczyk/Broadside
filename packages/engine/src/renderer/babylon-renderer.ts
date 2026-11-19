@@ -240,7 +240,10 @@ export class BabylonRenderer {
   /** Domain events of the last steps (Observer): effects react to them. */
   onEvents(events: readonly DomainEvent[]): void {
     this.effects.onEvents(events);
-    for (const e of events) if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
+    for (const e of events) {
+      if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
+      if (e.type === "hit" && (e.part === "hull" || e.part === "gun")) this.views.get(e.ship)?.shotHit(e.at, e.damage);
+    }
     this.weather.onEvents(events);
   }
 

@@ -940,3 +940,11 @@ trafionego kadłuba (wypieczoną z modelu, jak pokład i kasztel; dla kadłubów
 w widoku (`effects/debris-motion.ts`: lot z obrotem, plusk, pływanie na tej samej fali co statki, obrót na płasko,
 dryf, zatonięcie po ok. 16 s), ziarno z miejsca trafienia. Liczba desek: 1–6 na trafienie w kadłub, działo albo ster
 (rośnie z obrażeniami), do 6 przy zderzeniu, 24 przy wybuchu prochowni; pula 160 sztuk na presecie high.
+
+## 19.11: przestrzeliny w kadłubie (M11.3, część)
+Dziura po kuli to kwadrat z teksturą rysowaną raz na scenę (czarny, poszarpany otwór, brązowa krawędź, jasne drzazgi
+świeżo pękniętego drewna), kładziony na powierzchni kadłuba, w którą trafia promień z zewnątrz na wysokości i stacji
+trafienia (`scene.pickWithRay` na siatkach kadłuba: test przecięcia pojedynczej siatki trafiał w wewnętrzną warstwę
+skalowanego modelu). Jedna zwykła siatka na statek, przebudowywana przy trafieniu, pod węzłem kadłuba; do 40 dziur na
+statek, rozmiar 0,9–1,7 m z obrażeniami. Instancje (thin instances) pod węzłem kadłuba nie rysowały się we właściwym
+miejscu, stąd zwykła siatka. Ciężko uszkodzony statek (kadłub poniżej 40%) dymi ze śródokręcia.

@@ -1,5 +1,5 @@
-import { type DomainEvent, windVector, rotate, rotateInv, vec3, waterHeight, waterVerticalSpeed } from "@broadside/core";
-import { type Simulation, pointVelocity, smokeRadius } from "@broadside/sim";
+import { DAMAGE_STATES, type DomainEvent, windVector, rotate, rotateInv, vec3, waterHeight, waterVerticalSpeed } from "@broadside/core";
+import { type Simulation, hullShare, pointVelocity, smokeRadius } from "@broadside/sim";
 import { Color3, Matrix, type Mesh, MeshBuilder, type Scene, StandardMaterial, type Texture, Vector3 } from "../babylon";
 import { BurstEmitter, rgba } from "./burst-emitter";
 import { type Sprites, createSprites } from "./sprite-textures";
@@ -140,6 +140,8 @@ this.mist = new BurstEmitter("fx-mist", scene, { texture: this.sprites.puff, cap
       const b = e.body!;
       this.shipAt.set(e.id, { x: b.pos.x, z: b.pos.z });
       if (!emitFires) continue;
+      // Badly damaged (core damage-states): a thin dark smoke out of the wrecked timbers amidships.
+      if (!s.sinking && hullShare(s) < DAMAGE_STATES.battered) this.fireSmoke.emit(b.pos.x, b.pos.y + s.model.def.hull.freeboard, b.pos.z, w.x * 0.1, 1, w.z * 0.1, 1, s.model.def.hull.length * 0.3);
       s.sections.forEach((sec, i) => {
         if (sec.fire <= 0) return;
         const zone = Math.floor(i / 2);
