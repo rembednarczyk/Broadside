@@ -401,6 +401,10 @@ void main() {
   vec3 gn = normalize(n + gfade * (0.5 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.4 * vec3(vnoise(gp * 2.7) - 0.5, 0.0, vnoise(gp * 2.7 + 5.1) - 0.5)));
   vec2 wk = wakes(vWorld.xz);
   float glitter = pow(max(dot(gn, h), 0.0), 5000.0 - wk.y * 2500.0) * (70.0 + wk.y * 50.0) * smoothstep(-0.05, 0.25, sunDirection.y);
+  // The facets glitter in the sun's path, where the wave itself nearly mirrors the sun; away from
+  // it (40 degrees and more between the wave's normal and the half vector) the sea stays dark, as in
+  // the reference frames (sparks across the whole sea read as noise). The wake keeps its sparks.
+  glitter *= max(smoothstep(0.75, 0.97, dot(n, h)), clamp(wk.y, 0.0, 1.0));
   col += sunColor * sunGlint * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);

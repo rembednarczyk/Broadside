@@ -986,3 +986,6 @@ Plansze porównawcze: w referencji (ref_152, ref_060) dalekie lądy pod słońce
 i ostre, bo mgła Babylona barwi je jednym kolorem. Wtyczka materiału `sun-haze.ts` dodaje wyspom i dalekiemu
 wybrzeżu ten sam człon rozpraszania w stronę słońca co ocean (dwa płaty: potęgi 3 i 12), razy udział mgły przed
 powierzchnią (czynnik mgły Babylona albo zamglenie pierścienia wybrzeża). Z dala od słońca bez zmian.
+Tego samego dnia: iskry odblasków (szkliste fasetki) tylko w ścieżce słońca, gdzie sama fala prawie odbija słońce
+(kąt normalnej fali do wektora połówkowego poniżej ok. 40°); dalej morze zostaje ciemne jak na klatkach referencji,
+kilwater zachowuje swoje błyski.
