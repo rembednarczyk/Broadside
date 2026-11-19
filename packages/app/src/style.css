@@ -193,8 +193,9 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .notices { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: calc(6 * var(--u)); pointer-events: none; }
 .notice { font-family: var(--display); font-weight: 700; font-size: calc(15 * var(--u)); letter-spacing: 0.05em; color: #2a1a0a; padding: calc(6 * var(--u)) calc(20 * var(--u)); background: linear-gradient(180deg, #ecd9a8, #cdb27a); border: calc(1.5 * var(--u)) solid var(--brass-lo); border-radius: calc(3 * var(--u)); box-shadow: 0 calc(3 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.5); }
 .enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 calc(4 * var(--u)) #000; }
-.enemy-marker .arrow { font-size: calc(22 * var(--u)); line-height: 1; }
+.enemy-marker .arrow { display: inline-block; font-size: calc(22 * var(--u)); line-height: 1; }
 .enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }
+.enemy-marker.wreck { color: var(--brass); pointer-events: auto; padding: calc(6 * var(--u)); }
 .settings, .help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: calc(100% - 20 * var(--u)); overflow-y: auto; z-index: 5; }
 .settings { width: calc(420 * var(--u)); font-size: calc(13 * var(--u)); }
 .settings .label { display: block; margin-top: calc(4 * var(--u)); font-family: var(--display); font-style: normal; font-size: calc(11 * var(--u)); letter-spacing: 0.05em; color: var(--brass-hi); }

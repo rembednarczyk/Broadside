@@ -135,7 +135,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
   (`core/data/salvage.ts`, `sim/economy/salvage.ts`, zdarzenie złota z powodem `wreck`, komunikat „Łup z wraku!”, zapis
   w migawce, test); złoty hash bez zmian (przebieg kontrolny bez archipelagu)
 - [x] (19.11) tapnięcie wraku jako rozkaz „ratuj”: podejście na głębszą wodę, kotwica, szalupy w zasięgu 150 m
-- [ ] wraki dalej: znacznik wraku poza ekranem (gra nie ma jeszcze mapy), ładunek
+- [x] (19.11) znacznik najbliższego wraku (do 900 m, gdy nie ma wroga) na krawędzi ekranu, stuknięcie wydaje rozkaz ratowania
+- [ ] wraki dalej: ładunek (towar zamiast samego złota)
   zamiast samego złota
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 

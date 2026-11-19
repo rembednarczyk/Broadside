@@ -19,6 +19,8 @@ export interface OrderIntents {
   follow(target: number): void;
   engage(target: number): void;
   cancelCourse(): void;
+  /** Sail to a wreck, anchor off her and send the boats (the wreck marker). */
+  salvage(x: number, z: number): void;
   closeMenu(): void;
 }
 

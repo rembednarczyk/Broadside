@@ -191,6 +191,7 @@ const intents: UiIntents = {
     follow: (t) => shipOrder("follow")(t),
     engage: (t) => shipOrder("engage")(t),
     cancelCourse: () => session.helm.navigate([], false),
+    salvage: (x, z) => issue({ kind: "salvage", at: { x, z } }),
     closeMenu: () => patchHud({ shipMenu: null }),
   },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
@@ -356,6 +357,25 @@ const clockRuns = params.get("clock") !== "stop";
 // `sun=<degrees>`: a fixed bearing of the sun (0 = east, 90 = north, the +z a ship starts along), for staged shots.
 const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 180 : undefined;
 const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
+// With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
+// within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
+const WRECK_MARK = 900;
+let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
+const wreckMarker = (p: { x: number; z: number }) => {
+  const a = session.sim.env.archipelago;
+  if (!a) return null;
+  if (wrecksOf?.a !== a) wrecksOf = { a, sites: wreckSites(a) };
+  let best: { x: number; z: number; d: number } | null = null;
+  wrecksOf.sites.forEach((w, i) => {
+    if (session.sim.salvage.salvaged.includes(i)) return;
+    const d = Math.hypot(w.x - p.x, w.z - p.z);
+    if (d < WRECK_MARK && (!best || d < best.d)) best = { x: w.x, z: w.z, d };
+  });
+  const w = best as { x: number; z: number; d: number } | null;
+  if (!w) return null;
+  const m = presentMarker(renderer.project(w.x, 0, w.z), w.d);
+  return m ? { ...m, kind: "wreck" as const, at: { x: w.x, z: w.z } } : null;
+};
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
@@ -403,7 +423,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
-    marker: focus && me?.body ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z)) : null,
+    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z)) : wreckMarker(me.body.pos)) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

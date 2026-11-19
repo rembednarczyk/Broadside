@@ -54,7 +54,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
           <span className="fps">{fps.toFixed(0)} fps</span>
         </div>
       </div>
-      <EnemyMarker />
+      <EnemyMarker intents={intents.orders} />
       <ShipMenu intents={intents.orders} />
       <Notices />
       <SettingsPanel intents={intents.settings} />
