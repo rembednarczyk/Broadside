@@ -15,6 +15,7 @@ import { buildModelRails } from "./model-rails";
 import { buildModelDecks, deckPlanks } from "./deck-planks";
 import { ShotHoles } from "./shot-holes";
 import { MastFall } from "./mast-fall";
+import { hangingRope, isParted } from "./rope-cut";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -395,16 +396,19 @@ export class ShipView {
   }
 
   /** Stays follow the mastheads and sag when the masts carry little (slack) or straighten under load. */
-  private updateStays(bends: readonly MastBend[], loads: readonly number[]): void {
+  private updateStays(bends: readonly MastBend[], loads: readonly number[], s: { rigging: number; mastHp: readonly number[] }, time: number): void {
     const at = (mast: number, p: [number, number, number]): [number, number, number] => {
       const bend = bends[mast];
       if (mast < 0 || !bend) return p;
       const k = bendShare(bend, p[1]);
       return [p[0] + bend.dx * k, p[1], p[2] + bend.dz * k];
     };
-    const paths = this.stays.ends.map((e) => {
+    const down = (m: number): boolean => m >= 0 && (s.mastHp[m] ?? 1) <= 0;
+    const paths = this.stays.ends.map((e, i) => {
       const a = at(e.from, e.a);
       const b = at(e.to, e.b);
+      // Shot away (rope-cut), or gone with its mast: it hangs from its upper end.
+      if (isParted(i, s.rigging) || down(e.from) || down(e.to)) return hangingRope(a, b, i, time, this.model.def.hull.freeboard);
       const span = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
       const slack = 1 - Math.min(1, loads[e.from] ?? 0);
       return sagLine(a, b, span * (0.004 + 0.022 * slack));
@@ -511,7 +515,7 @@ export class ShipView {
       }
       this.fallMast(m.mesh, i, aw.x, dt);
     });
-    this.updateStays(bends, s.mastLoad);
+    this.updateStays(bends, s.mastLoad, s, time);
     const fb = bends[this.flagMast];
     if (fb) this.flag.position.set(this.flagBase.x + fb.dx, this.flagBase.y, this.flagBase.z + fb.dz);
     if (s.crew !== this.shownCrew) {
