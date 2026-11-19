@@ -2,14 +2,12 @@ import { type PointerEvent } from "react";
 import { useHud } from "../store/hud-store";
 import { text, type TextKey } from "../i18n/catalog";
 import { type ChartIntents, type SettingsIntents } from "../intents";
+import { placeLabels } from "./chart-labels";
 
 type P = { readonly x: number; readonly z: number };
 
 /** Grid of the chart (m): squares of a kilometre. */
 const GRID = 1000;
-
-/** Names near the chart's side edges run inwards, so they are not cut off. */
-const anchor = (x: number, half: number): "start" | "middle" | "end" => (x > half * 0.7 ? "end" : x < -half * 0.7 ? "start" : "middle");
 
 const points = (ps: readonly P[]): string => ps.map((p) => `${p.x.toFixed(0)},${(-p.z).toFixed(0)}`).join(" ");
 /** Closed loops as one SVG path (M … Z per loop). */
@@ -40,6 +38,8 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
   const grid: number[] = [];
   for (let g = -h + GRID; g < h; g += GRID) grid.push(g);
   const size = h / 40;
+  // The names placed clear of each other and of the marks (chart-labels), inside the chart.
+  const labels = placeLabels(chart.ports.map((p) => ({ x: p.x, y: -p.z, name: p.name })), size * 2.2, size * 1.6, h);
   return (
     <div className="menu-screen" data-testid="chart">
       <div className="panel chart">
@@ -70,7 +70,7 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
           {chart.ports.map((p, i) => (
             <g key={`p${i}`} className={p.hostile ? "chart-port hostile" : "chart-port"}>
               <circle cx={p.x} cy={-p.z} r={size * 0.9} />
-              <text x={p.x} y={-p.z - size * 1.6} fontSize={size * 2.2} textAnchor={anchor(p.x, h)}>{p.name}</text>
+              <text x={labels[i]!.x} y={labels[i]!.y} fontSize={size * 2.2} textAnchor={labels[i]!.anchor}>{p.name}</text>
             </g>
           ))}
           {chart.ships.map((s, i) => (

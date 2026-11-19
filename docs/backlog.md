@@ -217,7 +217,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   wzdłuż jednej krawędzi morza z zatokami i cyplami, 2–3 półwyspy zgięte w kolanie, wydłużone wyspy; ląd w kafelkach
   500 m z dwoma poziomami szczegółu, drzewa na kafelek, płycizny od osi lądu, mapa z konturów (marching squares),
   trzy porty na kontynencie, stare zapisy przenoszone na nowy ląd.
-- [ ] Etykiety portów na mapie nachodzą na siebie przy blisko leżących portach (rozsuwanie etykiet).
+- [x] Etykiety portów na mapie rozsuwane: zachłanne rozmieszczanie z ośmiu miejsc wokół znaku i dwa razy dalej.
 - [x] Pierścienie dalekiego wybrzeża (tło) wygaszone w stronę kontynentu (60–90° od jego kierunku), tam horyzont
   wypełnia narysowany ląd.
 - [ ] Mapa: przybliżanie i przesuwanie palcami, zasięg widzenia z bocianiego gniazda, mgła wojny (nieodkryte wyspy).

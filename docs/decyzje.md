@@ -1093,3 +1093,6 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
 - Tło dalekiego wybrzeża (pierścienie wokół kamery) nie stoi już po stronie kontynentu: wysokość pierścienia mnożona
   przez maskę od kierunku kontynentu (zero do 60°, pełna od 90°, gładki krok); kierunek stały, liczony od środka morza,
   bo pierścienie i tak idą za kamerą. Na ujęciu `coast` zniknął jasny płaski pas nad lasem kontynentu.
+- Nazwy portów na mapie: zachłanne rozmieszczanie etykiet punktów (Christensen, Marks i Shieber 1995, bez ich
+  wyżarzania): osiem miejsc wokół znaku, potem te same dwa razy dalej, pierwsze wolne od nazw i znaków; bez wolnego
+  miejsca to, które nachodzi najmniej. Szerokość liter Cinzel szacowana na 0,72 em (przy 0,62 dwie nazwy się stykały).
