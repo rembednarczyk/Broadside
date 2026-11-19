@@ -73,6 +73,8 @@ export interface TargetHud {
   readonly struck: boolean;
   /** A prize already taken by boarding (cannot be boarded again). */
   readonly taken?: boolean;
+  /** Too far for a broadside to tell (the panel warns). */
+  readonly far?: boolean;
   /** Ships: the target's id (orders about it). */
   readonly id?: number;
   /** Ships: the condition's name (core damageState: sound, damaged, battered, disabled, struck, sinking). */

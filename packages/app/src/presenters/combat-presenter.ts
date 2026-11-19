@@ -37,6 +37,12 @@ export const presentCombat = (e: Entity, forts: readonly Entity[] = [], ships: r
   };
 };
 
+/**
+ * Beyond this a broadside rarely tells (m): the shot falls short or wide of a ship end-on (a beta
+ * tester fired 21 times from 200-330 m for no damage); the target panel says so.
+ */
+const TELLING_RANGE = 220;
+
 export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => {
   const ships = sim.ships();
   const has = (k: MountKind) => me.ship!.model.guns.some((g) => g.kind === k);
@@ -68,6 +74,7 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     crew: t.crew,
     struck: t.struck,
     taken: t.taken,
+    far: aim.range > TELLING_RANGE,
     state: damageState(shipCondition(t)),
     side,
   };

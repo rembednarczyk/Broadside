@@ -5,13 +5,14 @@
  */
 const CLEAR = { left: 0.24, right: 0.76, top: 0.2, bottom: 0.78 } as const;
 
-export const presentMarker = (screen: { x: number; y: number }, range: number): { x: number; y: number; angle: number; range: number } | null => {
-  const inside = screen.x > CLEAR.left && screen.x < CLEAR.right && screen.y > CLEAR.top && screen.y < CLEAR.bottom;
+/** `clear`: the clear middle of the screen (fractions; presenters/clear-area measures the HUD), by default a fixed guess. */
+export const presentMarker = (screen: { x: number; y: number }, range: number, c: { left: number; right: number; top: number; bottom: number } = CLEAR): { x: number; y: number; angle: number; range: number } | null => {
+  const inside = screen.x > c.left && screen.x < c.right && screen.y > c.top && screen.y < c.bottom;
   if (inside) return null;
   const dx = screen.x - 0.5;
   const dy = screen.y - 0.5;
-  const sx = dx === 0 ? Infinity : (dx > 0 ? CLEAR.right - 0.5 : CLEAR.left - 0.5) / dx;
-  const sy = dy === 0 ? Infinity : (dy > 0 ? CLEAR.bottom - 0.5 : CLEAR.top - 0.5) / dy;
+  const sx = dx === 0 ? Infinity : (dx > 0 ? c.right - 0.5 : c.left - 0.5) / dx;
+  const sy = dy === 0 ? Infinity : (dy > 0 ? c.bottom - 0.5 : c.top - 0.5) / dy;
   const s = Math.min(sx, sy);
   // The arrow glyph points up: rotate it towards the enemy (screen y grows downwards).
   return { x: 0.5 + dx * s, y: 0.5 + dy * s, angle: Math.atan2(dx, -dy), range };

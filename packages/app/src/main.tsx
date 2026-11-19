@@ -10,6 +10,7 @@ import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
 import { presentChart } from "./presenters/chart-presenter";
+import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
@@ -149,6 +150,13 @@ const applySteering = (steering: SteeringMode) => {
   if (steering !== "simple") session.helm.navigate([], false);
   if (steering !== "arcade") session.helm.rudder(0);
   patchHud({ astern: false });
+  // The action mode's view is the chase camera following the stern (Black Flag's), also on a start
+  // with the mode stored (unless the address names a camera); the camera button still cycles.
+  renderer.camera.trail = steering === "arcade";
+  if (steering === "arcade" && renderer.camera.mode === "isometric" && !urlCamera) {
+    renderer.camera.mode = "chase";
+    patchHud({ cameraMode: "chase" });
+  }
 };
 applySteering(storedSteering);
 /** One gear of sail more or less (pad, W and S); below furled under assisted sailing: astern with the sails backed. */
@@ -188,16 +196,7 @@ const setSteering = (steering: SteeringMode) => {
   patchHud({ steering });
   applySteering(steering);
   renderer.camera.drawGestures = steering === "simple";
-  // The action mode's view is the chase camera astern (Black Flag's); the camera button still cycles.
-  if (steering === "arcade" && renderer.camera.mode === "isometric") {
-    renderer.camera.mode = "chase";
-    patchHud({ cameraMode: "chase" });
-  }
-  try {
-    localStorage.setItem(STEER_KEY, steering);
-  } catch {
-    // Storage unavailable: the choice lasts for this run only.
-  }
+  writeSetting(STEER_KEY, steering);
 };
 
 const intents: UiIntents = {
@@ -425,7 +424,7 @@ const wreckMarker = (p: { x: number; z: number }) => {
   });
   const w = best as { x: number; z: number; d: number } | null;
   if (!w) return null;
-  const m = presentMarker(renderer.project(w.x, 0, w.z), w.d);
+  const m = presentMarker(renderer.project(w.x, 0, w.z), w.d, clearArea(performance.now()));
   return m ? { ...m, kind: "wreck" as const, at: { x: w.x, z: w.z } } : null;
 };
 const frame = (now: number) => {
@@ -486,7 +485,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
-    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z)) : wreckMarker(me.body.pos)) : null,
+    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : wreckMarker(me.body.pos)) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

@@ -74,6 +74,8 @@ export interface ShipState {
   struck: boolean;
   /** Carried by boarding: a prize already taken (her hold and prize money paid once). */
   taken: boolean;
+  /** Her keel was on the bottom at the last step (systems/grounding). */
+  aground: boolean;
   /** Masts gone by the board (core WRECKAGE): to which side the wreck went and how long until it is cut free (0: cut away). */
   wrecks: { mast: number; side: number; left: number }[];
 }
@@ -115,6 +117,7 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     lastHitBy: null,
     struck: false,
     taken: false,
+    aground: false,
     wrecks: [],
   };
 };

@@ -175,7 +175,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### Sterowanie „Akcja” (właściciel 18.11: pad jak w Black Flag)
 - [x] Żeglowanie wspomagane w symulacji (prędkość kadłubowa na każdym kursie, skręt po kole, wstecz), pad w HUD, klawiatura, pomoc PL i EN.
 - [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
-- [ ] Kamera w tym trybie bliżej i za rufą (jak w Black Flag), jeśli właściciel zechce.
+- [x] Kamera w tym trybie za rufą (beta-test 19.11).
+- [ ] Większe cele dotykowe przycisków amunicji i żagli na telefonie (21–24 px), kamera pościgowa odsuwająca się
+  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka na krawędzi ekranu, bez autopilota).
 
 ### M11 uszkodzenia jak w Black Flag (właściciel 19.11: „stany zdrowia i wizualne uszkodzenia, lecące deski, łańcuchy ścinają olinowanie, żagle, reje i maszty”)
 Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie

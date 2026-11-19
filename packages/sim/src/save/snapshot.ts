@@ -116,8 +116,8 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     body.vel = s.body.vel;
     body.angVel = s.body.angVel;
     // Fields added after a save was written get their defaults (refits, standing orders).
-    const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades" | "wrecks" | "taken">;
-    const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [], wrecks: old.wrecks ?? [], taken: old.taken ?? false };
+    const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades" | "wrecks" | "taken" | "aground">;
+    const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [], wrecks: old.wrecks ?? [], taken: old.taken ?? false, aground: old.aground ?? false };
     sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.assist ? { assist: clone(s.assist) } : {}), ...(s.anchor ? { anchor: clone(s.anchor) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
   // A save from an older world: the land has moved under it. The ships are moved off it to the

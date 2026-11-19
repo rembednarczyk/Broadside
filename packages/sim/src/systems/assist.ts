@@ -36,7 +36,11 @@ export const assistSystem: System = (ctx) => {
     const set = canvasSet(s);
     const w = windAt(ctx.env, 10, b.pos.x, b.pos.z);
     const want = e.assist.astern && set < 0.05 ? -ASSIST.astern : assistSpeed(length, set, Math.hypot(w.x, w.z));
-    const accel = clamp(ASSIST.gain * (want - local.z), -ASSIST.maxAccel, ASSIST.maxAccel);
+    // On the bottom the canvas does not drive her further onto the shoal (the assist pushed on at
+    // full power and ground a galleon to pieces in seconds, beta test 19.11): no drive ahead, and
+    // going astern backs her off (with the kedge, systems/grounding, once she is nearly stopped).
+    const ahead = s.aground && want > 0;
+    const accel = ahead ? 0 : clamp(ASSIST.gain * (want - local.z), -ASSIST.maxAccel, ASSIST.maxAccel);
     applyForce(b, rotate(b.rot, vec3(0, 0, b.mass * accel)));
     // Rate of turn for the rudder: a circle of turnRadius lengths at her speed; astern the helm acts the other way.
     const dir = local.z >= -0.2 ? 1 : -1;

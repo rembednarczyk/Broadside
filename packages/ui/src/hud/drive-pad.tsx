@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type HelmIntents } from "../intents";
 import { useHud } from "../store/hud-store";
 import { text } from "../i18n/catalog";
@@ -7,12 +7,17 @@ import { text } from "../i18n/catalog";
 const DEAD = 0.12;
 const SHIFT = 0.6;
 const RELEASE = 0.3;
+/** Held up or down past the shift, the stick shifts on a gear every this many milliseconds. */
+const REPEAT_MS = 650;
 
 /**
  * Assisted sailing's touch pad (a virtual thumbstick, the usual control of touch action games):
  * left and right put the helm over as far as the thumb goes and back amidships on release; a flick
  * up or down shifts one gear of sail (furled, reefed, battle, full, studding sails, and astern
- * below furled), the stick latched until it comes back towards the middle.
+ * below furled), and held there goes on shifting a gear every REPEAT_MS; only a throw more up or
+ * down than sideways shifts (a hard turn with the thumb a little high changed gear by accident,
+ * beta test 19.11). The helm comes amidships when the pad goes away under a thumb (the menu
+ * opened, the HUD hidden: the thumb's release never reaches it).
  */
 export const DrivePad = ({ intents }: { intents: HelmIntents }) => {
   const astern = useHud((h) => h.astern);
@@ -21,6 +26,18 @@ export const DrivePad = ({ intents }: { intents: HelmIntents }) => {
   const pad = useRef<HTMLDivElement>(null);
   const latch = useRef(0);
   const rudder = useRef(0);
+  const repeat = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopRepeat = () => {
+    if (repeat.current) clearInterval(repeat.current);
+    repeat.current = null;
+  };
+  useEffect(
+    () => () => {
+      stopRepeat();
+      if (rudder.current !== 0) intents.rudder(0);
+    },
+    [],
+  );
   const move = (e: React.PointerEvent) => {
     const r = pad.current?.getBoundingClientRect();
     if (!r) return;
@@ -38,12 +55,19 @@ export const DrivePad = ({ intents }: { intents: HelmIntents }) => {
       rudder.current = helm;
       intents.rudder(helm);
     }
-    if (latch.current === 0 && Math.abs(y) > SHIFT) {
-      latch.current = Math.sign(y);
-      intents.gear(y > 0 ? 1 : -1);
-    } else if (Math.abs(y) < RELEASE) latch.current = 0;
+    if (latch.current === 0 && Math.abs(y) > SHIFT && Math.abs(y) > Math.abs(x)) {
+      const step = y > 0 ? 1 : -1;
+      latch.current = step;
+      intents.gear(step);
+      stopRepeat();
+      repeat.current = setInterval(() => intents.gear(step), REPEAT_MS);
+    } else if (Math.abs(y) < RELEASE) {
+      latch.current = 0;
+      stopRepeat();
+    }
   };
   const end = () => {
+    stopRepeat();
     setKnob({ x: 0, y: 0 });
     latch.current = 0;
     rudder.current = 0;

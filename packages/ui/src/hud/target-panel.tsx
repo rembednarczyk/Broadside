@@ -26,6 +26,7 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
         <div className="row"><span>{text(lang, `state.${t.state}` as TextKey)}</span></div>
       )}
       <div className="row"><span>{text(lang, "hud.range")}</span><span>{Math.round(t.range)} m</span></div>
+      {t.far && t.kind !== "fort" && <div className="row hint"><span>{text(lang, "hud.far")}</span></div>}
       {t.kind === "fort" && t.guns ? (
         <div className="row"><span>{text(lang, "hud.guns")}</span><span>{t.guns[0]}/{t.guns[1]}</span></div>
       ) : (

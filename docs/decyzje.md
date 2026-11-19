@@ -1121,3 +1121,19 @@ w scratchpadzie sesji. Poprawki z raportu weterana (klasyczny ster):
 - Ster klasyczny po puszczeniu przycisku trzyma bieżący kurs (wcześniej dokręcał 20–30°).
 - Język zapamiętywany na urządzeniu; przycisk zamknięcia karty pomocy przypięty do jej dołu; wiersz pogody
   z etykietą „Pogoda”; pomoc klawiszy pełna (A/D, W/S, Q/E, X, Z, M, Esc), „B kryć się” jak na przycisku.
+
+Poprawki z raportu gracza zręcznościowego (tryb Akcja, telefon):
+- Kamera pościgowa w trybie Akcja idzie za rufą (alfa orbity zbiega do kierunku za rufą, wykładniczo, stała
+  1,6/s), więc lewo na padzie to lewo na ekranie; tryb Akcja zapisany ustawia kamerę pościgową także na starcie
+  (chyba że adres podaje kamerę).
+- Na mieliźnie (nowy stan `aground` z systemu wejścia na mieliznę) napęd wspomagany nie pcha naprzód; bieg wstecz
+  zdejmuje statek z dna, a wyciąganie kotwicą działa, gdy prawie stanie. Galeon przy pełnej prędkości zachowuje
+  ponad 60% kadłuba (wcześniej 18% i utrata statku).
+- Pad: ster wraca do środka, gdy pad znika spod kciuka (menu, ukryty HUD); wytrzymanie w górę lub w dół zmienia
+  bieg co 650 ms; bieg zmienia tylko ruch bardziej pionowy niż poziomy.
+- Znacznik wroga przy krawędzi wolnego środka ekranu mierzonego z bieżącego układu HUD (dwa razy na sekundę,
+  margines 24 px), a nie stałego prostokąta.
+- Panel celu ostrzega „Za daleko: mało trafień” od 220 m.
+- Krótsze polskie etykiety: „Refy”, „Łańcuch”, „Osłona” (ucinały się na 915 × 412).
+- Do backlogu: większe cele dotykowe przycisków amunicji i żagli (21–24 px), kamera pościgowa odsuwająca się
+  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka bez autopilota).
