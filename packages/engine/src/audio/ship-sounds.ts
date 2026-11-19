@@ -64,6 +64,7 @@ export class ShipSounds {
   private play(s: ShipShot): void {
     if (s.voice === "flap") this.burst(s, "lowpass", 420 * s.rate, 0.16, 0.25);
     else if (s.voice === "crack") this.burst(s, "bandpass", 900 * s.rate, 0.09, 0.9);
+    else if (s.voice === "crackle") this.burst(s, "highpass", 2600 * s.rate, 0.035, 0.7);
     else if (s.voice === "rumble") this.burst(s, "lowpass", 140 * s.rate, 0.8, 0.5);
     else if (s.voice === "bell") this.bell(s);
     else this.scape.oneShot(s.voice, s.gain, s.pan, s.rate, s.delay);

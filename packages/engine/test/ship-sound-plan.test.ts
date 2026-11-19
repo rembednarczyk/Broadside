@@ -64,4 +64,10 @@ describe("ship sounds", () => {
     expect(far!.deck).toBe(0);
     expect(far!.shots).toHaveLength(0);
   });
+  it("crackles while she burns, quicker the worse the fire, and is silent without one", () => {
+    const count = (fire: number) => voices(run(Array.from({ length: 100 }, () => ({ ...calm, fire })))).filter((v) => v === "crackle").length;
+    expect(count(0)).toBe(0);
+    expect(count(0.2)).toBeGreaterThan(0);
+    expect(count(1)).toBeGreaterThan(count(0.2));
+  });
 });
