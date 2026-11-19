@@ -182,7 +182,7 @@ przy załodze lub kadłubie poniżej 15%. Kolejność:
 1. [x] (19.11, bez zdarzenia zmiany stanu: dojdzie z punktem 5) **Stany zdrowia** (tabela w `core/data`, wzorzec Type Object): nienaruszony, uszkodzony, ciężko uszkodzony,
    unieruchomiony, tonący; liczone z sekcji kadłuba, masztów i olinowania; zdarzenie przy zmianie stanu; pasek celu w HUD
    podzielony na odcinki, nazwa stanu (EN, PL).
-2. [ ] **Lecące deski**: modele desek z folderu właściciela (`double_dutch_outer_pinewood_plank`,
+2. [x] (19.11: odłamek generowany z teksturą desek trafionego kadłuba; skany desek okazały się atlasem z pąklami, 24–83 tys. trójkątów) **Lecące deski**: modele desek z folderu właściciela (`double_dutch_outer_pinewood_plank`,
    `double_dutch_inner_oak_strake`, `pine_wood_double_outer_plank`, autorzy do CREDITS.md) przez `tools/assets/optimize.mjs`
    do kilkuset trójkątów, pula instancji (Object Pool, thin instances), lot balistyczny z obrotem tylko w widoku (bez
    wpływu na symulację i złoty hash), plusk i dryf na fali z `core/ocean`, znikanie po kilkunastu sekundach; liczba

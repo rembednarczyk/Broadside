@@ -931,3 +931,12 @@ właściciela (tylko w widoku, bez wpływu na symulację), przestrzeliny i osmal
 żagle, reje i maszty (maszt przewraca się za burtę i hamuje statek), unieruchomienie i poddanie jak „disabled” w Black
 Flag. Zmiany reguł symulacji (grupy olinowania, reje z HP, poddanie unieruchomionego) zmienią złoty hash i wymagają
 audytu bitew w progach ADR-0005.
+
+## 19.11: lecące deski (M11.2)
+Skany desek z folderu właściciela (Stichting Archeos Fryslan, CC BY 4.0) nie nadają się na odłamki: każdy to 6–8 kawałków
+atlasu tekstur z deskami wraku pokrytymi pąklami, a po uproszczeniu nadal 24–83 tys. trójkątów. Odłamek to więc
+generowana deska z poszarpanymi końcami (12 trójkątów, instancje jednej siatki na rodzaj desek) z teksturą desek
+trafionego kadłuba (wypieczoną z modelu, jak pokład i kasztel; dla kadłubów generowanych deski pokładu). Ruch tylko
+w widoku (`effects/debris-motion.ts`: lot z obrotem, plusk, pływanie na tej samej fali co statki, obrót na płasko,
+dryf, zatonięcie po ok. 16 s), ziarno z miejsca trafienia. Liczba desek: 1–6 na trafienie w kadłub, działo albo ster
+(rośnie z obrażeniami), do 6 przy zderzeniu, 24 przy wybuchu prochowni; pula 160 sztuk na presecie high.

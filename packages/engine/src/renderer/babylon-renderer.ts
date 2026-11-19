@@ -1,6 +1,6 @@
 import { WakeTrails } from "./wake-trails";
 import { type Simulation } from "@broadside/sim";
-import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, Vector3 } from "../babylon";
+import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, type Texture, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
 import { PostStack } from "./post-stack";
 import { type GraphicsSettings } from "../graphics-settings";
@@ -118,6 +118,11 @@ export class BabylonRenderer {
     this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
     this.effects = new EffectsDirector(this.scene, g.particles);
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
+    // Torn planks show the timber of the hull they came from: the model's baked planking, else the generated decks' planks.
+    this.effects.plankTexture = (shipId) => {
+      const def = this.views.get(shipId)?.model.def;
+      return (def && this.hulls?.planks(def.id, def.hull)?.texture) ?? (this.materials.deck.diffuseTexture as Texture | null) ?? null;
+    };
     this.effects.hullLength = (id, physical) => this.hulls?.fitted(id as ShipClassId, SHIP_CLASSES[id as ShipClassId].hull)?.length ?? physical;
     this.salvo = new SalvoMarks(this.scene);
     this.course = new CourseView(this.scene);
