@@ -96,6 +96,54 @@ export class SideProfile {
     return caps;
   }
 
+  /** Stations forward of `from` where the cut left the deck open (not sliced): z, the bulwark's top and the half-breadth, to measure the deck at. */
+  deckStations(from = -Infinity): { k: number; z: number; top: number; half: number }[] {
+    const out: { k: number; z: number; top: number; half: number }[] = [];
+    for (let k = 0; k < this.stations; k++) {
+      const z = this.zOf(k);
+      const sliced = this.top[k]! >= this.cutTop - 0.06 * (this.cutTop + this.fit.draft);
+      if (z >= from && !sliced && this.half[k]! > 0.3) out.push({ k, z, top: this.top[k]!, half: this.half[k]! });
+    }
+    return out;
+  }
+
+  /**
+   * The model's open decks (the waist and a forecastle) as strips of [half-breadth, y, z] at the
+   * heights measured at `deckStations` (`ys`, null where no deck was found); a run breaks at a
+   * gap and where the deck steps up or down.
+   */
+  openDecks(stations: readonly { k: number; z: number; half: number }[], measured: readonly (number | null)[]): { half: number; y: number; z: number }[][] {
+    // Where the model has no deck at all (a hollow waist), the deck goes on at the level abaft it;
+    // single readings off a hatch or a gun are dropped by a running median of three.
+    const held: (number | null)[] = [];
+    stations.forEach((s, i) => {
+      const prev = i > 0 && stations[i - 1]!.k === s.k - 1 ? held[i - 1]! : null;
+      held.push(measured[i] ?? prev);
+    });
+    // (Of two readings at the end of a run the lower: fittings stand on the deck, not under it.)
+    const ys = held.map((y, i) => {
+      if (y === null) return null;
+      const near = held.slice(Math.max(0, i - 1), i + 2).filter((v): v is number => v !== null).sort((a, b) => a - b);
+      return near[(near.length - 1) >> 1]!;
+    });
+    const runs: { half: number; y: number; z: number }[][] = [];
+    let run: { half: number; y: number; z: number }[] = [];
+    let last = -2;
+    const close = () => {
+      if (run.length > 1) runs.push(run);
+      run = [];
+    };
+    stations.forEach((s, i) => {
+      const y = ys[i];
+      const prev = run[run.length - 1];
+      if (y === null || y === undefined || s.k !== last + 1 || (prev && Math.abs(prev.y - y) > 0.3)) close();
+      last = s.k;
+      if (y !== null && y !== undefined) run.push({ half: s.half * 0.97, y, z: s.z });
+    });
+    close();
+    return runs;
+  }
+
   /**
    * Runs of rail along one side: the smoothed top of the bulwark from stern to bow, broken where
    * it steps (the breaks of the castles), as polylines [x, y, z] for `side` (+1 starboard).

@@ -897,3 +897,17 @@ płynie swoją największą prędkością i odczuwa pogodę kosztem realizmu. De
   środek; ruch w górę lub w dół zmienia „bieg” żagli o jeden; poniżej zwiniętych żagli statek wybiera je na wstecz i cofa
   się 1,6 m/s. Klawiatura w tym trybie: A i D wychylają ster, W i S biegi. Przyciski ognia zostają w rogach.
 - Tryb tylko dla gracza i tylko na życzenie (ustawienia, Sterowanie: Akcja); AI płynie po staremu. Złoty hash bez zmian.
+
+## 19.11, użytkownik: „czy pokład może być z desek takich jak statek, aby było go widać”
+Pokład galeonu z modelu był z góry prawie czarny, a nasze pokłady (kasztel, zaślepki nad przeciętymi kasztelami) miały
+deski Poly Haven innego koloru niż burta. Zmiany (`engine/renderer/deck-planks.ts`):
+- wszystkie pokłady statku z modelu (kasztel rufowy, zaślepki, śródokręcie) dostają teksturę desek wypieczoną z burty
+  tego samego modelu (`HullModels.planks`), deski wzdłuż statku w zmierzonym rozmiarze, kolor jaśniejszy od burty
+  (pokład wybielony słońcem), połysk mokrego pokładu jak dotąd;
+- wysokość pokładu na śródokręciu mierzymy promieniami w dół w siatkę modelu (raz na klasę, jak `HullModels.sides`):
+  najniższe z trzech trafień w poprzek pokładu, mediana z trzech stacji; tam, gdzie model nie ma pokładu (galeon ma pustą
+  studnię ok. 6–13 m przed środkiem), deski idą dalej na wysokości pokładu za nią;
+- załoga stoi na zmierzonym pokładzie (wcześniej reguła „wierzch burty minus 0,95 m” podnosiła ją na śródokręciu
+  o 0,7–1,4 m ponad pokład modelu).
+Śródokręcie galeonu to głęboka studnia między wysokimi burtami, w cieniu żagli: z kamery gry nadal jest ciemniejsze od
+kasztelu. Pokład dziobówki modelu zostaje własny (pomiar tam jest zaszumiony przez nadbudówki).

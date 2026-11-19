@@ -42,10 +42,12 @@ export interface CrewDecks {
   readonly tops: readonly { readonly y: number; readonly z: number }[];
   /** The gangs of shrouds (rig-layout), for the topmen's way aloft. */
   readonly ladders?: readonly ShroudLadder[];
+  /** The model's open decks as measured (deck-planks: `openDeckAt`), where the waist is not at the castle's step. */
+  readonly floor?: ((z: number) => number | null) | null;
 }
 
-/** Height of the deck a man stands on at a station: the castle's deck aft of its break, else the waist. */
-const deckY = (d: CrewDecks, z: number): number => (d.castle && z < d.castle.ring[d.castle.ring.length - 1]!.z ? d.castle.top : d.castle ? d.castle.waist : d.side.topAt(z) - 0.95);
+/** Height of the deck a man stands on at a station: the castle's deck aft of its break, else the measured deck, else the waist. */
+const deckY = (d: CrewDecks, z: number): number => (d.castle && z < d.castle.ring[d.castle.ring.length - 1]!.z ? d.castle.top : (d.floor?.(z) ?? (d.castle ? d.castle.waist : d.side.topAt(z) - 0.95)));
 
 export const modelCrewSpots = (model: ShipModel, d: CrewDecks): CrewSpot[] => {
   const total = crewFigures(model.def.crew);

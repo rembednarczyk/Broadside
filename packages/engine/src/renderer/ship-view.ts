@@ -11,7 +11,8 @@ import { type SideProfile } from "./side-profile";
 import { gunPlaces } from "./gun-layout";
 import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
-import { buildModelDecks, buildModelRails } from "./model-rails";
+import { buildModelRails } from "./model-rails";
+import { buildModelDecks, deckPlanks } from "./deck-planks";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -258,21 +259,23 @@ export class ShipView {
     const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows, side);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
-    if (side) {
-      buildModelRails(scene, hullSpace, side, mats.wood, shadows);
-      buildModelDecks(scene, hullSpace, side, mats.deck);
-      // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
-      const places = gunPlaces(model, (_, z) => side.halfAt(z));
-      const castle = sternCastle(side, places);
-      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
-      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
-    }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
     this.modelled = hullMeshes !== null;
     if (hullMeshes) {
       const far = hulls?.instantiate(model.def.id, hullSpace, model.def.hull, true) ?? null;
       if (far) this.hullTiers = { near: hullMeshes, far };
+    }
+    if (side) {
+      buildModelRails(scene, hullSpace, side, mats.wood, shadows);
+      // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
+      const places = gunPlaces(model, (_, z) => side.halfAt(z));
+      const castle = sternCastle(side, places);
+      const planks = hulls?.planks(model.def.id, model.def.hull) ?? null;
+      const decks = deckPlanks(scene, mats.deck, planks, model.def.id);
+      const floor = buildModelDecks(scene, hullSpace, side, mats.deck, decks, hullMeshes && hulls ? { hulls, id: model.def.id, meshes: hullMeshes, from: castle ? castle.ring[castle.ring.length - 1]!.z : -Infinity } : null);
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side), floor }));
+      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, deckPlanks: decks, wood: mats.wood, lantern: mats.detail.lantern }, shadows, planks, model.def.id);
     }
     // Guns stand at the side the hull really has: the model's, where there is one.
     const sides = hullMeshes && hulls

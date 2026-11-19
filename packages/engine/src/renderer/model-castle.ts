@@ -1,6 +1,7 @@
 import { Matrix, Mesh, MeshBuilder, Quaternion, type Scene, type ShadowGenerator, StandardMaterial, type Texture, type TransformNode, Vector3, VertexData } from "../babylon";
 import { BALUSTRADE, type CastleLayout, WHEEL_ABAFT } from "./castle-layout";
 import { buildCastlePorts } from "./castle-ports";
+import { type DeckPlanks, deckUv } from "./deck-planks";
 
 /**
  * The sterncastle of a modelled hull as meshes (layout: castle-layout): walls laid strake by
@@ -12,6 +13,8 @@ import { buildCastlePorts } from "./castle-ports";
 export interface CastleMaterials {
   readonly castle: StandardMaterial;
   readonly deck: StandardMaterial;
+  /** The hull's own planking for the deck (deck-planks), where the model has it baked. */
+  readonly deckPlanks?: DeckPlanks | null;
   readonly wood: StandardMaterial;
   readonly lantern: StandardMaterial;
 }
@@ -171,11 +174,11 @@ export const buildModelCastle = (scene: Scene, parent: TransformNode, c: CastleL
   const di: number[] = [];
   ring.forEach((r, i) => {
     dp.push(-r.half, c.top, r.z, r.half, c.top, r.z);
-    du.push(0, r.z / 4, 1, r.z / 4);
+    du.push(...deckUv(mats.deckPlanks ?? null, -r.half, r.z, 0), ...deckUv(mats.deckPlanks ?? null, r.half, r.z, 1));
     if (i > 0) di.push(i * 2 - 2, i * 2, i * 2 - 1, i * 2 - 1, i * 2, i * 2 + 1);
   });
   const deck = meshOf(scene, `castle-deck-${parent.name}`, dp, du, di);
-  deck.material = mats.deck;
+  deck.material = mats.deckPlanks?.material ?? mats.deck;
   deck.receiveShadows = true;
   // Balustrade round the deck: a rail on balusters every 0.45 m, open at the two stairs.
   const stairX = last.half * 0.55;
