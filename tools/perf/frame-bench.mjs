@@ -81,6 +81,11 @@ const result = await page.evaluate((n) => {
     ships: (on) => { for (const s of ships) s.setEnabled(on); },
     shadows: (on) => { scene.shadowsEnabled = on; },
     post: (on) => { scene.postProcessesEnabled = on; },
+    // The post-processes one by one (default pipeline's bloom, SSAO, motion blur, the grade with the sun shafts).
+    "post:bloom": (on) => { const p = scene.postProcessRenderPipelineManager.supportedPipelines.find((x) => x.name === "post"); if (p) p.bloomEnabled = on; },
+    "post:ssao": (on) => { const m = scene.postProcessRenderPipelineManager; for (const c of scene.cameras) on ? m.attachCamerasToRenderPipeline("ssao", c) : m.detachCamerasFromRenderPipeline("ssao", c); },
+    "post:motion": (on) => { for (const pp of scene.postProcesses) if (pp.name === "motion") pp.enabled = on; },
+    "post:grade": (on) => { for (const pp of scene.postProcesses) if (pp.name === "grade") pp.enabled = on; },
   };
   const out = { full: time() };
   for (const [name, set] of Object.entries(parts)) {

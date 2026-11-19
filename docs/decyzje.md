@@ -963,3 +963,13 @@ przyłożony na linii wody przy burcie: statek zwalnia (test: brig o ponad 25%) 
 odetnie, 40 s przy pełnej załodze, dłużej przy mniejszej. Widok trzyma maszt przy burcie do odcięcia, potem tonie.
 Przestrzelone liny stałe zwisają z górnego końca (każda pęka przy swoim progu stanu olinowania), żagiel z płótnem
 poniżej 30% odrywa się i wisi z jednego rogu (tylko w symulacji tkaniny z bliska). Złoty hash bez zmian, audyty w progach.
+
+## 19.11: reje, wanty i osmalenia (M11.3–4, widok)
+- Reje przewróconego masztu obracają się z nim wokół złamania i toną z nim; drabinki want znikają (wcześniej zostawały
+  w powietrzu).
+- Każda reja ma własny próg stanu olinowania (8–42%, stały skrót jak liny); poniżej zsuwa się w 1,5 s na pokład, a jej
+  żagiel znika. Symulacja nadal liczy ciąg żagli z udziału olinowania w trymie (`sails.ts`), reje nie mają własnego HP:
+  przy olinowaniu poniżej 20% statek i tak jest unieruchomiony (M11.5).
+- Sekcja kadłuba po pożarze albo poniżej 1/3 wytrzymałości dostaje raz trzy plamy sadzy na swojej burcie.
+- Celowanie gracza zależy od załadowanej amunicji: łańcuchy na 40% wysokości masztów celu, kartacze na pokład, kula na
+  linię wody (jak kanonierzy AI w `tactics.aimHeightFor`).
