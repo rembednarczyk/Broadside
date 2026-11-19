@@ -992,3 +992,16 @@ kilwater zachowuje swoje błyski.
 Tego samego dnia: mgła pod chmurami gęstsza (składnik zachmurzenia 0,0028 → 0,0042 · pokrycie^1,5): przy szkwałach wybrzeże
 za statkiem rozpływa się w mgle jak na ref_124, statek gracza w kamerze izometrycznej zostaje czytelny (sprawdzone
 zrzutem przy szkwałach). Burzowa noc: odcień burzy 45% jasności dnia zamiast 25% (ref_075).
+
+## 19.11: ratowanie wraku stuknięciem i kotwica
+Wraki leżą na mieliznach (1–2 m wody), a statki mają 2–6 m zanurzenia, więc warunek ratowania (do 60 m od wraku, poniżej
+1,5 m/s przez 5 s) był w praktyce nieosiągalny; do tego statek bez żagli dryfował 3–4,5 m/s. Zmiany:
+- zasięg ratowania 150 m (`SALVAGE.radius`): ładunek wyławiają szalupy i nurkowie, statek kotwiczy na głębszej wodzie,
+  jak w epoce;
+- kotwica w symulacji (`sim/systems/anchor.ts`, komenda `anchor`, komponent `anchor` w zapisie): lina jak sprężyna po
+  wybraniu 30 m długości plus opór kotwicy i liny na dnie (model cumowniczy sprężyna-tłumik, tylko w poziomie);
+  postawienie żagla albo nowy rozkaz podnosi kotwicę;
+- rozkaz pilota `salvage`: płynie ku wrakowi na żaglach bojowych, ostatnie 60 m bez żagli, rzuca kotwicę, gdy jest w 3/4
+  zasięgu szalup na wodzie głębszej o 2 m od zanurzenia; stuknięcie wraku (tryb „wskaż i płyń”) wydaje ten rozkaz;
+- znane ograniczenie: wrak pod wiatr pilot osiąga słabo (decyzje 18.11), test rozkazu idzie półwiatrem.
+Złoty hash bez zmian, audyty w progach.

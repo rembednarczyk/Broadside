@@ -61,6 +61,9 @@ export class PlayerHelm {
       case "go":
       case "dock":
         return this.navigate([o.at], false);
+      case "salvage":
+        // In over the wreck as far as the depth allows, anchor there and send the boats (sim pilot salvage).
+        return this.sim.command({ type: "pilot", ship, order: { kind: "salvage", x: o.at.x, z: o.at.z } });
       case "board":
       case "follow":
       case "engage":

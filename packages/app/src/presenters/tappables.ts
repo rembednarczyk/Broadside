@@ -1,3 +1,4 @@
+import { wreckSites } from "@broadside/core";
 import { type Simulation, hostileTo } from "@broadside/sim";
 import { type Tappable } from "../controllers/tap-targets";
 
@@ -29,6 +30,15 @@ export const presentTappables = (sim: Simulation, playerId: number, project: Pro
     const c = project(port.ax, 0, port.az);
     out.push({ kind: "port", id: i, sx: c.x, sy: c.y, reach: MIN_REACH * 1.4, at: { x: port.ax, z: port.az } });
   });
+  // Wrecks not yet stripped (sim salvage): a tap sends the crew to lie over her.
+  const a = sim.env.archipelago;
+  if (a) {
+    wreckSites(a).forEach((w, i) => {
+      if (sim.salvage.salvaged.includes(i)) return;
+      const c = project(w.x, 0, w.z);
+      out.push({ kind: "wreck", id: i, sx: c.x, sy: c.y, reach: MIN_REACH * 1.4, at: { x: w.x, z: w.z } });
+    });
+  }
   for (const f of sim.forts()) {
     const site = f.fort!.site;
     const c = project(site.x, 5, site.z);

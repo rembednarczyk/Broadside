@@ -44,6 +44,9 @@ export const presentCourse = (sim: Simulation, playerId: number): CourseHud => {
       const at = { x: f.site.x, z: f.site.z };
       return { path: [from, at], goal: { ...at, kind: "storm", size: f.def.radius / 8 } };
     }
+    case "salvage":
+      // To the wreck; the crew anchors off her where the depth allows (the ring marks the wreck).
+      return { path: [from, o.at], goal: { ...o.at, kind: "go", size: 1.5 } };
   }
 };
 

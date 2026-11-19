@@ -34,6 +34,8 @@ export interface Entity {
   pilot?: PilotState;
   /** Assisted sailing (systems/assist): the ship makes her top speed on any heading; `astern`: backing the sails. */
   assist?: AssistState;
+  /** Riding to an anchor let go here (systems/anchor). */
+  anchor?: { x: number; z: number };
   /** A waterspout wandering across the sea. */
   spout?: Spout;
   /** A shore fort. */

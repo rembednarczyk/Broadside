@@ -134,7 +134,8 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] łup z wraków (18.11): postój do 60 m od wraku, najwyżej 1,5 m/s przez 5 s daje raz złoto 150–600 z ziarna świata
   (`core/data/salvage.ts`, `sim/economy/salvage.ts`, zdarzenie złota z powodem `wreck`, komunikat „Łup z wraku!”, zapis
   w migawce, test); złoty hash bez zmian (przebieg kontrolny bez archipelagu)
-- [ ] wraki dalej: znacznik wraku (gra nie ma jeszcze mapy), tapnięcie wraku jako rozkaz „ratuj” (kurs i postój), ładunek
+- [x] (19.11) tapnięcie wraku jako rozkaz „ratuj”: podejście na głębszą wodę, kotwica, szalupy w zasięgu 150 m
+- [ ] wraki dalej: znacznik wraku poza ekranem (gra nie ma jeszcze mapy), ładunek
   zamiast samego złota
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 

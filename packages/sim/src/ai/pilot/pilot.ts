@@ -6,6 +6,7 @@ import { sailRoute } from "./route";
 import { runDown } from "./board";
 import { followShip } from "./follow";
 import { closeFort } from "./assault";
+import { lieOverWreck } from "./salvage";
 import { fightShip } from "./engage";
 
 /**
@@ -33,5 +34,7 @@ export const conning = (me: Entity, p: PilotState, w: PilotWorld): Conn => {
       return fightShip(me, o, w.ships.find((s) => s.id === o.target), w);
     case "assault":
       return closeFort(me, p, w.forts.find((f) => f.id === o.fort), w);
+    case "salvage":
+      return lieOverWreck(me, p, o.at, w);
   }
 };

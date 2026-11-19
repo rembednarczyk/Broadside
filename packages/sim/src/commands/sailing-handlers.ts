@@ -35,9 +35,18 @@ export const sailingHandlers: HandlerTable = {
   },
   pilot: (e, cmd, ctx) => {
     const o = cmd.order;
-    givePilot(e, ctx, o.kind === "assault" ? { kind: "assault", fort: o.fort } : o.kind === "engage" ? { kind: "engage", target: o.target, side: "starboard", range: ENGAGE_RANGE } : { kind: o.kind, target: o.target });
+    givePilot(e, ctx, o.kind === "assault" ? { kind: "assault", fort: o.fort } : o.kind === "salvage" ? { kind: "salvage", at: { x: o.x, z: o.z } } : o.kind === "engage" ? { kind: "engage", target: o.target, side: "starboard", range: ENGAGE_RANGE } : { kind: o.kind, target: o.target });
   },
-  sails: (e, cmd) => {
+  anchor: (e, cmd, ctx) => {
+    if (!cmd.down) {
+      if (e.anchor) ctx.world.removeComponent(e, "anchor");
+      return;
+    }
+    if (!e.anchor) ctx.world.addComponent(e, "anchor", { x: e.body.pos.x, z: e.body.pos.z });
+  },
+  sails: (e, cmd, ctx) => {
+    // Making sail weighs the anchor first.
+    if (cmd.level > 0 && e.anchor && !e.pilot) ctx.world.removeComponent(e, "anchor");
     if (cmd.mast === "all") e.ship.sailTarget = e.ship.sailTarget.map(() => cmd.level);
     else if (cmd.mast >= 0 && cmd.mast < e.ship.sailTarget.length) e.ship.sailTarget[cmd.mast] = cmd.level;
     // The captain's own order is what a reefing crew makes sail back up to.
@@ -72,6 +81,7 @@ const CRUISING = 3;
 /** Hands the ship to the pilot with a new order (simple steering, ai/pilot). */
 const givePilot = (e: ShipEntity, ctx: SimContext, order: PilotOrder): void => {
   if (e.pilot) ctx.world.removeComponent(e, "pilot");
+  if (e.anchor) ctx.world.removeComponent(e, "anchor");
   ctx.world.addComponent(e, "pilot", { order, think: 0 });
   // With no canvas spread the crew makes sail to get under way.
   if (e.ship.sailTarget.every((l) => l === 0)) e.ship.sailTarget = e.ship.sailTarget.map(() => CRUISING);

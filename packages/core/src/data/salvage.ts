@@ -6,8 +6,11 @@ import { createRng, hashString } from "../math/rng";
  * fixed by the world's seed and the wreck (the same wreck pays the same in every game of a seed).
  */
 export const SALVAGE = {
-  /** The ship must lie within this distance of the wreck (m). */
-  radius: 60,
+  /**
+   * The ship must lie within this distance of the wreck (m): the boats pull over to her and the
+   * divers work her (wrecks lie on shoals, where a ship of any draught cannot go alongside).
+   */
+  radius: 150,
   /** ...this slowly (m/s), the boats need a ship that is not under way... */
   maxSpeed: 1.5,
   /** ...for this long (s). */

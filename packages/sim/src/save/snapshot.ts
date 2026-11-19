@@ -35,6 +35,7 @@ export interface ShipSnap {
   /** Standing order to reef (absent in older saves). */
   readonly reefing?: ReefingState | null;
   readonly assist?: AssistState | null;
+  readonly anchor?: { x: number; z: number } | null;
   readonly ttl: number | null;
 }
 
@@ -73,7 +74,7 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
   ships: sim.ships().map((e) => {
     const { model: _model, ...fields } = e.ship!;
     const b = e.body!;
-    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ...(e.pilot ? { pilot: clone(e.pilot) } : {}), ...(e.reefing ? { reefing: clone(e.reefing) } : {}), ...(e.assist ? { assist: clone(e.assist) } : {}), ttl: e.ttl ?? null };
+    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ...(e.pilot ? { pilot: clone(e.pilot) } : {}), ...(e.reefing ? { reefing: clone(e.reefing) } : {}), ...(e.assist ? { assist: clone(e.assist) } : {}), ...(e.anchor ? { anchor: clone(e.anchor) } : {}), ttl: e.ttl ?? null };
   }),
   forts: sim.forts().map((e) => {
     const { def: _def, site, ...state } = e.fort!;
@@ -112,7 +113,7 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
     // Fields added after a save was written get their defaults (refits, standing orders).
     const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades" | "wrecks">;
     const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [], wrecks: old.wrecks ?? [] };
-    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.assist ? { assist: clone(s.assist) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
+    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.assist ? { assist: clone(s.assist) } : {}), ...(s.anchor ? { anchor: clone(s.anchor) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
   for (const f of snap.forts) {
     const e = sim.spawnFort(f.site);

@@ -3,6 +3,7 @@ import { helmSystem } from "./helm";
 import { sailSystem } from "./sails";
 import { assistSystem } from "./assist";
 import { wreckageSystem } from "./wreckage";
+import { anchorSystem } from "./anchor";
 import { hydroSystem } from "./hydro";
 import { integrateSystem } from "./integrate";
 import { gunsSystem } from "./guns";
@@ -39,6 +40,7 @@ export const createSystems = (): readonly System[] => [
   sailSystem,
   assistSystem,
   wreckageSystem,
+  anchorSystem,
   hydroSystem,
   groundingSystem,
   integrateSystem,

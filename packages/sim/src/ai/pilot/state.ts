@@ -15,7 +15,9 @@ export type PilotOrder =
   /** Fight a ship broadside to broadside (the AI captains' engagement: gunnery range, the side that is loaded). */
   | { kind: "engage"; target: number; side: "port" | "starboard"; range: number }
   /** Close a fort to storming distance; storm it if silenced, else heave to there (bombard). */
-  | { kind: "assault"; fort: number };
+  | { kind: "assault"; fort: number }
+  /** Sail in over a wreck as far as the depth allows and anchor there for the boats (sim salvage). */
+  | { kind: "salvage"; at: P };
 
 export interface PilotState {
   order: PilotOrder;
