@@ -103,7 +103,7 @@ export class BabylonRenderer {
     this.engine = new Engine(opts.canvas, g.msaa > 1, { preserveDrawingBuffer: true, stencil: true }, true);
     // Pixel density capped at 2: a 3x phone screen shades 2.25 times the pixels of a 2x one for a
     // difference the eye does not find at arm's length (the cap three.js and most web games use).
-    this.engine.setHardwareScalingLevel(1 / Math.max(0.3, Math.min(MAX_PIXEL_RATIO, globalThis.devicePixelRatio || 1) * g.renderScale));
+    this.setRenderScale(g.renderScale);
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.5, 0.6, 0.7, 1);
     this.camera = new FollowCamera(this.scene, opts.canvas);
@@ -363,6 +363,11 @@ export class BabylonRenderer {
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */
   drawCalls(): number {
     return this.instrumentation.drawCallsCounter.current;
+  }
+
+  /** Share of the screen's pixels rendered (the settings slider, or dynamic resolution below it). */
+  setRenderScale(scale: number): void {
+    this.engine.setHardwareScalingLevel(1 / Math.max(0.3, Math.min(MAX_PIXEL_RATIO, globalThis.devicePixelRatio || 1) * scale));
   }
 
   resize(): void {

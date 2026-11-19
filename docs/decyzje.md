@@ -911,3 +911,16 @@ deski Poly Haven innego koloru niż burta. Zmiany (`engine/renderer/deck-planks.
   o 0,7–1,4 m ponad pokład modelu).
 Śródokręcie galeonu to głęboka studnia między wysokimi burtami, w cieniu żagli: z kamery gry nadal jest ciemniejsze od
 kasztelu. Pokład dziobówki modelu zostaje własny (pomiar tam jest zaszumiony przez nadbudówki).
+
+## 19.11, użytkownik: „grafika dalej daje w kość, jakie mamy możliwości optymalizacji”
+Pomiar `tools/perf/frame-bench.mjs` (high, 800×450, SwiftShader; przełącznik `shallows` dodany do pomiaru): klatka
+2,1 s, z czego niebo z chmurami objętościowymi 53%, ocean 17% (płycizny tylko 3%), statki 14%, post-procesy 4%.
+Pieczenie płycizn do tekstury odłożone (mały zysk). Zrobione:
+- niebo i chmury w 35% rozdzielczości zamiast 50% na high i ultra (`skyScale`): koszt nieba 1110 → 554 ms, klatka
+  2,1 → 1,5 s (−28%); na zrzutach ujęć z dużą ilością nieba (horyzont w wichurze) różnicy nie widać, bo chmury są
+  miękkie, a maszty i liny rysujemy w pełnej rozdzielczości; kinowy zostaje w pełnej;
+- dynamiczna rozdzielczość (`engine/renderer/dynamic-resolution.ts`, technika konsolowa): gdy wygładzony czas klatki
+  przekracza 1/28 s, skala renderu spada o 5% co 1,5 s, najniżej do 60% ustawienia suwaka; gdy klatki są szybsze niż
+  1/42 s, wraca do suwaka (nigdy ponad). Telefon, który nadąża, nie widzi zmiany. Wyłączona w narzędziach Playwright
+  (`navigator.webdriver`) i parametrem `dynres=0`, żeby zrzuty i pomiary były w zadanej rozdzielczości.
+Limit 30 kl./s jako opcja w ustawieniach czeka (wymaga przełącznika w panelu i audytu interfejsu).

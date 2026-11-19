@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { type ColorMode, CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
+import { type ColorMode, CAMERA_MODES, BabylonRenderer, DynamicResolution, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
 import { Hud, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
@@ -97,6 +97,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
   renderer.camera.mode = mode;
   renderer.camera.drawGestures = useHud.getState().steering === "simple";
+  dynres = new DynamicResolution(next.renderScale);
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
@@ -330,6 +331,10 @@ const pushNotice = (key: string) => {
 };
 
 const haptics = new Haptics();
+// Dynamic resolution under the slider's scale when frames come too slow (off for the tools that drive
+// the page, whose shots and measurements must be at the set resolution, and with `dynres=0`).
+const autoResolution = params.get("dynres") !== "0" && !navigator.webdriver;
+let dynres = new DynamicResolution(graphics.renderScale);
 let last = performance.now();
 let fpsAcc = 0;
 let frames = 0;
@@ -350,6 +355,8 @@ const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   session.advance(dt);
+  const scale = autoResolution ? dynres.update(dt) : null;
+  if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
   haptics.enabled = useHud.getState().haptics;

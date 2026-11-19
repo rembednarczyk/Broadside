@@ -36,15 +36,15 @@ export interface GraphicsSettings {
   readonly lens: boolean;
   /** Particle budget multiplier. */
   readonly particles: number;
-  /** Share of the render resolution the sky and its volumetric clouds are drawn at (soft, so half loses next to nothing). */
+  /** Share of the render resolution the sky and its volumetric clouds are drawn at (soft: 35% looks the same as 50%, frame-bench 19.11: high 2.1 → 1.5 s). */
   readonly skyScale: number;
 }
 
 const BASE: Readonly<Record<GraphicsPreset, Omit<GraphicsSettings, "preset" | "colorMode">>> = {
   low: { renderScale: 0.6, msaa: 1, shadowSize: 0, cascades: false, oceanCells: 120, detailWaves: 0, cloudOctaves: 3, sunShafts: 0, bloom: false, ssao: false, motionBlur: false, lens: false, particles: 0.4, skyScale: 1 },
   medium: { renderScale: 0.75, msaa: 1, shadowSize: 1024, cascades: false, oceanCells: 180, detailWaves: 0, cloudOctaves: 4, sunShafts: 30, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 0.7, skyScale: 1 },
-  high: { renderScale: 1, msaa: 2, shadowSize: 2048, cascades: false, oceanCells: 240, detailWaves: 4, cloudOctaves: 6, sunShafts: 60, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 1, skyScale: 0.5 },
-  ultra: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 360, detailWaves: 8, cloudOctaves: 6, sunShafts: 90, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.3, skyScale: 0.5 },
+  high: { renderScale: 1, msaa: 2, shadowSize: 2048, cascades: false, oceanCells: 240, detailWaves: 4, cloudOctaves: 6, sunShafts: 60, bloom: true, ssao: false, motionBlur: false, lens: true, particles: 1, skyScale: 0.35 },
+  ultra: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 360, detailWaves: 8, cloudOctaves: 6, sunShafts: 90, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.3, skyScale: 0.35 },
   cinematic: { renderScale: 1, msaa: 4, shadowSize: 4096, cascades: true, oceanCells: 480, detailWaves: 8, cloudOctaves: 6, sunShafts: 120, bloom: true, ssao: true, motionBlur: true, lens: true, particles: 1.6, skyScale: 1 },
 };
 

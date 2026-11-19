@@ -76,12 +76,16 @@ export class Ocean {
     this.mesh.material = this.material;
   }
 
+  /** Islands in the shallows term now (the frame bench switches the term off and on). */
+  islandCount = 0;
+
   /** Islands for the shallows and surf term: (x, z, radius, shoal), at most 32 (nearest first). */
   setIslands(list: readonly { x: number; z: number; radius: number; shoal: number }[]): void {
     const a = new Array<number>(128).fill(0);
     list.slice(0, 32).forEach((is, i) => a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal));
     this.material.setArray4("islands", a);
-    this.material.setInt("islandCount", Math.min(32, list.length));
+    this.islandCount = Math.min(32, list.length);
+    this.material.setInt("islandCount", this.islandCount);
   }
 
   setUnderwater(under: boolean): void {

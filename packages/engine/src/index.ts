@@ -7,4 +7,5 @@ export { SynthAudio, type Cue, type Listener } from "./audio/synth-audio";
 export { type Ambience } from "./audio/soundscape";
 export { type ShipAudioState } from "./audio/ship-sound-plan";
 export * from "./graphics-settings";
+export { DynamicResolution } from "./renderer/dynamic-resolution";
 export { type CameraMode, CAMERA_MODES } from "./camera/follow-camera";

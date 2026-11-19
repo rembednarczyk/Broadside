@@ -180,6 +180,9 @@ Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu
 z wyostrzeniem, gęstość pikseli do 2, skany dział do 45 m, kadłub z modelu w dwóch poziomach (pełny do 50 m), ocean
 pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po sprawdzeniu na telefonie:
+- [x] 19.11: niebo w 35% rozdzielczości na high i ultra (klatka −28% w pomiarze), dynamiczna rozdzielczość pod suwakiem
+- [ ] limit 30 kl./s jako opcja (telefon: równiej, mniej grzania)
+- [ ] chmury: rozłożenie marszu na kilka klatek z reprojekcją (Schneider 2015), jeśli niebo dalej będzie największym kosztem
 - [ ] pomiar na prawdziwym telefonie (klatki na high i ultra po zmianach); bez niego koszt MSAA jest nieznany (SwiftShader
   cieniuje każdą próbkę osobno, więc zawyża go)
 - [ ] ultra: MSAA ×4 → ×2 albo domyślne 80–85% rozdzielczości, jeśli telefon nie uciągnie naprawionego wygładzania

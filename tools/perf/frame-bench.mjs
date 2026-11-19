@@ -74,6 +74,10 @@ const result = await page.evaluate((n) => {
       } else r.sky.mesh.isVisible = on;
     },
     ocean: (on) => { r.ocean.mesh.isVisible = on; },
+    // The shallows and surf term of the ocean (no islands: the loop and the surf's lace and noise still run).
+    shallows: (on) => {
+      r.ocean.material.setInt("islandCount", on ? (r.ocean.islandCount ?? 0) : 0);
+    },
     ships: (on) => { for (const s of ships) s.setEnabled(on); },
     shadows: (on) => { scene.shadowsEnabled = on; },
     post: (on) => { scene.postProcessesEnabled = on; },
