@@ -41,6 +41,45 @@ const RINGS = [
 export const HAZE_SCALE = 0.5;
 export const coastHaze = (distance: number, fogDensity: number): number => Math.min(0.97, 1 - Math.exp(-distance * fogDensity * HAZE_SCALE));
 
+/**
+ * One ring of the coast as a mesh: the cliff's face from below the water to its top edge, then the
+ * headland's top running back inland and falling away behind it, so the coast has a top and a
+ * depth seen from a masthead or a high camera (a bare wall read as a pale flat band). Vertex
+ * colours shade it within its haze: gullies down the face (vertical streaks of noise, as erosion
+ * cuts sea cliffs), the face darker towards the water and the top edge catching the light.
+ */
+export const coastRing = (heights: readonly number[], radius: number, scale: number, seed: number): { positions: number[]; indices: number[]; colors: number[] } => {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+  // Rows from the water up and back: distance out (times the radius), height (times the skyline's;
+  // null: the foot, under the water), shade, and whether the gullies show (on the face).
+  const rows = [
+    [1, null, 0.78, true],
+    [1.01, 1, 1.06, true],
+    [1.05, 0.96, 1, false],
+    [1.14, 0.35, 0.88, false],
+  ] as const;
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const a = (i / SEGMENTS) * Math.PI * 2;
+    const h = heights[i % SEGMENTS]! * scale;
+    const gully = 1 - 0.18 * Math.max(0, fbm2(seed + 23, a * 90, 0.3, 2));
+    for (const [out, up, shade, face] of rows) {
+      positions.push(Math.sin(a) * radius * out, up === null ? -20 : h * up, Math.cos(a) * radius * out);
+      const g = face ? gully : 1;
+      colors.push(shade * g, shade * g, shade * g, 1);
+    }
+  }
+  const n = rows.length;
+  for (let i = 0; i < SEGMENTS; i++) {
+    for (let r = 0; r < n - 1; r++) {
+      const b = i * n + r;
+      indices.push(b, b + 1, b + n, b + n, b + 1, b + n + 1);
+    }
+  }
+  return { positions, indices, colors };
+};
+
 export class FarCoast {
   readonly meshes: Mesh[] = [];
   private readonly materials: StandardMaterial[] = [];
@@ -48,24 +87,12 @@ export class FarCoast {
 
   constructor(scene: Scene, seed: number) {
     RINGS.forEach((ring, r) => {
-      const heights = coastHeights(seed + ring.salt);
-      const positions: number[] = [];
-      const indices: number[] = [];
-      for (let i = 0; i <= SEGMENTS; i++) {
-        const a = (i / SEGMENTS) * Math.PI * 2;
-        const h = heights[i % SEGMENTS]! * ring.height;
-        const x = Math.sin(a) * ring.radius;
-        const z = Math.cos(a) * ring.radius;
-        positions.push(x, -20, z, x * 1.01, h, z * 1.01);
-      }
-      for (let i = 0; i < SEGMENTS; i++) {
-        const b = i * 2;
-        indices.push(b, b + 1, b + 2, b + 2, b + 1, b + 3);
-      }
+      const { positions, indices, colors } = coastRing(coastHeights(seed + ring.salt), ring.radius, ring.height, seed + ring.salt);
       const mesh = new Mesh(`far-coast-${r}`, scene);
       const data = new VertexData();
       data.positions = positions;
       data.indices = indices;
+      data.colors = colors;
       data.applyToMesh(mesh);
       // Unlit and unfogged: the colour is the haze over the rock, set each frame (setHaze).
       const m = new StandardMaterial(`far-coast-${r}`, scene);
@@ -86,8 +113,9 @@ export class FarCoast {
   setHaze(fog: { r: number; g: number; b: number }, density: number): void {
     RINGS.forEach((ring, r) => {
       // The rock in shadow against the light: a third of the haze's brightness, then the airlight,
-      // which at the horizon is brighter than the scene's fog colour (the sky's glowing band of haze).
-      const k = 0.35 + 0.8 * coastHaze(ring.radius, density);
+      // short of the fog's colour, so the shore stands a shade darker than the haze around it
+      // (ref_095, ref_176; brighter, its lit top edge read as a white wall, 19.11).
+      const k = 0.35 + 0.62 * coastHaze(ring.radius, density);
       this.materials[r]!.emissiveColor.set(fog.r * k, fog.g * k, fog.b * k);
       this.hazes[r]!.haze = coastHaze(ring.radius, density);
     });
