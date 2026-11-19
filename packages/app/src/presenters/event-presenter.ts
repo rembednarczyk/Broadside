@@ -39,6 +39,13 @@ export const cueFor = (e: DomainEvent, playerId = -1, shipAt: (id: number) => { 
     case "grounded":
       // Her own crew man the capstan to haul her off.
       return e.ship === playerId ? { kind: "capstan" } : null;
+    case "anchored": {
+      // Letting go: the cable roars out and the anchor strikes the water; weighing: the capstan.
+      if (e.ship !== playerId) return null;
+      if (!e.down) return { kind: "capstan" };
+      const at = shipAt(e.ship);
+      return at ? { kind: "splash", x: at.x, z: at.z, size: 1.5 } : null;
+    }
     case "contractAccepted":
       return { kind: "chest" };
     default:
@@ -92,6 +99,8 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return e.by === playerId ? "notice.assaultFailed" : null;
     case "grounded":
       return e.ship === playerId ? "notice.grounded" : null;
+    case "anchored":
+      return e.ship === playerId && e.down ? "notice.anchored" : null;
     case "weatherChanged":
       return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : null;
     default:

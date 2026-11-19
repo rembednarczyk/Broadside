@@ -39,14 +39,16 @@ export const sailingHandlers: HandlerTable = {
   },
   anchor: (e, cmd, ctx) => {
     if (!cmd.down) {
-      if (e.anchor) ctx.world.removeComponent(e, "anchor");
+      if (e.anchor) weigh(e, ctx);
       return;
     }
-    if (!e.anchor) ctx.world.addComponent(e, "anchor", { x: e.body.pos.x, z: e.body.pos.z });
+    if (e.anchor) return;
+    ctx.world.addComponent(e, "anchor", { x: e.body.pos.x, z: e.body.pos.z });
+    ctx.events.push({ type: "anchored", ship: e.id, down: true });
   },
   sails: (e, cmd, ctx) => {
     // Making sail weighs the anchor first.
-    if (cmd.level > 0 && e.anchor && !e.pilot) ctx.world.removeComponent(e, "anchor");
+    if (cmd.level > 0 && e.anchor && !e.pilot) weigh(e, ctx);
     if (cmd.mast === "all") e.ship.sailTarget = e.ship.sailTarget.map(() => cmd.level);
     else if (cmd.mast >= 0 && cmd.mast < e.ship.sailTarget.length) e.ship.sailTarget[cmd.mast] = cmd.level;
     // The captain's own order is what a reefing crew makes sail back up to.
@@ -78,10 +80,16 @@ const ENGAGE_RANGE = 220;
 /** Sail made when an order is given to a ship with none set: full sail, the AI's cruising plan. */
 const CRUISING = 3;
 
+/** The anchor weighed (the capstan's work, heard as such). */
+const weigh = (e: ShipEntity, ctx: SimContext): void => {
+  ctx.world.removeComponent(e, "anchor");
+  ctx.events.push({ type: "anchored", ship: e.id, down: false });
+};
+
 /** Hands the ship to the pilot with a new order (simple steering, ai/pilot). */
 const givePilot = (e: ShipEntity, ctx: SimContext, order: PilotOrder): void => {
   if (e.pilot) ctx.world.removeComponent(e, "pilot");
-  if (e.anchor) ctx.world.removeComponent(e, "anchor");
+  if (e.anchor) weigh(e, ctx);
   ctx.world.addComponent(e, "pilot", { order, think: 0 });
   // With no canvas spread the crew makes sail to get under way.
   if (e.ship.sailTarget.every((l) => l === 0)) e.ship.sailTarget = e.ship.sailTarget.map(() => CRUISING);

@@ -56,3 +56,13 @@ describe("sounds of damage (M11)", () => {
     expect(light && "size" in light && heavy && "size" in heavy && heavy.size > light.size).toBe(true);
   });
 });
+
+describe("the anchor (salvage)", () => {
+  it("is heard letting go and weighing, and noticed when it goes down", () => {
+    const at = () => ({ x: 1, z: 2 });
+    expect(cueFor({ type: "anchored", ship: 1, down: true }, 1, at)).toEqual({ kind: "splash", x: 1, z: 2, size: 1.5 });
+    expect(cueFor({ type: "anchored", ship: 1, down: false }, 1, at)).toEqual({ kind: "capstan" });
+    expect(cueFor({ type: "anchored", ship: 7, down: true }, 1, at)).toBeNull();
+    expect(noticeFor({ type: "anchored", ship: 1, down: true }, 1)).toBe("notice.anchored");
+  });
+});
