@@ -18,6 +18,10 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
       {t.state === "disabled" && !t.struck && t.id !== undefined && (
         <button className="alarm wide" onPointerDown={() => intents.board(t.id!)} data-testid="board-disabled">{text(lang, "state.disabled")}</button>
       )}
+      {/* A ship that has struck lies hove to: run down and take her as a prize (once). */}
+      {t.struck && !t.taken && t.id !== undefined && (
+        <button className="alarm wide" onPointerDown={() => intents.board(t.id!)} data-testid="board-struck">{text(lang, "state.struckBoard")}</button>
+      )}
       {t.state && t.state !== "sound" && t.state !== "disabled" && !t.struck && isTextKey(`state.${t.state}`) && (
         <div className="row"><span>{text(lang, `state.${t.state}` as TextKey)}</span></div>
       )}
@@ -28,7 +32,7 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
         <div className="row"><span>{text(lang, "hud.crew")}</span><span>{t.crew}</span></div>
       )}
       {t.silenced && <div className="alarm">{text(lang, "hud.silenced")}</div>}
-      {t.struck && <div className="alarm">{text(lang, "hud.struck")}</div>}
+      {t.struck && t.taken && <div className="alarm">{text(lang, "hud.struck")}</div>}
     </div>
   );
 };

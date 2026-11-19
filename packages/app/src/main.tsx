@@ -137,7 +137,7 @@ const setReef = (on: boolean) => {
 };
 // Vibration on hits and broadsides: on unless turned off on this device.
 const HAPTICS_KEY = "broadside.haptics";
-patchHud({ haptics: readSetting(HAPTICS_KEY) !== "0" });
+patchHud({ haptics: readSetting(HAPTICS_KEY) !== "0", language: readSetting("broadside.lang") === "pl" ? "pl" : "en" });
 const setHaptics = (on: boolean) => {
   patchHud({ haptics: on });
   writeSetting(HAPTICS_KEY, on ? "1" : "0");
@@ -244,7 +244,10 @@ const intents: UiIntents = {
     board: () => session.board(),
   },
   settings: {
-    setLanguage: (language) => patchHud({ language }),
+    setLanguage: (language) => {
+      patchHud({ language });
+      writeSetting("broadside.lang", language);
+    },
     setFpsCap: (cap) => {
       pacer.cap = cap;
       dynres.setCap(cap);

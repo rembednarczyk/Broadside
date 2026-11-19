@@ -72,6 +72,8 @@ export interface ShipState {
   sunkFor: number;
   lastHitBy: number | null;
   struck: boolean;
+  /** Carried by boarding: a prize already taken (her hold and prize money paid once). */
+  taken: boolean;
   /** Masts gone by the board (core WRECKAGE): to which side the wreck went and how long until it is cut free (0: cut away). */
   wrecks: { mast: number; side: number; left: number }[];
 }
@@ -82,6 +84,7 @@ const defaultAmmo: Partial<Record<MountKind, AmmoId>> = { broadside: "round", bo
 
 export const createShipState = (model: ShipModel, faction: FactionId, sail: SailLevel = 3): ShipState => {
   const def = model.def;
+  const broadside = Math.max(2, def.guns.find((g) => g.kind === "broadside")?.count ?? 0);
   return {
     model,
     faction,
@@ -102,13 +105,16 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     guns: model.guns.map((g) => ({ reload: 0, ammo: defaultAmmo[g.kind] ?? "round", dismounted: false, fuse: -1, elevation: 0, train: 0 })),
     ammoLoad: { ...defaultAmmo },
     upgrades: [],
-    stores: { round: 40 * def.guns.length, chain: 12, grape: 12, heavy: 8, hot: 4, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2, smoke: 2, greekFire: def.guns.some((g) => g.kind === "bowChaser") ? 8 : 0, rocket: def.guns.some((g) => g.kind === "swivel") ? 6 : 0 },
+    // Shot by the guns of a broadside (a salvo spends one each): round shot for a dozen salvos,
+    // three of chain and of grape, two of heavy, one of hot (per side's guns, at least two).
+    stores: { round: Math.max(60, 12 * broadside), chain: 3 * broadside, grape: 3 * broadside, heavy: 2 * broadside, hot: broadside, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2, smoke: 2, greekFire: def.guns.some((g) => g.kind === "bowChaser") ? 8 : 0, rocket: def.guns.some((g) => g.kind === "swivel") ? 6 : 0 },
     braced: 0,
     oars: false,
     sinking: false,
     sunkFor: 0,
     lastHitBy: null,
     struck: false,
+    taken: false,
     wrecks: [],
   };
 };

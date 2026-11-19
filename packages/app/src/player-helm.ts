@@ -30,9 +30,13 @@ export class PlayerHelm {
 
   /** Classic helm: start or stop turning (-1 to port, 1 to starboard, 0 to hold); takes the wheel from the pilot. */
   steer(direction: -1 | 0 | 1): void {
-    if (direction !== 0 && this.steering === 0) {
-      const p = this.sim.byId(this.playerId);
-      if (p?.body) this.course = yawOf(p.body.rot);
+    const p = this.sim.byId(this.playerId);
+    if (direction !== 0 && this.steering === 0 && p?.body) this.course = yawOf(p.body.rot);
+    // Letting go of the button means "steady as she goes": the course is her head now (the lead
+    // the turn ran ahead of her, up to 0.6 rad, would carry her on 20-30 degrees, beta 19.11).
+    if (direction === 0 && this.steering !== 0 && p?.body) {
+      this.course = yawOf(p.body.rot);
+      this.sim.command({ type: "course", ship: this.playerId, heading: this.course });
     }
     this.steering = direction;
   }

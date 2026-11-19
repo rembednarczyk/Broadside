@@ -56,6 +56,12 @@ const hullHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: Event
   return killed > 0 && a.crew > 1.5 ? "crew" : "hull";
 };
 
+/** Mast strength of the ship whose canvas and rigging the damage rates are set for (a brig's). */
+const RIG_MEASURE = 240;
+/** Share of the canvas and of the rigging a unit of damage takes (weighted by the shot's sails and rigging factors). */
+const CLOTH_DAMAGE = 0.0013;
+const RIG_DAMAGE = 0.0004;
+
 const rigHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQueue, shipId: number): HitPart => {
   const a = AMMO[imp.ammo];
   let mast = 0;
@@ -67,8 +73,12 @@ const rigHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQ
       mast = i;
     }
   });
-  s.sailCloth[mast] = Math.max(0, s.sailCloth[mast]! - dmg * a.sails * 0.0035);
-  s.rigging = Math.max(0, s.rigging - dmg * a.rigging * 0.0012);
+  // Canvas and rigging are shares of the whole: a hit takes less of a big ship's (her spars and
+  // gear in proportion to her masts' strength, a brig the measure). Before, one salvo of chain
+  // took 83% of any ship's rigging, a liner's as a schooner's, and settled every fight (beta 19.11).
+  const size = RIG_MEASURE / s.model.def.mastHp;
+  s.sailCloth[mast] = Math.max(0, s.sailCloth[mast]! - dmg * a.sails * CLOTH_DAMAGE * size);
+  s.rigging = Math.max(0, s.rigging - dmg * a.rigging * RIG_DAMAGE * size);
   s.crew -= Math.min(s.crew, Math.floor(dmg * a.crew * 0.03 + rng.next() * 0.5));
   if (Math.abs(imp.local.x) < 1.2 && best < 1.5) {
     s.mastHp[mast] = Math.max(0, s.mastHp[mast]! - dmg * (0.6 + a.rigging * 0.4));

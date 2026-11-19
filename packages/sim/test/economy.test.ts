@@ -27,10 +27,11 @@ describe("ports", () => {
     const e = alongside(sim, friendly);
     e.ship!.crew -= 20;
     const gold = sim.purse.gold;
+    const chainBefore = e.ship!.stores.chain!;
     sim.command({ type: "trade", ship: e.id, port: friendly, service: "ammo", ammo: "chain", qty: 10 });
     sim.command({ type: "trade", ship: e.id, port: friendly, service: "crew", qty: 50 });
     run(sim, 0.1);
-    expect(e.ship!.stores.chain).toBe(22);
+    expect(e.ship!.stores.chain).toBe(chainBefore + 10);
     expect(e.ship!.crew).toBe(e.ship!.model.def.crew);
     expect(sim.purse.gold).toBeLessThan(gold);
   });

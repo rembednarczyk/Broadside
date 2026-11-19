@@ -7,13 +7,15 @@ import { shipCondition } from "../ship/ship-state";
  * Boarding: grappled alongside, the attacking party (three quarters of the crew) meets the
  * defenders (all hands; a ship that has struck her colours barely resists). The side with the
  * larger effective strength carries the deck; losses fall mostly on the losers. A taken ship
- * yields her whole hold (plunder) and prize money, and some of her men join the victors.
+ * yields her whole hold (plunder) and prize money, once (a prize taken cannot be boarded again),
+ * and some of her men join the victors.
  */
 export const BOARD_REACH = 30;
 export const BOARD_SPEED = 2.5;
 
+/** Alongside, slow enough to grapple, and a ship that is neither one's own side nor a prize already taken. */
 export const canBoard = (me: Entity, target: Entity): boolean => {
-  if (target.ship!.sinking || target.id === me.id) return false;
+  if (target.ship!.sinking || target.id === me.id || target.ship!.taken || target.ship!.faction === me.ship!.faction) return false;
   const a = me.body!;
   const b = target.body!;
   const gap = Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) - (me.ship!.model.def.hull.beam + target.ship!.model.def.hull.beam) / 2;
@@ -35,6 +37,7 @@ export const board = (events: EventQueue, me: Entity, target: Entity, rng: Rng, 
     a.crew += pressed;
     d.crew = Math.max(0, survivors - pressed);
     d.struck = true;
+    d.taken = true;
     if (target.captain) target.captain.mode = "struck";
     d.sailTarget = d.sailTarget.map(() => 0);
     events.push({ type: "boarded", ship: target.id, by: me.id, won: true });

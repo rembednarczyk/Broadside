@@ -1104,3 +1104,20 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
 - Zasięg obserwatora zależy od mgły tak samo jak wykrywanie wroga przez kapitanów AI: 1,2 km × (1 − 0,7 × mgła)
   (`lookoutRange`); dotyczy oznaczania morza i statków na mapie. Noc pominięta, bo symulacja nie zna godziny
   (początek doby to parametr aplikacji); przeniesienie pory dnia do symulacji zmieniłoby zapis i złoty hash.
+
+## 19.11, użytkownik: „puść trzech beta-testerów… poprawisz cokolwiek znajdą”
+Trzech agentów-testerów (prosty ster i telefon EN, klasyczny ster i monitor PL, Akcja i telefon PL), raporty
+w scratchpadzie sesji. Poprawki z raportu weterana (klasyczny ster):
+- Pryz zdobyty abordażem ma znacznik `taken`: drugi abordaż jest niemożliwy (wcześniej każdy dawał złoto i łup);
+  abordaż nigdy własnej strony.
+- Statek, który opuścił banderę, staje w dryfie: opór wzdłużny ×8 (`HOVE_TO`), traci drogę w niespełna minutę;
+  w panelu celu przycisk „Bandera opuszczona: abordaż”.
+- Uszkodzenia olinowania i płótna skalowane wytrzymałością masztów klasy (bryg 240 jako miara), współczynniki
+  0,0004 i 0,0013: salwa łańcuchowa galeonu zabiera szkunerowi ok. 30% olinowania zamiast 83%.
+- Zapasy amunicji według dział jednej burty: kule pełne 12 salw (co najmniej 60), łańcuchowa i kartacze po 3,
+  ciężka 2, rozżarzona 1 salwa; po wyczerpaniu specjalnej amunicji działa same ładują kule pełne, z komunikatem.
+- Opór kadłuba przy ruchu wstecz ×4 (`ASTERN_DRAG`): w linii wiatru statek cofa się ok. połowę wolniej.
+- Refowanie załogi z sufitem od wiatru: od 13,9 m/s najwyżej żagle bojowe, od 17,2 m/s zrefowane.
+- Ster klasyczny po puszczeniu przycisku trzyma bieżący kurs (wcześniej dokręcał 20–30°).
+- Język zapamiętywany na urządzeniu; przycisk zamknięcia karty pomocy przypięty do jej dołu; wiersz pogody
+  z etykietą „Pogoda”; pomoc klawiszy pełna (A/D, W/S, Q/E, X, Z, M, Esc), „B kryć się” jak na przycisku.

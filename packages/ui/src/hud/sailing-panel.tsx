@@ -28,7 +28,7 @@ export const SailingPanel = ({ intents }: { intents: SailIntents }) => {
         <span className="label">{text(lang, "hud.wind")}</span>
         <span className="value">{s.windKnots.toFixed(0)} {text(lang, "hud.knots")} · {isTextKey(bft) ? text(lang, bft) : ""}</span>
       </div>
-      {s.weather && isTextKey(`weather.${s.weather}`) && <div className="row weather"><span className="label" /><span className="value">{text(lang, `weather.${s.weather}` as TextKey)}</span></div>}
+      {s.weather && isTextKey(`weather.${s.weather}`) && <div className="row weather"><span className="label">{text(lang, "hud.weather")}</span><span className="value">{text(lang, `weather.${s.weather}` as TextKey)}</span></div>}
       <div className="row gold">
         <span className="label">{text(lang, "hud.gold")}</span>
         <span className="value" data-testid="gold">{gold} · {days.toFixed(0)} {text(lang, "hud.days")}</span>

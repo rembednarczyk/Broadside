@@ -67,6 +67,7 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     hull: hullShare(t),
     crew: t.crew,
     struck: t.struck,
+    taken: t.taken,
     state: damageState(shipCondition(t)),
     side,
   };
