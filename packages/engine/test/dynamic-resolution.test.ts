@@ -40,4 +40,14 @@ describe("dynamic resolution", () => {
     for (let i = 0; i < 20; i++) expect(r.update(2)).toBeNull();
     expect(r.scale).toBe(1);
   });
+
+  it("under a 30 fps cap, keeps the scale while the cap holds, steps down when it does not and back up after", () => {
+    const r = new DynamicResolution(1);
+    r.setCap(30);
+    expect(run(r, 30, 20)).toEqual([]);
+    run(r, 22, 6);
+    expect(r.scale).toBeLessThan(1);
+    run(r, 30, 60);
+    expect(r.scale).toBe(1);
+  });
 });

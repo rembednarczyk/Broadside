@@ -57,6 +57,7 @@ const Options = ({ intents }: { intents: SettingsIntents }) => {
 
 const Graphics = ({ intents }: { intents: SettingsIntents }) => {
   const g = useHud((h) => h.graphics);
+  const fpsCap = useHud((h) => h.fpsCap);
   const lang = useHud((h) => h.language);
   const custom = `gfx.${g.preset}`;
   return (
@@ -79,6 +80,14 @@ const Graphics = ({ intents }: { intents: SettingsIntents }) => {
       </div>
       <div className="label">{text(lang, "settings.resolution")} {Math.round(g.renderScale * 100)}%</div>
       <input type="range" min={50} max={100} step={5} value={Math.round(g.renderScale * 100)} onChange={(e) => intents.setRenderScale(Number(e.target.value) / 100)} />
+      <div className="label">{text(lang, "settings.fpsCap")}</div>
+      <div className="presets two">
+        {[30, 0].map((c) => (
+          <button key={c} className={fpsCap === c ? "on" : ""} onPointerDown={() => intents.setFpsCap(c)} data-testid={`fps-${c}`}>
+            {text(lang, c ? "fps.30" : "fps.free")}
+          </button>
+        ))}
+      </div>
     </>
   );
 };

@@ -174,6 +174,8 @@ export interface HudState {
   readonly courseActive: boolean;
   /** Orders for a ship held down on (screen fractions, the ship, whether she is an enemy). */
   readonly shipMenu: { readonly x: number; readonly y: number; readonly target: number; readonly hostile: boolean } | null;
+  /** Frame-rate cap (frames per second; 0: as fast as the screen refreshes). */
+  readonly fpsCap: number;
   /** The sea chart, filled while it is open (menu "chart"). */
   readonly chart: ChartHud | null;
   readonly drawCalls: number;
@@ -191,6 +193,6 @@ export interface SoundVolumes {
 /** Simple (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad (the action game's controls). */
 export type SteeringMode = "simple" | "classic" | "arcade";
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, chart: null, drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, chart: null, fpsCap: 0, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

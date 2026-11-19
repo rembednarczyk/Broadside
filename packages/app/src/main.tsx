@@ -10,6 +10,7 @@ import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
 import { presentChart } from "./presenters/chart-presenter";
+import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
@@ -99,6 +100,7 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer.camera.mode = mode;
   renderer.camera.drawGestures = useHud.getState().steering === "simple";
   dynres = new DynamicResolution(next.renderScale);
+  dynres.setCap(useHud.getState().fpsCap);
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
@@ -135,21 +137,10 @@ const setReef = (on: boolean) => {
 };
 // Vibration on hits and broadsides: on unless turned off on this device.
 const HAPTICS_KEY = "broadside.haptics";
-const storedHaptics = ((): boolean => {
-  try {
-    return localStorage.getItem(HAPTICS_KEY) !== "0";
-  } catch {
-    return true;
-  }
-})();
-patchHud({ haptics: storedHaptics });
+patchHud({ haptics: readSetting(HAPTICS_KEY) !== "0" });
 const setHaptics = (on: boolean) => {
   patchHud({ haptics: on });
-  try {
-    localStorage.setItem(HAPTICS_KEY, on ? "1" : "0");
-  } catch {
-    // Storage unavailable: the choice lasts for this run only.
-  }
+  writeSetting(HAPTICS_KEY, on ? "1" : "0");
 };
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
@@ -254,6 +245,12 @@ const intents: UiIntents = {
   },
   settings: {
     setLanguage: (language) => patchHud({ language }),
+    setFpsCap: (cap) => {
+      pacer.cap = cap;
+      dynres.setCap(cap);
+      writeSetting("broadside.fpsCap", String(cap));
+      patchHud({ fpsCap: cap });
+    },
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setSteering,
@@ -388,6 +385,10 @@ const haptics = new Haptics();
 const autoResolution = params.get("dynres") !== "0" && !navigator.webdriver;
 let dynres = new DynamicResolution(graphics.renderScale);
 let last = performance.now();
+// The frame-rate cap (graphics options), kept on this device.
+const pacer = new FramePacer(Number(readSetting("broadside.fpsCap") ?? 0) || 0);
+patchHud({ fpsCap: pacer.cap });
+dynres.setCap(pacer.cap);
 let fpsAcc = 0;
 let frames = 0;
 // One game hour passes in four minutes (a day in an hour and a half).
@@ -425,6 +426,7 @@ const wreckMarker = (p: { x: number; z: number }) => {
   return m ? { ...m, kind: "wreck" as const, at: { x: w.x, z: w.z } } : null;
 };
 const frame = (now: number) => {
+  if (!pacer.due(now)) return void requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   // The game stands still while the menu is up (the sea and the ships are drawn as they are).

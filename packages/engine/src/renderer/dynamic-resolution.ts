@@ -7,7 +7,9 @@
  * each step while the new cost settles, so the scale does not hunt. Differs from the engines in
  * the target: they hold the refresh rate exactly; a phone browser gives no GPU timings, so this
  * goes by the time between frames and only steps in when the game would stutter (below about
- * 28 frames a second), leaving the picture alone on a phone that keeps up.
+ * 28 frames a second), leaving the picture alone on a phone that keeps up. Under a frame-rate cap
+ * (setCap) the time between frames is the cap's interval whenever the phone keeps up, so the
+ * thresholds follow the cap: down when frames come 20% late, back up while they hold the cap.
  */
 export const DYNAMIC_RESOLUTION = {
   /** Smoothed frame time above which the scale steps down (ms; 28 frames a second). */
@@ -27,6 +29,8 @@ export class DynamicResolution {
   private average = 1000 / 60;
   private wait = DYNAMIC_RESOLUTION.settle;
   private current: number;
+  private slow: number = DYNAMIC_RESOLUTION.slow;
+  private fast: number = DYNAMIC_RESOLUTION.fast;
 
   /** `max`: the player's render scale (the ceiling). */
   constructor(private readonly max: number) {
@@ -35,6 +39,12 @@ export class DynamicResolution {
 
   get scale(): number {
     return this.current;
+  }
+
+  /** The frame-rate cap (frames a second; 0: none), which sets the thresholds. */
+  setCap(cap: number): void {
+    this.slow = cap > 0 ? (1000 / cap) * 1.2 : DYNAMIC_RESOLUTION.slow;
+    this.fast = cap > 0 ? (1000 / cap) * 1.04 : DYNAMIC_RESOLUTION.fast;
   }
 
   /** One frame of `dt` seconds; returns the new scale when it changes, else null. Pauses (dt over 0.25 s: a tab in the background) are not counted. */
@@ -46,8 +56,8 @@ export class DynamicResolution {
     if (this.wait > 0) return null;
     const low = this.max * d.floor;
     let next = this.current;
-    if (this.average > d.slow) next = Math.max(low, this.current - d.step);
-    else if (this.average < d.fast) next = Math.min(this.max, this.current + d.step);
+    if (this.average > this.slow) next = Math.max(low, this.current - d.step);
+    else if (this.average < this.fast) next = Math.min(this.max, this.current + d.step);
     next = Math.round(next * 100) / 100;
     if (next === this.current) return null;
     this.current = next;

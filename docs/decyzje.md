@@ -1053,3 +1053,8 @@ pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts
   wysokości co fizyka (`core/world/coastline.ts`, promienie i bisekcja), płycizny do 4 m. Dotknięcie morza wysyła
   kurs przez `helm.navigate` (A* omija wyspy) tylko w prostym sterowaniu; w klasycznym i „Akcji” mapa tylko pokazuje.
 - Ujęcia `island` i `island-close` w `tools/shots/views.json` (największa wyspa dżungli z bliska).
+- Limit 30 kl./s (pętla pracy, pozycja M10): opcja w zakładce grafiki, zapisana na urządzeniu, domyślnie bez limitu.
+  Odświeżenia ekranu przed terminem następnej klatki są pomijane (co druga przy 60 Hz, co czwarta przy 120 Hz), termin
+  idzie całymi odstępami z 2 ms luzu na drgania, po przestoju liczy się od nowa (`app/src/frame-pacing.ts`). Dynamiczna
+  rozdzielczość pod limitem ma progi od limitu (w dół przy klatkach o 20% spóźnionych, w górę, gdy limit się trzyma);
+  ze stałymi progami zeszłaby w dół przy pierwszych spóźnionych klatkach i nie wróciła.

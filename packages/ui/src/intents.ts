@@ -54,6 +54,8 @@ export interface SettingsIntents {
   setLanguage(lang: "en" | "pl"): void;
   setGraphicsPreset(preset: string): void;
   setRenderScale(scale: number): void;
+  /** Frame-rate cap: 30 or 0 (none). */
+  setFpsCap(cap: number): void;
   setColorMode(mode: string): void;
   /** Simple steering (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad. */
   setSteering(mode: SteeringMode): void;
