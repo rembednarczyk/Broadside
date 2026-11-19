@@ -80,6 +80,9 @@ export class BabylonRenderer {
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
+  /** Light level the unlit rigging lines were last drawn at, and seconds to the next check (lineLight). */
+  private lineK = -1;
+  private lineCheck = 0;
   private readonly effects: EffectsDirector;
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
@@ -169,6 +172,7 @@ export class BabylonRenderer {
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
     this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
     this.sun.intensity = look.keyIntensity;
+    this.lineLight(look.keyIntensity);
     // The sky the wet decks mirror (wet-deck.ts).
     const wet = wetSkyOf(this.scene);
     wet.horizon = look.skyHorizon;
@@ -378,6 +382,27 @@ export class BabylonRenderer {
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */
   drawCalls(): number {
     return this.instrumentation.drawCallsCounter.current;
+  }
+
+  /**
+   * The thin rigging drawn as lines (ratlines, far stays, running rigging) is unlit: its colour is
+   * scaled with the key light, so at night it does not stand out pale against a darkened ship (the
+   * ratlines read white in the night shot against ref_075). Checked a few times a second (new ships
+   * bring new lines), redrawn only when the light has changed.
+   */
+  private lineLight(key: number): void {
+    const k = Math.max(0.12, Math.min(1, key / 1.6));
+    this.lineCheck -= 1 / 60;
+    if (Math.abs(k - this.lineK) < 0.02 && this.lineCheck > 0) return;
+    this.lineCheck = 0.5;
+    this.lineK = k;
+    for (const m of this.scene.meshes) {
+      if (m.getClassName() !== "LinesMesh") continue;
+      const lines = m as unknown as { color: Color3; metadata: { lineBase?: Color3 } | null };
+      lines.metadata ??= {};
+      const base = (lines.metadata.lineBase ??= lines.color.clone());
+      lines.color.set(base.r * k, base.g * k, base.b * k);
+    }
   }
 
   /** Share of the screen's pixels rendered (the settings slider, or dynamic resolution below it). */
