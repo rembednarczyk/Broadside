@@ -430,8 +430,11 @@ void main() {
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
-  float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
-  col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
+  // The surf's noise and lace only where there is surf (most of the sea is far from any shore).
+  if (sh.y > 0.004) {
+    float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
+    col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
+  }
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
   // Two lobes: the broad glow of the haze round a low sun and the brighter core under it.
