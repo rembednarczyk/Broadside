@@ -15,7 +15,11 @@ export class ShipSounds {
   private readonly deck: GainNode | null;
   private last = 0;
 
-  constructor(private readonly ctx: AudioContext, private readonly out: AudioNode, private readonly scape: Soundscape, private readonly noise: AudioBuffer) {
+  /** Where another ship's sounds come from (-1..1); null: the own ship, all round the listener. */
+  pan: number | null = null;
+
+  /** `own`: the listener's own ship (with the deck's creaking bed); else another ship close by, heard from one side. */
+  constructor(private readonly ctx: AudioContext, private readonly out: AudioNode, private readonly scape: Soundscape, private readonly noise: AudioBuffer, own = true) {
     const bed = (): AudioBufferSourceNode => {
       const src = ctx.createBufferSource();
       src.buffer = noise;
@@ -43,7 +47,7 @@ export class ShipSounds {
       return f;
     });
     this.rig = { gain: rigGain, filters };
-    this.deck = scape.startLoop("deck");
+    this.deck = own ? scape.startLoop("deck") : null;
   }
 
   update(state: ShipAudioState): void {
@@ -61,7 +65,8 @@ export class ShipSounds {
     for (const s of plan.shots) this.play(s);
   }
 
-  private play(s: ShipShot): void {
+  private play(shot: ShipShot): void {
+    const s = this.pan === null ? shot : { ...shot, pan: this.pan };
     if (s.voice === "flap") this.burst(s, "lowpass", 420 * s.rate, 0.16, 0.25);
     else if (s.voice === "crack") this.burst(s, "bandpass", 900 * s.rate, 0.09, 0.9);
     else if (s.voice === "crackle") this.burst(s, "highpass", 2600 * s.rate, 0.035, 0.7);

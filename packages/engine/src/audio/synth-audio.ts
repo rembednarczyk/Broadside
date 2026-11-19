@@ -39,6 +39,7 @@ export class SynthAudio {
   private ctx: AudioContext | null = null;
   private scape: Soundscape | null = null;
   private ship: ShipSounds | null = null;
+  private nearby: { sounds: ShipSounds; panner: StereoPannerNode } | null = null;
 
   /** `clipsUrl`: where the recorded clips lie (`<url><name>.mp3`); omitted, everything is synthesised. */
   constructor(private readonly clipsUrl?: string) {}
@@ -122,6 +123,22 @@ export class SynthAudio {
     if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
     this.ship ??= new ShipSounds(this.ctx, this.master, this.scape, this.noise);
     this.ship.update(state);
+  }
+
+  /**
+   * Another ship close by (null: none): her ropes, canvas and hull heard from her side (`pan`), as
+   * the own ship's are (ship-sound-plan), quieter with distance (the state's `aboard`).
+   */
+  setNearby(state: ShipAudioState | null, pan: number): void {
+    if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
+    if (!this.nearby) {
+      const panner = this.ctx.createStereoPanner();
+      panner.connect(this.master);
+      this.nearby = { sounds: new ShipSounds(this.ctx, panner, this.scape, this.noise, false), panner };
+    }
+    this.nearby.panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), this.ctx.currentTime, 0.3);
+    this.nearby.sounds.pan = pan;
+    this.nearby.sounds.update(state ?? { aboard: 0, speed: 0, wind: 0, load: 0, luff: 0, heel: 0, bow: 0, canvas: 0, turn: 0, ready: 0, water: 0, halfHour: 0 });
   }
 
   /** Noise bed: wind in m/s, a gust factor 0..1. */

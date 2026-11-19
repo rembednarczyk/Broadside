@@ -360,6 +360,8 @@ const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 
 // With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
 // within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
 const WRECK_MARK = 900;
+/** Another ship is heard (her rigging and canvas) within this distance of the listener (m). */
+const NEARBY = 150;
 let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
 const wreckMarker = (p: { x: number; z: number }) => {
   const a = session.sim.env.archipelago;
@@ -399,6 +401,15 @@ const frame = (now: number) => {
   audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
   const aboard = presentShipAudio(session.sim, session.playerId, renderer.camera.camera.radius, hoursNow());
   if (aboard) audio.setShip(aboard);
+  // The nearest other ship within NEARBY metres is heard too (her ropes and canvas), from her side.
+  let near: { id: number; d: number; x: number; z: number } | null = null;
+  for (const o of session.sim.ships()) {
+    if (o.id === session.playerId || !o.body || o.ship?.sinking) continue;
+    const d = Math.hypot(o.body.pos.x - listener.x, o.body.pos.z - listener.z);
+    if (d < NEARBY && (!near || d < near.d)) near = { id: o.id, d, x: o.body.pos.x, z: o.body.pos.z };
+  }
+  const nearState = near ? presentShipAudio(session.sim, near.id, 0, hoursNow()) : null;
+  audio.setNearby(nearState && near ? { ...nearState, aboard: 0.5 * (1 - near.d / NEARBY) } : null, near ? Math.sin(Math.atan2(near.x - listener.x, near.z - listener.z) - listener.heading) : 0);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
   const course = presentCourse(session.sim, session.playerId);
