@@ -45,6 +45,24 @@ export class SynthAudio {
   constructor(private readonly clipsUrl?: string) {}
 
   private master: GainNode | null = null;
+  private ambienceBus: GainNode | null = null;
+  private effectsBus: GainNode | null = null;
+  /** Volumes 0..1 (the options' sound tab), kept until the audio starts on the first touch. */
+  private volumes = { master: 0.8, ambience: 1, effects: 1 };
+
+  /** The options' sound tab: overall volume, the beds of sea and weather, the effects. */
+  setVolumes(v: { master: number; ambience: number; effects: number }): void {
+    this.volumes = { ...v };
+    this.applyVolumes();
+  }
+
+  private applyVolumes(): void {
+    if (!this.ctx || !this.master || !this.ambienceBus || !this.effectsBus) return;
+    const t = this.ctx.currentTime;
+    this.master.gain.setTargetAtTime(this.volumes.master, t, 0.05);
+    this.ambienceBus.gain.setTargetAtTime(this.volumes.ambience, t, 0.05);
+    this.effectsBus.gain.setTargetAtTime(this.volumes.effects, t, 0.05);
+  }
   private noise: AudioBuffer | null = null;
   private windGain: GainNode | null = null;
   private seaGain: GainNode | null = null;
@@ -60,14 +78,19 @@ export class SynthAudio {
     if (!Ctx) return;
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.8;
     const comp = this.ctx.createDynamicsCompressor();
     this.master.connect(comp).connect(this.ctx.destination);
+    // Two buses under the master (the options' sound tab): the looping beds and the effects.
+    this.ambienceBus = this.ctx.createGain();
+    this.ambienceBus.connect(this.master);
+    this.effectsBus = this.ctx.createGain();
+    this.effectsBus.connect(this.master);
+    this.applyVolumes();
     // Long enough that the ear does not catch the loop (two seconds of noise repeat audibly).
     this.noise = this.makeNoise(9);
     this.startBeds();
     if (this.clipsUrl) {
-      this.scape = new Soundscape(this.ctx, this.master, this.clipsUrl);
+      this.scape = new Soundscape(this.ctx, this.effectsBus, this.clipsUrl, this.ambienceBus);
       void this.scape.load();
     }
   }
@@ -96,7 +119,7 @@ export class SynthAudio {
     filter.Q.value = q;
     const gain = ctx.createGain();
     gain.gain.value = 0;
-    src.connect(filter).connect(gain).connect(this.master!);
+    src.connect(filter).connect(gain).connect(this.ambienceBus!);
     src.start();
     return { gain, filter };
   }
@@ -121,7 +144,7 @@ export class SynthAudio {
   /** The player's ship as heard aboard (ropes, deck, canvas, bell, water along the side): needs the clips. */
   setShip(state: ShipAudioState): void {
     if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
-    this.ship ??= new ShipSounds(this.ctx, this.master, this.scape, this.noise);
+    this.ship ??= new ShipSounds(this.ctx, this.effectsBus!, this.scape, this.noise);
     this.ship.update(state);
   }
 
@@ -133,7 +156,7 @@ export class SynthAudio {
     if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
     if (!this.nearby) {
       const panner = this.ctx.createStereoPanner();
-      panner.connect(this.master);
+      panner.connect(this.effectsBus!);
       this.nearby = { sounds: new ShipSounds(this.ctx, panner, this.scape, this.noise, false), panner };
     }
     this.nearby.panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), this.ctx.currentTime, 0.3);
@@ -175,7 +198,7 @@ export class SynthAudio {
     g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
     const pan = ctx.createStereoPanner();
     pan.pan.value = at.pan;
-    src.connect(f).connect(g).connect(pan).connect(this.master!);
+    src.connect(f).connect(g).connect(pan).connect(this.effectsBus!);
     src.start(t0, Math.random(), dur + 0.1);
     if (thump > 0) {
       const o = ctx.createOscillator();
@@ -239,7 +262,7 @@ export class SynthAudio {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.06, t);
       g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18);
-      o.connect(g).connect(this.master!);
+      o.connect(g).connect(this.effectsBus!);
       o.start(t);
       o.stop(t + 0.2);
     });
@@ -284,7 +307,7 @@ export class SynthAudio {
       const g = ctx.createGain();
       g.gain.setValueAtTime(a, t0);
       g.gain.exponentialRampToValueAtTime(0.0005, t0 + 1.6);
-      o.connect(g).connect(this.master!);
+      o.connect(g).connect(this.effectsBus!);
       o.start(t0);
       o.stop(t0 + 1.7);
     }

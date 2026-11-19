@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { type ColorMode, CAMERA_MODES, BabylonRenderer, DynamicResolution, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
-import { Hud, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
+import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
@@ -101,7 +101,15 @@ const applyGraphics = (next: GraphicsSettings) => {
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
-if (!helpSeen) patchHud({ helpOpen: true });
+// The main menu greets the player (the game paused behind it); the how-to-play card follows on the
+// first start. Tools driving the page (`navigator.webdriver`) and `menu=0` go straight to the sea.
+const startMenu = params.get("menu") !== "0" && !navigator.webdriver;
+let helpPending = !helpSeen;
+if (startMenu) patchHud({ menu: "main" });
+else if (helpPending) {
+  patchHud({ helpOpen: true });
+  helpPending = false;
+}
 patchHud({ steering: storedSteering });
 renderer.camera.drawGestures = storedSteering === "simple";
 // The crew's standing order to reef in squalls: on unless the player turned it off on this device.
@@ -162,6 +170,26 @@ const gear = (step: 1 | -1) => {
     session.assist(true, false);
     patchHud({ astern: false });
   } else session.setSails(clamp(sail + step, 0, 4));
+};
+/** The main menu's screens (null: back to the game, which is paused while a screen is up). */
+const showMenu = (menu: MenuScreen | null) => {
+  patchHud({ menu, shipMenu: null });
+  // The how-to-play card on the first start, once the player has left the menu for the sea.
+  if (!menu && helpPending) {
+    helpPending = false;
+    patchHud({ helpOpen: true });
+  }
+};
+// Sound volumes (the options' sound tab), kept on this device.
+const SOUND_KEY = "broadside.sound";
+const setVolumes = (v: SoundVolumes) => {
+  patchHud({ sound: v });
+  audio.setVolumes(v);
+  try {
+    localStorage.setItem(SOUND_KEY, JSON.stringify(v));
+  } catch {
+    // Storage unavailable: the choice lasts for this run only.
+  }
 };
 const setSteering = (steering: SteeringMode) => {
   patchHud({ steering });
@@ -230,10 +258,13 @@ const intents: UiIntents = {
     setReef,
     setHaptics,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
-    toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+    toggleSettings: () => showMenu(useHud.getState().menu ? null : "main"),
+    showMenu,
+    setOptionsTab: (optionsTab) => patchHud({ optionsTab }),
+    setVolume: (kind, value) => setVolumes({ ...useHud.getState().sound, [kind]: value }),
     toggleHelp: () => {
       const open = !useHud.getState().helpOpen;
-      patchHud({ helpOpen: open, settingsOpen: false });
+      patchHud({ helpOpen: open });
       if (!open) {
         try {
           localStorage.setItem(HELP_KEY, "1");
@@ -247,7 +278,7 @@ const intents: UiIntents = {
       session.crewOrders(useHud.getState().reef);
       applySteering(useHud.getState().steering);
       applyGraphics(graphics);
-      patchHud({ settingsOpen: false });
+      showMenu(null);
     },
     toggleHud: () => patchHud({ hudHidden: !useHud.getState().hudHidden }),
     nextCamera: () => {
@@ -320,6 +351,12 @@ bindCourseGestures(canvas, {
   },
 });
 const audio = new SynthAudio("assets/audio/");
+try {
+  const v = JSON.parse(localStorage.getItem(SOUND_KEY) ?? "null") as SoundVolumes | null;
+  if (v && [v.master, v.ambience, v.effects].every((x) => typeof x === "number")) setVolumes(v);
+} catch {
+  // Nothing stored, or storage unavailable: the default volumes.
+}
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
 // Autosave every minute and when the app goes to the background (phones kill background apps).
@@ -381,7 +418,8 @@ const wreckMarker = (p: { x: number; z: number }) => {
 const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  session.advance(dt);
+  // The game stands still while the menu is up (the sea and the ships are drawn as they are).
+  if (!useHud.getState().menu) session.advance(dt);
   const scale = autoResolution ? dynres.update(dt) : null;
   if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();

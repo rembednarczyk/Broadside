@@ -1,4 +1,4 @@
-import { type SteeringMode } from "./store/hud-store";
+import { type MenuScreen, type OptionsTab, type SoundVolumes, type SteeringMode } from "./store/hud-store";
 
 /**
  * Narrow intent interfaces (Interface Segregation; SpinalTap ADR-0031 split of UiIntents): each
@@ -61,7 +61,12 @@ export interface SettingsIntents {
   setReef(on: boolean): void;
   /** Vibration on hits and broadsides (phones). */
   setHaptics(on: boolean): void;
+  /** The ⚙ button: the main menu (pausing the game), or back to the game. */
   toggleSettings(): void;
+  /** Which menu screen to show (null: back to the game). */
+  showMenu(screen: MenuScreen | null): void;
+  setOptionsTab(tab: OptionsTab): void;
+  setVolume(kind: keyof SoundVolumes, value: number): void;
   toggleHelp(): void;
   newGame(): void;
   toggleHud(): void;

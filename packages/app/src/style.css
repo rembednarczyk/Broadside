@@ -196,6 +196,14 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .enemy-marker .arrow { display: inline-block; font-size: calc(22 * var(--u)); line-height: 1; }
 .enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }
 .enemy-marker.wreck { color: var(--brass); pointer-events: auto; padding: calc(6 * var(--u)); }
+/* The main menu and options over the paused game (main-menu.tsx): a dimmed sea, a panel in the middle. */
+.menu-screen { position: absolute; inset: 0; z-index: 5; background: radial-gradient(circle at 50% 45%, rgba(20, 14, 9, 0.25), rgba(10, 7, 4, 0.75)); pointer-events: auto; }
+.menu { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(300 * var(--u)); display: flex; flex-direction: column; gap: calc(8 * var(--u)); padding: calc(16 * var(--u)) calc(18 * var(--u)); }
+.menu-title { font-family: var(--display); font-size: calc(34 * var(--u)); letter-spacing: 0.08em; text-align: center; color: var(--brass-hi); }
+.menu-sub { text-align: center; font-style: italic; font-size: calc(13 * var(--u)); margin-bottom: calc(6 * var(--u)); }
+.menu .big { font-size: calc(17 * var(--u)); padding: calc(9 * var(--u)); }
+.settings .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(4 * var(--u)); margin: calc(6 * var(--u)) 0 calc(4 * var(--u)); }
+.settings .presets.two { grid-template-columns: repeat(2, 1fr); }
 .settings, .help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: calc(100% - 20 * var(--u)); overflow-y: auto; z-index: 5; }
 .settings { width: calc(420 * var(--u)); font-size: calc(13 * var(--u)); }
 .settings .label { display: block; margin-top: calc(4 * var(--u)); font-family: var(--display); font-style: normal; font-size: calc(11 * var(--u)); letter-spacing: 0.05em; color: var(--brass-hi); }

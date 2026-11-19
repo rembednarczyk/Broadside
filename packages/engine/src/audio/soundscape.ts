@@ -37,7 +37,8 @@ export class Soundscape {
   private nextGull = 0;
   private nextShore = 0;
 
-  constructor(private readonly ctx: AudioContext, private readonly out: AudioNode, private readonly baseUrl: string) {}
+  /** `out`: one-shot effects; `beds`: the looping beds (sea, wind, rain, the deck), mixed apart (the ambience volume). */
+  constructor(private readonly ctx: AudioContext, private readonly out: AudioNode, private readonly baseUrl: string, private readonly beds: AudioNode = out) {}
 
   async load(): Promise<void> {
     await Promise.all(
@@ -58,7 +59,7 @@ export class Soundscape {
       src.loop = true;
       const g = this.ctx.createGain();
       g.gain.value = 0;
-      src.connect(g).connect(this.out);
+      src.connect(g).connect(this.beds);
       // Start each loop at its own offset so the beds never line up.
       src.start(0, (LOOPS.indexOf(name) * 7.3) % buf.duration);
       this.loopGains.set(name, g);
@@ -74,7 +75,7 @@ export class Soundscape {
     src.loop = true;
     const g = this.ctx.createGain();
     g.gain.value = 0;
-    src.connect(g).connect(this.out);
+    src.connect(g).connect(this.beds);
     src.start();
     return g;
   }

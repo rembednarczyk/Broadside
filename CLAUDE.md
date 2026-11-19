@@ -51,7 +51,9 @@ pod ten sam adres.
 ## HUD
 Style w `packages/app/src/style.css`: siatka obszarów wokół wolnego środka, wymiary w jednostce `--u` (projekt 960 × 540,
 na niskich ekranach 760 × 430). Po zmianie HUD: `pnpm build` i `node tools/ui/ui-audit.mjs <katalog>` (15 rozmiarów
-ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane kolumny, pismo poniżej 8 px; zrzuty).
+ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane kolumny, pismo poniżej 8 px, menu główne
+i zakładki opcji; zrzuty). Menu główne i opcje: `packages/ui/src/hud/main-menu.tsx`; narzędzia pomijają je na starcie
+(`navigator.webdriver`, parametr `menu=0`).
 
 ## APK
 `pnpm apk` buduje tutaj podpisany APK (`Broadside.apk` w katalogu głównym, poza gitem; SDK i lustro Maven:

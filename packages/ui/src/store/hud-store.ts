@@ -129,7 +129,11 @@ export interface HudState {
   /** Arrow at the screen's edge towards an enemy, or else an unsalvaged wreck (`kind`, with its place for the salvage order). */
   readonly marker: { readonly x: number; readonly y: number; readonly angle: number; readonly range: number; readonly kind?: "enemy" | "wreck"; readonly at?: { readonly x: number; readonly z: number } } | null;
   readonly graphics: GraphicsHud;
-  readonly settingsOpen: boolean;
+  /** The main menu (the game paused behind it) or its options screen; null: playing. */
+  readonly menu: MenuScreen | null;
+  readonly optionsTab: OptionsTab;
+  /** Volumes 0..1: overall, the beds of sea and weather, the effects. */
+  readonly sound: SoundVolumes;
   /** The how-to-play card (shown on the first start). */
   readonly helpOpen: boolean;
   readonly hudHidden: boolean;
@@ -156,9 +160,17 @@ export interface HudState {
   readonly fps: number;
 }
 
+export type MenuScreen = "main" | "options";
+export type OptionsTab = "graphics" | "sound" | "gameplay";
+export interface SoundVolumes {
+  readonly master: number;
+  readonly ambience: number;
+  readonly effects: number;
+}
+
 /** Simple (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad (the action game's controls). */
 export type SteeringMode = "simple" | "classic" | "arcade";
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, settingsOpen: false, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, courseActive: false, shipMenu: null, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

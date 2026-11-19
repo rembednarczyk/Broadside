@@ -8,7 +8,7 @@ import { TargetPanel } from "./target-panel";
 import { JobPanel } from "./job-panel";
 import { EnemyMarker } from "./enemy-marker";
 import { Notices } from "./notices";
-import { SettingsPanel } from "./settings-panel";
+import { MainMenu } from "./main-menu";
 import { PortPanel } from "./port-panel";
 import { HelpCard } from "./help-card";
 import { CancelCourse, ShipMenu } from "./order-controls";
@@ -21,6 +21,16 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
   const cam = useHud((h) => h.cameraMode);
   const lang = useHud((h) => h.language);
   const steering = useHud((h) => h.steering);
+  const menu = useHud((h) => h.menu);
+  // The menu over the paused game: the HUD gives way to it (the help card can open from it).
+  if (menu) {
+    return (
+      <div className="hud">
+        <MainMenu intents={intents.settings} />
+        <HelpCard intents={intents.settings} />
+      </div>
+    );
+  }
   if (hidden) {
     return (
       <div className="hud">
@@ -57,7 +67,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       <EnemyMarker intents={intents.orders} />
       <ShipMenu intents={intents.orders} />
       <Notices />
-      <SettingsPanel intents={intents.settings} />
+
       <HelpCard intents={intents.settings} />
     </div>
   );

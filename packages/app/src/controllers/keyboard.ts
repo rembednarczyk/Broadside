@@ -24,6 +24,7 @@ export const bindKeyboard = (target: Window, intents: UiIntents): (() => void) =
     if (e.code === "KeyS" || e.code === "ArrowDown") intents.helm.gear(-1);
     if (e.code === "KeyR") intents.sails.toggleOars();
     if (e.code === "KeyH") intents.settings.toggleHud();
+    if (e.code === "Escape") intents.settings.toggleSettings();
     if (e.code === "KeyT") intents.settings.nextCamera();
     if (e.code === "KeyQ") intents.combat.fire("broadside", "port");
     if (e.code === "KeyE") intents.combat.fire("broadside", "starboard");

@@ -1018,3 +1018,13 @@ Przyciemnienie nieba w oknie Snella (1,4 → 0,8 średniej nieba) i mocniejsza p
 pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts`), a główna różnica z ref_161 to ujęcie
 (gra patrzy w górę na całe okno, referencja pod kątem ze słońcem z boku). Wycofane; do zrobienia: ujęcie sceny
 `underwater` w `reference-scenes.json` pod kątem, potem ekspozycja pod wodą.
+
+## 19.11, użytkownik: „zrób menu główne, dodaj opcje, tam przenieś ustawienia grafiki, dźwięku i rozgrywki”
+- Menu główne (`ui/hud/main-menu.tsx`) na starcie i pod przyciskiem ⚙ (oraz Escape): Wznów, Nowa gra, Opcje, Jak grać.
+  Gra stoi, gdy menu jest otwarte (symulacja nie liczy kroków, scena rysuje się dalej za przyciemnieniem), HUD chowa się.
+  Karta „Jak grać” przy pierwszym uruchomieniu pokazuje się po wyjściu z menu.
+- Opcje w trzech zakładkach: Grafika (jakość, kolory, rozdzielczość), Dźwięk (nowe: głośność ogólna, morze i pogoda,
+  efekty; szyny `ambienceBus` i `effectsBus` pod `master` w `SynthAudio`, zapis w `localStorage`), Rozgrywka
+  (sterowanie, refowanie w szkwałach, wibracje, język). Dawny panel ustawień usunięty.
+- Narzędzia (Playwright, `navigator.webdriver`) i parametr `menu=0` pomijają menu na starcie, żeby zrzuty i pomiary
+  szły od razu na morze; audyt interfejsu sprawdza menu i każdą zakładkę opcji na 15 rozmiarach ekranu.

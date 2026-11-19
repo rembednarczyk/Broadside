@@ -63,7 +63,10 @@ for (const size of SIZES) {
     await page.waitForSelector(".combat", { timeout: 60000 });
     if (lang === "pl") {
       await page.click('[data-testid="open-settings"]');
+      await page.click('[data-testid="open-options"]');
+      await page.click('[data-testid="tab-gameplay"]');
       await page.click('text=Polski');
+      await page.click('[data-testid="options-back"]');
       await page.click('[data-testid="close-settings"]');
     }
     await page.evaluate(() => document.fonts.ready);
@@ -93,14 +96,28 @@ for (const size of SIZES) {
     }
     for (const s of found.scrolls) issues.push(`kolumna przewija się (${s})`);
     if (found.minFont < MIN_FONT) issues.push(`najmniejsze pismo ${found.minFont.toFixed(1)} px`);
-    // The settings window must fit the screen (it scrolls inside if it must, but never off it).
+    // The main menu and every tab of the options must fit the screen (a window scrolls inside if it
+    // must, but never off it).
+    const fits = async (selector, label) => {
+      const r = await page.evaluate((sel) => {
+        const b = document.querySelector(sel).getBoundingClientRect();
+        return { x: b.left, y: b.top, w: b.width, h: b.height };
+      }, selector);
+      if (r.x < 0 || r.y < 0 || r.x + r.w > w || r.y + r.h > h) issues.push(`${label} poza ekranem`);
+    };
+    const shoot = async (label) => {
+      if (size === SIZES[0] || size === "640x360" || size === "1280x720") await page.screenshot({ path: join(outDir, `${size}-${lang}-${label}.png`), timeout: 120000 });
+    };
     await page.click('[data-testid="open-settings"]');
-    const modal = await page.evaluate(() => {
-      const r = document.querySelector(".settings").getBoundingClientRect();
-      return { x: r.left, y: r.top, w: r.width, h: r.height };
-    });
-    if (modal.x < 0 || modal.y < 0 || modal.x + modal.w > w || modal.y + modal.h > h) issues.push("ustawienia poza ekranem");
-    if (size === SIZES[0] || size === "640x360") await page.screenshot({ path: join(outDir, `${size}-${lang}-settings.png`), timeout: 120000 });
+    await fits(".menu", "menu");
+    await shoot("menu");
+    await page.click('[data-testid="open-options"]');
+    for (const tab of ["graphics", "sound", "gameplay"]) {
+      await page.click(`[data-testid="tab-${tab}"]`);
+      await fits(".settings", `opcje (${tab})`);
+      await shoot(`options-${tab}`);
+    }
+    await page.click('[data-testid="options-back"]');
     await page.click('[data-testid="close-settings"]');
     problems += issues.length;
     const name = `${size}-${steering}-${lang}`;
