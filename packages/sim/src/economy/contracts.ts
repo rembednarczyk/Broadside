@@ -1,4 +1,4 @@
-import { type ContractOffer, type Faction, CONTRACT_EPOCH, applyDeed, contractOffer, openWater } from "@broadside/core";
+import { type ContractOffer, type Faction, CONTRACT_EPOCH, FORT_RANGE, applyDeed, contractOffer, isHostile, openWater, standing } from "@broadside/core";
 import { type ShipEntity } from "../commands/handler";
 import { type SimContext } from "../systems/context";
 import { spawnShip } from "../world/spawn";
@@ -30,10 +30,25 @@ export const acceptContract = (e: ShipEntity, port: number, owner: Faction, ctx:
     x = e.body.pos.x + 90;
     z = e.body.pos.z + 40;
   } else {
-    const ang = ctx.rng.next() * Math.PI * 2;
-    const r = 1300 + ctx.rng.next() * 600;
-    x = site.x + Math.sin(ang) * r;
-    z = site.z + Math.cos(ang) * r;
+    // A few places round the port, the first clear of everything hostile to her: forts' guns and
+    // enemy ships made an end of a quarry in one to four minutes, before the player could reach
+    // her (the bounty was then lost, playtest audit 19.11). Failing that, the last tried.
+    const foe = (f: Faction) => isHostile(standing(offer.faction, f, ctx.relations));
+    const clear = (px: number, pz: number): boolean => {
+      for (const f of ctx.world.with("fort")) if (foe(f.fort.faction) && !f.fort.silenced && Math.hypot(f.fort.site.x - px, f.fort.site.z - pz) < FORT_RANGE + 400) return false;
+      for (const s of ctx.world.with("ship", "body")) if (s.id !== e.id && foe(s.ship.faction) && !s.ship.sinking && Math.hypot(s.body.pos.x - px, s.body.pos.z - pz) < 900) return false;
+      return true;
+    };
+    x = site.x;
+    z = site.z;
+    for (let k = 0; k < 8; k++) {
+      const ang = ctx.rng.next() * Math.PI * 2;
+      const r = 1300 + ctx.rng.next() * 600;
+      x = site.x + Math.sin(ang) * r;
+      z = site.z + Math.cos(ang) * r;
+      if (ctx.env.archipelago) ({ x, z } = openWater(ctx.env.archipelago, x, z));
+      if (clear(x, z)) break;
+    }
   }
   if (ctx.env.archipelago) ({ x, z } = openWater(ctx.env.archipelago, x, z));
   const dest = offer.dest >= 0 ? ctx.ports[offer.dest]! : null;
