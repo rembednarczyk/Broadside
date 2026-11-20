@@ -80,6 +80,10 @@ export const groundingSystem: System = (ctx, dt) => {
       }
     }
     s.aground = touching;
+    // An AI ship hard on the bottom takes in all sail: canvas drawing against a ship pinned by her
+    // keel heels her over until she lies on her beam (a frigate capsized on a bank without a shot
+    // fired, playtest audit 20.11). The player's crew leave the canvas to the player.
+    if (touching && !s.sinking && e.captain && Math.hypot(b.vel.x, b.vel.z) < 1.5) s.sailTarget = s.sailTarget.map(() => 0);
     if (touching && !s.sinking && Math.hypot(b.vel.x, b.vel.z) < 0.4) kedge(a, b, s);
   }
 };
