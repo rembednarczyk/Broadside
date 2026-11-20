@@ -228,7 +228,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku nocą (symulacja nie zna dziś pory dnia: godzina żyje w app).
 
 ### Po beta-teście (19.11, trzech testerów; raporty w scratchpadzie sesji, poprawki w decyzjach)
-- [ ] Samoobrona załogi w prostym sterowaniu (działa strzelają same do wroga w zasięgu, jeśli gracz nie wydał rozkazu).
+- [x] Samoobrona załogi w prostym sterowaniu: kanonierzy strzelają sami do wroga w łuku burty do 260 m (20.11).
 - [x] Pilot i kapitanowie AI nie wypływają poza mapę: nawigacja czyta dno z mieliznami 150 m przed krawędzią morza.
 - [x] Cel zlecenia pojawia się z dala od wrogich mu fortów (zasięg + 400 m) i statków (900 m), do 8 prób (20.11):
   na ziarnie 3 cel przeżył do terminu (wcześniej zginął po 42 s od innych).

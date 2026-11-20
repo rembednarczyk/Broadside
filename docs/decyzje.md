@@ -1161,3 +1161,7 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Nawigacja (pilot, kapitanowie AI, planer tras) czyta dno, które 150 m przed krawędzią morza kończy się mielizną
   (`chartedBed`); fizyka ma prawdziwe dno. Zlecenie „bounty”: płatne, gdy działa gracza trafiły cel choć raz
   (`hitByPlayer`); reguła „ostatnie trafienie gracza” odrzucała cele dobite przez fort albo inny statek.
+- Stały rozkaz „ogień, gdy namierzy” w prostym sterowaniu (`app/src/gun-captains.ts`): burta strzela sama, gdy
+  w jej łuku do 260 m jest wrogi statek, który nie opuścił bandery; celowanie jak salwa gracza, najwyżej raz na
+  sekundę na burtę, sprawdzane cztery razy na sekundę. Tylko w prostym sterowaniu (w klasycznym i Akcji strzela
+  gracz); bez przełącznika w opcjach, dopóki właściciel o niego nie poprosi.

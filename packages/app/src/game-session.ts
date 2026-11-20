@@ -2,6 +2,7 @@ import { PlayerHelm } from "./player-helm";
 import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, yawOf } from "@broadside/core";
 import { STEP, Simulation, type SimulationOptions, type SimSnapshot, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 import { aimOf } from "./aiming";
+import { GunCaptains } from "./gun-captains";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -88,11 +89,13 @@ export class GameSession {
   }
 
   /** Advances the simulation by real elapsed seconds; returns the number of steps taken. */
-  advance(seconds: number): number {
+  /** `fireAsTheyBear`: the gun captains' standing order of simple steering (gun-captains). */
+  advance(seconds: number, fireAsTheyBear = false): number {
     this.accumulator = Math.min(this.accumulator + Math.max(0, seconds), STEP * MAX_STEPS);
     let n = 0;
     while (this.accumulator >= STEP) {
       this.helm.apply();
+      if (fireAsTheyBear) this.fireAsTheyBear();
       this.sim.step();
       this.accumulator -= STEP;
       n++;
@@ -129,6 +132,14 @@ export class GameSession {
 
 
 
+
+  /** Simple steering's standing order: the gun captains fire as the guns bear (gun-captains). */
+  fireAsTheyBear(): void {
+    this.gunCaptains ??= new GunCaptains(this.sim, this.playerId);
+    for (const c of this.gunCaptains.orders()) this.send(c);
+  }
+
+  private gunCaptains: GunCaptains | null = null;
 
   /** Boards the nearest ship alongside, if any. */
   board(): void {

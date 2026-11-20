@@ -432,7 +432,7 @@ const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   // The game stands still while the menu or the how-to-play card is up (the sea and ships drawn as they are).
-  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt);
+  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt, useHud.getState().steering === "simple");
   const scale = autoResolution ? dynres.update(dt) : null;
   if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();
