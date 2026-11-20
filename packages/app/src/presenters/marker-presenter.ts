@@ -17,3 +17,23 @@ export const presentMarker = (screen: { x: number; y: number }, range: number, c
   // The arrow glyph points up: rotate it towards the enemy (screen y grows downwards).
   return { x: 0.5 + dx * s, y: 0.5 + dy * s, angle: Math.atan2(dx, -dy), range };
 };
+
+type Marker = { x: number; y: number; angle: number; range: number };
+
+/**
+ * The arrow towards the ship of the contract in hand when she is out of view (a quarry to hunt or a
+ * merchantman to escort, often well out of sight: the beta testers lost her), with what a tap on
+ * it orders (follow her for an escort, fight her otherwise).
+ */
+export const jobMarker = (
+  job: { readonly target: number; readonly kind: string } | null,
+  target: { readonly x: number; readonly z: number } | null,
+  me: { readonly x: number; readonly z: number },
+  project: (x: number, z: number) => { x: number; y: number },
+  clear: { left: number; right: number; top: number; bottom: number },
+): (Marker & { kind: "job"; target: number; order: "follow" | "engage" }) | null => {
+  if (!job || !target) return null;
+  const m = presentMarker(project(target.x, target.z), Math.hypot(target.x - me.x, target.z - me.z), clear);
+  return m ? { ...m, kind: "job", target: job.target, order: job.kind === "escort" ? "follow" : "engage" } : null;
+};
+

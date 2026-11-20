@@ -235,7 +235,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Kapitan AI w walce wchodzi na mieliznę i tonie (audyt rozgrywki, ziarno 21: fregata-cel ostrzeliwana przez
   inny statek, na mieliźnie po 3,8 min).
 - [x] Zlecenia: zdanie, co trzeba zrobić (oferta i panel), strzałka do celu względem dziobu zamiast stopni (20.11).
-- [ ] Znacznik celu zlecenia na krawędzi ekranu (także eskortowanego statku), jak znacznik wroga.
+- [x] Znacznik celu zlecenia na krawędzi ekranu (bez wroga w pobliżu; stuknięcie: eskorta to „płyń za nią”, inne to walka); znaczniki znikają przy panelu portu (20.11).
 - [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
 - [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
 - [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.

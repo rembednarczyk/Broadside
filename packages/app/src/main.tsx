@@ -8,7 +8,7 @@ import { type SimSnapshot } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
-import { presentMarker } from "./presenters/marker-presenter";
+import { jobMarker, presentMarker } from "./presenters/marker-presenter";
 import { chartTarget, presentChart } from "./presenters/chart-presenter";
 import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
@@ -412,6 +412,7 @@ const WRECK_MARK = 900;
 /** Another ship is heard (her rigging and canvas) within this distance of the listener (m). */
 const NEARBY = 150;
 let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
+const jobAhead = (p: { x: number; z: number }) => { const j = session.sim.jobs.active; const t = j ? session.sim.byId(j.target)?.body?.pos : undefined; return jobMarker(j ? { target: j.target, kind: j.offer.kind } : null, t ?? null, p, (x, z) => renderer.project(x, 2, z), clearArea(performance.now())); };
 const wreckMarker = (p: { x: number; z: number }) => {
   const a = session.sim.env.archipelago;
   if (!a) return null;
@@ -485,7 +486,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
-    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : wreckMarker(me.body.pos)) : null,
+    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : (jobAhead(me.body.pos) ?? wreckMarker(me.body.pos))) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

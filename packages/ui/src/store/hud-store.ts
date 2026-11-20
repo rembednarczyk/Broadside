@@ -154,7 +154,7 @@ export interface HudState {
   readonly job: JobHud | null;
   /** Arrow towards the nearest enemy when it is off screen or under a panel (screen fractions, radians). */
   /** Arrow at the screen's edge towards an enemy, or else an unsalvaged wreck (`kind`, with its place for the salvage order). */
-  readonly marker: { readonly x: number; readonly y: number; readonly angle: number; readonly range: number; readonly kind?: "enemy" | "wreck"; readonly at?: { readonly x: number; readonly z: number } } | null;
+  readonly marker: { readonly x: number; readonly y: number; readonly angle: number; readonly range: number; readonly kind?: "enemy" | "wreck" | "job"; readonly at?: { readonly x: number; readonly z: number }; readonly target?: number; readonly order?: "follow" | "engage" } | null;
   readonly graphics: GraphicsHud;
   /** The main menu (the game paused behind it) or its options screen; null: playing. */
   readonly menu: MenuScreen | null;

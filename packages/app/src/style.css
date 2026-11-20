@@ -199,6 +199,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .enemy-marker .arrow { display: inline-block; font-size: calc(22 * var(--u)); line-height: 1; }
 .enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }
 .enemy-marker.wreck { color: var(--brass); pointer-events: auto; padding: calc(6 * var(--u)); }
+.enemy-marker.job { color: var(--sea-blue); pointer-events: auto; padding: calc(6 * var(--u)); }
 /* The main menu and options over the paused game (main-menu.tsx): a dimmed sea, a panel in the middle. */
 .menu-screen { position: absolute; inset: 0; z-index: 5; background: radial-gradient(circle at 50% 45%, rgba(20, 14, 9, 0.25), rgba(10, 7, 4, 0.75)); pointer-events: auto; }
 .menu { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(300 * var(--u)); display: flex; flex-direction: column; gap: calc(8 * var(--u)); padding: calc(16 * var(--u)) calc(18 * var(--u)); }

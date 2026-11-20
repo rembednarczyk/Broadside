@@ -22,12 +22,13 @@ export const clearArea = (now: number): Clear => {
   if (cached && now - cached.at < 500) return cached.clear;
   const w = window.innerWidth;
   const h = window.innerHeight;
-  // Room for the arrow and its label (about 25 x 34 px) inside the clear middle.
-  const margin = 24;
-  const left = Math.max(0, ...rects(".hud .col.left > *").map((r) => r.right + margin));
-  const right = Math.min(w, ...rects(".hud .col.right > *").map((r) => r.left - margin));
-  const top = Math.max(0, ...rects(".hud .combat").map((r) => r.bottom + margin));
-  const bottom = Math.min(h, ...rects(".hud .bottom > *").map((r) => r.top - margin));
+  // Room for the arrow and its label (a word and a range, centred under it: about 90 x 34 px).
+  const mx = 48;
+  const my = 24;
+  const left = Math.max(0, ...rects(".hud .col.left > *").map((r) => r.right + mx));
+  const right = Math.min(w, ...rects(".hud .col.right > *").map((r) => r.left - mx));
+  const top = Math.max(0, ...rects(".hud .combat").map((r) => r.bottom + my));
+  const bottom = Math.min(h, ...rects(".hud .bottom > *").map((r) => r.top - my));
   // A degenerate middle (a very small screen): keep the old guess.
   const clear = right - left > w * 0.2 && bottom - top > h * 0.2 ? { left: left / w, right: right / w, top: top / h, bottom: bottom / h } : GUESS;
   cached = { at: now, clear };
