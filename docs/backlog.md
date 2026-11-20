@@ -236,7 +236,9 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   inny statek, na mieliźnie po 3,8 min).
 - [x] Zlecenia: zdanie, co trzeba zrobić (oferta i panel), strzałka do celu względem dziobu zamiast stopni (20.11).
 - [x] Znacznik celu zlecenia na krawędzi ekranu (bez wroga w pobliżu; stuknięcie: eskorta to „płyń za nią”, inne to walka); znaczniki znikają przy panelu portu (20.11).
-- [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
+- [x] Panel portu: stocznia mieści się na 844 × 390, 915 × 412 i 1280 × 720 (ulepszenia w jednym rzędzie, ciaśniejsze
+  rzędy na niskim ekranie, 20.11).
+- [ ] Panel portu na 640 × 360: ostatni rząd stoczni wymaga przewinięcia (19 px); panel zasłania statek.
 - [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
 - [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.
 - [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
