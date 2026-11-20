@@ -239,7 +239,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Panel portu: stocznia mieści się na 844 × 390, 915 × 412 i 1280 × 720 (ulepszenia w jednym rzędzie, ciaśniejsze
   rzędy na niskim ekranie, 20.11).
 - [ ] Panel portu na 640 × 360: ostatni rząd stoczni wymaga przewinięcia (19 px); panel zasłania statek.
-- [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
+- [x] Wraki łatwiejsze do znalezienia: wieści w porcie (postój przy kotwicowisku odsłania na mapie wodę 400 m wokół najbliższego nieobrabowanego wraku do 4 km), znacznik wraku od 1,5 km (20.11).
 - [x] Panel celu: cienki pasek olinowania pod kadłubem, maszty stojące, gdy któryś padł; polskie stany bez rodzaju („Uszkodzenia”, „Bez napędu: abordaż”, „Bandera opuszczona”) (20.11).
 - [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
 - [x] Pogoda: wiatr narasta ze stałą ok. 100 s (od świeżego do sztormowego w 2–4 min, było ok. 80 s), wichura i sztorm trwają 5–9 min, komunikat przy nadejściu wichury i sztormu (20.11).

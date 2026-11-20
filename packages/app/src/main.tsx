@@ -408,7 +408,7 @@ const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 1
 const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
 // With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
 // within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
-const WRECK_MARK = 900;
+const WRECK_MARK = 1500;
 /** Another ship is heard (her rigging and canvas) within this distance of the listener (m). */
 const NEARBY = 150;
 let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
