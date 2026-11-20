@@ -242,7 +242,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
 - [x] Panel celu: cienki pasek olinowania pod kadłubem, maszty stojące, gdy któryś padł; polskie stany bez rodzaju („Uszkodzenia”, „Bez napędu: abordaż”, „Bandera opuszczona”) (20.11).
 - [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
-- [ ] Pogoda: wiatr rośnie od świeżego do sztormu w ok. 80 s, sztorm trwa 2–4 min (wolniejsze przejścia, zapowiedź).
+- [x] Pogoda: wiatr narasta ze stałą ok. 100 s (od świeżego do sztormowego w 2–4 min, było ok. 80 s), wichura i sztorm trwają 5–9 min, komunikat przy nadejściu wichury i sztormu (20.11).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie

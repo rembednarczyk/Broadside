@@ -104,7 +104,7 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
     case "ammoOut":
       return e.ship === playerId ? "notice.ammoOut" : null;
     case "weatherChanged":
-      return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : null;
+      return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : e.kind === "gale" ? "notice.gale" : e.kind === "storm" ? "notice.storm" : null;
     default:
       return null;
   }
