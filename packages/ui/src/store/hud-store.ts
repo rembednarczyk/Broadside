@@ -121,6 +121,8 @@ export interface JobHud {
   /** Active contract only: distance and compass bearing to the ship (m, degrees). */
   readonly distance?: number;
   readonly bearing?: number;
+  /** Bearing relative to her head (degrees, clockwise; 0 dead ahead): the panel's arrow. */
+  readonly relative?: number;
 }
 
 type Point = { readonly x: number; readonly z: number };

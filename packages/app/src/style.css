@@ -110,6 +110,8 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .mast-row.warn { color: #ffd27f; }
 .mast-row.alarm { color: var(--alarm); }
 .job { width: 100%; }
+.job .what, .harbour .what { display: block; font-style: italic; color: var(--ink-soft); margin: 0 0 calc(3 * var(--u)); line-height: 1.25; }
+.job-arrow { display: inline-block; margin-right: calc(5 * var(--u)); font-weight: 700; color: var(--brass-hi); }
 .offer button { width: 100%; margin-top: calc(6 * var(--u)); }
 
 /* --- compass and target (right) --- */
