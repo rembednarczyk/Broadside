@@ -243,7 +243,9 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Panel portu na 640 × 360: ostatni rząd stoczni wymaga przewinięcia (19 px); panel zasłania statek.
 - [x] Wraki łatwiejsze do znalezienia: wieści w porcie (postój przy kotwicowisku odsłania na mapie wodę 400 m wokół najbliższego nieobrabowanego wraku do 4 km), znacznik wraku od 1,5 km (20.11).
 - [x] Panel celu: cienki pasek olinowania pod kadłubem, maszty stojące, gdy któryś padł; polskie stany bez rodzaju („Uszkodzenia”, „Bez napędu: abordaż”, „Bandera opuszczona”) (20.11).
-- [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
+- [x] Kapitulacja przy 30% załogi (było 15%), ucieczka poniżej 45% (było 30%): przegrani bitew audytu kończyli z 0–15
+  ludźmi na 110 przy kadłubie w połowie (20.11). Bramki ADR-0005 zielone; bryg z brygiem 2:1 zamiast 3:0.
+- [ ] Cele bounty częściej padają od innych przed przybyciem gracza (audyt rozgrywki 20.11: 0 z 2 opłaconych).
 - [x] Pogoda: wiatr narasta ze stałą ok. 100 s (od świeżego do sztormowego w 2–4 min, było ok. 80 s), wichura i sztorm trwają 5–9 min, komunikat przy nadejściu wichury i sztormu (20.11).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)

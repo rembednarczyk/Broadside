@@ -280,13 +280,21 @@ const quarry = (me: Entity, ships: readonly Entity[], rel: Relations | null): En
   return Math.hypot(p.body!.pos.x - me.body!.pos.x, p.body!.pos.z - me.body!.pos.z) < HUNT_RANGE ? p : null;
 };
 
+/**
+ * Her people's share at which a captain strikes, and below which he runs: ships of the age of sail
+ * struck with a third or so of their people down, not fought on to the last tenth (at 0.15 and 0.3
+ * the losers of the battle audit ended with 0-15 men of 110 and half their hull, beta test 19.11).
+ */
+const STRIKE_CREW = 0.3;
+const FLEE_CREW = 0.45;
+
 /** One decision of the captain; mutates its state and returns the commands it gives. */
 export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   const s = me.ship!;
   if (c.mode === "struck") return [];
   const seen = (x: Entity): boolean => !smokeBetween(w.screens, me.body!.pos.x, me.body!.pos.z, x.body!.pos.x, x.body!.pos.z);
   const target = c.target === null ? null : (w.ships.find((x) => x.id === c.target && !x.ship!.sinking && !x.ship!.struck && seen(x)) ?? null);
-  if (crewShare(s) < 0.15 || hullShare(s) < 0.15) {
+  if (crewShare(s) < STRIKE_CREW || hullShare(s) < 0.15) {
     c.mode = "struck";
     s.struck = true;
     return [{ type: "sails", ship: me.id, mast: "all", level: 0 }];
@@ -305,7 +313,7 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
       return [{ type: "sails", ship: me.id, mast: "all", level: 0 }];
     }
   }
-  if (!disabled && (crewShare(s) < 0.3 || hullShare(s) < 0.3)) {
+  if (!disabled && (crewShare(s) < FLEE_CREW || hullShare(s) < 0.3)) {
     c.mode = "flee";
     return flee(me, target, w);
   }

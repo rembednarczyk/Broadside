@@ -1169,3 +1169,6 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   łukiem szerszym niż dawne 250 m sond i weszła na mieliznę w walce przy brzegu); pilot płynący do punktu ucina
   sondy na odległości punktu + 20 m (wrak na płyciźnie, kotwicowisko przy brzegu są osiągalne). Audyty ADR-0005
   zielone, złoty hash bez zmian.
+- Kapitan AI opuszcza banderę przy 30% załogi i ucieka poniżej 45% (było 15% i 30%): statki epoki żagla poddawały
+  się po stracie mniej więcej jednej trzeciej ludzi; w audycie bitew przegrani nie kończą już niemal bez załogi.
+  Bramki ADR-0005 zielone, soak 1,42 ms na krok, złoty hash bez zmian.
