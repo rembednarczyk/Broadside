@@ -1165,3 +1165,7 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   w jej łuku do 260 m jest wrogi statek, który nie opuścił bandery; celowanie jak salwa gracza, najwyżej raz na
   sekundę na burtę, sprawdzane cztery razy na sekundę. Tylko w prostym sterowaniu (w klasycznym i Akcji strzela
   gracz); bez przełącznika w opcjach, dopóki właściciel o niego nie poprosi.
+- Omijanie mielizn (Reynolds) z sondą na odległość 70 s drogi, gdy przekracza 250 m (fregata przy 5 m/s skręca
+  łukiem szerszym niż dawne 250 m sond i weszła na mieliznę w walce przy brzegu); pilot płynący do punktu ucina
+  sondy na odległości punktu + 20 m (wrak na płyciźnie, kotwicowisko przy brzegu są osiągalne). Audyty ADR-0005
+  zielone, złoty hash bez zmian.

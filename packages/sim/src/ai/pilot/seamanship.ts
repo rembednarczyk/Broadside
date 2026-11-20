@@ -43,7 +43,7 @@ export const steerFor = (me: Entity, p: PilotState, x: number, z: number, sea: S
   // and measured against her head the choice flipped at every swing (wearing back and forth).
   const course = sailableHeading(aim, sea.windDirection, me.ship!, p.tack ?? yaw, LAYLINE);
   p.tack = wrapAngle(course - aim) === 0 ? undefined : course;
-  return clearHeading(me, course, sea);
+  return clearHeading(me, course, sea, Math.hypot(x - b.pos.x, z - b.pos.z) + 20);
 };
 
 /** Course to keep a heading (made sailable and clear of shoals). */

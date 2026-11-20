@@ -232,8 +232,9 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Pilot i kapitanowie AI nie wypływają poza mapę: nawigacja czyta dno z mieliznami 150 m przed krawędzią morza.
 - [x] Cel zlecenia pojawia się z dala od wrogich mu fortów (zasięg + 400 m) i statków (900 m), do 8 prób (20.11):
   na ziarnie 3 cel przeżył do terminu (wcześniej zginął po 42 s od innych).
-- [ ] Kapitan AI w walce wchodzi na mieliznę i tonie (audyt rozgrywki, ziarno 21: fregata-cel ostrzeliwana przez
-  inny statek, na mieliźnie po 3,8 min).
+- [x] Kapitan AI sprawdza dno także na odległość 70 s drogi, gdy ta przekracza 250 m (szybki statek skręca szerokim
+  łukiem); pilot płynący do punktu nie patrzy dalej niż ten punkt (20.11). Ziarno 21: fregata-cel nie weszła
+  na mieliznę (przeżyła do 13. minuty); ziarno 3: bounty wykonane i opłacone.
 - [x] Zlecenia: zdanie, co trzeba zrobić (oferta i panel), strzałka do celu względem dziobu zamiast stopni (20.11).
 - [x] Znacznik celu zlecenia na krawędzi ekranu (bez wroga w pobliżu; stuknięcie: eskorta to „płyń za nią”, inne to walka); znaczniki znikają przy panelu portu (20.11).
 - [x] Panel portu: stocznia mieści się na 844 × 390, 915 × 412 i 1280 × 720 (ulepszenia w jednym rzędzie, ciaśniejsze

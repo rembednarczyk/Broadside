@@ -46,11 +46,19 @@ const ARC = 0.28;
  * out to either side until one is clear.
  */
 const LOOKAHEAD = [60, 130, 250];
-export const clearHeading = (me: Entity, heading: number, w: Pick<World2D, "bed" | "windDirection">): number => {
+/**
+ * Seconds of way ahead probed besides: a frigate at 5 m/s turns in a circle wider than 250 m and
+ * ran aground in a fight close under the land (playtest audit 19.11), so a fast ship looks further.
+ */
+const AHEAD_SECONDS = 70;
+/** `reach`: how far off the point she steers for lies (m); the probes stop short of it (a point close under the land, a wreck on her shoal, is reached). */
+export const clearHeading = (me: Entity, heading: number, w: Pick<World2D, "bed" | "windDirection">, reach = Infinity): number => {
   if (!w.bed) return heading;
   const b = me.body!;
   const keel = -me.ship!.model.def.hull.draft - 2;
-  const clear = (h: number): boolean => LOOKAHEAD.every((d) => w.bed!(b.pos.x + Math.sin(h) * d, b.pos.z + Math.cos(h) * d) < keel);
+  const ahead = Math.hypot(b.vel.x, b.vel.z) * AHEAD_SECONDS;
+  const probes = (ahead > 250 ? [...LOOKAHEAD, ahead] : LOOKAHEAD).map((d) => Math.min(d, reach));
+  const clear = (h: number): boolean => probes.every((d) => w.bed!(b.pos.x + Math.sin(h) * d, b.pos.z + Math.cos(h) * d) < keel);
   // A way round the shoal must also be a heading the ship can sail (not into the eye of the wind).
   const sailable = (h: number): boolean => me.ship!.oars || angleOffWind(h, w.windDirection) <= Math.PI - closeHauled(me.ship!);
   if (clear(heading)) return heading;
