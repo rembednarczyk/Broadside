@@ -176,8 +176,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] Żeglowanie wspomagane w symulacji (prędkość kadłubowa na każdym kursie, skręt po kole, wstecz), pad w HUD, klawiatura, pomoc PL i EN.
 - [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
 - [x] Kamera w tym trybie za rufą (beta-test 19.11).
-- [ ] Większe cele dotykowe przycisków amunicji i żagli na telefonie (21–24 px), kamera pościgowa odsuwająca się
-  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka na krawędzi ekranu, bez autopilota).
+- [x] Większe cele dotykowe na ekranach dotykowych: żagle 30 px, amunicja 28 px, przyciski w rogu 32 px; bez nakładania
+  na 844 × 390, 640 × 360 i 915 × 412 (20.11; skrypt pomiaru z emulacją dotyku, zwykły audyt jej nie ma).
+- [ ] Kamera pościgowa odsuwająca się w walce; cel z mapy w trybie Akcja i klasycznym (strzałka, bez autopilota).
 
 ### M11 uszkodzenia jak w Black Flag (właściciel 19.11: „stany zdrowia i wizualne uszkodzenia, lecące deski, łańcuchy ścinają olinowanie, żagle, reje i maszty”)
 Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie

@@ -293,3 +293,11 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .cancel-course { padding: calc(6 * var(--u)) calc(12 * var(--u)); border-color: var(--brass); }
 .ship-menu { position: absolute; transform: translate(-50%, calc(-100% - 14 * var(--u))); display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: calc(120 * var(--u)); z-index: 4; padding-top: calc(10 * var(--u)); }
 .ship-menu button { padding: calc(7 * var(--u)) calc(10 * var(--u)); }
+
+/* Fingers, not a mouse: the small buttons a thumb aims at grow to a touchable height (the beta testers
+   measured 21-24 px on phones; 44-48 px is the platforms' advice, more than the panels can spare). */
+@media (pointer: coarse) {
+  .sailing button { min-height: 30px; }
+  .combat .ammo button { min-height: 28px; }
+  .corner button { min-height: 32px; min-width: 36px; }
+}
