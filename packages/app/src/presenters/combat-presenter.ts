@@ -1,5 +1,5 @@
-import { type MountKind, canFire, AMMO_IDS, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm } from "@broadside/sim";
+import { type MountKind, canFire, AMMO_IDS, damageState, wrapAngle, yawOf } from "@broadside/core";
+import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm, hullShare, shipCondition } from "@broadside/sim";
 import { type BatteryHud, type CombatHud, type TargetHud } from "@broadside/ui";
 
 /** Reads the player's guns, stores and condition, and the current target (Presenter). */
@@ -37,6 +37,12 @@ export const presentCombat = (e: Entity, forts: readonly Entity[] = [], ships: r
   };
 };
 
+/**
+ * Beyond this a broadside rarely tells (m): the shot falls short or wide of a ship end-on (a beta
+ * tester fired 21 times from 200-330 m for no damage); the target panel says so.
+ */
+const TELLING_RANGE = 220;
+
 export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => {
   const ships = sim.ships();
   const has = (k: MountKind) => me.ship!.model.guns.some((g) => g.kind === k);
@@ -60,12 +66,16 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
   const side = Math.abs(rel) < 0.6 ? "ahead" : Math.abs(rel) > Math.PI - 0.6 ? "astern" : rel > 0 ? "starboard" : "port";
   return {
     kind: "ship",
+    id: aim.target.id,
     classId: t.model.def.id,
     faction: t.faction,
     range: aim.range,
-    hull: t.sections.reduce((a, x) => a + x.hp, 0) / (t.model.def.sectionHp * t.sections.length),
+    hull: hullShare(t),
     crew: t.crew,
     struck: t.struck,
+    taken: t.taken,
+    far: aim.range > TELLING_RANGE,
+    state: damageState(shipCondition(t)),
     side,
   };
 };

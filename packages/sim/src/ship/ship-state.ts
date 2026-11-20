@@ -1,4 +1,4 @@
-import { type AmmoId, type Faction, type MountKind, type SailLevel, type UpgradeId } from "@broadside/core";
+import { type AmmoId, type Faction, type MountKind, type SailLevel, type ShipCondition, type UpgradeId } from "@broadside/core";
 import { type ShipModel } from "./ship-model";
 
 /**
@@ -72,6 +72,14 @@ export interface ShipState {
   sunkFor: number;
   lastHitBy: number | null;
   struck: boolean;
+  /** Carried by boarding: a prize already taken (her hold and prize money paid once). */
+  taken: boolean;
+  /** Her keel was on the bottom at the last step (systems/grounding). */
+  aground: boolean;
+  /** The player's shot has struck her (a bounty is earned only by taking part in her end). */
+  hitByPlayer: boolean;
+  /** Masts gone by the board (core WRECKAGE): to which side the wreck went and how long until it is cut free (0: cut away). */
+  wrecks: { mast: number; side: number; left: number }[];
 }
 
 export const setFactor = (level: SailLevel, studding: boolean): number => [0, 0.35, 0.65, 1, studding ? 1.25 : 1][level] ?? 0;
@@ -80,6 +88,7 @@ const defaultAmmo: Partial<Record<MountKind, AmmoId>> = { broadside: "round", bo
 
 export const createShipState = (model: ShipModel, faction: FactionId, sail: SailLevel = 3): ShipState => {
   const def = model.def;
+  const broadside = Math.max(2, def.guns.find((g) => g.kind === "broadside")?.count ?? 0);
   return {
     model,
     faction,
@@ -100,14 +109,33 @@ export const createShipState = (model: ShipModel, faction: FactionId, sail: Sail
     guns: model.guns.map((g) => ({ reload: 0, ammo: defaultAmmo[g.kind] ?? "round", dismounted: false, fuse: -1, elevation: 0, train: 0 })),
     ammoLoad: { ...defaultAmmo },
     upgrades: [],
-    stores: { round: 40 * def.guns.length, chain: 12, grape: 12, heavy: 8, hot: 4, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2, smoke: 2, greekFire: def.guns.some((g) => g.kind === "bowChaser") ? 8 : 0, rocket: def.guns.some((g) => g.kind === "swivel") ? 6 : 0 },
+    // Shot by the guns of a broadside (a salvo spends one each): round shot for a dozen salvos,
+    // three of chain and of grape, two of heavy, one of hot (per side's guns, at least two).
+    stores: { round: Math.max(60, 12 * broadside), chain: 3 * broadside, grape: 3 * broadside, heavy: 2 * broadside, hot: broadside, shell: def.guns.some((g) => g.kind === "mortar") ? 30 : 0, fireBarrel: 3, mine: 2, smoke: 2, greekFire: def.guns.some((g) => g.kind === "bowChaser") ? 8 : 0, rocket: def.guns.some((g) => g.kind === "swivel") ? 6 : 0 },
     braced: 0,
     oars: false,
     sinking: false,
     sunkFor: 0,
     lastHitBy: null,
     struck: false,
+    taken: false,
+    aground: false,
+    hitByPlayer: false,
+    wrecks: [],
   };
 };
 
 export const crewShare = (s: ShipState): number => s.crew / s.model.def.crew;
+
+/** Share of the hull's strength left over all its sections. */
+export const hullShare = (s: ShipState): number => s.sections.reduce((a, x) => a + x.hp, 0) / (s.model.def.sectionHp * s.sections.length);
+
+/** The measures core's `damageState` names (hull, masts standing, rigging, canvas, struck, sinking). */
+export const shipCondition = (s: ShipState): ShipCondition => ({
+  hull: hullShare(s),
+  mastsStanding: s.mastHp.filter((h) => h > 0).length / Math.max(1, s.mastHp.length),
+  rigging: s.rigging,
+  canvas: s.sailCloth.reduce((a, x, i) => a + (s.mastHp[i]! > 0 ? x : 0), 0) / Math.max(1, s.sailCloth.length),
+  struck: s.struck,
+  sinking: s.sinking,
+});

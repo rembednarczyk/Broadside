@@ -1,6 +1,6 @@
 /* global document, getComputedStyle -- the page.evaluate callbacks run in the browser */
 // Audit of the HUD layout (as podrcr's ui-audit): the built game (packages/app/dist) opened at
-// screen sizes from small phones in landscape to large monitors, with simple and classic
+// screen sizes from small phones in landscape to large monitors, with simple, classic and action
 // steering, in English and in Polish (the longer words); for each, the boxes of the HUD's regions are measured and every overlap between
 // two of them, every box outside the screen, every column that has to scroll and every type
 // smaller than MIN_FONT is reported, with a screenshot. Exit code 1 if anything is reported.
@@ -46,6 +46,7 @@ const REGIONS = [
   ["fire-port", ".fire.port"],
   ["fire-starboard", ".fire.starboard"],
   ["helm", ".helm-pad"],
+  ["drive", ".drive-pad"],
   ["corner", ".corner"],
   ["harbour", ".harbour"],
 ];
@@ -54,7 +55,7 @@ const report = [];
 let problems = 0;
 for (const size of SIZES) {
   const [w, h] = size.split("x").map(Number);
-  for (const [steering, lang] of [["simple", "en"], ["classic", "pl"]]) {
+  for (const [steering, lang] of [["simple", "en"], ["classic", "pl"], ["arcade", "pl"]]) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     await page.addInitScript(`localStorage.setItem("broadside.help", "1"); localStorage.setItem("broadside.steering", "${steering}");`);
     await page.goto(`http://localhost:${port}/index.html?seed=7&quality=low&hours=12:00&clock=stop`);
@@ -62,8 +63,11 @@ for (const size of SIZES) {
     await page.waitForSelector(".combat", { timeout: 60000 });
     if (lang === "pl") {
       await page.click('[data-testid="open-settings"]');
+      await page.click('[data-testid="open-options"]');
+      await page.click('[data-testid="tab-gameplay"]');
       await page.click('text=Polski');
-      await page.click('[data-testid="open-settings"]');
+      await page.click('[data-testid="options-back"]');
+      await page.click('[data-testid="close-settings"]');
     }
     await page.evaluate(() => document.fonts.ready);
     const found = await page.evaluate((regions) => {
@@ -92,15 +96,32 @@ for (const size of SIZES) {
     }
     for (const s of found.scrolls) issues.push(`kolumna przewija się (${s})`);
     if (found.minFont < MIN_FONT) issues.push(`najmniejsze pismo ${found.minFont.toFixed(1)} px`);
-    // The settings window must fit the screen (it scrolls inside if it must, but never off it).
+    // The main menu, every tab of the options and the sea chart must fit the screen (a window scrolls inside if it
+    // must, but never off it).
+    const fits = async (selector, label) => {
+      const r = await page.evaluate((sel) => {
+        const b = document.querySelector(sel).getBoundingClientRect();
+        return { x: b.left, y: b.top, w: b.width, h: b.height };
+      }, selector);
+      if (r.x < 0 || r.y < 0 || r.x + r.w > w || r.y + r.h > h) issues.push(`${label} poza ekranem`);
+    };
+    const shoot = async (label) => {
+      if (size === SIZES[0] || size === "640x360" || size === "1280x720") await page.screenshot({ path: join(outDir, `${size}-${lang}-${label}.png`), timeout: 120000 });
+    };
     await page.click('[data-testid="open-settings"]');
-    const modal = await page.evaluate(() => {
-      const r = document.querySelector(".settings").getBoundingClientRect();
-      return { x: r.left, y: r.top, w: r.width, h: r.height };
-    });
-    if (modal.x < 0 || modal.y < 0 || modal.x + modal.w > w || modal.y + modal.h > h) issues.push("ustawienia poza ekranem");
-    if (size === SIZES[0] || size === "640x360") await page.screenshot({ path: join(outDir, `${size}-${lang}-settings.png`), timeout: 120000 });
-    await page.click('[data-testid="open-settings"]');
+    await fits(".menu", "menu");
+    await shoot("menu");
+    await page.click('[data-testid="open-options"]');
+    for (const tab of ["graphics", "sound", "gameplay"]) {
+      await page.click(`[data-testid="tab-${tab}"]`);
+      await fits(".settings", `opcje (${tab})`);
+      await shoot(`options-${tab}`);
+    }
+    await page.click('[data-testid="options-back"]');
+    await page.click('[data-testid="menu-chart"]');
+    await fits(".chart", "mapa");
+    await shoot("chart");
+    await page.click('[data-testid="chart-close"]');
     problems += issues.length;
     const name = `${size}-${steering}-${lang}`;
     await page.screenshot({ path: join(outDir, `${name}.png`), timeout: 120000 });

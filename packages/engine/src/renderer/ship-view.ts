@@ -1,4 +1,4 @@
-import { type Entity, type FactionId, type ShipModel, setFactor } from "@broadside/sim";
+import { type Entity, type FactionId, type ShipModel, type ShipState, setFactor } from "@broadside/sim";
 import { type ShipPart, partId, rotateInv, vec3, windVector } from "@broadside/core";
 import { type AbstractMesh, Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
@@ -11,7 +11,11 @@ import { type SideProfile } from "./side-profile";
 import { gunPlaces } from "./gun-layout";
 import { modelCrewSpots } from "./crew-layout";
 import { buildModelCastle } from "./model-castle";
-import { buildModelDecks, buildModelRails } from "./model-rails";
+import { type RailGap, buildModelRails } from "./model-rails";
+import { buildModelDecks, deckPlanks } from "./deck-planks";
+import { ShotHoles } from "./shot-holes";
+import { MastFall } from "./mast-fall";
+import { hangingRope, isParted, yardFallsBelow } from "./rope-cut";
 import { type RunningLine, runningRigging, shroudLadders, stayEnds } from "./rig-layout";
 import { listShipParts } from "./ship-parts";
 import { RopeTubes } from "./rope-tubes";
@@ -207,6 +211,16 @@ export class ShipView {
   private readonly flagPositions: Float32Array;
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
+  private readonly holes: ShotHoles;
+  private readonly scorch: ShotHoles;
+  /** The cap rail of a modelled hull, rebuilt with gaps where it is shot away (M11). */
+  private rails: { side: SideProfile; wood: StandardMaterial; shadows: ShadowGenerator | null; mesh: Mesh | null; gaps: RailGap[] } | null = null;
+  /** Sections already scorched (fire, or shot to pieces). */
+  private readonly scorched = new Set<number>();
+  /** When each yard (by sail plan) was shot down (rope-cut), in simulation time. */
+  private readonly yardsDown = new Map<number, number>();
+  /** Masts going by the board (mast-fall), by mast. */
+  private readonly falls = new Map<number, { fall: MastFall; side: number; pivotY: number; pivotZ: number }>();
 
   /** The model hull in its two tiers (full near the camera, light beyond HULL_FULL), where both loaded. */
   private hullTiers: { near: AbstractMesh[]; far: AbstractMesh[] } | null = null;
@@ -258,15 +272,6 @@ export class ShipView {
     const side = hulls?.profile(model.def.id, model.def.hull) ?? null;
     this.buildRig(scene, hullSpace, model, faction, mats, shadows, side);
     this.detail = new ShipDetail(scene, hullSpace, `${model.def.id}-${entityId}`, model, mats.detail, shadows, side);
-    if (side) {
-      buildModelRails(scene, hullSpace, side, mats.wood, shadows);
-      buildModelDecks(scene, hullSpace, side, mats.deck);
-      // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
-      const places = gunPlaces(model, (_, z) => side.halfAt(z));
-      const castle = sternCastle(side, places);
-      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side) }));
-      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, wood: mats.wood, lantern: mats.detail.lantern }, shadows, hulls?.planks(model.def.id, model.def.hull) ?? null, model.def.id);
-    }
     // A modelled hull replaces the generated one, its deck and the procedural castles and fittings.
     const hullMeshes = hulls?.instantiate(model.def.id, hullSpace, model.def.hull) ?? null;
     this.modelled = hullMeshes !== null;
@@ -274,11 +279,25 @@ export class ShipView {
       const far = hulls?.instantiate(model.def.id, hullSpace, model.def.hull, true) ?? null;
       if (far) this.hullTiers = { near: hullMeshes, far };
     }
+    if (side) {
+      this.rails = { side, wood: mats.wood, shadows, mesh: buildModelRails(scene, hullSpace, side, mats.wood, shadows), gaps: [] };
+      // The high sterncastle of the reference ship, raised where the model ends in an open quarterdeck.
+      const places = gunPlaces(model, (_, z) => side.halfAt(z));
+      const castle = sternCastle(side, places);
+      const planks = hulls?.planks(model.def.id, model.def.hull) ?? null;
+      const decks = deckPlanks(scene, mats.deck, planks, model.def.id);
+      const floor = buildModelDecks(scene, hullSpace, side, mats.deck, decks, hullMeshes && hulls ? { hulls, id: model.def.id, meshes: hullMeshes, from: castle ? castle.ring[castle.ring.length - 1]!.z : -Infinity } : null);
+      this.detail.crew.setSpots(modelCrewSpots(model, { side, castle, guns: places, tops: rigPlan(model.def).tops, ladders: shroudLadders(model, side), floor }));
+      if (castle) buildModelCastle(scene, hullSpace, castle, { castle: mats.detail.castle, deck: mats.deck, deckPlanks: decks, wood: mats.wood, lantern: mats.detail.lantern }, shadows, planks, model.def.id);
+    }
     // Guns stand at the side the hull really has: the model's, where there is one.
     const sides = hullMeshes && hulls
       ? hulls.sides(model.def.id, hullMeshes, hullSpace, model.guns.map((g) => ({ y: g.pos.y + model.com.y + gunHeight(g.kind), z: g.pos.z + model.com.z, sign: Math.sign(g.dir.x) || 1 })), model.def.hull.beam)
       : null;
     this.guns = new ShipGuns(scene, hullSpace, model, mats.detail.dark, mats.wood, shadows, gunScan, sides);
+    const hullOf = (): readonly AbstractMesh[] => (this.modelled ? [...(this.hullTiers?.near ?? hullMeshes ?? []), ...(this.hullTiers?.far ?? [])] : [hullMesh]);
+    this.scorch = new ShotHoles(scene, hullSpace, hullOf, model.def.hull.beam, "scorch");
+    this.holes = new ShotHoles(scene, hullSpace, () => (this.modelled ? [...(this.hullTiers?.near ?? hullMeshes ?? []), ...(this.hullTiers?.far ?? [])] : [hullMesh]), model.def.hull.beam);
     if (this.modelled) {
       hullMesh.setEnabled(false);
       deck.setEnabled(false);
@@ -386,16 +405,19 @@ export class ShipView {
   }
 
   /** Stays follow the mastheads and sag when the masts carry little (slack) or straighten under load. */
-  private updateStays(bends: readonly MastBend[], loads: readonly number[]): void {
+  private updateStays(bends: readonly MastBend[], loads: readonly number[], s: { rigging: number; mastHp: readonly number[] }, time: number): void {
     const at = (mast: number, p: [number, number, number]): [number, number, number] => {
       const bend = bends[mast];
       if (mast < 0 || !bend) return p;
       const k = bendShare(bend, p[1]);
       return [p[0] + bend.dx * k, p[1], p[2] + bend.dz * k];
     };
-    const paths = this.stays.ends.map((e) => {
+    const down = (m: number): boolean => m >= 0 && (s.mastHp[m] ?? 1) <= 0;
+    const paths = this.stays.ends.map((e, i) => {
       const a = at(e.from, e.a);
       const b = at(e.to, e.b);
+      // Shot away (rope-cut), or gone with its mast: it hangs from its upper end.
+      if (isParted(i, s.rigging) || down(e.from) || down(e.to)) return hangingRope(a, b, i, time, this.model.def.hull.freeboard);
       const span = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
       const slack = 1 - Math.min(1, loads[e.from] ?? 0);
       return sagLine(a, b, span * (0.004 + 0.022 * slack));
@@ -403,6 +425,61 @@ export class ShipView {
     const lines = paths.map((path) => path.map((p) => new Vector3(...p)));
     this.stays.tubes.update(paths);
     MeshBuilder.CreateLineSystem(this.stays.mesh.name, { lines, instance: this.stays.mesh });
+  }
+
+  /** A mast shot away goes over the side to leeward (mast-fall), lies there, sinks and is gone. */
+  private fallMast(mesh: Mesh, i: number, leeward: number, dt: number, hold: boolean): void {
+    let f = this.falls.get(i);
+    if (!f) {
+      const bounds = mesh.getBoundingInfo().boundingBox;
+      // Broken a little above its foot; the side it goes over is the side the wind leans it to.
+      const pivot = new Vector3(0, bounds.minimum.y + 1.5, this.model.def.masts[i]!.z);
+      mesh.setPivotPoint(pivot);
+      f = { fall: new MastFall(Math.max(4, bounds.maximum.y - bounds.minimum.y)), side: Math.sign(leeward) || 1, pivotY: pivot.y, pivotZ: pivot.z };
+      this.falls.set(i, f);
+    }
+    f.fall.step(dt, hold);
+    mesh.setEnabled(!f.fall.gone);
+    mesh.rotationQuaternion = Quaternion.RotationAxis(new Vector3(0, 0, 1), -f.side * f.fall.angle);
+    mesh.position.y = -f.fall.drop;
+  }
+
+  /**
+   * Soot on the side of a section that has burnt or is shot to pieces (below a third of its
+   * strength), once per section: a few blotches over its length, laid like shot holes.
+   */
+  private scorchSections(s: ShipState): void {
+    const h = this.model.def.hull;
+    s.sections.forEach((sec, i) => {
+      if (this.scorched.has(i) || (sec.fire <= 0 && sec.hp > this.model.def.sectionHp / 3)) return;
+      this.scorched.add(i);
+      const zone = Math.floor(i / 2);
+      const side = i % 2 === 1 ? 1 : -1;
+      // Shot to pieces (not only burnt): a stretch of the rail over it is carried away.
+      if (sec.hp <= this.model.def.sectionHp / 3) this.breakRail(side, h.length * (0.3 - zone * 0.3));
+      const world = this.hullSpace.computeWorldMatrix(true);
+      for (let k = 0; k < 3; k++) {
+        const z = h.length * (0.3 - zone * 0.3) + (k - 1) * h.length * 0.07;
+        const y = h.freeboard * (0.35 + 0.25 * ((k + i) % 2));
+        const p = Vector3.TransformCoordinates(new Vector3(side * h.beam * 0.5, y, z), world);
+        this.scorch.add(p, 2.4 + k * 0.6);
+      }
+    });
+  }
+
+  /** A stretch of the cap rail of 4-6 m about z on one side carried away: the rail is rebuilt without it. */
+  private breakRail(side: 1 | -1, z: number): void {
+    const r = this.rails;
+    if (!r) return;
+    const half = 2 + (Math.abs(z * 7.1) % 1);
+    r.gaps.push({ side, from: z - half, to: z + half });
+    r.mesh?.dispose();
+    r.mesh = buildModelRails(this.hullSpace.getScene(), this.hullSpace, r.side, r.wood, r.shadows, r.gaps);
+  }
+
+  /** A ball went into the hull at a world point: a shot hole there (M11). */
+  shotHit(at: { readonly x: number; readonly y: number; readonly z: number }, damage: number): void {
+    this.holes.add(at, Math.min(1.7, 0.9 + damage * 0.03));
   }
 
   /** A gun fired at a world position: the nearest one recoils. */
@@ -447,6 +524,7 @@ export class ShipView {
     const s = e.ship!;
     this.root.position.set(b.pos.x, b.pos.y, b.pos.z);
     this.root.rotationQuaternion!.set(b.rot.x, b.rot.y, b.rot.z, b.rot.w);
+    this.scorchSections(s);
     const tw = windVector(windDirection, windSpeed);
     const aw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
     const states: SailState[] = this.plans.map((p, i) => {
@@ -460,23 +538,35 @@ export class ShipView {
       const fill = Math.min(1.4, s.sailFill[p.mast]![p.sail]!);
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
-      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03, flutter, furled: alive ? 1 - set : 0 };
+      // A yard shot down (rope-cut): it comes down on deck over a second and a half, and its sail with it.
+      const downAt = s.rigging < yardFallsBelow(i) ? (this.yardsDown.get(i) ?? time) : null;
+      if (downAt !== null) this.yardsDown.set(i, downAt);
+      const yardDown = downAt === null ? undefined : { t: Math.min(1, (time - downAt) / 1.5), deck: this.model.def.hull.freeboard + 0.6 };
+      const f = this.falls.get(p.mast);
+      const fall = f ? { roll: -f.side * f.fall.angle, y: f.pivotY, z: f.pivotZ, drop: f.fall.drop, gone: f.fall.gone } : undefined;
+      return { angle, set, billow: lee * (0.3 + 0.8 * fill), visible: alive && set > 0.03 && !yardDown, flutter, furled: alive && !yardDown ? 1 - set : 0, ...(fall ? { fall } : {}), ...(yardDown ? { yardDown } : {}) };
     });
     const dt = Math.max(0, Math.min(0.1, time - this.lastTime));
     this.lastTime = time;
     const awLen = Math.hypot(aw.x, aw.z) || 1;
     const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
-    this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen);
+    this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen, s.mastHp.map((h) => h <= 0));
     this.guns.update(dt);
     this.cloth.setDamage(s.sailCloth);
     this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
     this.updateRunning((plan) => s.sailFill[this.plans[plan]!.mast]![this.plans[plan]!.sail]!);
     this.masts.forEach((m, i) => {
-      m.mesh.setEnabled(s.mastHp[i]! > 0);
-      const bend = bends[i];
-      if (bend) m.apply(bend);
+      if (s.mastHp[i]! > 0) {
+        if (this.falls.delete(i)) m.mesh.rotationQuaternion = Quaternion.Identity();
+        m.mesh.setEnabled(true);
+        const bend = bends[i];
+        if (bend) m.apply(bend);
+        return;
+      }
+      const wreck = s.wrecks.find((w) => w.mast === i);
+      this.fallMast(m.mesh, i, wreck?.side ?? aw.x, dt, (wreck?.left ?? 0) > 0);
     });
-    this.updateStays(bends, s.mastLoad);
+    this.updateStays(bends, s.mastLoad, s, time);
     const fb = bends[this.flagMast];
     if (fb) this.flag.position.set(this.flagBase.x + fb.dx, this.flagBase.y, this.flagBase.z + fb.dz);
     if (s.crew !== this.shownCrew) {
@@ -508,6 +598,8 @@ export class ShipView {
   }
 
   dispose(): void {
+    this.holes.dispose();
+    this.scorch.dispose();
     this.root.dispose();
   }
 }

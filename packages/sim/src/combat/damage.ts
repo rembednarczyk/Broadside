@@ -56,6 +56,12 @@ const hullHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: Event
   return killed > 0 && a.crew > 1.5 ? "crew" : "hull";
 };
 
+/** Mast strength of the ship whose canvas and rigging the damage rates are set for (a brig's). */
+const RIG_MEASURE = 240;
+/** Share of the canvas and of the rigging a unit of damage takes (weighted by the shot's sails and rigging factors). */
+const CLOTH_DAMAGE = 0.0035;
+const RIG_DAMAGE = 0.0012;
+
 const rigHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQueue, shipId: number): HitPart => {
   const a = AMMO[imp.ammo];
   let mast = 0;
@@ -67,8 +73,14 @@ const rigHit = (s: ShipState, imp: Impact, dmg: number, rng: Rng, events: EventQ
       mast = i;
     }
   });
-  s.sailCloth[mast] = Math.max(0, s.sailCloth[mast]! - dmg * a.sails * 0.0035);
-  s.rigging = Math.max(0, s.rigging - dmg * a.rigging * 0.0012);
+  // Canvas and rigging are shares of the whole: a hit takes less of a big ship's and more of a
+  // small one's (her spars and gear in proportion to her masts' strength, at a brig's the rates
+  // of before). Before, one salvo took the same share of any ship's rigging, a liner's as a
+  // schooner's (beta test 19.11); lower rates for all let one brig sweep another unscathed (the
+  // ADR-0005 battle gate), so the brig keeps the old rates.
+  const size = RIG_MEASURE / s.model.def.mastHp;
+  s.sailCloth[mast] = Math.max(0, s.sailCloth[mast]! - dmg * a.sails * CLOTH_DAMAGE * size);
+  s.rigging = Math.max(0, s.rigging - dmg * a.rigging * RIG_DAMAGE * size);
   s.crew -= Math.min(s.crew, Math.floor(dmg * a.crew * 0.03 + rng.next() * 0.5));
   if (Math.abs(imp.local.x) < 1.2 && best < 1.5) {
     s.mastHp[mast] = Math.max(0, s.mastHp[mast]! - dmg * (0.6 + a.rigging * 0.4));
@@ -92,6 +104,7 @@ export const applyImpact = (world: SimWorld, events: EventQueue, e: Entity, imp:
   const part = imp.where === "hull" ? hullHit(s, imp, dmg, rng, events, e.id) : rigHit(s, imp, dmg, rng, events, e.id);
   if (rake > 0) s.crew = Math.max(0, s.crew - Math.floor((crewBefore - s.crew) * RAKE_CREW * rake));
   s.lastHitBy = imp.by;
+  if (!s.hitByPlayer) for (const p of world.with("player")) if (p.id === imp.by) s.hitByPlayer = true;
   events.push({ type: "hit", ship: e.id, by: imp.by, at: imp.world, part, damage: dmg });
   // A heavy hit throws men into the sea (Overboard!): some of the casualties are swimmers.
   const lost = crewBefore - s.crew;

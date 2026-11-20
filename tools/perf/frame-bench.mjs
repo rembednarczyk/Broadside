@@ -48,7 +48,8 @@ const result = await page.evaluate((n) => {
   const px = new Uint8Array(4);
   scene.render();
   // Switching a part recompiles shaders on the next frames: those are rendered, not timed.
-  const time = () => {
+  // The median by default; the mean where frames alternate in cost (the sky redrawn every other frame).
+  const time = (mean = false) => {
     for (let i = 0; i < 3; i++) {
       scene.render();
       gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -61,7 +62,7 @@ const result = await page.evaluate((n) => {
       t.push(performance.now() - t0);
     }
     t.sort((a, c) => a - c);
-    return t[t.length >> 1];
+    return mean ? t.reduce((a, c) => a + c, 0) / t.length : t[t.length >> 1];
   };
   const ships = [...r.views.values()].map((v) => v.root);
   const parts = {
@@ -74,11 +75,30 @@ const result = await page.evaluate((n) => {
       } else r.sky.mesh.isVisible = on;
     },
     ocean: (on) => { r.ocean.mesh.isVisible = on; },
+    // The shallows and surf term of the ocean (no islands: the loop and the surf's lace and noise still run).
+    shallows: (on) => {
+      r.ocean.material.setInt("islandCount", on ? (r.ocean.islandCount ?? 0) : 0);
+    },
     ships: (on) => { for (const s of ships) s.setEnabled(on); },
     shadows: (on) => { scene.shadowsEnabled = on; },
     post: (on) => { scene.postProcessesEnabled = on; },
+    // The post-processes one by one (default pipeline's bloom, SSAO, motion blur, the grade with the sun shafts).
+    "post:bloom": (on) => { const p = scene.postProcessRenderPipelineManager.supportedPipelines.find((x) => x.name === "post"); if (p) p.bloomEnabled = on; },
+    "post:ssao": (on) => { const m = scene.postProcessRenderPipelineManager; for (const c of scene.cameras) { if (on) m.attachCamerasToRenderPipeline("ssao", c); else m.detachCamerasFromRenderPipeline("ssao", c); } },
+    "post:motion": (on) => { for (const pp of scene.postProcesses) if (pp.name === "motion") pp.enabled = on; },
+    "post:grade": (on) => { for (const pp of scene.postProcesses) if (pp.name === "grade") pp.enabled = on; },
   };
+  // The game redraws the sky backdrop every other frame while the view holds still (Sky.refresh);
+  // timed here at every frame, as a turning view does, and the saving of the half rate apart.
+  const backdrop = scene.customRenderTargets.find((t) => t.name === "sky-backdrop");
+  if (backdrop) backdrop.refreshRate = 1;
   const out = { full: time() };
+  if (backdrop) {
+    const every = time(true);
+    backdrop.refreshRate = 2;
+    out["sky:half-rate saves"] = every - time(true);
+    backdrop.refreshRate = 1;
+  }
   for (const [name, set] of Object.entries(parts)) {
     set(false);
     out[name] = out.full - time();

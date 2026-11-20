@@ -5,7 +5,8 @@ import { type Cue } from "@broadside/engine";
  * Routes domain events to the views (Observer): sound cues and player notices. Pure mapping, so
  * it is tested without audio or DOM (`playerId`: sounds of her own ship play only for the player's); the app hands the results to SynthAudio and the HUD.
  */
-export const cueFor = (e: DomainEvent, playerId = -1): Cue | null => {
+/** `shipAt`: where a ship is (for events that name a ship but no place, such as a mast going by the board). */
+export const cueFor = (e: DomainEvent, playerId = -1, shipAt: (id: number) => { x: number; z: number } | null = () => null): Cue | null => {
   switch (e.type) {
     case "gunFired":
       return { kind: "gun", x: e.at.x, z: e.at.z, size: Math.sqrt(e.pounder / 12) };
@@ -14,7 +15,12 @@ export const cueFor = (e: DomainEvent, playerId = -1): Cue | null => {
     case "ricochet":
       return { kind: "splash", x: e.at.x, z: e.at.z, size: 0.5 };
     case "hit":
-      return { kind: "wood", x: e.at.x, z: e.at.z, size: 1 };
+      // Heavier blows crack louder (and the heaviest are heard as timbers stove in).
+      return { kind: "wood", x: e.at.x, z: e.at.z, size: Math.min(2, 0.6 + e.damage / 20) };
+    case "mastFell": {
+      const at = shipAt(e.ship);
+      return at ? { kind: "mast", x: at.x, z: at.z } : null;
+    }
     case "explosion":
       return { kind: "boom", x: e.at.x, z: e.at.z, size: Math.min(2, e.radius / 6) };
     case "magazineExploded":
@@ -33,6 +39,13 @@ export const cueFor = (e: DomainEvent, playerId = -1): Cue | null => {
     case "grounded":
       // Her own crew man the capstan to haul her off.
       return e.ship === playerId ? { kind: "capstan" } : null;
+    case "anchored": {
+      // Letting go: the cable roars out and the anchor strikes the water; weighing: the capstan.
+      if (e.ship !== playerId) return null;
+      if (!e.down) return { kind: "capstan" };
+      const at = shipAt(e.ship);
+      return at ? { kind: "splash", x: at.x, z: at.z, size: 1.5 } : null;
+    }
     case "contractAccepted":
       return { kind: "chest" };
     default:
@@ -75,7 +88,7 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
     case "contractFailed":
       return "notice.contractFailed";
     case "gold":
-      return "notice.gold";
+      return e.reason === "wreck" ? "notice.salvage" : "notice.gold";
     case "tradeRefused":
       return "notice.tradeRefused";
     case "fortSilenced":
@@ -86,6 +99,10 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return e.by === playerId ? "notice.assaultFailed" : null;
     case "grounded":
       return e.ship === playerId ? "notice.grounded" : null;
+    case "anchored":
+      return e.ship === playerId && e.down ? "notice.anchored" : null;
+    case "ammoOut":
+      return e.ship === playerId ? "notice.ammoOut" : null;
     case "weatherChanged":
       return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : null;
     default:

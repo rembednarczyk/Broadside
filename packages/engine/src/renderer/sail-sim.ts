@@ -132,6 +132,22 @@ export class SailSim {
     return c === 0 || (r === 0 && c === COLS);
   }
 
+  /** Shot to rags (M11): every fastening but the first head corner carried away, the sail hangs and flogs from it. */
+  torn = false;
+
+  tear(): void {
+    if (this.torn) return;
+    this.torn = true;
+    const keep = at(ROWS, 0);
+    const cell = (this.outline.width / COLS) * (this.outline.height / ROWS);
+    for (let i = 0; i < N; i++) {
+      if (!this.pinned[i] || i === keep) continue;
+      this.pinned[i] = 0;
+      // A loose edge weighs as the tabling does (see the constructor).
+      this.inv[i] = 1 / (CANVAS * cell * SEAM_WEIGHT * 1.15 * 0.6);
+    }
+  }
+
   /** Lays the cloth flat on its outline, at rest. */
   reset(set: number): void {
     this.reshape(set);

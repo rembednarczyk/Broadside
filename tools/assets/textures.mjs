@@ -28,6 +28,10 @@ const TEXTURES = [
   { id: "dark_planks", maps: { diff: 1024, nor_gl: 1024 } },
   // Sailcloth: the weave, packed as a detail map over the painted canvas (see detailMap below).
   { id: "rough_linen", maps: { diff: 1024, nor_gl: 1024 }, detail: true },
+  // Island terrain (terrain-splat.ts): cliff faces, the tops seen from above, the beaches.
+  { id: "rock_face", maps: { diff: 1024 } },
+  { id: "aerial_grass_rock", maps: { diff: 1024 } },
+  { id: "sandy_gravel_02", maps: { diff: 1024 } },
 ];
 const KEY = { diff: "Diffuse", nor_gl: "nor_gl" };
 

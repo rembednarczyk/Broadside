@@ -46,3 +46,23 @@ describe("event presenter", () => {
     expect(noticeFor({ type: "shipSunk", ship: 2, by: 1 }, 1)).toBe("notice.sunk");
   });
 });
+
+describe("sounds of damage (M11)", () => {
+  it("a mast going by the board is heard where the ship is; heavier hits crack louder", () => {
+    expect(cueFor({ type: "mastFell", ship: 4, mast: 1 }, 1, (id) => (id === 4 ? { x: 10, z: 20 } : null))).toEqual({ kind: "mast", x: 10, z: 20 });
+    expect(cueFor({ type: "mastFell", ship: 9, mast: 0 }, 1, () => null)).toBeNull();
+    const light = cueFor({ type: "hit", ship: 4, by: 1, at: vec3(0, 0, 0), part: "hull", damage: 2 });
+    const heavy = cueFor({ type: "hit", ship: 4, by: 1, at: vec3(0, 0, 0), part: "hull", damage: 30 });
+    expect(light && "size" in light && heavy && "size" in heavy && heavy.size > light.size).toBe(true);
+  });
+});
+
+describe("the anchor (salvage)", () => {
+  it("is heard letting go and weighing, and noticed when it goes down", () => {
+    const at = () => ({ x: 1, z: 2 });
+    expect(cueFor({ type: "anchored", ship: 1, down: true }, 1, at)).toEqual({ kind: "splash", x: 1, z: 2, size: 1.5 });
+    expect(cueFor({ type: "anchored", ship: 1, down: false }, 1, at)).toEqual({ kind: "capstan" });
+    expect(cueFor({ type: "anchored", ship: 7, down: true }, 1, at)).toBeNull();
+    expect(noticeFor({ type: "anchored", ship: 1, down: true }, 1)).toBe("notice.anchored");
+  });
+});

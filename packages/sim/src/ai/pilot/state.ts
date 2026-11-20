@@ -15,7 +15,9 @@ export type PilotOrder =
   /** Fight a ship broadside to broadside (the AI captains' engagement: gunnery range, the side that is loaded). */
   | { kind: "engage"; target: number; side: "port" | "starboard"; range: number }
   /** Close a fort to storming distance; storm it if silenced, else heave to there (bombard). */
-  | { kind: "assault"; fort: number };
+  | { kind: "assault"; fort: number }
+  /** Sail in over a wreck as far as the depth allows and anchor there for the boats (sim salvage). */
+  | { kind: "salvage"; at: P };
 
 export interface PilotState {
   order: PilotOrder;
@@ -23,6 +25,8 @@ export interface PilotState {
   think: number;
   /** Leeway the ship makes (radians, smoothed): the angle her track falls off her heading. */
   leeway?: number;
+  /** The course last given to windward (a tack): the tack is held against it, not against her head of the moment. */
+  tack?: number;
 }
 
 /** A save written with the first, route-only pilot (route, hold, heading, from on the state itself). */

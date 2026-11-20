@@ -39,6 +39,8 @@ page.on("crash", () => console.log("crashed; last logs:\n" + logs.slice(-15).joi
 await page.addInitScript('localStorage.setItem("broadside.help", "1")');
 // SHOT_SETTINGS: graphics settings JSON stored before loading (use without `quality` in the query).
 if (process.env.SHOT_SETTINGS) await page.addInitScript(`localStorage.setItem("broadside.graphics", ${JSON.stringify(process.env.SHOT_SETTINGS)})`);
+// SHOT_INIT: a script run before the page's own (e.g. localStorage choices such as the steering mode).
+if (process.env.SHOT_INIT) await page.addInitScript(process.env.SHOT_INIT);
 // Optional scripted actions during the advance: SHOT_SCRIPT is a function body (b, t) => {...}.
 if (process.env.SHOT_SCRIPT) await page.addInitScript(`globalThis.__shotScript = (b, t) => { ${process.env.SHOT_SCRIPT} }`);
 await page.goto(`http://localhost:${port}/index.html?${query}`);

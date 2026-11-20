@@ -36,7 +36,11 @@ describe("contracts", () => {
     if (sim.jobs.active!.offer.kind === "escort") {
       const dest = sim.ports[sim.jobs.active!.offer.dest]!;
       target.body!.pos = { ...target.body!.pos, x: dest.x, z: dest.z };
-    } else target.ship!.struck = true;
+    } else {
+      // Struck to the player's guns.
+      target.ship!.hitByPlayer = true;
+      target.ship!.struck = true;
+    }
     sim.step();
     const out: DomainEvent[] = sim.drainEvents();
     expect(out.some((e) => e.type === "contractDone")).toBe(true);
@@ -68,5 +72,22 @@ describe("contracts", () => {
     const o = sim.contractOffer(index)!;
     expect(o.reward).toBeGreaterThan(0);
     expect(sim.contractOffer(-1)).toBeNull();
+  });
+
+  it("pays a bounty only when the player's guns struck her", () => {
+    for (let k = 0; k < 6; k++) {
+      const { sim, me, index } = moored();
+      sim.env.time += k * 3600;
+      take(sim, me.id, index);
+      if (sim.jobs.active?.offer.kind !== "bounty") continue;
+      const target = sim.byId(sim.jobs.active.target)!;
+      target.ship!.lastHitBy = 999;
+      target.ship!.struck = true;
+      const gold = sim.purse.gold;
+      sim.step();
+      expect(sim.drainEvents().some((e) => e.type === "contractFailed")).toBe(true);
+      expect(sim.purse.gold).toBe(gold);
+      return;
+    }
   });
 });

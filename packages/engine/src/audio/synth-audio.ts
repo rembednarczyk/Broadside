@@ -21,6 +21,8 @@ export type Cue =
   | { readonly kind: "splash"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "wood"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "boom"; readonly x: number; readonly z: number; readonly size: number }
+  /** A mast going by the board (M11): the crack, the groan of the rigging as it goes over, the splash. */
+  | { readonly kind: "mast"; readonly x: number; readonly z: number }
   | { readonly kind: "bell" }
   /** Coins counted into the chest (prize money, pay, sales). */
   | { readonly kind: "coins" }
@@ -37,11 +39,30 @@ export class SynthAudio {
   private ctx: AudioContext | null = null;
   private scape: Soundscape | null = null;
   private ship: ShipSounds | null = null;
+  private nearby: { sounds: ShipSounds; panner: StereoPannerNode } | null = null;
 
   /** `clipsUrl`: where the recorded clips lie (`<url><name>.mp3`); omitted, everything is synthesised. */
   constructor(private readonly clipsUrl?: string) {}
 
   private master: GainNode | null = null;
+  private ambienceBus: GainNode | null = null;
+  private effectsBus: GainNode | null = null;
+  /** Volumes 0..1 (the options' sound tab), kept until the audio starts on the first touch. */
+  private volumes = { master: 0.8, ambience: 1, effects: 1 };
+
+  /** The options' sound tab: overall volume, the beds of sea and weather, the effects. */
+  setVolumes(v: { master: number; ambience: number; effects: number }): void {
+    this.volumes = { ...v };
+    this.applyVolumes();
+  }
+
+  private applyVolumes(): void {
+    if (!this.ctx || !this.master || !this.ambienceBus || !this.effectsBus) return;
+    const t = this.ctx.currentTime;
+    this.master.gain.setTargetAtTime(this.volumes.master, t, 0.05);
+    this.ambienceBus.gain.setTargetAtTime(this.volumes.ambience, t, 0.05);
+    this.effectsBus.gain.setTargetAtTime(this.volumes.effects, t, 0.05);
+  }
   private noise: AudioBuffer | null = null;
   private windGain: GainNode | null = null;
   private seaGain: GainNode | null = null;
@@ -57,14 +78,19 @@ export class SynthAudio {
     if (!Ctx) return;
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.8;
     const comp = this.ctx.createDynamicsCompressor();
     this.master.connect(comp).connect(this.ctx.destination);
+    // Two buses under the master (the options' sound tab): the looping beds and the effects.
+    this.ambienceBus = this.ctx.createGain();
+    this.ambienceBus.connect(this.master);
+    this.effectsBus = this.ctx.createGain();
+    this.effectsBus.connect(this.master);
+    this.applyVolumes();
     // Long enough that the ear does not catch the loop (two seconds of noise repeat audibly).
     this.noise = this.makeNoise(9);
     this.startBeds();
     if (this.clipsUrl) {
-      this.scape = new Soundscape(this.ctx, this.master, this.clipsUrl);
+      this.scape = new Soundscape(this.ctx, this.effectsBus, this.clipsUrl, this.ambienceBus);
       void this.scape.load();
     }
   }
@@ -93,7 +119,7 @@ export class SynthAudio {
     filter.Q.value = q;
     const gain = ctx.createGain();
     gain.gain.value = 0;
-    src.connect(filter).connect(gain).connect(this.master!);
+    src.connect(filter).connect(gain).connect(this.ambienceBus!);
     src.start();
     return { gain, filter };
   }
@@ -118,8 +144,24 @@ export class SynthAudio {
   /** The player's ship as heard aboard (ropes, deck, canvas, bell, water along the side): needs the clips. */
   setShip(state: ShipAudioState): void {
     if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
-    this.ship ??= new ShipSounds(this.ctx, this.master, this.scape, this.noise);
+    this.ship ??= new ShipSounds(this.ctx, this.effectsBus!, this.scape, this.noise);
     this.ship.update(state);
+  }
+
+  /**
+   * Another ship close by (null: none): her ropes, canvas and hull heard from her side (`pan`), as
+   * the own ship's are (ship-sound-plan), quieter with distance (the state's `aboard`).
+   */
+  setNearby(state: ShipAudioState | null, pan: number): void {
+    if (!this.ctx || !this.master || !this.noise || !this.scape?.ready) return;
+    if (!this.nearby) {
+      const panner = this.ctx.createStereoPanner();
+      panner.connect(this.effectsBus!);
+      this.nearby = { sounds: new ShipSounds(this.ctx, panner, this.scape, this.noise, false), panner };
+    }
+    this.nearby.panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), this.ctx.currentTime, 0.3);
+    this.nearby.sounds.pan = pan;
+    this.nearby.sounds.update(state ?? { aboard: 0, speed: 0, wind: 0, load: 0, luff: 0, heel: 0, bow: 0, canvas: 0, turn: 0, ready: 0, water: 0, halfHour: 0 });
   }
 
   /** Noise bed: wind in m/s, a gust factor 0..1. */
@@ -156,7 +198,7 @@ export class SynthAudio {
     g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
     const pan = ctx.createStereoPanner();
     pan.pan.value = at.pan;
-    src.connect(f).connect(g).connect(pan).connect(this.master!);
+    src.connect(f).connect(g).connect(pan).connect(this.effectsBus!);
     src.start(t0, Math.random(), dur + 0.1);
     if (thump > 0) {
       const o = ctx.createOscillator();
@@ -181,6 +223,10 @@ export class SynthAudio {
     if (cue.kind === "gun") this.burst(at, "lowpass", 900 + 600 / cue.size, 1.1 + cue.size * 0.5, 0.9, 0.9 * cue.size);
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
+    else if (cue.kind === "mast") {
+      this.burst(at, "highpass", 1200, 0.6, 0.9, 0.5);
+      this.burst(at, "bandpass", 1000, 1.4, 0.4, 0);
+    }
     else this.burst(at, "lowpass", 600, 2.2 * cue.size, 1, 1.2);
   }
 
@@ -216,7 +262,7 @@ export class SynthAudio {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.06, t);
       g.gain.exponentialRampToValueAtTime(0.0005, t + 0.18);
-      o.connect(g).connect(this.master!);
+      o.connect(g).connect(this.effectsBus!);
       o.start(t);
       o.stop(t + 0.2);
     });
@@ -234,8 +280,17 @@ export class SynthAudio {
   /** Recorded version of a placed cue, if its clip is loaded (pitch varied per shot, lower for bigger guns). */
   private playRecorded(cue: Cue, at: { gain: number; pan: number; delay: number }): boolean {
     const s = this.scape;
-    if (!s || !("size" in cue)) return false;
+    if (!s) return false;
     const jitter = 0.94 + Math.random() * 0.12;
+    if (cue.kind === "mast") {
+      if (!s.has("ram")) return false;
+      // Mast-fall's few seconds: the crack, the rigging groaning (a slowed creak), the wreck striking the water.
+      s.oneShot("ram", at.gain, at.pan, 0.8 * jitter, at.delay);
+      if (s.has("creak")) s.oneShot("creak", at.gain * 0.8, at.pan, 0.6, at.delay + 0.5);
+      if (s.has("splash")) s.oneShot("splash", at.gain, at.pan, 0.7, at.delay + 4.2);
+      return true;
+    }
+    if (!("size" in cue)) return false;
     if (cue.kind === "gun" && s.has("gun")) s.oneShot("gun", at.gain * Math.min(1.2, 0.5 + cue.size * 0.5), at.pan, jitter / Math.pow(Math.max(0.3, cue.size), 0.25), at.delay);
     else if (cue.kind === "splash" && s.has("splash")) s.oneShot("splash", at.gain * Math.min(1, 0.3 + cue.size * 0.3), at.pan, jitter, at.delay);
     else if (cue.kind === "wood" && s.has("hit")) s.oneShot(cue.size > 1.5 ? "ram" : "hit", at.gain * Math.min(1, 0.4 + cue.size * 0.3), at.pan, jitter, at.delay);
@@ -252,7 +307,7 @@ export class SynthAudio {
       const g = ctx.createGain();
       g.gain.setValueAtTime(a, t0);
       g.gain.exponentialRampToValueAtTime(0.0005, t0 + 1.6);
-      o.connect(g).connect(this.master!);
+      o.connect(g).connect(this.effectsBus!);
       o.start(t0);
       o.stop(t0 + 1.7);
     }

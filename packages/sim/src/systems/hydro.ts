@@ -1,4 +1,4 @@
-import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterHeight, DEG, refit } from "@broadside/core";
+import { type Vec3, WATER_DENSITY, clamp, rotate, rotateInv, vec3, waterState, DEG, refit } from "@broadside/core";
 import { type System } from "./context";
 import { type RigidBody, GRAVITY_VEC, applyForce, applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -6,8 +6,8 @@ import { type GerstnerWave } from "@broadside/core";
 
 /**
  * Hydrostatics and hydrodynamics on the hull samples: buoyancy rho g V_submerged per sample, and
- * anisotropic quadratic drag (a keel resists sideways and vertical motion far more than forward
- * motion). Forward drag grows past hull speed (wave-making resistance by Froude number). The
+ * anisotropic quadratic drag, vertically on the speed relative to the water's orbital motion
+ * (Morison's drag term; a keel resists sideways and vertical motion far more than forward motion). Forward drag grows past hull speed (wave-making resistance by Froude number). The
  * rudder is a foil at the stern; oars push along the keel.
  */
 const G = 9.81;
@@ -16,6 +16,19 @@ const C_SIDE = 1.1;
 const C_BOTTOM = 1.4;
 /** Small linear damping so slow drift and roll settle (skin friction at low speed). */
 const LINEAR_DAMPING = 0.04;
+/**
+ * A ship that has struck heaves to (a topsail backed against the others, the helm down) and lies
+ * nearly still for the victor to board: her way through the water is checked as by this much more
+ * drag ahead. Without it a struck ship under bare poles carried her way 6-9 knots for minutes and
+ * could be neither caught nor boarded (beta test 19.11).
+ */
+const HOVE_TO = 8;
+/**
+ * Going astern a hull meets the water with her square stern and the rudder blade across the flow:
+ * several times the drag of her fine entry ahead. With the same drag both ways a ship in irons
+ * made 3-4.5 knots of sternway for over a minute (beta test 19.11); with this, half that.
+ */
+const ASTERN_DRAG = 4;
 const RUDDER_MAX = 35 * DEG;
 /** Game scale on the rudder: real ships turn in 3 hull lengths; the game wants about 1.5-2. */
 const RUDDER_GAIN = 2.2;
@@ -29,19 +42,28 @@ const waveMultiplier = (speed: number, length: number): number => {
 const hullForces = (b: RigidBody, s: ShipState, waves: readonly GerstnerWave[], t: number, far: boolean): void => {
   const fwd = rotateInv(b.rot, b.vel).z;
   const waveMul = waveMultiplier(fwd, s.model.def.hull.length);
-  const drag = refit(s.upgrades, "drag");
+  const drag = refit(s.upgrades, "drag") * (s.struck && !s.sinking ? HOVE_TO : 1);
   for (const smp of far ? s.model.samplesFar : s.model.samples) {
     const wp = bodyToWorld(b, smp.p);
-    const wy = waterHeight(waves, wp.x, wp.z, t);
+    // The water there: its surface and how it moves round the sample (the waves' orbits, at the
+    // sample's depth below the mean sea level).
+    const water = waterState(waves, wp.x, wp.z, t, Math.max(0, -wp.y));
+    const wy = water.height;
     const f = clamp((wy - (wp.y - smp.height / 2)) / smp.height, 0, 1);
     if (f <= 0) continue;
     applyForceAt(b, vec3(0, WATER_DENSITY * G * smp.volume * f, 0), wp);
-    const v = rotateInv(b.rot, pointVelocity(b, wp));
+    // Drag on the hull's vertical motion through the water, not against a still sea (the drag
+    // term of Morison's equation): a crest rising under the bottom or against the side strikes it,
+    // and the hull heaves and pitches with the swell. The horizontal orbits are left out: in full,
+    // or at a third, they pushed the ships off their courses (the playtest audit's autopilot
+    // stopped finishing its contracts).
+    const pv = pointVelocity(b, wp);
+    const v = rotateInv(b.rot, vec3(pv.x, pv.y - water.velocity.y, pv.z));
     const k = 0.5 * WATER_DENSITY * f;
     const local = vec3(
       -k * C_SIDE * smp.areaSide * Math.abs(v.x) * v.x - LINEAR_DAMPING * k * smp.areaSide * v.x * 10,
       -k * C_BOTTOM * smp.areaBottom * Math.abs(v.y) * v.y - LINEAR_DAMPING * k * smp.areaBottom * v.y * 10,
-      -k * C_FORWARD * waveMul * drag * smp.areaFront * Math.abs(v.z) * v.z - LINEAR_DAMPING * k * smp.areaFront * v.z,
+      -k * C_FORWARD * waveMul * drag * (v.z < 0 ? ASTERN_DRAG : 1) * smp.areaFront * Math.abs(v.z) * v.z - LINEAR_DAMPING * drag * k * smp.areaFront * v.z,
     );
     applyForceAt(b, rotate(b.rot, local), wp);
   }

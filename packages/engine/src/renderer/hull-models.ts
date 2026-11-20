@@ -33,6 +33,7 @@ const HULL_GAIN = 1.6;
 export class HullModels {
   private readonly plankTextures = new Map<ShipClassId, Texture>();
   private readonly sideCache = new Map<ShipClassId, (number | null)[]>();
+  private readonly deckCache = new Map<ShipClassId, (number | null)[]>();
   private readonly loaded = new Map<ShipClassId, { container: AssetContainer; metrics: HullMetrics }>();
   /** The light tier of the full models, for ships away from the camera (level of detail); absent where the file is. */
   private readonly far = new Map<ShipClassId, AssetContainer>();
@@ -150,6 +151,35 @@ export class HullModels {
       return best;
     });
     this.sideCache.set(id, out);
+    return out;
+  }
+
+  /**
+   * Height of the model's own deck at points z of hull space (null where none is found), by rays
+   * cast straight down from `from(z)` at three points across the deck: the lowest hit within
+   * `depth` is the deck (hatches, guns and fittings stand on it, so they are hit higher), the
+   * same ray casting as `sides`, once per class and cached.
+   */
+  decks(id: ShipClassId, meshes: readonly AbstractMesh[], parent: TransformNode, points: readonly { z: number; from: number; half: number }[], depth: number): (number | null)[] {
+    const cached = this.deckCache.get(id);
+    if (cached) return cached;
+    parent.computeWorldMatrix(true);
+    for (const m of meshes) m.computeWorldMatrix(true);
+    const off = parent.getAbsolutePosition();
+    const out = points.map((p) => {
+      let low: number | null = null;
+      for (const across of [-0.5, 0, 0.5]) {
+        const ray = new Ray(new Vector3(off.x + across * p.half, off.y + p.from, off.z + p.z), new Vector3(0, -1, 0), depth);
+        let near: number | null = null;
+        for (const m of meshes) {
+          const hit = ray.intersectsMesh(m, false);
+          if (hit.hit && hit.pickedPoint) near = Math.max(near ?? -Infinity, hit.pickedPoint.y - off.y);
+        }
+        if (near !== null) low = Math.min(low ?? Infinity, near);
+      }
+      return low;
+    });
+    this.deckCache.set(id, out);
     return out;
   }
 }

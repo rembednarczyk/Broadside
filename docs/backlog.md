@@ -109,7 +109,7 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 ### M8 dopracowanie modeli i walki (plan z 17.11, po 93afbcf)
 - [x] mniej upraszczać (właściciel, 17.11, drugi raz): wrak z Uelvesbüll w siatce 362 tys. trójkątów i teksturach 2048, Älvsnabben jako drugi wrak (761 tys., 30 MB), skan działka z teksturą (12 tys. trójkątów na lufę) na statkach do 140 m od kamery, pełne kadłuby także na medium; działa stoją przy rzeczywistej burcie modelu (promień w siatkę); naprawione rysowanie wnętrza kadłuba zamiast poszycia i brak normalnych w modelach (17.11); zbudowana gra 77 MB
 - [x] udźwiękowienie statku (właściciel, 17.11): reżyser dźwięków statku (`engine/audio/ship-sound-plan.ts`, testowany) ze stanu symulacji: skrzypiący pokład (pętla z przechyłem i obciążeniem masztów), woda wzdłuż burty (z prędkością), wiatr w olinowaniu (ton eolski ze wzoru Strouhala), liny jęczące pod obciążeniem i w szkwale, bloki i bieg załogi przy stawianiu żagli, brasowanie przy zwrocie, łopot i strzał płótna, kroki wachty, dzwon okrętowy co pół godziny wachty (1–8 uderzeń parami), wytaczanie działa po załadowaniu, dziób uderzający w falę, pompa przy wodzie w kadłubie, kabestan przy mieliźnie, szable i pistolety przy abordażu, monety, skrzynia przy zleceniu; nagrania: JC Sounds Pirate Pack (CC BY 4.0) i kabestan (CC0); nieodsłuchane w kontenerze
-- [ ] dźwięki statku, czego jeszcze brak: głosy i komendy załogi, gwizdek bosmański, kotwica (łańcuch i plusk), ster (skrzyp rumpla), ogień na pokładzie, dźwięki innych statków z bliska (ich liny i żagle), nagrany łopot żagla zamiast syntezy
+- [ ] dźwięki statku, czego jeszcze brak (19.11 zrobione: kotwica, skrzyp steru, trzask ognia, gwizdek bosmański, inne statki do 150 m z ich strony): głosy i komendy załogi, nagrany łopot żagla zamiast syntezy
 - [x] fizyka żagli, część 1 (17.11): płótno jako symulowana tkanina (XPBD, stały krok 1/120 s, bez losowości) dla statków do 220 m od kamery: żagiel przywiązany do rei, masztu, sztagu i szotów, skrojony z zapasem (brzuch ok. 11% cięciwy), nić tylko ciągnie, grawitacja i ciśnienie wiatru z wypełnienia żagla z symulacji, łopot od fali biegnącej przy utracie wiatru, zbieranie do rei przy refowaniu; przeszycia z `SAIL_LAYOUT` wchodzą do fizyki: każda linia brytu, refbanty i obszycie są sztywniejsze na zginanie i cięższe (test: zszyty żagiel ma mniejszy brzuch i spokojniejsze liki niż gładkie płótno); siatka żagla 12 x 8; koszt ok. 0,17 ms na żagiel i klatkę
 - [x] kasztel statku gracza bez podłogi (uwaga właściciela, 17.11): cięcie modelu nad pokładem przechodziło przez kasztel rufowy i zostawiało otwartą skorupę; gra wykrywa przekroje, w których burta sięga wysokości cięcia, i zamyka je pokładem z desek od burty do burty, wysokość nadburcia poniżej góry
 - [x] kasztel rufowy jak na statku referencyjnym (17.11): na przeciętych przekrojach rufy modelu stoi kasztel wysokości 2,5 m (ściany z deskowaniem i oknami galerii świecącymi nocą, pokład z desek, tralkowa balustrada dookoła, schody z obu burt na śródokręcie, trzy latarnie rufowe przygaszone za dnia); układ w `castle-layout.ts` (wspólny dla siatek i katalogu części: `castle`, `lantern`); to zamyka też pozycję „latarnie rufowe”
@@ -131,7 +131,13 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] zrzut salwy burtowej z bliska: rząd błysków i dym wzdłuż burty, salwa działa (17.11); odjazdu luf i zgodności z furtami kadłuba z modelu nie widać w rozdzielczości zrzutu, do sprawdzenia na żywo
 - [x] jasna płaszczyzna pod rufą: to było morze widziane przez niewyrysowane poszycie kadłuba z modelu (zgubiona orientacja ścian przy zamianie materiałów), naprawione (17.11)
 - [ ] kadłub okrętu liniowego z modelu trójpokładowca 1660 (zamiast szkieletu 1700), potem karaka dla kolejnej klasy bez modelu
-- [ ] łup z wraków: postój przy wraku daje złoto albo ładunek raz na wrak, znacznik na mapie (reguła symulacji, złoty hash ręcznie)
+- [x] łup z wraków (18.11): postój do 60 m od wraku, najwyżej 1,5 m/s przez 5 s daje raz złoto 150–600 z ziarna świata
+  (`core/data/salvage.ts`, `sim/economy/salvage.ts`, zdarzenie złota z powodem `wreck`, komunikat „Łup z wraku!”, zapis
+  w migawce, test); złoty hash bez zmian (przebieg kontrolny bez archipelagu)
+- [x] (19.11) tapnięcie wraku jako rozkaz „ratuj”: podejście na głębszą wodę, kotwica, szalupy w zasięgu 150 m
+- [x] (19.11) znacznik najbliższego wraku (do 900 m, gdy nie ma wroga) na krawędzi ekranu, stuknięcie wydaje rozkaz ratowania
+- [x] (19.11) wraki: oprócz złota ładunek o wartości 200–1200 jako łup do sprzedania w porcie
+  zamiast samego złota
 - [ ] audyt budżetu trójkątów i wywołań rysowania na preset (pełne kadłuby, działa, wraki), próg w ADR-0005
 
 ### M9 grafika do poziomu klatek referencyjnych i kolizje części statku (właściciel, 17.11)
@@ -153,11 +159,98 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] D3 (właściciel 17.11). Proste sterowanie, domyślne: tapnięcie w morze wysyła tam załogę (pilot kursem jak kapitanowie AI, halsowanie z jednym zwrotem na laylinie i poprawką na dryf, zwinięcie żagli u celu), przeciągnięcie palcem rysuje kurs, po którym statek płynie i potem trzyma jego kierunek; trasa i cel widoczne na wodzie; klasyczny ster w ustawieniach (Sterowanie: Ster), A i D zawsze przejmują koło (`ai/pilot.ts`, `systems/pilot.ts`, `controllers/course-gestures.ts`, `course-view.ts`)
 - [ ] D2 (w toku, właściciel 17.11). żywy pokład: więcej postaci, animowanych (animacje z Universal Animation Library Quaterniusa wypieczone do tekstur wierzchołków, `BakedVertexAnimationManager` Babylona dla instancji), z rolami ze stanu symulacji: ludzie przy brasach przy zmianie kursu i trymu (D1), na rejach przy zmianie żagli i refowaniu, obsługa dział przy salwie i ładowaniu, sternik przy kole, obserwator na marsie, ludzie na wantach; podział z `crew` statku (straty widać), deterministycznie z czasu symulacji. Zrobione: postacie z kośćmi i 7 klipów (spoczynek, rozmowa, ciągnięcie, ster, praca na klęczkach, obsługa, obserwacja) wypieczone do tekstury macierzy kości (`crew-anim.mjs`, `CrewRig`), klip i faza na instancję; stanowiska z rolami (ster, mars, reling kasztelu, fały, brasy, działa pokładu górnego, śródokręcie; `crew-layout.ts`) i klip ze stanu statku (`crew-roles.ts`, `crew-activity.ts`): ciągnięcie przy brasowaniu i zmianie żagli, obsługa 18 s po strzale, sternik, obserwator, pobici stoją. Część 2: druga biblioteka (CC0): oparcie o reling, wołanie, skrzyżowane ręce; oficer wachtowy przy sterniku; koło sterowe na kasztelu; zbliżenie: pozy poprawne, postacie na pokładzie. Część 3: wspinaczka z Mixamo (pliki właściciela): topmani przy każdej drabince want pod marsem wchodzą po wyblinkach przy stawianiu i zwijaniu żagli, przechodzą przez krawędź marsa, stoją tam 20 s po robocie i schodzą (`crew-aloft.ts`, retargeting `tools/assets/retarget.mjs`). Zostaje: ruch między stanowiskami (chód), wyjście na reje (brak klipu chodzenia po pertach), klipy liny i ściany (wypieczone, jeszcze nieużyte: abordaż przez burtę, wejście po linie), obsługa dział niższych pokładów widoczna przez furty, latarnie wacht nocą (`Idle_Lantern_Loop`)
 
+### Promienie słońca przez olinowanie (18.11)
+- [x] zastąpione promieniami w przestrzeni ekranu w końcowym przebiegu (GPU Gems 3 rozdz. 13): `VolumetricLightScatteringPostProcess`
+  nic nie rysował (tarcza słońca poza warstwami kamery), a co klatkę renderował scenę drugi raz; usunięty
+
+### Woda wokół statku (właściciel 18.11: „maksymalny realizm… chlapanie wody o burtę, uderzanie fal i fizyka”)
+- [x] chlapanie o burtę z prędkości względnej wody i kadłuba (`effects/hull-slap.ts`, Kerner 2015), piana po uderzeniu
+  przy linii wodnej (`shipB.w` w shaderze), `waterState` w `core` (wysokość i prędkość orbitalna wody w fali, test)
+- [x] fizyka (18.11, zgoda właściciela): opór pionowy na prędkości względem ruchu wody w fali (człon oporu Morisona):
+  uderzenia fali w dno i burtę, kołysanie i nurkowanie z martwą falą; poziomy ruch wody pominięty (wytrącał statki z kursu,
+  autopilot audytu rozgrywki nie kończył zleceń). Reżyser świata liczy cały skład grupy (konwój to 4 statki), żeby morze
+  mieściło się w budżecie + 3 z graczem (ADR-0005)
+- [ ] do rozważenia: poziomy ruch wody przy statkach gracza (z regulatorem kursu autopilota odpornym na pchnięcia fal)
+
+### Sterowanie „Akcja” (właściciel 18.11: pad jak w Black Flag)
+- [x] Żeglowanie wspomagane w symulacji (prędkość kadłubowa na każdym kursie, skręt po kole, wstecz), pad w HUD, klawiatura, pomoc PL i EN.
+- [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
+- [x] Kamera w tym trybie za rufą (beta-test 19.11).
+- [ ] Większe cele dotykowe przycisków amunicji i żagli na telefonie (21–24 px), kamera pościgowa odsuwająca się
+  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka na krawędzi ekranu, bez autopilota).
+
+### M11 uszkodzenia jak w Black Flag (właściciel 19.11: „stany zdrowia i wizualne uszkodzenia, lecące deski, łańcuchy ścinają olinowanie, żagle, reje i maszty”)
+Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie
+`mastFell`; widok ma dziury w żaglach, drzazgi jako płaskie iskry, maszt po upadku po prostu znika; AI poddaje się tylko
+przy załodze lub kadłubie poniżej 15%. Kolejność:
+1. [x] (19.11, bez zdarzenia zmiany stanu: dojdzie z punktem 5) **Stany zdrowia** (tabela w `core/data`, wzorzec Type Object): nienaruszony, uszkodzony, ciężko uszkodzony,
+   unieruchomiony, tonący; liczone z sekcji kadłuba, masztów i olinowania; zdarzenie przy zmianie stanu; pasek celu w HUD
+   podzielony na odcinki, nazwa stanu (EN, PL).
+2. [x] (19.11: odłamek generowany z teksturą desek trafionego kadłuba; skany desek okazały się atlasem z pąklami, 24–83 tys. trójkątów) **Lecące deski**: modele desek z folderu właściciela (`double_dutch_outer_pinewood_plank`,
+   `double_dutch_inner_oak_strake`, `pine_wood_double_outer_plank`, autorzy do CREDITS.md) przez `tools/assets/optimize.mjs`
+   do kilkuset trójkątów, pula instancji (Object Pool, thin instances), lot balistyczny z obrotem tylko w widoku (bez
+   wpływu na symulację i złoty hash), plusk i dryf na fali z `core/ocean`, znikanie po kilkunastu sekundach; liczba
+   desek rośnie z obrażeniami trafienia; obecne iskry zostają jako drobne drzazgi.
+3. [x] (19.11: przestrzeliny, dym przy ciężkich uszkodzeniach, osmalenia sekcji po pożarze albo poniżej 1/3 wytrzymałości, wyrwany reling 4–6 m nad rozbitą sekcją kadłuba z modelu; trafienia sprzed doczytania modelu kadłuba giną przy przebudowie widoku) **Uszkodzenia kadłuba widoczne na statku**: przestrzeliny w miejscu trafień (ciemne otwory z poszarpaną krawędzią,
+   naklejki na kadłubie modelu, limit na statek), w stanie ciężkim osmalenia, wyrwane fragmenty relingu i nadburcia, dym
+   z kadłuba, przechył z zalania (fizyka już jest).
+4. [~] (19.11: maszt przewraca się za burtę i jako wrak hamuje i skręca statek, dopóki załoga go nie odetnie (40 s przy pełnej załodze); przestrzelone liny zwisają; żagiel w strzępach wisi z rogu; gracz celuje łańcuchami w maszty (40% wysokości), kartaczami w pokład; reje spadają na pokład, każda przy swoim progu olinowania 8–42%, razem z żaglem (tylko widok; symulacja dalej liczy ciąg żagli z udziału olinowania w trymie)) **Łańcuchy i olinowanie**: w symulacji olinowanie rozbite na grupy (wanty, sztagi, brasy, fały) i reje z własnym
+   HP, łańcuch trafia głównie w nie; w widoku przecięte liny zwisają i kołyszą się (wahadło), porwany żagiel wisi z jednego
+   rogu i łopocze (zerwane więzy w tkaninie XPBD), reja spada na pokład albo za burtę, maszt łamie się i przewraca za burtę
+   (animacja obrotu wokół pnia), wrak masztu wleczony przy burcie hamuje i skręca statek, dopóki załoga go nie odetnie.
+5. [x] (19.11: poddanie unieruchomionego, słabsza obrona przy abordażu, przycisk „Unieruchomiony: abordaż” w panelu celu wydaje rozkaz podejścia i abordażu) **Unieruchomienie i poddanie** (jak „disabled” w Black Flag): bez masztów albo z olinowaniem poniżej progu statek
+   nie ucieknie; kapitan AI poddaje się, gdy wróg jest blisko, a jego załoga słabsza; abordaż unieruchomionego łatwiejszy;
+   w HUD przycisk abordażu przy unieruchomionym celu w zasięgu; złoty hash ręcznie z nazwą reguły, `pnpm run audit`
+   (bitwy) w progach ADR-0005.
+6. [x] (19.11: trzask, jęk olinowania i plusk przy upadku masztu z nagrań ram, creak, splash; mocniejsze trafienia głośniejsze; plusk rei czeka na reje z HP) **Dźwięk**: trzask belek, pękający maszt, plusk spadającej rei.
+Weryfikacja: testy reguł (stany, łańcuch na olinowaniu, poddanie), zrzuty salwy łańcuchowej z bliska (`SHOT_SCRIPT`)
+przed i po, audyt bitew, przeglądarka statku i APK.
+
+### Wyspy i mapa (właściciel 19.11: „podkręć wygląd wysp i mapy”)
+- [x] Ląd wysp się rysuje (odwrócona kolejność wierzchołków), tekstury skał, trawy i piasku, gęstsza siatka od high.
+- [x] Drzewa: palmy (wygięty pień, korona wiszących liści) przy brzegu i drzewa liściaste (korona z kilku brył) w głębi
+  dżungli, instancje obrócone, w różnych odcieniach, odrzucane wyspa po wyspie i niewidoczne dalej niż 1,8 km.
+- [x] Ląd wysp z odrzucaniem poza kadrem i rzadką siatką dalej niż 1,4 km: przy wyspie 1,8 → 0,76 mln trójkątów.
+- [x] Dalekie wybrzeże: wierzch klifu z głębią, żleby na ścianie, ton trochę ciemniejszy od mgły (ref_095, ref_176).
+- [x] Mapa morska (przycisk „Mapa” w rogu, menu, klawisz M): wyspy z płyciznami, porty, forty, wraki, statki, kurs
+  i cel; dotknięcie morza w prostym sterowaniu wyznacza tam kurs.
+- [x] Nazwy portów się nie powtarzają (24 nazwy losowane bez zwracania, razem ze zmianą świata 19.11).
+- [x] Świat w wersji 2 (właściciel 19.11: „wyspy, półwyspy, kawałek kontynentu, również w grze”): pas kontynentu
+  wzdłuż jednej krawędzi morza z zatokami i cyplami, 2–3 półwyspy zgięte w kolanie, wydłużone wyspy; ląd w kafelkach
+  500 m z dwoma poziomami szczegółu, drzewa na kafelek, płycizny od osi lądu, mapa z konturów (marching squares),
+  trzy porty na kontynencie, stare zapisy przenoszone na nowy ląd.
+- [x] Etykiety portów na mapie rozsuwane: zachłanne rozmieszczanie z ośmiu miejsc wokół znaku i dwa razy dalej.
+- [x] Pierścienie dalekiego wybrzeża (tło) wygaszone w stronę kontynentu (60–90° od jego kierunku), tam horyzont
+  wypełnia narysowany ląd.
+- [x] Mapa: mgła wojny (19.11): morze w komórkach 250 m, obejrzane w promieniu 1,2 km od statku gracza, zapisane w grze;
+  forty i wraki tylko w obejrzanych miejscach, inne statki tylko w zasięgu wzroku, porty zawsze.
+- [x] Zasięg wzroku obserwatora we mgle krótszy (do 30% przy gęstej, reguła wykrywania kapitanów AI).
+- [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku nocą (symulacja nie zna dziś pory dnia: godzina żyje w app).
+
+### Po beta-teście (19.11, trzech testerów; raporty w scratchpadzie sesji, poprawki w decyzjach)
+- [ ] Samoobrona załogi w prostym sterowaniu (działa strzelają same do wroga w zasięgu, jeśli gracz nie wydał rozkazu).
+- [x] Pilot i kapitanowie AI nie wypływają poza mapę: nawigacja czyta dno z mieliznami 150 m przed krawędzią morza.
+- [x] Cel zlecenia pojawia się z dala od wrogich mu fortów (zasięg + 400 m) i statków (900 m), do 8 prób (20.11):
+  na ziarnie 3 cel przeżył do terminu (wcześniej zginął po 42 s od innych).
+- [ ] Kapitan AI w walce wchodzi na mieliznę i tonie (audyt rozgrywki, ziarno 21: fregata-cel ostrzeliwana przez
+  inny statek, na mieliźnie po 3,8 min).
+- [ ] Zlecenia: zdanie, co trzeba zrobić, i znacznik celu na krawędzi ekranu (także eskortowanego statku).
+- [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
+- [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
+- [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.
+- [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
+- [ ] Pogoda: wiatr rośnie od świeżego do sztormu w ok. 80 s, sztorm trwa 2–4 min (wolniejsze przejścia, zapowiedź).
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu
 z wyostrzeniem, gęstość pikseli do 2, skany dział do 45 m, kadłub z modelu w dwóch poziomach (pełny do 50 m), ocean
 pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po sprawdzeniu na telefonie:
+- [x] 19.11: niebo w 35% rozdzielczości na high i ultra (klatka −28% w pomiarze), dynamiczna rozdzielczość pod suwakiem
+- [x] 19.11: piana przyboju liczona tylko przy brzegu (ultra: ocean 817 → 679 ms, −17%)
+- [x] 19.11: tło nieba co drugą klatkę, gdy widok stoi (obrót powyżej 0,003 rad na klatkę albo błyskawica odświeża od razu): high oszczędza 18% klatki przy nieruchomym widoku (frame-bench, średnia z 12 klatek)
+- [x] 19.11: limit 30 kl./s jako opcja w zakładce grafiki (telefon: równiej, mniej grzania); dynamiczna rozdzielczość z progami od limitu
+- [ ] chmury: rozłożenie marszu na kilka klatek z reprojekcją (Schneider 2015), jeśli niebo dalej będzie największym kosztem
 - [ ] pomiar na prawdziwym telefonie (klatki na high i ultra po zmianach); bez niego koszt MSAA jest nieznany (SwiftShader
   cieniuje każdą próbkę osobno, więc zawyża go)
 - [ ] ultra: MSAA ×4 → ×2 albo domyślne 80–85% rozdzielczości, jeśli telefon nie uciągnie naprawionego wygładzania
@@ -167,7 +260,10 @@ pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po spra
   `oceanCells` na ultra (360) i wywołania `hullWater` w shaderze wierzchołków
 - [ ] statki: załoga z animacją wierzchołkową i liny ruchome (w podziale kosztu pojawiają się po 0–8%, pomiar zaszumiony:
   powtórzyć z większą liczbą klatek)
-- [ ] post-procesy na ultra (ok. 13%): SSAO w połowie rozdzielczości już jest; sprawdzić koszt rozmycia ruchu i bloomu
+- [x] post-procesy na ultra, pomiar 19.11 (12 klatek, `frame-bench` z podziałem): razem 8%, z tego SSAO 8%, bloom 2%,
+  rozmycie ruchu i gradacja ok. 0%; jedyny kandydat to SSAO (już w połowie rozdzielczości)
+- [ ] płycizny na ultra nadal 7% po przyboju liczonym tylko przy brzegu; skrócenie listy wysp do 2,2 km od kamery nie
+  zmieniło kosztu w scenie pomiaru (wycofane): koszt siedzi w fbm najbliższych wysp, kandydat to maska z tekstury
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

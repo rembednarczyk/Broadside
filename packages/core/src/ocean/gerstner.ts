@@ -63,6 +63,38 @@ export const waterHeight = (waves: readonly GerstnerWave[], x: number, z: number
   return displacement(waves, x0, z0, t).y;
 };
 
+/**
+ * The water at a world point: the surface height over it and the velocity of the water `depth`
+ * metres below that surface. The velocity is the time derivative of the Gerstner displacement at
+ * the rest position (the orbital motion of the water particles, GPU Gems 1 ch. 1), decaying as
+ * e^(-k depth) into the depth as in Airy's linear theory; one fixed-point search serves both.
+ */
+export const waterState = (waves: readonly GerstnerWave[], x: number, z: number, t: number, depth = 0): { height: number; velocity: Vec3 } => {
+  let x0 = x;
+  let z0 = z;
+  for (let i = 0; i < 4; i++) {
+    const d = displacement(waves, x0, z0, t);
+    x0 = x - d.x;
+    z0 = z - d.z;
+  }
+  let height = 0;
+  let vx = 0;
+  let vy = 0;
+  let vz = 0;
+  const below = Math.max(0, depth);
+  for (const w of waves) {
+    const th = w.k * (w.dirX * x0 + w.dirZ * z0) - w.omega * t + w.phase;
+    const s = Math.sin(th);
+    const c = Math.cos(th);
+    height += w.amplitude * s;
+    const fall = Math.exp(-w.k * below) * w.omega;
+    vx += w.qa * w.dirX * s * fall;
+    vz += w.qa * w.dirZ * s * fall;
+    vy -= w.amplitude * c * fall;
+  }
+  return { height, velocity: vec3(vx, vy, vz) };
+};
+
 /** Surface normal near a world point (central differences on waterHeight). */
 export const waterNormal = (waves: readonly GerstnerWave[], x: number, z: number, t: number, eps = 0.5): Vec3 => {
   const hx = waterHeight(waves, x + eps, z, t) - waterHeight(waves, x - eps, z, t);

@@ -1,6 +1,9 @@
 import { type System } from "./context";
 import { helmSystem } from "./helm";
 import { sailSystem } from "./sails";
+import { assistSystem } from "./assist";
+import { wreckageSystem } from "./wreckage";
+import { anchorSystem } from "./anchor";
 import { hydroSystem } from "./hydro";
 import { integrateSystem } from "./integrate";
 import { gunsSystem } from "./guns";
@@ -21,6 +24,8 @@ import { collisionSystem } from "./collisions";
 import { populationSystem } from "./population";
 import { smokeSystem } from "./smoke";
 import { contractSystem } from "./contracts";
+import { salvageSystem } from "../economy/salvage";
+import { surveySystem } from "../economy/survey";
 import { rescueSystem } from "./rescue";
 
 /**
@@ -34,6 +39,9 @@ export const createSystems = (): readonly System[] => [
   reefingSystem,
   helmSystem,
   sailSystem,
+  assistSystem,
+  wreckageSystem,
+  anchorSystem,
   hydroSystem,
   groundingSystem,
   integrateSystem,
@@ -48,6 +56,8 @@ export const createSystems = (): readonly System[] => [
   castawaySystem,
   provisionsSystem,
   contractSystem,
+  salvageSystem,
+  surveySystem,
   rescueSystem,
   cleanupSystem,
   populationSystem,

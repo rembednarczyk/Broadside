@@ -153,4 +153,17 @@ describe("sailcloth simulation", () => {
       expect(belly, shape).toBeLessThan(3);
     }
   });
+  it("shot to rags, tears loose and hangs from its one remaining corner", () => {
+    const s = new SailSim(square);
+    for (let i = 0; i < 120; i++) s.advance(1 / 60, 1, 0.8, 8, 0);
+    const kept = Array.from(s.positions.slice(at(SAIL_ROWS, 0), at(SAIL_ROWS, 0) + 3));
+    const far0 = Array.from(s.positions.slice(at(SAIL_ROWS, SAIL_COLS), at(SAIL_ROWS, SAIL_COLS) + 3));
+    s.tear();
+    for (let i = 0; i < 6 * 60; i++) s.advance(1 / 60, 1, 0.8, 8, 0);
+    const p = s.positions;
+    expect(p.every(Number.isFinite)).toBe(true);
+    expect(Array.from(p.slice(at(SAIL_ROWS, 0), at(SAIL_ROWS, 0) + 3))).toEqual(kept);
+    const far = Array.from(p.slice(at(SAIL_ROWS, SAIL_COLS), at(SAIL_ROWS, SAIL_COLS) + 3));
+    expect(Math.hypot(far[0]! - far0[0]!, far[1]! - far0[1]!, far[2]! - far0[2]!)).toBeGreaterThan(2);
+  });
 });

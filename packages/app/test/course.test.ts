@@ -65,7 +65,7 @@ describe("simple steering in the app", () => {
     expect(stroke).toBe(0);
   });
 
-  it("reads a tap by what it falls on: board an enemy, follow a friend, put into port, storm a fort, stop the ship, else sail there", () => {
+  it("reads a tap by what it falls on: fight an enemy broadside, follow a friend, put into port, storm a fort, stop the ship, else sail there", () => {
     const at = { x: 0, z: 0 };
     const items: Tappable[] = [
       { kind: "self", id: 1, sx: 100, sy: 100, reach: 30, at },
@@ -77,7 +77,7 @@ describe("simple steering in the app", () => {
     const water = { x: 5, z: 6 };
     const tap = (x: number, y: number) => orderFor(tappedAt(x, y, items), water)?.kind;
     expect(tap(105, 98)).toBe("stop");
-    expect(tap(310, 95)).toBe("board");
+    expect(tap(310, 95)).toBe("engage");
     expect(tap(495, 105)).toBe("follow");
     expect(tap(120, 320)).toBe("dock");
     expect(tap(340, 300)).toBe("storm");

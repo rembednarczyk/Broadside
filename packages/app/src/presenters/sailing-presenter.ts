@@ -42,6 +42,7 @@ export const presentSailing = (sim: Simulation, playerId: number): SailingHud | 
     // Under a storm cell the captain is in a squall, whatever the open sea is doing.
     weather: cell > 0.3 ? "squally" : (sim.env.weather?.kind ?? null),
     mastLoad: [...s.mastLoad],
-    shoalAhead: shoalAhead(sim, b.pos.x, b.pos.z, heading, s.model.def.hull.draft),
+    // The leadsman calls only with way on (lying at the quay, the shoal ahead is the harbour's own).
+    shoalAhead: Math.hypot(b.vel.x, b.vel.z) > 1 && shoalAhead(sim, b.pos.x, b.pos.z, heading, s.model.def.hull.draft),
   };
 };

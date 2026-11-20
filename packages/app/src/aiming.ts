@@ -27,7 +27,12 @@ export const aimOf = (sim: Simulation, me: Entity, mount: MountKind, side?: "por
   const useFort = fort && (!aim || fort.range < aim.range);
   const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
   const bearing = useFort ? fort.bearing : aim?.bearing;
-  return { range, ...(bearing !== undefined ? { bearing } : {}), aimHeight: useFort ? fort.aimHeight : 0, locked: !!(useFort || aim) };
+  // The gunners lay for what the shot is for (Black Flag's chain shot at the rigging): chain and bar
+  // at the masts, two fifths up as the AI's gunners do (sim tactics.aimHeightFor), grape at the deck.
+  const ammo = me.ship!.ammoLoad[mount];
+  const t = aim?.target.ship;
+  const shipAim = !t ? 0 : ammo === "chain" ? (t.model.def.masts[0]?.height ?? 20) * 0.4 : ammo === "grape" ? t.model.def.hull.freeboard + 1 : 0;
+  return { range, ...(bearing !== undefined ? { bearing } : {}), aimHeight: useFort ? fort.aimHeight : shipAim, locked: !!(useFort || aim) };
 };
 
 /** The nearest enemy ship or fort still fighting within gun range (the camera frames it). */

@@ -88,6 +88,12 @@ export class FollowCamera {
 
   /** A one-finger or left-button drag draws a course instead of turning the view (simple steering). */
   drawGestures = false;
+  /**
+   * The chase view swings round behind the stern as she turns (the action mode, Black Flag's
+   * camera), so the pad's left is the screen's left; otherwise the orbit stays where the player
+   * left it. Eased (a lazy follow), the player's own orbit drag undone within a few seconds.
+   */
+  trail = false;
 
   /** Frames a ship of the given length on first use. */
   frameShip(length: number, rigHeight = 10): void {
@@ -155,6 +161,14 @@ export class FollowCamera {
       return;
     }
     this.cine = null;
+    if (this.mode === "chase" && this.trail) {
+      // Behind the stern: the eye's offset is the ship's heading reversed (alpha of Babylon's orbit
+      // measured from +x towards +z).
+      const yaw = new Quaternion(p.qx, p.qy, p.qz, p.qw).toEulerAngles().y;
+      const behind = Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
+      const d = Math.atan2(Math.sin(behind - this.camera.alpha), Math.cos(behind - this.camera.alpha));
+      this.camera.alpha += d * (1 - Math.exp(-1.6 * dt));
+    }
     if (this.mode === "isometric") this.follow(p.x + this.aim.x, p.y, p.z + this.aim.z, dt);
     else this.follow(p.x, p.y, p.z, dt);
   }

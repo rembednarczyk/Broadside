@@ -1,6 +1,7 @@
 import { terrainHeight } from "@broadside/core";
 import { type System } from "./context";
 import { PILOT_THINK, conning } from "../ai/pilot/pilot";
+import { chartedBed } from "../ai/pilot/plan";
 import { applyCommand } from "../commands/apply";
 import { sortedById } from "../world/world";
 import { screens } from "../combat/smoke";
@@ -13,7 +14,7 @@ import { screens } from "../combat/smoke";
  */
 export const pilotSystem: System = (ctx, dt) => {
   const a = ctx.env.archipelago;
-  const bed = a ? (x: number, z: number): number => terrainHeight(a, x, z) : null;
+  const bed = a ? chartedBed(a.half, (x: number, z: number): number => terrainHeight(a, x, z)) : null;
   const ships = sortedById(ctx.world.with("ship", "body"));
   const forts = sortedById(ctx.world.with("fort"));
   const smoke = screens(ctx.world);

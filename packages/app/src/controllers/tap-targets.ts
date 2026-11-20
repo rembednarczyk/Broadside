@@ -2,14 +2,15 @@
  * What a tap on the sea means (pure, tested): the nearest thing under the finger within its
  * reach on screen (a ship, a port's approach, a fort, the player's own ship), else the water;
  * and the order that follows from it. A context-sensitive command (as in real-time strategy
- * games: the same tap moves to open ground and attacks an enemy): an enemy ship is run down and
- * boarded, any other ship followed, a port put into, a fort closed and stormed, the own ship
+ * games: the same tap moves to open ground and attacks an enemy): an enemy ship is fought
+ * broadside to broadside, any other ship followed, a port put into, a fort closed and stormed, a wreck
+ * sailed to and lain over for her cargo, the own ship
  * stopped, open water sailed to.
  */
 type P = { x: number; z: number };
 
 export interface Tappable {
-  readonly kind: "self" | "ship" | "port" | "fort";
+  readonly kind: "self" | "ship" | "port" | "fort" | "wreck";
   readonly id: number;
   /** Where it is on screen (client pixels) and how far round it a tap still finds it. */
   readonly sx: number;
@@ -25,6 +26,8 @@ export type TapOrder =
   | { readonly kind: "stop"; readonly at: P }
   | { readonly kind: "go"; readonly at: P }
   | { readonly kind: "dock"; readonly at: P }
+  /** Sail to a wreck and lie to over her while the divers bring her cargo up (sim salvage). */
+  | { readonly kind: "salvage"; readonly at: P }
   | { readonly kind: "board" | "follow" | "engage"; readonly target: number; readonly at: P }
   | { readonly kind: "storm"; readonly fort: number; readonly at: P };
 
@@ -49,11 +52,15 @@ export const orderFor = (hit: Tappable | null, water: P | null): TapOrder | null
     case "self":
       return { kind: "stop", at: hit.at };
     case "ship":
-      return { kind: hit.hostile ? "board" : "follow", target: hit.id, at: hit.at };
+      // An enemy is fought broadside to broadside (the crew bring her round and fire as the guns
+      // bear); boarding is in the ship's menu (hold on her), once she is beaten or alongside.
+      return { kind: hit.hostile ? "engage" : "follow", target: hit.id, at: hit.at };
     case "port":
       return { kind: "dock", at: hit.at };
     case "fort":
       return { kind: "storm", fort: hit.id, at: hit.at };
+    case "wreck":
+      return { kind: "salvage", at: hit.at };
   }
 };
 

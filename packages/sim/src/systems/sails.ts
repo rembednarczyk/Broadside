@@ -1,4 +1,4 @@
-import { DEG, type RigType, type Vec3, approach, rotate, rotateInv, sailForce, sailForceAt, vec3 } from "@broadside/core";
+import { ASSIST, DEG, type RigType, type Vec3, approach, rotate, rotateInv, sailForce, sailForceAt, vec3 } from "@broadside/core";
 import { type System } from "./context";
 import { applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare, setFactor } from "../ship/ship-state";
@@ -53,6 +53,9 @@ export const sailSystem: System = (ctx, dt) => {
     handleSails(s, dt);
     const trim = Math.min(1, crewShare(s) * 1.2) * (0.4 + 0.6 * s.rigging);
     const hands = Math.max(0.15, crewShare(s)) * (0.35 + 0.65 * s.rigging);
+    // Assisted sailing (systems/assist) drives the ship itself: the sails keep only part of their side force, for the heel.
+    const side = e.assist ? ASSIST.sideForce : 1;
+    const ahead = e.assist ? 0 : 1;
     s.model.masts.forEach((m, i) => {
       if (s.mastHp[i]! <= 0 || s.sailSet[i]! <= 0) return;
       let total: Vec3 = vec3(0, 0, 0);
@@ -67,7 +70,8 @@ export const sailSystem: System = (ctx, dt) => {
         const chord = approach(s.sailChord[i]![j]!, want, BRACE_RATE[sail.rig] * hands * dt);
         const f = sailForceAt(sail.rig, area, local.x, local.z, chord, trim);
         const world = rotate(b.rot, vec3(f.fx * SAIL_GAIN, 0, f.fz * SAIL_GAIN));
-        applyForceAt(b, world, ceWorld);
+        applyForceAt(b, e.assist ? rotate(b.rot, vec3(f.fx * SAIL_GAIN * side, 0, f.fz * SAIL_GAIN * ahead)) : world, ceWorld);
+        // The mast bears the whole wind load either way: too much canvas in a blow still carries it away.
         total = vec3(total.x + world.x, total.y + world.y, total.z + world.z);
         const q = 0.5 * 1.225 * (local.x * local.x + local.z * local.z);
         s.sailChord[i]![j] = f.chord;

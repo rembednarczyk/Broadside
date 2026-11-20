@@ -28,7 +28,7 @@ export class Ratlines {
     this.ladders = shroudLadders(model, side);
     if (side && iron) this.channels(scene, parent, iron);
     this.tubes = new RopeTubes(scene, parent, "shroud-ropes", this.ladders.length * 4, SEGMENTS + 1, 0.032);
-    this.mesh = MeshBuilder.CreateLineSystem("ratlines", { lines: this.lines([], [], 0), updatable: true }, scene);
+    this.mesh = MeshBuilder.CreateLineSystem("ratlines", { lines: this.lines([], [], 0, []), updatable: true }, scene);
     this.mesh.color = new Color3(0.08, 0.06, 0.05);
     this.mesh.parent = parent;
     this.mesh.isPickable = false;
@@ -64,13 +64,13 @@ export class Ratlines {
     }
   }
 
-  /** `lee`: -1..1 side the sails push to (starboard +), as given to the mast springs. */
-  update(bends: readonly MastBend[], loads: readonly number[], lee: number): void {
+  /** `lee`: -1..1 side the sails push to (starboard +), as given to the mast springs. `down`: masts gone by the board (their shrouds go with them). */
+  update(bends: readonly MastBend[], loads: readonly number[], lee: number, down: readonly boolean[] = []): void {
     if (!this.mesh.isEnabled()) return;
-    MeshBuilder.CreateLineSystem(this.mesh.name, { lines: this.lines(bends, loads, lee), instance: this.mesh });
+    MeshBuilder.CreateLineSystem(this.mesh.name, { lines: this.lines(bends, loads, lee, down), instance: this.mesh });
   }
 
-  private lines(bends: readonly MastBend[], loads: readonly number[], lee: number): Vector3[][] {
+  private lines(bends: readonly MastBend[], loads: readonly number[], lee: number, down: readonly boolean[]): Vector3[][] {
     const out: Vector3[][] = [];
     const ropes: [number, number, number][][] = [];
     for (const l of this.ladders) {
@@ -81,14 +81,17 @@ export class Ratlines {
       const bow = TAUT + (SLACK - TAUT) * Math.min(1, load * leeward * 1.5);
       const polys = l.shrouds.map((s) => {
         const k = bend ? bendShare(bend, s.head[1]) : 0;
-        const hx = s.head[0] + (bend ? bend.dx * k : 0);
-        const hz = s.head[2] + (bend ? bend.dz * k : 0);
+        // Gone with its mast: drawn as nothing at the channel (the line count must stay the same).
+        const gone = down[l.mast] === true;
+        const hx = gone ? s.foot[0] : s.head[0] + (bend ? bend.dx * k : 0);
+        const hz = gone ? s.foot[2] : s.head[2] + (bend ? bend.dz * k : 0);
         const len = Math.hypot(hx - s.foot[0], s.head[1] - s.foot[1], hz - s.foot[2]);
         const pts: Vector3[] = [];
         for (let i = 0; i <= SEGMENTS; i++) {
           const t = i / SEGMENTS;
           const bulge = l.side * bow * len * 4 * t * (1 - t);
-          pts.push(new Vector3(s.foot[0] + (hx - s.foot[0]) * t + bulge, s.foot[1] + (s.head[1] - s.foot[1]) * t, s.foot[2] + (hz - s.foot[2]) * t));
+          const hy = gone ? s.foot[1] : s.head[1];
+          pts.push(new Vector3(s.foot[0] + (hx - s.foot[0]) * t + (gone ? 0 : bulge), s.foot[1] + (hy - s.foot[1]) * t, s.foot[2] + (hz - s.foot[2]) * t));
         }
         return pts;
       });

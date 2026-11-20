@@ -26,6 +26,11 @@ export const DIRECTOR = {
   combat: 1200,
 } as const;
 
+/** Ships a traffic kind brings at once: its leader and, for a convoy, its merchantmen and escorts. */
+export const groupSize = (k: TrafficKind): number => 1 + (k.convoy ? k.convoy.merchants + k.convoy.escorts.length : 0);
+/** How far a group may carry the sea past the budget (the soak audit's bound is budget + 3 with the player). */
+const GROUP_SLACK = 2;
+
 const dist = (a: Entity, x: number, z: number): number => Math.hypot(a.body!.pos.x - x, a.body!.pos.z - z);
 
 const pick = <T>(items: readonly T[], u: number): T => items[Math.min(items.length - 1, Math.floor(u * items.length))]!;
@@ -74,6 +79,10 @@ export const directPopulation = (ctx: SimContext): void => {
     if (d < DIRECTOR.combat && !e.ship.struck && isHostile(standing(e.ship.faction, player.ship.faction, ctx.relations))) fighting = true;
   }
   if (near >= DIRECTOR.budget) return;
-  const kinds = fighting ? TRAFFIC.filter((k) => k.peaceful) : TRAFFIC;
+  // A convoy comes as a group (leader, merchantmen and escorts): only groups that keep the sea
+  // within the budget plus GROUP_SLACK, so the whole population stays within budget + 3 with the
+  // player (ADR-0005; a convoy of four topping up five ships made ten).
+  const kinds = (fighting ? TRAFFIC.filter((k) => k.peaceful) : TRAFFIC).filter((k) => near + groupSize(k) <= DIRECTOR.budget + GROUP_SLACK);
+  if (kinds.length === 0) return;
   spawnTraffic(ctx, pickTraffic(ctx.rng.next(), kinds), px, pz);
 };

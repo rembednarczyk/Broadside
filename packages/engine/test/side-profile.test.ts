@@ -19,6 +19,20 @@ describe("side profile of a modelled hull", () => {
     expect(p.topAt(-9)).toBeCloseTo(4);
   });
 
+  it("lays the open decks at the measured heights, through a hollow waist, broken where the deck steps", () => {
+    const stations = p.deckStations();
+    expect(stations.map((s) => s.k)).toEqual([...Array(16).keys()]);
+    // The waist at 1.0 with a hatch read at 1.8 and no deck found at stations 7-9; a forecastle at 2.5 from station 12.
+    const ys = stations.map((s) => (s.k < 4 ? null : s.k === 5 ? 1.8 : s.k >= 7 && s.k <= 9 ? null : s.k >= 12 ? 2.5 : 1.0));
+    const runs = p.openDecks(stations, ys);
+    expect(runs).toHaveLength(2);
+    expect(runs[0]!.map((q) => q.z)).toEqual([4, 5, 6, 7, 8, 9, 10, 11].map((k) => p.zOf(k)));
+    expect(runs[0]!.every((q) => q.y === 1.0)).toBe(true);
+    expect(runs[1]!.every((q) => q.y === 2.5 && q.half > 0)).toBe(true);
+    // Forward of a point only.
+    expect(p.deckStations(0).every((s) => s.z >= 0)).toBe(true);
+  });
+
   it("runs the rail along the top, broken at the castles, with posts where the model falls short", () => {
     const { runs, posts } = p.railRuns(1);
     expect(runs).toHaveLength(3);

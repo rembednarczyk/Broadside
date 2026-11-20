@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displacement, makeWave, waterHeight, waterNormal, packWaves, MAX_WAVES } from "../src/ocean/gerstner";
+import { displacement, makeWave, waterHeight, waterNormal, waterState, waterVerticalSpeed, packWaves, MAX_WAVES } from "../src/ocean/gerstner";
 import { seaWaves, waveBands, significantHeight, spectrum, peakOmega } from "../src/ocean/sea-state";
 
 describe("Gerstner waves", () => {
@@ -74,5 +74,29 @@ describe("JONSWAP sea", () => {
     expect(hs).toBeLessThan(significantHeight(15));
     const wp = peakOmega(15);
     expect((2 * Math.PI * 9.81) / (wp * wp)).toBeLessThan(120);
+  });
+});
+
+describe("waterState", () => {
+  const waves = [makeWave(0.3, 60, 1.2, 0.6, 0.4, 3), makeWave(1.4, 25, 0.5, 0.5, 1.1, 3), makeWave(-0.8, 12, 0.2, 0.4, 2.0, 3)];
+
+  it("gives the same surface height as waterHeight", () => {
+    for (const [x, z, t] of [[3, 7, 1.2], [-40, 12, 5], [100, -33, 9.7]] as const) {
+      expect(waterState(waves, x, z, t).height).toBeCloseTo(waterHeight(waves, x, z, t), 6);
+    }
+  });
+
+  it("moves the surface water at the speed the surface rises and falls", () => {
+    for (const [x, z, t] of [[3, 7, 1.2], [-40, 12, 5]] as const) {
+      // At the surface the vertical speed of the water at a fixed point is close to the rate of rise
+      // of the surface there (equal for small steepness).
+      expect(waterState(waves, x, z, t).velocity.y).toBeCloseTo(waterVerticalSpeed(waves, x, z, t, 1 / 240), 0);
+    }
+  });
+
+  it("calms with depth (Airy decay)", () => {
+    const top = waterState(waves, 5, 5, 2).velocity;
+    const deep = waterState(waves, 5, 5, 2, 30).velocity;
+    expect(Math.hypot(deep.x, deep.y, deep.z)).toBeLessThan(Math.hypot(top.x, top.y, top.z) * 0.2);
   });
 });

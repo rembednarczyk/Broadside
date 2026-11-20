@@ -30,11 +30,21 @@ export class PlayerHelm {
 
   /** Classic helm: start or stop turning (-1 to port, 1 to starboard, 0 to hold); takes the wheel from the pilot. */
   steer(direction: -1 | 0 | 1): void {
-    if (direction !== 0 && this.steering === 0) {
-      const p = this.sim.byId(this.playerId);
-      if (p?.body) this.course = yawOf(p.body.rot);
+    const p = this.sim.byId(this.playerId);
+    if (direction !== 0 && this.steering === 0 && p?.body) this.course = yawOf(p.body.rot);
+    // Letting go of the button means "steady as she goes": the course is her head now (the lead
+    // the turn ran ahead of her, up to 0.6 rad, would carry her on 20-30 degrees, beta 19.11).
+    if (direction === 0 && this.steering !== 0 && p?.body) {
+      this.course = yawOf(p.body.rot);
+      this.sim.command({ type: "course", ship: this.playerId, heading: this.course });
     }
     this.steering = direction;
+  }
+
+  /** Assisted sailing: the rudder straight from the pad (-1 hard to port, 1 hard to starboard). */
+  rudder(x: number): void {
+    this.steering = 0;
+    this.sim.command({ type: "helm", ship: this.playerId, rudder: clamp(x, -1, 1) });
   }
 
   /** Simple steering: the crew sails the ship through these points (`hold`: then keeps on; `append`: after the route in hand). */
@@ -55,6 +65,9 @@ export class PlayerHelm {
       case "go":
       case "dock":
         return this.navigate([o.at], false);
+      case "salvage":
+        // In over the wreck as far as the depth allows, anchor there and send the boats (sim pilot salvage).
+        return this.sim.command({ type: "pilot", ship, order: { kind: "salvage", x: o.at.x, z: o.at.z } });
       case "board":
       case "follow":
       case "engage":

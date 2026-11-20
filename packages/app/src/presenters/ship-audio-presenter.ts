@@ -42,5 +42,6 @@ export const presentShipAudio = (sim: Simulation, playerId: number, distance: nu
     ready: s.guns.filter((g) => g.reload === 0 && !g.dismounted).length,
     water: s.sections.reduce((a, x) => a + x.water, 0),
     halfHour: Math.floor(hours * 2),
+    fire: Math.max(0, ...s.sections.map((x) => x.fire)),
   };
 };

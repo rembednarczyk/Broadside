@@ -64,4 +64,20 @@ describe("ship sounds", () => {
     expect(far!.deck).toBe(0);
     expect(far!.shots).toHaveLength(0);
   });
+  it("crackles while she burns, quicker the worse the fire, and is silent without one", () => {
+    const count = (fire: number) => voices(run(Array.from({ length: 100 }, () => ({ ...calm, fire })))).filter((v) => v === "crackle").length;
+    expect(count(0)).toBe(0);
+    expect(count(0.2)).toBeGreaterThan(0);
+    expect(count(1)).toBeGreaterThan(count(0.2));
+  });
+  it("creaks at the helm as she comes round, more often in a hard turn", () => {
+    const count = (turn: number) => voices(run(Array.from({ length: 200 }, () => ({ ...calm, turn })))).filter((v) => v === "creak").length;
+    expect(count(0)).toBe(0);
+    expect(count(0.05)).toBeGreaterThan(0);
+    expect(count(0.2)).toBeGreaterThan(count(0.05));
+  });
+  it("pipes the hands once at the start of a bout of sail handling, not at every haul", () => {
+    const states = Array.from({ length: 60 }, (_, i) => ({ ...calm, canvas: 2 + i * 0.05 }));
+    expect(voices(run(states)).filter((v) => v === "pipe")).toHaveLength(1);
+  });
 });

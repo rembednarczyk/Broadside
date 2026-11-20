@@ -36,7 +36,7 @@ varying float vHeight;
 // the square of its speed (wave-making, cf. Froude scaling), piles water along its sides, holds
 // the sea below its keel inside the hull outline (so the hull cuts the water and no crest shows
 // through the deck), and leaves Kelvin-wedge ridges astern. Data: (x, z, dirX, dirZ) and
-// (speed, length, beam, 0) per ship.
+// (speed, length, beam, slap) per ship (slap: how hard the sea has lately struck the sides).
 float hullWater(vec2 p) {
   float h = 0.0;
   for (int i = 0; i < 8; i++) {
@@ -152,14 +152,15 @@ uniform float fogDensity;
 uniform float time;
 uniform float foamAmount;
 uniform float sunGlint;
-// Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, 0); up to 8.
+// Ships for wakes: (x, z, dirX, dirZ) and (speed, length, beam, slap); up to 8.
 uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
 ${WAKE_TRAIL}
 uniform float underwater;
-// Islands for shallows and surf: (x, z, radius, shoal); up to 32.
+// Landmasses for shallows and surf: (x, z, radius, shoal) and (spine half dx, dz, roughness, 0); up to 32.
 uniform vec4 islands[32];
+uniform vec4 spines[32];
 uniform int islandCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -225,9 +226,16 @@ vec2 shallows(vec2 p) {
   for (int i = 0; i < 32; i++) {
     if (i >= islandCount) break;
     vec4 is = islands[i];
-    float d = length(p - is.xy);
-    if (d > is.z * 1.4 + is.w + 60.0) continue;
-    float wob = 0.75 + 0.5 * fbm(normalize(p - is.xy) * 1.8 + 5.0);
+    vec4 sp = spines[i];
+    // Distance to the spine (a capsule; a point for a round island), as core/world/archipelago.
+    vec2 s = sp.xy;
+    float len2 = dot(s, s);
+    float k = len2 > 0.0 ? clamp(dot(p - is.xy, s) / len2, -1.0, 1.0) : 0.0;
+    float d = length(p - is.xy - s * k);
+    if (d > is.z * (1.0 + sp.z * 0.6) + is.w + 60.0) continue;
+    // The coast's wander from noise in space at the landmass's scale (the terrain's own noise is
+    // approximated: a shader noise of the same scale and amplitude).
+    float wob = 1.0 + sp.z * (fbm(p * (1.8 / is.z) + 5.0) - 0.5) * 2.0;
     float t = d / (is.z * wob);
     shallow = max(shallow, 1.0 - smoothstep(1.0, 1.0 + is.w / is.z, t));
     surf = max(surf, exp(-pow((t - 1.0) * is.z / 6.0, 2.0)));
@@ -275,10 +283,17 @@ vec2 wakes(vec2 p) {
     float u = along / halfLen;
     float w = across / (b.z * 0.5);
     float outline = u * u + w * w / max(0.05, 1.0 - max(0.0, u) * 0.6);
-    foam += exp(-pow((outline - 1.0) / 0.12, 2.0)) * (0.35 + clamp(speed / 6.0, 0.0, 0.5));
+    // Broken, not a painted band: patches of white that come and go along the side (a noise
+    // drifting aft), thin at rest and fuller with way on.
+    float broken = 0.3 + 0.9 * vnoise(vec2(along * 0.45 + speed * time * 0.6, across * 0.9 + float(i) * 7.0));
+    foam += exp(-pow((outline - 1.0) / 0.08, 2.0)) * (0.1 + clamp(speed / 6.0, 0.0, 0.45)) * broken;
+    // Where the sea has just struck the side, the water along it is white with the broken wave.
+    foam += exp(-pow((outline - 1.0) / 0.3, 2.0)) * b.w * 0.5 * broken;
+    // The churned water along the side glitters too (ref_020: sparks at the hull, not only astern).
+    glit += exp(-pow((outline - 1.0) / 0.3, 2.0)) * 0.6 * clamp(speed / 4.0, 0.0, 1.0);
     // Bow wave: a foam collar around the forward hull.
     float bow = smoothstep(b.z * 0.9, b.z * 0.4, across) * smoothstep(halfLen + 2.0, halfLen * 0.5, along) * step(0.0, along);
-    foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.5;
+    foam += bow * clamp(speed / 6.0, 0.0, 1.0) * 0.45 * broken;
     // The bow wave breaks along its crest: foam on the ridge that runs off from the stem.
     float fromStem = halfLen - along;
     if (fromStem > 0.0) {
@@ -326,7 +341,12 @@ vec3 underside(vec3 v, vec3 n, float dist) {
   // the critical angle), and the ripples of the surface show as brighter and darker streaks.
   float rim = mix(0.55, 1.0, smoothstep(0.66, 0.97, c));
   float ripple = 0.75 + 0.5 * clamp(0.5 + dot(n.xz, vec2(0.6, 0.8)) * 5.0, 0.0, 1.0);
-  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.8 * rim * ripple + sunColor * sun;
+  // Seen from below the wind's ripples run in long streaks across the window (ref_161): noise
+  // stretched eight times along the wind (the same direction as the surface's chop above).
+  vec2 wdir = normalize(vec2(0.9, 0.5));
+  vec2 sp = vec2(dot(vWorld.xz, wdir) * 0.12, dot(vWorld.xz, vec2(-wdir.y, wdir.x)) * 0.95) + vec2(time * 0.08, 0.0);
+  ripple *= 0.7 + 0.6 * fbm(sp);
+  vec3 sky = mix(skyHorizon, skyZenith, 0.5) * 1.4 * rim * ripple + sunColor * sun;
   // Outside the window the depths, mirrored, with the waves' relief catching the light from the
   // window's side (the teal ripples round the bright disc in ref_161).
   float relief = 0.6 + 0.8 * clamp(dot(n.xz, normalize(sunDirection.xz + 1e-4)) * 4.0 + 0.3, 0.0, 1.0);
@@ -361,7 +381,9 @@ void main() {
   vec3 n = normalize(vNormal + dn * 0.5);
   // From below the same surface, ripples and all (seen through it: Snell's window).
   if (underwater > 0.5) {
-    gl_FragColor = vec4(underside(v, n, dist), 1.0);
+    // Seen from below through a few metres of water the slopes read gentler (the window's edge
+    // wanders, it does not shatter into black patches): half the tilt of the surface's normal.
+    gl_FragColor = vec4(underside(v, normalize(mix(n, vec3(0.0, 1.0, 0.0), 0.5)), dist), 1.0);
     return;
   }
   float nv = clamp(dot(n, v), 0.0, 1.0);
@@ -387,6 +409,10 @@ void main() {
   vec3 gn = normalize(n + gfade * (0.5 * vec3(vnoise(gp) - 0.5, 0.0, vnoise(gp + 17.3) - 0.5) + 0.4 * vec3(vnoise(gp * 2.7) - 0.5, 0.0, vnoise(gp * 2.7 + 5.1) - 0.5)));
   vec2 wk = wakes(vWorld.xz);
   float glitter = pow(max(dot(gn, h), 0.0), 5000.0 - wk.y * 2500.0) * (70.0 + wk.y * 50.0) * smoothstep(-0.05, 0.25, sunDirection.y);
+  // The facets glitter in the sun's path, where the wave itself nearly mirrors the sun; away from
+  // it (40 degrees and more between the wave's normal and the half vector) the sea stays dark, as in
+  // the reference frames (sparks across the whole sea read as noise). The wake keeps its sparks.
+  glitter *= max(smoothstep(0.75, 0.97, dot(n, h)), clamp(wk.y, 0.0, 1.0));
   col += sunColor * sunGlint * (spec + glitter * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7));
   // Whitecaps: folding surface (Jacobian below 1) broken up by noise.
   float fold = clamp((1.0 - vFold) * 1.6 - 0.25, 0.0, 1.0);
@@ -403,21 +429,30 @@ void main() {
   float foam = (laceFar < 1.0 ? mix(lace(fp, capCover), capCover * 0.45, laceFar) : capCover * 0.45) * 0.75;
   // The wake's lace is finer than the crests' (churned water breaks into small bubbles) and lies
   // on a soft milky bed, so from a distance it reads as a streak of white, not a net of holes.
+  // In the churned water astern the lace is the texture of a milky sheet, not holes cut in it (as
+  // full cover, the cells' dark eyes read as a net laid on the sea): the sheet is never thinner
+  // than 45% of its cover, the bubble walls whiten it the rest of the way, and a slow noise
+  // thins and thickens it in streaks.
   float wakeCover = clamp(wk.x * 1.3, 0.0, 1.0);
   float wakeFar = smoothstep(0.05, 0.2, foot);
-  float wakeLace = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), wakeCover * 0.85, wakeFar) : wakeCover * 0.85;
-  float wakeBed = wk.x * smoothstep(0.25, 0.75, fbm(fp * 0.8 + 11.0));
-  foam = max(foam, max(wakeLace * (0.35 + 0.4 * wk.x), wakeBed * 0.55));
+  float wakeTex = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), 0.85, wakeFar) : 0.85;
+  float wakeFoam = wakeCover * mix(0.45, 1.0, wakeTex) * (0.4 + 0.35 * wk.x) * mix(0.7, 1.15, fbm(fp * 0.8 + 11.0));
+  foam = max(foam, wakeFoam);
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   vec2 sh = shallows(vWorld.xz);
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
-  float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
-  col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
+  // The surf's noise and lace only where there is surf (most of the sea is far from any shore).
+  if (sh.y > 0.004) {
+    float surfFoam = lace(vWorld.xz * 0.7 + vec2(time * 0.3, 0.0), clamp(sh.y * smoothstep(0.3, 0.7, fbm(vWorld.xz * 0.25 + vec2(time * 0.3, 0.0)) + sh.y * 0.3) * 1.3, 0.0, 1.0));
+    col = mix(col, vec3(0.9, 0.92, 0.92) * foamLight(), surfFoam * 0.8);
+  }
   // Aerial perspective with in-scattering towards the sun: the haze glows where the sun is.
   float fog = 1.0 - exp(-fogDensity * dist);
-  float towardSun = pow(max(dot(-v, sunDirection), 0.0), 6.0);
-  col = mix(col, fogColor + sunColor * towardSun * 0.9, fog);
+  // Two lobes: the broad glow of the haze round a low sun and the brighter core under it.
+  float sunward = max(dot(-v, sunDirection), 0.0);
+  float towardSun = pow(sunward, 3.0) * 0.55 + pow(sunward, 12.0) * 0.6;
+  col = mix(col, fogColor + sunColor * towardSun, fog);
   gl_FragColor = vec4(col, 1.0);
 }
 `;

@@ -38,6 +38,10 @@ export const rescuePlayer = (ctx: SimContext, e: Entity): void => {
   e.ship = ship;
   e.body = createBody(model.mass, model.inertia, vec3(x, model.com.y, z), quatFromYaw(0));
   if (e.ttl !== undefined) ctx.world.removeComponent(e, "ttl");
+  // A fresh ship in port: the lost ship's orders, anchor and helm-assist state go with her (the
+  // sloop sailed on along the old route, beta test 19.11).
+  if (e.pilot) ctx.world.removeComponent(e, "pilot");
+  if (e.anchor) ctx.world.removeComponent(e, "anchor");
   if (ctx.purse) ctx.purse.plunder = 0;
   ctx.events.push({ type: "playerRescued", port: best });
 };

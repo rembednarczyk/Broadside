@@ -1,5 +1,5 @@
 import { type AssetContainer, Mesh, type Scene, StandardMaterial, type Texture, VertexData } from "../babylon";
-import { WetDeck } from "./wet-deck";
+import { WetDeck, wetSkyOf } from "./wet-deck";
 
 /**
  * Turns a loaded model's PBR materials into StandardMaterials with the same colour texture and
@@ -40,7 +40,7 @@ export const useStandardMaterials = (container: AssetContainer, scene: Scene, pr
       std.invertNormalMapY = pbr.invertNormalMapY ?? false;
     }
     std.specularColor.set(0.06, 0.05, 0.04);
-    if (wet) new WetDeck(std);
+    if (wet) new WetDeck(std, wetSkyOf(scene));
     for (const mesh of container.meshes) if (mesh.material === m) mesh.material = std;
     container.materials.push(std);
   }

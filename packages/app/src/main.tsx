@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { type ColorMode, CAMERA_MODES, BabylonRenderer, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
-import { Hud, type UiIntents, patchHud, useHud } from "@broadside/ui";
+import { type ColorMode, CAMERA_MODES, BabylonRenderer, DynamicResolution, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
+import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
@@ -9,11 +9,14 @@ import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
 import { presentMarker } from "./presenters/marker-presenter";
+import { chartTarget, presentChart } from "./presenters/chart-presenter";
+import { clearArea } from "./presenters/clear-area";
+import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
+import { type AmmoId, clamp, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse, presentWind } from "./presenters/course-presenter";
@@ -28,6 +31,7 @@ import "@fontsource/eb-garamond/400.css";
 import "@fontsource/eb-garamond/400-italic.css";
 import "@fontsource/eb-garamond/600.css";
 import "./style.css";
+import { registerServiceWorker } from "./pwa";
 
 /** Composition root (ADR-0001): wires session, renderer, HUD and input. */
 // A page that cannot carry a query string (the ship viewer published as an artifact) sets the options itself.
@@ -69,9 +73,10 @@ const urlColor = params.get("color");
 if (urlColor === "sepia" || urlColor === "natural" || urlColor === "vibrant") graphics = { ...graphics, colorMode: urlColor };
 // Steering: simple (tap or draw a course, the crew sails it) by default, the classic helm on request.
 const STEER_KEY = "broadside.steering";
-const storedSteering = ((): "simple" | "classic" => {
+const storedSteering = ((): SteeringMode => {
   try {
-    return localStorage.getItem(STEER_KEY) === "classic" ? "classic" : "simple";
+    const m = localStorage.getItem(STEER_KEY);
+    return m === "classic" || m === "arcade" ? m : "simple";
   } catch {
     return "simple";
   }
@@ -95,10 +100,20 @@ const applyGraphics = (next: GraphicsSettings) => {
   renderer = new BabylonRenderer({ canvas, graphics, hullsUrl: HULLS_URL, propsUrl: "assets/props/", texturesUrl: "assets/textures/" });
   renderer.camera.mode = mode;
   renderer.camera.drawGestures = useHud.getState().steering === "simple";
+  dynres = new DynamicResolution(next.renderScale);
+  dynres.setCap(useHud.getState().fpsCap);
   patchHud({ graphics: { preset: next.preset, colorMode: next.colorMode, renderScale: next.renderScale } });
 };
 patchHud({ graphics: { preset: graphics.preset, colorMode: graphics.colorMode, renderScale: graphics.renderScale }, hudHidden: params.get("hud") === "0", cameraMode: renderer.camera.mode });
-if (!helpSeen) patchHud({ helpOpen: true });
+// The main menu greets the player (the game paused behind it); the how-to-play card follows on the
+// first start. Tools driving the page (`navigator.webdriver`) and `menu=0` go straight to the sea.
+const startMenu = params.get("menu") !== "0" && !navigator.webdriver;
+let helpPending = !helpSeen;
+if (startMenu) patchHud({ menu: "main" });
+else if (helpPending) {
+  patchHud({ helpOpen: true });
+  helpPending = false;
+}
 patchHud({ steering: storedSteering });
 renderer.camera.drawGestures = storedSteering === "simple";
 // The crew's standing order to reef in squalls: on unless the player turned it off on this device.
@@ -123,39 +138,80 @@ const setReef = (on: boolean) => {
 };
 // Vibration on hits and broadsides: on unless turned off on this device.
 const HAPTICS_KEY = "broadside.haptics";
-const storedHaptics = ((): boolean => {
-  try {
-    return localStorage.getItem(HAPTICS_KEY) !== "0";
-  } catch {
-    return true;
-  }
-})();
-patchHud({ haptics: storedHaptics });
+patchHud({ haptics: readSetting(HAPTICS_KEY) !== "0", language: readSetting("broadside.lang") === "pl" ? "pl" : "en" });
 const setHaptics = (on: boolean) => {
   patchHud({ haptics: on });
+  writeSetting(HAPTICS_KEY, on ? "1" : "0");
+};
+/** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
+const applySteering = (steering: SteeringMode) => {
+  session.assist(steering === "arcade");
+  session.helm.steer(0);
+  if (steering !== "simple") session.helm.navigate([], false);
+  if (steering !== "arcade") session.helm.rudder(0);
+  patchHud({ astern: false });
+  // The action mode's view is the chase camera following the stern (Black Flag's), also on a start
+  // with the mode stored (unless the address names a camera); the camera button still cycles.
+  renderer.camera.trail = steering === "arcade";
+  if (steering === "arcade" && renderer.camera.mode === "isometric" && !urlCamera) {
+    renderer.camera.mode = "chase";
+    patchHud({ cameraMode: "chase" });
+  }
+};
+applySteering(storedSteering);
+/** One gear of sail more or less (pad, W and S); below furled under assisted sailing: astern with the sails backed. */
+const gear = (step: 1 | -1) => {
+  const h = useHud.getState();
+  const sail = h.sailing?.sailTargets[0] ?? 3;
+  if (h.steering === "arcade" && step < 0 && sail === 0 && !h.astern) {
+    session.assist(true, true);
+    patchHud({ astern: true });
+  } else if (h.astern && step > 0) {
+    session.assist(true, false);
+    patchHud({ astern: false });
+  } else session.setSails(clamp(sail + step, 0, 4));
+};
+/** The main menu's screens (null: back to the game, which is paused while a screen is up). */
+const showMenu = (menu: MenuScreen | null) => {
+  // The chart is drawn once on opening: the game stands still behind it.
+  patchHud({ menu, shipMenu: null, chart: menu === "chart" ? presentChart(session.sim, session.playerId) : null });
+  // The how-to-play card on the first start, once the player has left the menu for the sea.
+  if (!menu && helpPending) {
+    helpPending = false;
+    patchHud({ helpOpen: true });
+  }
+};
+// Sound volumes (the options' sound tab), kept on this device.
+const SOUND_KEY = "broadside.sound";
+const setVolumes = (v: SoundVolumes) => {
+  patchHud({ sound: v });
+  audio.setVolumes(v);
   try {
-    localStorage.setItem(HAPTICS_KEY, on ? "1" : "0");
+    localStorage.setItem(SOUND_KEY, JSON.stringify(v));
   } catch {
     // Storage unavailable: the choice lasts for this run only.
   }
 };
-const setSteering = (steering: "simple" | "classic") => {
+const setSteering = (steering: SteeringMode) => {
   patchHud({ steering });
+  applySteering(steering);
   renderer.camera.drawGestures = steering === "simple";
-  try {
-    localStorage.setItem(STEER_KEY, steering);
-  } catch {
-    // Storage unavailable: the choice lasts for this run only.
-  }
+  writeSetting(STEER_KEY, steering);
 };
 
 const intents: UiIntents = {
-  helm: { steer: (d) => session.helm.steer(d) },
+  helm: {
+    // Under assisted sailing the keys put the helm over like the pad; otherwise they turn the course.
+    steer: (d) => (useHud.getState().steering === "arcade" ? session.helm.rudder(d) : session.helm.steer(d)),
+    rudder: (x) => session.helm.rudder(x),
+    gear,
+  },
   orders: {
     board: (t) => shipOrder("board")(t),
     follow: (t) => shipOrder("follow")(t),
     engage: (t) => shipOrder("engage")(t),
     cancelCourse: () => session.helm.navigate([], false),
+    salvage: (x, z) => issue({ kind: "salvage", at: { x, z } }),
     closeMenu: () => patchHud({ shipMenu: null }),
   },
   sails: { setSails: (l) => session.setSails(l), setMastSails: (m, l) => session.setMastSails(m, l), toggleOars: () => session.toggleOars() },
@@ -187,17 +243,29 @@ const intents: UiIntents = {
     board: () => session.board(),
   },
   settings: {
-    setLanguage: (language) => patchHud({ language }),
+    setLanguage: (language) => {
+      patchHud({ language });
+      writeSetting("broadside.lang", language);
+    },
+    setFpsCap: (cap) => {
+      pacer.cap = cap;
+      dynres.setCap(cap);
+      writeSetting("broadside.fpsCap", String(cap));
+      patchHud({ fpsCap: cap });
+    },
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setSteering,
     setReef,
     setHaptics,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
-    toggleSettings: () => patchHud({ settingsOpen: !useHud.getState().settingsOpen }),
+    toggleSettings: () => showMenu(useHud.getState().menu ? null : "main"),
+    showMenu,
+    setOptionsTab: (optionsTab) => patchHud({ optionsTab }),
+    setVolume: (kind, value) => setVolumes({ ...useHud.getState().sound, [kind]: value }),
     toggleHelp: () => {
       const open = !useHud.getState().helpOpen;
-      patchHud({ helpOpen: open, settingsOpen: false });
+      patchHud({ helpOpen: open });
       if (!open) {
         try {
           localStorage.setItem(HELP_KEY, "1");
@@ -209,8 +277,9 @@ const intents: UiIntents = {
     newGame: () => {
       session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
       session.crewOrders(useHud.getState().reef);
+      applySteering(useHud.getState().steering);
       applyGraphics(graphics);
-      patchHud({ settingsOpen: false });
+      showMenu(null);
     },
     toggleHud: () => patchHud({ hudHidden: !useHud.getState().hudHidden }),
     nextCamera: () => {
@@ -219,9 +288,16 @@ const intents: UiIntents = {
       patchHud({ cameraMode: next });
     },
   },
+  chart: {
+    // A course from the chart: the crew sails there round the islands (A*, sim/ai/pilot/plan).
+    sailTo: (x, z) => {
+      session.helm.navigate([chartTarget(session.sim, x, z)], false);
+      showMenu(null);
+    },
+  },
 };
 createRoot(document.getElementById("hud")!).render(<Hud intents={intents} />);
-bindKeyboard(window, intents, () => useHud.getState().sailing?.sailTargets[0] ?? 3);
+bindKeyboard(window, intents);
 addEventListener("resize", () => renderer.resize());
 // Simple steering: what a tap, a long press or a drawn line on the canvas means (tap-targets), as orders to the crew.
 const tappables = () => {
@@ -283,6 +359,12 @@ bindCourseGestures(canvas, {
   },
 });
 const audio = new SynthAudio("assets/audio/");
+try {
+  const v = JSON.parse(localStorage.getItem(SOUND_KEY) ?? "null") as SoundVolumes | null;
+  if (v && [v.master, v.ambience, v.effects].every((x) => typeof x === "number")) setVolumes(v);
+} catch {
+  // Nothing stored, or storage unavailable: the default volumes.
+}
 addEventListener("pointerdown", () => audio.unlock());
 addEventListener("keydown", () => audio.unlock());
 // Autosave every minute and when the app goes to the background (phones kill background apps).
@@ -300,7 +382,15 @@ const pushNotice = (key: string) => {
 };
 
 const haptics = new Haptics();
+// Dynamic resolution under the slider's scale when frames come too slow (off for the tools that drive
+// the page, whose shots and measurements must be at the set resolution, and with `dynres=0`).
+const autoResolution = params.get("dynres") !== "0" && !navigator.webdriver;
+let dynres = new DynamicResolution(graphics.renderScale);
 let last = performance.now();
+// The frame-rate cap (graphics options), kept on this device.
+const pacer = new FramePacer(Number(readSetting("broadside.fpsCap") ?? 0) || 0);
+patchHud({ fpsCap: pacer.cap });
+dynres.setCap(pacer.cap);
 let fpsAcc = 0;
 let frames = 0;
 // One game hour passes in four minutes (a day in an hour and a half).
@@ -316,17 +406,45 @@ const clockRuns = params.get("clock") !== "stop";
 // `sun=<degrees>`: a fixed bearing of the sun (0 = east, 90 = north, the +z a ship starts along), for staged shots.
 const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 180 : undefined;
 const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
+// With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
+// within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
+const WRECK_MARK = 900;
+/** Another ship is heard (her rigging and canvas) within this distance of the listener (m). */
+const NEARBY = 150;
+let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
+const wreckMarker = (p: { x: number; z: number }) => {
+  const a = session.sim.env.archipelago;
+  if (!a) return null;
+  if (wrecksOf?.a !== a) wrecksOf = { a, sites: wreckSites(a) };
+  let best: { x: number; z: number; d: number } | null = null;
+  wrecksOf.sites.forEach((w, i) => {
+    if (session.sim.salvage.salvaged.includes(i)) return;
+    const d = Math.hypot(w.x - p.x, w.z - p.z);
+    if (d < WRECK_MARK && (!best || d < best.d)) best = { x: w.x, z: w.z, d };
+  });
+  const w = best as { x: number; z: number; d: number } | null;
+  if (!w) return null;
+  const m = presentMarker(renderer.project(w.x, 0, w.z), w.d, clearArea(performance.now()));
+  return m ? { ...m, kind: "wreck" as const, at: { x: w.x, z: w.z } } : null;
+};
 const frame = (now: number) => {
+  if (!pacer.due(now)) return void requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  session.advance(dt);
+  // The game stands still while the menu or the how-to-play card is up (the sea and ships drawn as they are).
+  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt);
+  const scale = autoResolution ? dynres.update(dt) : null;
+  if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
   haptics.enabled = useHud.getState().haptics;
   haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
-    const cue = cueFor(e, session.playerId);
+    const cue = cueFor(e, session.playerId, (id) => {
+      const b = session.sim.byId(id)?.body;
+      return b ? { x: b.pos.x, z: b.pos.z } : null;
+    });
     if (cue) audio.play(cue, listener);
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);
@@ -334,6 +452,15 @@ const frame = (now: number) => {
   audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
   const aboard = presentShipAudio(session.sim, session.playerId, renderer.camera.camera.radius, hoursNow());
   if (aboard) audio.setShip(aboard);
+  // The nearest other ship within NEARBY metres is heard too (her ropes and canvas), from her side.
+  let near: { id: number; d: number; x: number; z: number } | null = null;
+  for (const o of session.sim.ships()) {
+    if (o.id === session.playerId || !o.body || o.ship?.sinking) continue;
+    const d = Math.hypot(o.body.pos.x - listener.x, o.body.pos.z - listener.z);
+    if (d < NEARBY && (!near || d < near.d)) near = { id: o.id, d, x: o.body.pos.x, z: o.body.pos.z };
+  }
+  const nearState = near ? presentShipAudio(session.sim, near.id, 0, hoursNow()) : null;
+  audio.setNearby(nearState && near ? { ...nearState, aboard: 0.5 * (1 - near.d / NEARBY) } : null, near ? Math.sin(Math.atan2(near.x - listener.x, near.z - listener.z) - listener.heading) : 0);
   renderer.salvo.visible = !useHud.getState().hudHidden;
   renderer.salvo.set(salvoPreview(session.sim, session.playerId));
   const course = presentCourse(session.sim, session.playerId);
@@ -358,7 +485,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
-    marker: focus && me?.body ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z)) : null,
+    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : wreckMarker(me.body.pos)) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });
@@ -366,3 +493,6 @@ const frame = (now: number) => {
 };
 requestAnimationFrame(frame);
 Object.defineProperty(globalThis, "__broadside", { get: () => ({ session, renderer, audio, wrecks: () => (session.sim.env.archipelago ? wreckSites(session.sim.env.archipelago) : []) }) });
+
+// Installable and offline once opened (PWA): the service worker in a browser, not in the Android app.
+registerServiceWorker();

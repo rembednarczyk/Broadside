@@ -1,14 +1,17 @@
-import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, createRng, seaWaves } from "@broadside/core";
+import { type Archipelago, type FortSite, type Quat, type ShipClassId, type Vec3, type WeatherKind, type WeatherState, WORLD_VERSION, createRng, fortSites, openWater, seaWaves } from "@broadside/core";
 import { Simulation, type SimulationOptions } from "../simulation";
 import { type CaptainState } from "../ai/captain-state";
 import { type PilotState, upgradePilot } from "../ai/pilot/state";
 import { type ReefingState } from "../systems/reefing-state";
+import { type AssistState } from "../world/components";
 import { type Castaway, type Floater, type FortState } from "../world/components";
 import { type ShipState } from "../ship/ship-state";
 import { shipModel } from "../ship/ship-model";
 import { createBody } from "../physics/rigid-body";
 import { type Purse } from "../economy/purse";
 import { type Relations, type StormCell } from "@broadside/core";
+import { type Salvage } from "../economy/salvage-state";
+import { type Survey } from "../economy/survey-state";
 import { type Jobs } from "../economy/contracts";
 
 /**
@@ -32,12 +35,14 @@ export interface ShipSnap {
   readonly pilot?: PilotState | null;
   /** Standing order to reef (absent in older saves). */
   readonly reefing?: ReefingState | null;
+  readonly assist?: AssistState | null;
+  readonly anchor?: { x: number; z: number } | null;
   readonly ttl: number | null;
 }
 
 export interface SimSnapshot {
   readonly version: number;
-  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean };
+  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean; /** The land's generator version (core WORLD_VERSION); absent: 1. */ world?: number };
   readonly steps: number;
   readonly nextId: number;
   readonly rng: number;
@@ -46,6 +51,10 @@ export interface SimSnapshot {
   /** Absent in saves from before reputation (standings at the start then). */
   readonly relations?: Relations;
   readonly jobs?: Jobs;
+  /** Absent in saves from before salvage (nothing salvaged then). */
+  readonly salvage?: Salvage;
+  /** Absent in saves from before the chart's fog of war (the lookout sweeps again from where the ship lies). */
+  readonly survey?: Survey;
   readonly ships: readonly ShipSnap[];
   readonly forts: readonly { id: number; site: FortSite; state: Omit<FortState, "def" | "site"> }[];
   readonly castaways: readonly Castaway[];
@@ -56,7 +65,7 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapshot => ({
   version: SNAPSHOT_VERSION,
-  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false },
+  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false, world: WORLD_VERSION },
   steps: sim.steps,
   nextId: sim.nextId,
   rng: sim.rngState(),
@@ -64,10 +73,12 @@ export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapsh
   purse: { ...sim.purse },
   relations: { ...sim.relations },
   jobs: clone(sim.jobs),
+  salvage: clone(sim.salvage),
+  survey: clone(sim.survey),
   ships: sim.ships().map((e) => {
     const { model: _model, ...fields } = e.ship!;
     const b = e.body!;
-    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ...(e.pilot ? { pilot: clone(e.pilot) } : {}), ...(e.reefing ? { reefing: clone(e.reefing) } : {}), ttl: e.ttl ?? null };
+    return { id: e.id, classId: e.ship!.model.def.id, player: !!e.player, body: { pos: b.pos, vel: b.vel, rot: b.rot, angVel: b.angVel }, ship: clone(fields), captain: e.captain ? clone(e.captain) : null, ...(e.pilot ? { pilot: clone(e.pilot) } : {}), ...(e.reefing ? { reefing: clone(e.reefing) } : {}), ...(e.assist ? { assist: clone(e.assist) } : {}), ...(e.anchor ? { anchor: clone(e.anchor) } : {}), ttl: e.ttl ?? null };
   }),
   forts: sim.forts().map((e) => {
     const { def: _def, site, ...state } = e.fort!;
@@ -97,17 +108,36 @@ export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Sim
   Object.assign(sim.purse, snap.purse);
   if (snap.relations) Object.assign(sim.relations, snap.relations);
   if (snap.jobs) sim.jobs.active = clone(snap.jobs.active);
+  if (snap.salvage) Object.assign(sim.salvage, clone(snap.salvage));
+  if (snap.survey) Object.assign(sim.survey, clone(snap.survey));
   for (const s of snap.ships) {
     const model = shipModel(s.classId);
     const body = createBody(model.mass, model.inertia, s.body.pos, s.body.rot);
     body.vel = s.body.vel;
     body.angVel = s.body.angVel;
     // Fields added after a save was written get their defaults (refits, standing orders).
-    const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades">;
-    const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [] };
-    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
+    const old = clone(s.ship) as Partial<Omit<ShipState, "model">> & Omit<ShipState, "model" | "upgrades" | "wrecks" | "taken" | "aground" | "hitByPlayer">;
+    const ship: ShipState = { model, ...old, upgrades: old.upgrades ?? [], wrecks: old.wrecks ?? [], taken: old.taken ?? false, aground: old.aground ?? false, hitByPlayer: old.hitByPlayer ?? false };
+    sim.world.add({ id: s.id, body, ship, ...(s.player ? { player: true as const } : {}), ...(s.captain ? { captain: withOrders(clone(s.captain)) } : {}), ...(s.pilot ? { pilot: upgradePilot(clone(s.pilot)) } : {}), ...(s.reefing ? { reefing: clone(s.reefing) } : {}), ...(s.assist ? { assist: clone(s.assist) } : {}), ...(s.anchor ? { anchor: clone(s.anchor) } : {}), ...(s.ttl !== null ? { ttl: s.ttl } : {}) });
   }
-  for (const f of snap.forts) {
+  // A save from an older world: the land has moved under it. The ships are moved off it to the
+  // nearest open water, the forts rebuilt where the new shores have them, and what pointed at the
+  // old ports and wrecks (the contract, the salvaged list) let go; the purse, the standing with
+  // the nations and the ships themselves are kept.
+  const stale = !!archipelago && (o.world ?? 1) < WORLD_VERSION;
+  if (stale) {
+    for (const e of sim.ships()) {
+      const p = openWater(archipelago, e.body!.pos.x, e.body!.pos.z, 60);
+      e.body!.pos = { ...e.body!.pos, x: p.x, z: p.z };
+      delete e.anchor;
+      delete e.pilot;
+    }
+    for (const site of fortSites(archipelago)) sim.spawnFort(site);
+    sim.jobs.active = null;
+    sim.salvage.salvaged.length = 0;
+    sim.survey.seen = [];
+  }
+  for (const f of stale ? [] : snap.forts) {
     const e = sim.spawnFort(f.site);
     Object.assign(e.fort!, clone(f.state));
     e.id = f.id;

@@ -51,12 +51,19 @@ pod ten sam adres.
 ## HUD
 Style w `packages/app/src/style.css`: siatka obszarów wokół wolnego środka, wymiary w jednostce `--u` (projekt 960 × 540,
 na niskich ekranach 760 × 430). Po zmianie HUD: `pnpm build` i `node tools/ui/ui-audit.mjs <katalog>` (15 rozmiarów
-ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane kolumny, pismo poniżej 8 px; zrzuty).
+ekranu, angielski i polski, nakładanie paneli, wyjście poza ekran, przewijane kolumny, pismo poniżej 8 px, menu główne
+i zakładki opcji; zrzuty). Menu główne i opcje: `packages/ui/src/hud/main-menu.tsx`; narzędzia pomijają je na starcie
+(`navigator.webdriver`, parametr `menu=0`).
 
 ## APK
 `pnpm apk` buduje tutaj podpisany APK (`Broadside.apk` w katalogu głównym, poza gitem; SDK i lustro Maven:
 `tools/android/README.md`). Po zmianie widocznej w grze: zbudować i wysłać właścicielowi plik razem z aktualizacją
 przeglądarki statku. CI (`android.yml`) buduje ten sam APK tym samym kluczem i numerem wersji.
+
+## PWA i ikona
+Gra instaluje się jako PWA (`public/manifest.webmanifest`, `public/sw.js`, rejestracja w `src/pwa.ts`, poza Capacitorem)
+i działa offline po pierwszym uruchomieniu. Sprawdzenie: `pnpm build && node tools/pwa/pwa-check.mjs` (manifest, ikony,
+service worker, start bez sieci). Ikona z generatora `node tools/icons/icon.mjs` (PWA i ikony Androida naraz).
 
 ## Definition of Done
 `pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test && pnpm build`. Audyty liczbowe: `pnpm run audit`.

@@ -35,8 +35,15 @@ export const steerFor = (me: Entity, p: PilotState, x: number, z: number, sea: S
   const speed = Math.hypot(b.vel.x, b.vel.z);
   if (speed > 1) p.leeway = 0.8 * (p.leeway ?? 0) + 0.2 * Math.min(0.45, Math.abs(wrapAngle(Math.atan2(b.vel.x, b.vel.z) - yaw)));
   const desired = Math.atan2(x - b.pos.x, z - b.pos.z);
-  const aim = desired - ((p.leeway ?? 0) + OVERSTAND) * Math.sign(Math.sin(sea.windDirection - desired));
-  return clearHeading(me, sailableHeading(aim, sea.windDirection, me.ship!, yaw, LAYLINE), sea);
+  // Leeway is a beam wind's: the allowance goes with the sine of the angle off the wind (none
+  // running before it; its sign flickering there made the course zigzag downwind).
+  const aim = desired - ((p.leeway ?? 0) + OVERSTAND) * Math.sin(sea.windDirection - desired);
+  // Hold the tack chosen last time until the point can be laid on the other (the layline), held
+  // against that course, not her head of the moment: a ship wearing round swings past both tacks,
+  // and measured against her head the choice flipped at every swing (wearing back and forth).
+  const course = sailableHeading(aim, sea.windDirection, me.ship!, p.tack ?? yaw, LAYLINE);
+  p.tack = wrapAngle(course - aim) === 0 ? undefined : course;
+  return clearHeading(me, course, sea);
 };
 
 /** Course to keep a heading (made sailable and clear of shoals). */

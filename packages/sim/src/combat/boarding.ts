@@ -1,18 +1,21 @@
-import { type EventQueue, type Rng, prizeMoney } from "@broadside/core";
+import { DISABLED, type EventQueue, type Rng, damageState, prizeMoney } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type Purse, credit } from "../economy/purse";
+import { shipCondition } from "../ship/ship-state";
 
 /**
  * Boarding: grappled alongside, the attacking party (three quarters of the crew) meets the
  * defenders (all hands; a ship that has struck her colours barely resists). The side with the
  * larger effective strength carries the deck; losses fall mostly on the losers. A taken ship
- * yields her whole hold (plunder) and prize money, and some of her men join the victors.
+ * yields her whole hold (plunder) and prize money, once (a prize taken cannot be boarded again),
+ * and some of her men join the victors.
  */
 export const BOARD_REACH = 30;
 export const BOARD_SPEED = 2.5;
 
+/** Alongside, slow enough to grapple, and a ship that is neither one's own side nor a prize already taken. */
 export const canBoard = (me: Entity, target: Entity): boolean => {
-  if (target.ship!.sinking || target.id === me.id) return false;
+  if (target.ship!.sinking || target.id === me.id || target.ship!.taken || target.ship!.faction === me.ship!.faction) return false;
   const a = me.body!;
   const b = target.body!;
   const gap = Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) - (me.ship!.model.def.hull.beam + target.ship!.model.def.hull.beam) / 2;
@@ -25,7 +28,7 @@ export const board = (events: EventQueue, me: Entity, target: Entity, rng: Rng, 
   const d = target.ship!;
   const party = Math.floor(a.crew * 0.75);
   const attack = party * (0.8 + rng.next() * 0.4);
-  const defence = d.crew * (d.struck ? 0.25 : 1.15) * (0.8 + rng.next() * 0.4);
+  const defence = d.crew * (d.struck ? 0.25 : damageState(shipCondition(d)) === "disabled" ? DISABLED.boardingDefence : 1.15) * (0.8 + rng.next() * 0.4);
   if (attack > defence) {
     const lostA = Math.min(party, Math.ceil(party * 0.35 * (defence / attack)));
     a.crew -= lostA;
@@ -34,6 +37,7 @@ export const board = (events: EventQueue, me: Entity, target: Entity, rng: Rng, 
     a.crew += pressed;
     d.crew = Math.max(0, survivors - pressed);
     d.struck = true;
+    d.taken = true;
     if (target.captain) target.captain.mode = "struck";
     d.sailTarget = d.sailTarget.map(() => 0);
     events.push({ type: "boarded", ship: target.id, by: me.id, won: true });

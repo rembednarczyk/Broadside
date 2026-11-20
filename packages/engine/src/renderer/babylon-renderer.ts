@@ -1,6 +1,6 @@
 import { WakeTrails } from "./wake-trails";
 import { type Simulation } from "@broadside/sim";
-import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, Vector3 } from "../babylon";
+import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, type Texture, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
 import { PostStack } from "./post-stack";
 import { type GraphicsSettings } from "../graphics-settings";
@@ -10,6 +10,8 @@ import { type SceneLook, sceneLook } from "./look";
 import { type ShipMaterials, ShipView, createShipMaterials, setNightGlow } from "./ship-view";
 import { SAIL_TRANSMITTANCE, sailLightOf } from "./sail-translucency";
 import { ShipFill } from "./ship-fill";
+import { wetSkyOf } from "./wet-deck";
+import { hazeSunOf } from "./sun-haze";
 import { EffectsDirector } from "../effects/effects-director";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
@@ -22,7 +24,7 @@ import { TownsView } from "./towns-view";
 import { WrecksView } from "./wrecks-view";
 import { CrewRig } from "./crew-rig";
 import { GunScan } from "./ship-guns";
-import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, waterHeight, wreckSites, yawOf } from "@broadside/core";
+import { type DomainEvent, SHIP_CLASSES, type ShipClassId, rotateInv, shoreDistance, waterHeight, wreckSites, yawOf } from "@broadside/core";
 
 /**
  * Facade over the Babylon scene (Facade, GoF; SpinalTap's BabylonRenderer split into parts):
@@ -78,6 +80,9 @@ export class BabylonRenderer {
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
+  /** Light level the unlit rigging lines were last drawn at, and seconds to the next check (lineLight). */
+  private lineK = -1;
+  private lineCheck = 0;
   private readonly effects: EffectsDirector;
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
@@ -88,12 +93,17 @@ export class BabylonRenderer {
   focus: { x: number; z: number } | null = null;
   private coast: FarCoast | null = null;
   private islands: IslandsView | null = null;
+  /** Where the camera was when the shallows' landmasses were last picked. */
+  private shallowsAt: { x: number; z: number } | null = null;
   private readonly forts: FortsView;
   private towns: TownsView | null = null;
   private readonly wreckUrl: string | undefined;
   private readonly gunScan: GunScan | null;
   private readonly crewRig: CrewRig | null;
   private readonly treeBudget: number;
+  /** The islands' textures (terrain-splat) and whether their grid is the dense one (high preset and up). */
+  private readonly texturesUrl: string | undefined;
+  private readonly fineLand: boolean;
   private readonly post: PostStack;
   private dropsLeft = 0;
 
@@ -102,7 +112,7 @@ export class BabylonRenderer {
     this.engine = new Engine(opts.canvas, g.msaa > 1, { preserveDrawingBuffer: true, stencil: true }, true);
     // Pixel density capped at 2: a 3x phone screen shades 2.25 times the pixels of a 2x one for a
     // difference the eye does not find at arm's length (the cap three.js and most web games use).
-    this.engine.setHardwareScalingLevel(1 / Math.max(0.3, Math.min(MAX_PIXEL_RATIO, globalThis.devicePixelRatio || 1) * g.renderScale));
+    this.setRenderScale(g.renderScale);
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.5, 0.6, 0.7, 1);
     this.camera = new FollowCamera(this.scene, opts.canvas);
@@ -117,6 +127,11 @@ export class BabylonRenderer {
     this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
     this.effects = new EffectsDirector(this.scene, g.particles);
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
+    // Torn planks show the timber of the hull they came from: the model's baked planking, else the generated decks' planks.
+    this.effects.plankTexture = (shipId) => {
+      const def = this.views.get(shipId)?.model.def;
+      return (def && this.hulls?.planks(def.id, def.hull)?.texture) ?? (this.materials.deck.diffuseTexture as Texture | null) ?? null;
+    };
     this.effects.hullLength = (id, physical) => this.hulls?.fitted(id as ShipClassId, SHIP_CLASSES[id as ShipClassId].hull)?.length ?? physical;
     this.salvo = new SalvoMarks(this.scene);
     this.course = new CourseView(this.scene);
@@ -124,14 +139,15 @@ export class BabylonRenderer {
     this.instrumentation = new SceneInstrumentation(this.scene);
     this.instrumentation.captureFrameTime = true;
     this.treeBudget = g.particles;
+    this.texturesUrl = opts.texturesUrl;
+    this.fineLand = g.preset !== "low" && g.preset !== "medium";
     this.forts = new FortsView(this.scene, this.shadows);
     this.wreckUrl = opts.propsUrl;
     this.gunScan = opts.propsUrl && opts.graphics.preset !== "low" ? new GunScan(this.scene, `${opts.propsUrl}gun.glb`) : null;
     this.crewRig = opts.propsUrl && opts.graphics.preset !== "low" ? new CrewRig(this.scene, `${opts.propsUrl}crew-anim.bin`) : null;
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
-    this.post = new PostStack(this.scene, this.engine, this.camera.camera, g, [this.sky.mesh]);
-    this.forts.onBuilt = (m) => this.post.excludeFromShafts(m);
+    this.post = new PostStack(this.scene, this.camera.camera, g);
   }
 
   /** Shadows: cascaded maps on the higher presets (sharp close up, wide range), one map below. */
@@ -158,16 +174,21 @@ export class BabylonRenderer {
   }
 
   private applyLook(look: SceneLook): void {
-    if (this.post.sunDisc) {
-      const c = this.camera.camera.position;
-      this.post.sunDisc.position.set(c.x + look.sunDir.x * 900, c.y + Math.max(0.02, look.sunDir.y) * 900, c.z + look.sunDir.z * 900);
-      this.post.sunDisc.isVisible = look.sunDir.y > -0.05;
-    }
     // The key light: the sun by day, the moon by night (look.ts).
     this.sun.direction.set(-look.keyDir.x, -Math.max(0.05, look.keyDir.y), -look.keyDir.z);
     this.sun.position = this.sun.direction.scale(-300).add(this.camera.camera.target);
     this.sun.diffuse = new Color3(look.keyColor.r, look.keyColor.g, look.keyColor.b);
     this.sun.intensity = look.keyIntensity;
+    this.lineLight(look.keyIntensity);
+    // The sky the wet decks mirror (wet-deck.ts).
+    const wet = wetSkyOf(this.scene);
+    wet.horizon = look.skyHorizon;
+    wet.zenith = look.skyZenith;
+    // The lit haze over the land glows towards the key light as the ocean's does (sun-haze.ts).
+    const haze = hazeSunOf(this.scene);
+    haze.dir = look.keyDir;
+    const hk = Math.min(1, look.keyIntensity / 2.2);
+    haze.color = { r: look.keyColor.r * hk, g: look.keyColor.g * hk, b: look.keyColor.b * hk };
     // The same key light, through the canvas of the sails (sail-translucency.ts).
     const through = sailLightOf(this.scene);
     through.dir = { x: look.keyDir.x, y: Math.max(0.05, look.keyDir.y), z: look.keyDir.z };
@@ -180,9 +201,9 @@ export class BabylonRenderer {
     this.ambient.groundColor = new Color3(look.ambient.r * 0.8, look.ambient.g * 0.95, look.ambient.b * 1.05);
     this.ambient.intensity = 1;
     setNightGlow(this.scene, 1 - Math.min(1, look.sunIntensity / 0.8), look.sunDir.y);
-    // Eyes adjust to the night: up to 2.2 times the exposure once the sun is down (post-stack);
+    // Eyes adjust to the night: up to 2 times the exposure once the sun is down (post-stack);
     // a storm by day stays dark, as it should.
-    this.post.adapt(1 + 1.2 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
+    this.post.adapt(1 + 1.0 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
     this.towns?.setNight(1 - Math.min(1, look.sunIntensity / 0.8));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
@@ -223,10 +244,23 @@ export class BabylonRenderer {
     if (changed) this.shipFill.track([...this.views.values()].map((x) => x.root));
   }
 
+  /**
+   * How strong the screen-space sun shafts are (grade.ts): a low sun in front of the camera, fading
+   * as it climbs, sets or goes behind heavy cloud (the reference's shafts are a low, backlit sun's).
+   */
+  private shaftStrength(look: SceneLook, toSun: Vector3): number {
+    const ahead = Vector3.Dot(this.camera.camera.getForwardRay(1).direction, toSun);
+    const low = smoothstep(-0.02, 0.08, look.sunDir.y) * (1 - smoothstep(0.35, 0.7, look.sunDir.y));
+    return 0.9 * low * smoothstep(0.2, 0.6, ahead) * (1 - 0.8 * smoothstep(0.55, 0.9, look.cloudCover));
+  }
+
   /** Domain events of the last steps (Observer): effects react to them. */
   onEvents(events: readonly DomainEvent[]): void {
     this.effects.onEvents(events);
-    for (const e of events) if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
+    for (const e of events) {
+      if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
+      if (e.type === "hit" && (e.part === "hull" || e.part === "gun")) this.views.get(e.ship)?.shotHit(e.at, e.damage);
+    }
     this.weather.onEvents(events);
   }
 
@@ -255,16 +289,25 @@ export class BabylonRenderer {
     this.applyLook(look);
     this.shipFill.frame(this.camera.camera.getForwardRay(1).direction, this.camera.mode === "cinematic", 1 - Math.min(1, look.sunIntensity / 0.8), dt);
     const cam = this.camera.camera.position;
-    if (!this.coast) this.coast = new FarCoast(this.scene, sim.env.seed);
+    if (!this.coast) {
+      const main = sim.env.archipelago?.islands.find((is) => is.form === "mainland");
+      this.coast = new FarCoast(this.scene, sim.env.seed, main ? Math.atan2(main.x, main.z) : null);
+    }
     if (!this.islands && sim.env.archipelago) {
-      this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget);
-      this.post.excludeFromShafts(this.islands.meshes);
+      this.islands = new IslandsView(this.scene, sim.env.archipelago, this.shadows, this.treeBudget, this.texturesUrl, this.fineLand);
       this.towns = new TownsView(this.scene, sim.env.archipelago, sim.ports);
-      this.post.excludeFromShafts(this.towns.meshes);
       if (this.wreckUrl) void new WrecksView(this.scene, this.wreckUrl).place(wreckSites(sim.env.archipelago));
-      this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ ...is, d: Math.hypot(is.x - cam.x, is.z - cam.z) })).sort((p, q) => p.d - q.d));
+    }
+    if (this.islands && sim.env.archipelago) {
+      this.islands.update(cam.x, cam.z);
+      // The shallows term takes the 32 landmasses nearest the camera: picked again whenever the camera has moved 300 m.
+      if (!this.shallowsAt || Math.hypot(cam.x - this.shallowsAt.x, cam.z - this.shallowsAt.z) > 300) {
+        this.shallowsAt = { x: cam.x, z: cam.z };
+        this.ocean.setIslands(sim.env.archipelago.islands.map((is) => ({ is, d: shoreDistance(is, cam.x, cam.z) })).sort((p, q) => p.d - q.d).map((e) => e.is));
+      }
     }
     this.coast.follow(cam.x, cam.z);
+    this.coast.setHaze(this.scene.fogColor, look.fogDensity);
     const underside = 1 - 0.55 * smoothstep(0.4, 0.95, look.cloudCover);
     this.ocean.update(sim.env.waves, sim.env.time, cam.x, cam.z, {
       sunDirection: new Vector3(look.keyDir.x, look.keyDir.y, look.keyDir.z),
@@ -287,9 +330,10 @@ export class BabylonRenderer {
     const strike = this.weather.strikeAt;
     const eye = this.camera.camera.position;
     const toStrike = strike ? new Vector3(strike.x - eye.x, 300, strike.z - eye.z).normalize() : null;
+    this.sky.refresh(this.camera.camera.getForwardRay(1).direction, (this.weather.flash ?? 0) > 0);
     this.sky.update(look, sim.env.time, Math.sin(sim.env.windDirection) * ws, Math.cos(sim.env.windDirection) * ws, toStrike ? { x: toStrike.x, y: toStrike.y, z: toStrike.z, w: this.weather.flash } : null);
     this.updateScreen(sim, look, dt);
-    const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
+    const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, slap: this.effects.slap.get(e.id) ?? 0, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.ocean.setTrails(this.trails.update(ships, sim.env.time));
     this.syncShips(sim);
@@ -323,7 +367,7 @@ export class BabylonRenderer {
     const LENS = 0.6;
     const h = cam.y - surface;
     const waterline = Math.abs(h) < LENS && this.camera.mode !== "isometric" ? 0.5 - h / (2 * LENS) : -1;
-    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8) });
+    Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8), shafts: this.shaftStrength(look, sd) });
     this.ocean.setUnderwater(under);
     if (under) {
       this.scene.fogColor = new Color3(0.02, 0.13, 0.12);
@@ -344,8 +388,10 @@ export class BabylonRenderer {
   pickWater(clientX: number, clientY: number): { x: number; z: number } | null {
     const rect = this.engine.getRenderingCanvasClientRect();
     if (!rect) return null;
-    const scale = this.engine.getRenderWidth() / Math.max(1, rect.width);
-    const ray = this.scene.createPickingRay((clientX - rect.left) * scale, (clientY - rect.top) * scale, Matrix.Identity(), this.camera.camera);
+    // CSS pixels from the canvas corner: Babylon divides by the hardware scaling itself (device
+    // pixel ratio and render scale). Scaled here again, a tap landed 1.5 times as far from the
+    // corner on a phone at DPR 2 and the medium preset (beta test 19.11).
+    const ray = this.scene.createPickingRay(clientX - rect.left, clientY - rect.top, Matrix.Identity(), this.camera.camera);
     if (ray.direction.y > -1e-4) return null;
     const t = -ray.origin.y / ray.direction.y;
     if (t < 0 || t > 5000) return null;
@@ -355,6 +401,32 @@ export class BabylonRenderer {
   /** Draw calls of the last frame: the performance gate (SpinalTap ADR-0046). */
   drawCalls(): number {
     return this.instrumentation.drawCallsCounter.current;
+  }
+
+  /**
+   * The thin rigging drawn as lines (ratlines, far stays, running rigging) is unlit: its colour is
+   * scaled with the key light, so at night it does not stand out pale against a darkened ship (the
+   * ratlines read white in the night shot against ref_075). Checked a few times a second (new ships
+   * bring new lines), redrawn only when the light has changed.
+   */
+  private lineLight(key: number): void {
+    const k = Math.max(0.12, Math.min(1, key / 1.6));
+    this.lineCheck -= 1 / 60;
+    if (Math.abs(k - this.lineK) < 0.02 && this.lineCheck > 0) return;
+    this.lineCheck = 0.5;
+    this.lineK = k;
+    for (const m of this.scene.meshes) {
+      if (m.getClassName() !== "LinesMesh") continue;
+      const lines = m as unknown as { color: Color3; metadata: { lineBase?: Color3 } | null };
+      lines.metadata ??= {};
+      const base = (lines.metadata.lineBase ??= lines.color.clone());
+      lines.color.set(base.r * k, base.g * k, base.b * k);
+    }
+  }
+
+  /** Share of the screen's pixels rendered (the settings slider, or dynamic resolution below it). */
+  setRenderScale(scale: number): void {
+    this.engine.setHardwareScalingLevel(1 / Math.max(0.3, Math.min(MAX_PIXEL_RATIO, globalThis.devicePixelRatio || 1) * scale));
   }
 
   resize(): void {

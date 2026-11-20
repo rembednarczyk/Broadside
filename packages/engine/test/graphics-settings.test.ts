@@ -20,7 +20,7 @@ describe("graphics settings", () => {
     const ultra = withSetting(presetSettings("ultra"), "renderScale", 0.8);
     expect(ultra.preset).toBe("ultra");
     expect(ultra.renderScale).toBe(0.8);
-    expect(ultra.skyScale).toBe(0.5);
+    expect(ultra.skyScale).toBe(0.35);
   });
 
   it("defaults by device and survives bad storage", () => {

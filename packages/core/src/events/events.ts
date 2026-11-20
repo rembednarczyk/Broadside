@@ -33,10 +33,14 @@ export type DomainEvent =
   | { readonly type: "fortSilenced"; readonly fort: EntityId; readonly by: EntityId | null }
   | { readonly type: "fortCaptured"; readonly fort: EntityId; readonly by: EntityId; readonly gold: number; readonly from: Faction }
   | { readonly type: "assaultFailed"; readonly fort: EntityId; readonly by: EntityId; readonly lost: number }
-  | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" | "contract" }
+  | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" | "contract" | "wreck" }
   | { readonly type: "tradeRefused"; readonly port: number; readonly reason: "hostile" | "far" | "gold" }
   | { readonly type: "collision"; readonly a: EntityId; readonly b: EntityId; readonly at: Vec3; readonly speed: number; readonly ram: boolean }
   | { readonly type: "grounded"; readonly ship: EntityId; readonly at: Vec3; readonly speed: number }
+  /** The anchor let go (down) or weighed. */
+  | { readonly type: "anchored"; readonly ship: EntityId; readonly down: boolean }
+  /** A ship has fired her last of a special shot: her guns of that mount go back to round shot. */
+  | { readonly type: "ammoOut"; readonly ship: EntityId; readonly ammo: string }
   | { readonly type: "weatherChanged"; readonly kind: string }
   | { readonly type: "contractAccepted"; readonly kind: ContractKind; readonly target: EntityId }
   | { readonly type: "contractDone"; readonly kind: ContractKind; readonly reward: number }

@@ -19,6 +19,7 @@ export type { UniformBuffer } from "@babylonjs/core/Materials/uniformBuffer";
 export { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
 export { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 export { Texture } from "@babylonjs/core/Materials/Textures/texture";
+export type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 export { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture";
 export { Layer } from "@babylonjs/core/Layers/layer";
 export { RawTexture3D } from "@babylonjs/core/Materials/Textures/rawTexture3D";

@@ -20,6 +20,7 @@ describe("gunnery", () => {
     sim.command({ type: "sails", ship: a.id, mast: "all", level: 0 });
     sim.command({ type: "sails", ship: b.id, mast: "all", level: 0 });
     run(sim, 2);
+    const roundBefore = a.ship!.stores.round!;
     sim.command({ type: "fire", ship: a.id, mount: "broadside", side: "starboard", range: 150 });
     const ev = run(sim, 4);
     const fired = ev.filter((e) => e.type === "gunFired");
@@ -30,7 +31,7 @@ describe("gunnery", () => {
     // Reloading: a second order right away fires nothing.
     sim.command({ type: "fire", ship: a.id, mount: "broadside", side: "starboard", range: 150 });
     expect(run(sim, 0.5).filter((e) => e.type === "gunFired")).toHaveLength(0);
-    expect(a.ship!.stores.round).toBe(40 * a.ship!.model.def.guns.length - 9);
+    expect(a.ship!.stores.round).toBe(roundBefore - 9);
   });
 
   it("does not fire while braced", () => {

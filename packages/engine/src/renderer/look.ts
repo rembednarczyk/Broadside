@@ -71,7 +71,8 @@ export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?
   let zenith = mix(NIGHT_ZENITH, mix(DAY_ZENITH, DUSK_ZENITH, golden), day);
   let horizon = mix(NIGHT_HORIZON, mix(DAY_HORIZON, DUSK_HORIZON, golden), day);
   const cover = clamp01(overcast);
-  const stormTint = scale(STORM, 0.25 + 0.75 * day);
+  // A storm by night keeps a dull grey sky (ref_075: the overcast glows faintly, the sea reads under it).
+  const stormTint = scale(STORM, 0.45 + 0.55 * day);
   zenith = mix(zenith, scale(stormTint, 0.8), cover * 0.85);
   horizon = mix(horizon, stormTint, cover * 0.8);
   const sunColor = mix(rgb(1, 0.97, 0.9), rgb(1, 0.6, 0.3), golden);
@@ -84,7 +85,7 @@ export const sceneLook = (hours: number, overcast: number, fog: number, azimuth?
   const moonKey = moonIntensity > sunIntensity;
   // Haze thickens faster than the cover: under a heavy sky the horizon and its cliffs sink into
   // it (ref_152, ref_060), under a broken one hardly changes (cover^1.5).
-  const fogDensity = 0.0006 + 0.0028 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
+  const fogDensity = 0.0006 + 0.0042 * Math.pow(cover, 1.5) + 0.006 * clamp01(fog);
   // That haze lies in the shadow of the deck of cloud: a dull grey, darker than the bright band
   // of a clear horizon (the sky shader dims its own haze by the same curve, horizonHaze in shaders/sky.ts).
   const fogColor = scale(horizon, hazeShade(cover));

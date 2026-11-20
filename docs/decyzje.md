@@ -749,3 +749,415 @@ wyrazów (rufa: e^-6 na 25 m, grzbiet fali dziobowej: trzy długości zaniku), a
 trójki fbm po cztery oktawy) liczą się tylko tam, gdzie ich waga od rozmiaru piksela jest niezerowa. Wynik bez zmiany w
 obrazie (pominięte wyrazy są zerowe). Ultra: 2,56 → 2,23 s, ocean 1,23 → 0,93 s. SwiftShader cieniuje każdą próbkę MSAA
 osobno, więc koszt pikseli na ultra jest tu zawyżony względem GPU.
+
+## 18.11 Wybrzeże w warstwach we mgle (orkiestrator, M9 C2)
+Klatki `ref_095` i `ref_176`: wzdłuż horyzontu długi, płaski płaskowyż w kilku coraz jaśniejszych warstwach. U nas
+pierścień wybrzeża stał 3400 m od kamery w zwykłej mgle sceny (przy gęstości ok. 0,0014 zostawało ok. 1% obrazu), więc
+go nie było widać, a jedyne lądy na horyzoncie to bliskie wyspy. Zmiana: dwa pierścienie (2600 m i 3800 m, drugi 1,45
+raza wyższy, inne ziarno), bez oświetlenia i bez mgły sceny, z własną perspektywą powietrzną: kolor skały w cieniu (35%
+koloru mgły) przechodzi w kolor mgły według `1 - exp(-d * gęstość * 0,35)` (prawo Koschmiedera ze zmniejszonym
+wygaszaniem, `coastHaze`, test). Dalsza warstwa wychodzi jaśniejsza, pod ciężkim niebem obie znikają. Plansze
+`stern-castle`, `horizon`, `stern-sun`.
+
+## 18.11 Zabłąkane ławice mgły w kolorze nieba (orkiestrator, M9 C1)
+Ławice mgły pojawiały się tylko przy pogodzie z mgłą i deszczem i miały stały, jasny kolor (nocą świeciłyby na biało).
+Teraz przy zachmurzeniu dryfuje kilka zabłąkanych ławic (6% budżetu przy pokryciu od 0,6; na klipie s. 8–9 ławica
+przechodzi przez kadr przy zachodzie z rozbitymi chmurami), a kolor ławic co klatkę idzie za kolorem mgły sceny (ciepły
+o zachodzie, szary nocą). Zostawione rzadkie, żeby nie zasłaniały widoku do grania. Tabela stanu w
+`docs/reference/README.md` uaktualniona (wiele pozycji ✘ było już zrobionych).
+
+## 18.11 Mokry pokład odbija niebo (orkiestrator, M9 C1)
+Na ujęciu z pokładu pod słońce (`ref_112`) cały pokład leży w cieniu żagli, więc połysk od słońca (mnożony przez cień)
+nie miał się gdzie pokazać, a na klatce deski są jasne. Mokra powierzchnia oglądana wzdłuż desek odbija przede wszystkim
+jasne niebo, którego cień żagli nie zatrzymuje. `WetDeck` dodaje odbicie nieba z członem Fresnela Schlicka (F0 = 0,02 jak
+dla wody), kolor nieba z wysokości odbitego promienia (horyzont do zenitu, ten sam gradient co kopuła), tylko na
+powierzchniach skierowanych w górę. Bez sondy odbić: relief desek i ciemne zakamarki pod nadbudówkami nie wchodzą.
+Plansza `deck`: deski i luki szare i czytelne zamiast czarnej plamy.
+
+## 18.11 Spód powierzchni łagodniejszy i w smugach (orkiestrator, M9 C5)
+Plansza `underwater` (ref_161): okno Snella rozpadało się na czarne łaty całkowitego wewnętrznego odbicia, bo widok od
+spodu brał pełne nachylenie fal i detalu. Teraz do widoku spod wody normalna jest spłaszczona w połowie ku pionowi (przez
+kilka metrów wody zbocza czyta się łagodniej): okno jest okrągłe, z błądzącym brzegiem. Jasność okna dostaje smugi z szumu
+rozciągniętego 8 razy wzdłuż wiatru, niebo w oknie przygaszone do 1,4, scena z kamerą pochyloną mniej (0,6), jak na klatce.
+
+## 18.11 Nocne dostosowanie oka do ×2 (orkiestrator, M9 C1)
+Po podniesieniu ekspozycji sepii (1,15) jasne partie nocy wyszły ponad klatkę `ref_075` (75. percentyl 56 przy 46).
+Dostosowanie oka w nocy z ×2,2 do ×2,0: 75. percentyl 48 przy 46, 95. percentyl 64 przy 67.
+
+## 18.11 Rufa względem rej: bez zmiany kamery kinowej (orkiestrator, M9 C5)
+Szeroka rufa na `ref_090` to perspektywa bliskiej kamery. Kamera kinowa krąży na 1,8 długości statku, 1,3 m nad wodą
+(kąt 0,9 rad); żeby rufa wyszła szersza od rej, musiałaby podejść na ok. 1,3 długości, a wtedy ucina wierzchołki masztów
+(potrzebny pionowy kąt ok. 41°), podczas gdy klatka pokazuje cały statek z niebem nad nim. Zostaje jak jest; wcześniej
+sprawdzony szerszy kasztel (0,95) też nie zmieniał obrazu.
+
+## 18.11 Jaśniejszy, wyższy pas mgły pod słońcem; wybrzeże bledsze (orkiestrator, M9 C2)
+Klatki `ref_020`, `ref_090`: pod nisko stojącym słońcem horyzont to szeroki, jasny pas mgły bez ostrej linii morza, a
+wybrzeże ledwo z niego wychodzi. Zmiany: pas mgiełki nieba sięga pod słońcem do ok. 11° (było stałe 5°) i świeci mocniej
+(×1,6); mgła nad morzem rozprasza słońce dwoma płatkami (szerokim `pow(·, 3)` i rdzeniem `pow(·, 12)`) zamiast jednego
+wąskiego; wybrzeże z mocniejszym zamgleniem (współczynnik 0,5) i jaśniejszym światłem powietrza (do ok. 1,1 koloru mgły,
+bo pas na horyzoncie jest jaśniejszy od mgły sceny). Trzy próby na planszy `stern-castle`: 0,65 zostawiało ciemny pas,
+0,95 chowało wybrzeże całkiem, 0,8 daje blady płaskowyż jak na klatce.
+
+## 18.11, użytkownik: klify na wyspach bez ruszania wysp
+Właściciel: „Zmień klify bez ruszania wysp”. Siatka wysp powyżej plaży (0,8 m) przeliczana krzywą wklęsłą
+1 - (1 - u)^n udziału w wysokości wyspy (`cliffProfile` w `island-geometry.ts`): brzeg wznosi się n razy bardziej stromo,
+szczyt płaski, najwyższy punkt bez zmian; n = 5 dla wysp klifowych, 3 dla reszty. Tylko rysowanie: linia wody (wysokość
+0), mielizny i ląd w symulacji (`islandHeight` w `core`) bez zmian, złoty hash bez zmian, drzewa na przeliczonej
+wysokości. Test profilu; zrzuty `horizon`, `stern-sun` i szerokie ujęcie: wyspy jako płaskowyże ze stromymi ścianami.
+
+## 18.11 Iskry przy burcie; promienie słońca do backlogu (orkiestrator, M9 C1, C3)
+Wzburzona woda wzdłuż linii wodnej kadłuba błyszczy jak kilwater (pasmo szersze od piany, rośnie z prędkością). Promienie
+przez olinowanie: okazało się, że przebieg promieni od początku nic nie rysował (tarcza słońca poza warstwami kamery);
+próba naprawy dawała biały statek, więc wycofana i opisana w backlogu.
+
+## 18.11 Promienie słońca w przestrzeni ekranu zamiast VolumetricLightScattering (orkiestrator, M9 C1)
+Promienie Babylona nic nie rysowały (tarcza słońca poza warstwami kamery), a ich przebieg co klatkę renderował scenę drugi
+raz. Naprawa przez tarczę na warstwie kamery bieliła statek. Nowe promienie liczy końcowy przebieg gradacji: rozmycie
+promieniste w stronę słońca jasnych pikseli samego obrazu (maska z progu jasności 0,72–0,95, wygaszanie 0,955 na próbkę,
+GPU Gems 3 rozdz. 13; maszty, żagle i liny są w obrazie ciemne, więc same przecinają smugi). Próbek: jedna trzecia
+dawnego ustawienia `sunShafts` (8 do 32). Siła: nisko stojące słońce przed kamerą, słabnąca gdy słońce wysoko, za kamerą
+albo pod ciężkim niebem; pod wodą zostają promienie podwodne. Plansze `deck` i `stern-sun`: smugi między wantami i wokół
+masztów. Pomiar high: klatka 1,90 → 1,77 s, wywołania rysowania 243 → 176.
+
+## 18.11, użytkownik: woda wokół statku, chlapanie o burtę, uderzenia fal, fizyka
+Właściciel: „popraw wodę wokół statku do maksymalnego realizmu… chlapanie wody o burtę, uderzanie fal i fizyka”.
+Zrobione: punkty wzdłuż linii wodnej obu burt porównują ruch wody (nowe `waterState` w `core`: pochodna przemieszczenia
+Gerstnera w punkcie spoczynku, zanik Airy'ego w głąb) z ruchem kadłuba; woda podnosząca się względem burty albo
+napływająca na nią szybciej niż 1,2 m/s rzuca bryzgi w górę i na zewnątrz, cięższe przy mocnych uderzeniach (Kerner,
+„Water interaction model for boats in video games”, 2015); wygasająca siła uderzeń bieli wodę przy linii wodnej w
+shaderze. Fizyka (opór na prędkości względem wody, człon oporu Morisona) zrobiona, ale wycofana: pełna psuje dwa audyty,
+sam pion psuje bramkę liczby statków o jeden statek (opis w backlogu). Bramki ADR-0005 nie luzuję bez decyzji.
+
+## 18.11, użytkownik („Tak”): fizyka uderzeń fal i reżyser liczący całe grupy
+Zgoda właściciela na propozycję: reżyser świata liczy przed pojawieniem się grupy cały jej skład (konwój: prowadzący,
+kupiec i dwie eskorty, czyli 4 statki) i wybiera tylko ruch, który mieści morze w budżecie + 2 (z graczem budżet + 3, jak
+bramka ADR-0005; wcześniej konwój dobierany przy pięciu statkach dawał dziesięć). Potem włączona fizyka pionowa: opór
+pionowy kadłuba liczony od prędkości względem wody w fali (człon oporu Morisona z `waterState`), więc fala unosząca się
+pod dnem i przy burcie uderza w nie, a statek kołysze się i nurkuje z martwą falą. Poziom pominięty (opis w backlogu).
+Złoty hash ręcznie: 81d3dd8a → 8cfc76e. Audyty: 5 z 5, najgorszy krok długiego przebiegu 1,05 ms (bramka 2 ms).
+
+## 18.11, użytkownik: PWA i podpisany APK
+Właściciel: „zrób PWA i podpisz APK”. PWA: manifest (pełny ekran, poziomo, sepia), własny service worker według „The
+Offline Cookbook” (strona: najpierw sieć; paczki Vite z hashem: najpierw pamięć; modele, tekstury, dźwięki: z pamięci z
+odświeżaniem w tle), rejestracja tylko w przeglądarce przez HTTPS albo localhost (nie w aplikacji Capacitora). Pierwsza
+wizyta ładuje grę przed startem workera, więc strona przekazuje mu listę wczytanych plików (Resource Timing) do zapisania.
+Sprawdzenie skryptem `tools/pwa/pwa-check.mjs`: manifest i 3 ikony, worker aktywny, 154 pliki w pamięci, start offline.
+Ikona: aplikacja miała domyślną ikonę Capacitora; nowa z generatora `tools/icons/icon.mjs` (sylwetka galeonu pod niskim
+słońcem w sepii, SVG renderowany przez sharp) dla PWA i Androida (ikona adaptacyjna, kwadratowa i okrągła w 5 gęstościach).
+APK: podpisany kluczem wydania (`broadside.keystore`, ten sam w CI), schemat v2, `apksigner verify` przechodzi
+(CN=Broadside). Hosting PWA (adres HTTPS) nie jest ustawiony: wymaga decyzji, gdzie publikować.
+
+## 18.11 Łup z wraków (orkiestrator, M8)
+Pozycja backlogu M8. Statek gracza, który stoi do 60 m od nietkniętego wraku z prędkością najwyżej 1,5 m/s przez 5 s
+(wysyła łodzie), dostaje raz złoto 150–600, stałe dla ziarna świata i wraku (tabela `SALVAGE`, wzorzec Type Object).
+Stan (ograbione wraki, licznik postoju) w symulacji i w zapisie jako pole opcjonalne `salvage?` (jak `jobs?`, bez
+podbijania wersji schematu); system `salvageSystem` w `createSystems()` po zleceniach; stan w osobnym `salvage-state.ts`
+(bez cyklu z kontekstem systemów). Komunikat „Łup z wraku!” / „Salvage from the wreck!”. Mapy ze znacznikami w grze nie
+ma, więc znacznik wraku i rozkaz po tapnięciu w backlogu.
+
+## 18.11, użytkownik: pływanie po zaznaczeniu „dziwnie działa” (pomiar i pierwsze poprawki)
+Pomiar bez przeglądarki (statek gracza, rozkaz trasy do punktów 150–400 m w różnych kierunkach od wiatru, 10–20 minut):
+z wiatrem, w bok i ukośnie statek dociera, ale kurs z wiatrem kołysze się o ok. ±20° (sterowanie przy wietrze z rufy),
+a po zwinięciu żagli płynie jeszcze 2,5–3 m/s i mija cel o ok. 150 m (za silny napór wiatru na gołe maszty); pod wiatr
+cel jest w praktyce nieosiągalny: rejowiec ostro na wiatr (74°) ma tor ok. 80–95° od wiatru, a zwrot przez rufę kosztuje
+150–200 m, więc bilans halsowania jest bliski zera albo ujemny. Poprawione w pilocie: poprawka na dryf rośnie z sinusem
+kąta do wiatru (bez skoków znaku przy wietrze z rufy), pilot pamięta wybrany hals i trzyma go względem niego (koniec
+zawracania tam i z powrotem na starcie, gdy cel był za rufą), żagle zwijane z wyprzedzeniem drogi hamowania. Próby
+odrzucone: zwrot przez sztag dla rejowców (statek nie przechodzi dziobem przez wiatr, po 90 s i tak zawraca przez rufę),
+zwrot, gdy cel wypada za trawers (krótkie halsy, więcej strat). Zostaje do decyzji (fizyka): dryf na gołych masztach,
+osiągi pod wiatr, stabilność kursu z wiatrem.
+
+## 18.11, użytkownik: „woda przy statku wygląda źle”
+Zbliżenia rufy i burty przy świeżym wietrze: wzdłuż linii wodnej szedł jednolity, ostry biały pas (piana na obrysie o
+stałej jasności), a za rufą koronka piany przy pełnym pokryciu wycinała ciemne oczka (biała siatka na morzu). Zmiany:
+pas przy linii wodnej węższy, przy postoju ledwo widoczny (rośnie z prędkością) i porwany szumem płynącym wzdłuż burty,
+tak samo kołnierz przy dziobie i piana po uderzeniu fali; w kilwaterze koronka jest fakturą mlecznej warstwy (od 45% do
+100% pokrycia, bez dziur), jasność warstwy faluje wolnym szumem. Zrzuty przed i po: rufa bez siatki, burta bez białego pasa.
+
+## 18.11, użytkownik: „jak wejść w tryb ataku burtą w pościgu”
+Atak burtą był ukryty pod gestem przeciągnięcia od własnego statku do wroga i w menu po przytrzymaniu; samo tapnięcie
+wroga oznaczało abordaż. Teraz tapnięcie wroga to atak burtą (załoga obraca statek burtą i strzela, gdy działa
+namierzą), abordaż i eskorta zostają w menu po przytrzymaniu palca na statku. Karta pomocy dostała akapit o rozkazach
+(PL i EN). Przy okazji: panel ustawień zasłaniał własny przycisk ⚙ (urósł po przełącznikach refowania i wibracji), więc
+dostał przycisk „Zamknij”; audyt interfejsu zamyka nim panel.
+
+## 18.11: trzeci tryb sterowania „Akcja” (pad, żeglowanie wspomagane)
+Właściciel zaproponował tryb jak w Black Flag: dotykowy pad (przód, tył, lewo, prawo), przyciski akcji po prawej, statek
+płynie swoją największą prędkością i odczuwa pogodę kosztem realizmu. Decyzja (wariant rekomendowany):
+- Reguła symulacji `sim/systems/assist.ts` (komponent `assist`, komenda `assist`), dane w `core/data/assist.ts`. Wzorzec:
+  zachowania sterujące Reynoldsa (1999), siła = prędkość pożądana minus obecna, obcięta do maksimum; u nas tylko wzdłuż
+  kilu i wokół osi pionowej. Prędkość docelowa to prędkość kadłubowa z liczby Froude'a 0,35 (v = Fr·√(gL); galeon ok.
+  12,5 węzła) razy udział postawionego płótna (zrefowane 0,35, bojowe 0,65, pełne 1, lizele 1,25) i udział wiatru
+  (55% w ciszy, pełna od 6 m/s). Kurs względem wiatru nie ma znaczenia: pod wiatr płynie tak samo jak z wiatrem.
+- Pogoda nadal działa: fale ruszają kadłubem, 40% bocznej siły żagli daje przechył i trochę dryfu, maszty niosą pełne
+  obciążenie wiatru (za dużo płótna w szkwale nadal łamie maszt), załoga sama refuje w szkwale (stały rozkaz).
+- Skręt: koło o promieniu 1,2 długości kadłuba przy pełnym wychyleniu (liczone od co najmniej 2,5 m/s, więc wolny statek
+  też się obraca), ster przekłada się dwa razy szybciej niż zwykle.
+- Pad (`ui/hud/drive-pad.tsx`, wirtualna gałka): w lewo i w prawo wychyla ster proporcjonalnie, puszczenie wraca na
+  środek; ruch w górę lub w dół zmienia „bieg” żagli o jeden; poniżej zwiniętych żagli statek wybiera je na wstecz i cofa
+  się 1,6 m/s. Klawiatura w tym trybie: A i D wychylają ster, W i S biegi. Przyciski ognia zostają w rogach.
+- Tryb tylko dla gracza i tylko na życzenie (ustawienia, Sterowanie: Akcja); AI płynie po staremu. Złoty hash bez zmian.
+
+## 19.11, użytkownik: „czy pokład może być z desek takich jak statek, aby było go widać”
+Pokład galeonu z modelu był z góry prawie czarny, a nasze pokłady (kasztel, zaślepki nad przeciętymi kasztelami) miały
+deski Poly Haven innego koloru niż burta. Zmiany (`engine/renderer/deck-planks.ts`):
+- wszystkie pokłady statku z modelu (kasztel rufowy, zaślepki, śródokręcie) dostają teksturę desek wypieczoną z burty
+  tego samego modelu (`HullModels.planks`), deski wzdłuż statku w zmierzonym rozmiarze, kolor jaśniejszy od burty
+  (pokład wybielony słońcem), połysk mokrego pokładu jak dotąd;
+- wysokość pokładu na śródokręciu mierzymy promieniami w dół w siatkę modelu (raz na klasę, jak `HullModels.sides`):
+  najniższe z trzech trafień w poprzek pokładu, mediana z trzech stacji; tam, gdzie model nie ma pokładu (galeon ma pustą
+  studnię ok. 6–13 m przed środkiem), deski idą dalej na wysokości pokładu za nią;
+- załoga stoi na zmierzonym pokładzie (wcześniej reguła „wierzch burty minus 0,95 m” podnosiła ją na śródokręciu
+  o 0,7–1,4 m ponad pokład modelu).
+Śródokręcie galeonu to głęboka studnia między wysokimi burtami, w cieniu żagli: z kamery gry nadal jest ciemniejsze od
+kasztelu. Pokład dziobówki modelu zostaje własny (pomiar tam jest zaszumiony przez nadbudówki).
+
+## 19.11, użytkownik: „grafika dalej daje w kość, jakie mamy możliwości optymalizacji”
+Pomiar `tools/perf/frame-bench.mjs` (high, 800×450, SwiftShader; przełącznik `shallows` dodany do pomiaru): klatka
+2,1 s, z czego niebo z chmurami objętościowymi 53%, ocean 17% (płycizny tylko 3%), statki 14%, post-procesy 4%.
+Pieczenie płycizn do tekstury odłożone (mały zysk). Zrobione:
+- niebo i chmury w 35% rozdzielczości zamiast 50% na high i ultra (`skyScale`): koszt nieba 1110 → 554 ms, klatka
+  2,1 → 1,5 s (−28%); na zrzutach ujęć z dużą ilością nieba (horyzont w wichurze) różnicy nie widać, bo chmury są
+  miękkie, a maszty i liny rysujemy w pełnej rozdzielczości; kinowy zostaje w pełnej;
+- dynamiczna rozdzielczość (`engine/renderer/dynamic-resolution.ts`, technika konsolowa): gdy wygładzony czas klatki
+  przekracza 1/28 s, skala renderu spada o 5% co 1,5 s, najniżej do 60% ustawienia suwaka; gdy klatki są szybsze niż
+  1/42 s, wraca do suwaka (nigdy ponad). Telefon, który nadąża, nie widzi zmiany. Wyłączona w narzędziach Playwright
+  (`navigator.webdriver`) i parametrem `dynres=0`, żeby zrzuty i pomiary były w zadanej rozdzielczości.
+Limit 30 kl./s jako opcja w ustawieniach czeka (wymaga przełącznika w panelu i audytu interfejsu).
+
+## 19.11, użytkownik: uszkodzenia statków jak w Black Flag (do planu)
+Zapisane jako M11 w backlogu, przed dalszą optymalizacją (M10): stany zdrowia z tabeli, lecące deski z modeli desek
+właściciela (tylko w widoku, bez wpływu na symulację), przestrzeliny i osmalenia na kadłubie, łańcuch ścinający liny,
+żagle, reje i maszty (maszt przewraca się za burtę i hamuje statek), unieruchomienie i poddanie jak „disabled” w Black
+Flag. Zmiany reguł symulacji (grupy olinowania, reje z HP, poddanie unieruchomionego) zmienią złoty hash i wymagają
+audytu bitew w progach ADR-0005.
+
+## 19.11: lecące deski (M11.2)
+Skany desek z folderu właściciela (Stichting Archeos Fryslan, CC BY 4.0) nie nadają się na odłamki: każdy to 6–8 kawałków
+atlasu tekstur z deskami wraku pokrytymi pąklami, a po uproszczeniu nadal 24–83 tys. trójkątów. Odłamek to więc
+generowana deska z poszarpanymi końcami (12 trójkątów, instancje jednej siatki na rodzaj desek) z teksturą desek
+trafionego kadłuba (wypieczoną z modelu, jak pokład i kasztel; dla kadłubów generowanych deski pokładu). Ruch tylko
+w widoku (`effects/debris-motion.ts`: lot z obrotem, plusk, pływanie na tej samej fali co statki, obrót na płasko,
+dryf, zatonięcie po ok. 16 s), ziarno z miejsca trafienia. Liczba desek: 1–6 na trafienie w kadłub, działo albo ster
+(rośnie z obrażeniami), do 6 przy zderzeniu, 24 przy wybuchu prochowni; pula 160 sztuk na presecie high.
+
+## 19.11: przestrzeliny w kadłubie (M11.3, część)
+Dziura po kuli to kwadrat z teksturą rysowaną raz na scenę (czarny, poszarpany otwór, brązowa krawędź, jasne drzazgi
+świeżo pękniętego drewna), kładziony na powierzchni kadłuba, w którą trafia promień z zewnątrz na wysokości i stacji
+trafienia (`scene.pickWithRay` na siatkach kadłuba: test przecięcia pojedynczej siatki trafiał w wewnętrzną warstwę
+skalowanego modelu). Jedna zwykła siatka na statek, przebudowywana przy trafieniu, pod węzłem kadłuba; do 40 dziur na
+statek, rozmiar 0,9–1,7 m z obrażeniami. Instancje (thin instances) pod węzłem kadłuba nie rysowały się we właściwym
+miejscu, stąd zwykła siatka. Ciężko uszkodzony statek (kadłub poniżej 40%) dymi ze śródokręcia.
+
+## 19.11: unieruchomiony statek się poddaje (M11.5)
+Reguła (`core/data/damage-states.ts` `DISABLED`, `sim/ai/captain.ts`, `sim/combat/boarding.ts`): statek bez stojącego
+masztu albo z olinowaniem poniżej 20% nie ucieka (kapitan AI nie przechodzi w ucieczkę); gdy wróg jest bliżej niż 300 m,
+a jego załoga jest liczniejsza niż 1,3 załogi unieruchomionego, opuszcza banderę. Przy abordażu unieruchomiony broni
+się mnożnikiem 0,85 zamiast 1,15. Złoty hash bez zmian (scenariusz determinizmu nikogo nie unieruchamia), audyty bitew
+w progach ADR-0005.
+
+## 19.11: wrak masztu przy burcie (M11.4)
+Złamany maszt spada na zawietrzną i wisi przy burcie na olinowaniu (`core WRECKAGE`, `sim/systems/wreckage.ts`, nowe pole
+stanu `wrecks` z domyślną pustą listą dla starych zapisów). Opór kwadratowy wraku (0,35 m² na metr masztu, współczynnik 1)
+przyłożony na linii wody przy burcie: statek zwalnia (test: brig o ponad 25%) i skręca w stronę wraku, aż załoga go
+odetnie, 40 s przy pełnej załodze, dłużej przy mniejszej. Widok trzyma maszt przy burcie do odcięcia, potem tonie.
+Przestrzelone liny stałe zwisają z górnego końca (każda pęka przy swoim progu stanu olinowania), żagiel z płótnem
+poniżej 30% odrywa się i wisi z jednego rogu (tylko w symulacji tkaniny z bliska). Złoty hash bez zmian, audyty w progach.
+
+## 19.11: reje, wanty i osmalenia (M11.3–4, widok)
+- Reje przewróconego masztu obracają się z nim wokół złamania i toną z nim; drabinki want znikają (wcześniej zostawały
+  w powietrzu).
+- Każda reja ma własny próg stanu olinowania (8–42%, stały skrót jak liny); poniżej zsuwa się w 1,5 s na pokład, a jej
+  żagiel znika. Symulacja nadal liczy ciąg żagli z udziału olinowania w trymie (`sails.ts`), reje nie mają własnego HP:
+  przy olinowaniu poniżej 20% statek i tak jest unieruchomiony (M11.5).
+- Sekcja kadłuba po pożarze albo poniżej 1/3 wytrzymałości dostaje raz trzy plamy sadzy na swojej burcie.
+- Celowanie gracza zależy od załadowanej amunicji: łańcuchy na 40% wysokości masztów celu, kartacze na pokład, kula na
+  linię wody (jak kanonierzy AI w `tactics.aimHeightFor`).
+
+## 19.11: niebo co drugą klatkę (M10)
+Tło nieba (połowa rozdzielczości z chmurami objętościowymi, 38–40% klatki na high) odświeżane co drugą klatkę, gdy kamera
+obraca się mniej niż 0,003 rad na klatkę i nie ma błyskawicy (`Sky.refresh`, amortyzacja czasowa jak w niebach gier).
+Chmury dryfują wolno, więc przeskok o klatkę nie jest widoczny; obrót widoku odświeża od razu, żeby niebo nie zostawało
+za masztami. Pomiar: high 18% klatki mniej przy nieruchomym widoku. Na telefonie przy kamerze śledzącej kołyszący się
+statek zysk będzie mniejszy (część klatek z obrotem).
+
+## 19.11: rozświetlona mgiełka nad lądem (C2)
+Plansze porównawcze: w referencji (ref_152, ref_060) dalekie lądy pod słońce giną w jasnej mgle, w grze stały ciemne
+i ostre, bo mgła Babylona barwi je jednym kolorem. Wtyczka materiału `sun-haze.ts` dodaje wyspom i dalekiemu
+wybrzeżu ten sam człon rozpraszania w stronę słońca co ocean (dwa płaty: potęgi 3 i 12), razy udział mgły przed
+powierzchnią (czynnik mgły Babylona albo zamglenie pierścienia wybrzeża). Z dala od słońca bez zmian.
+Tego samego dnia: iskry odblasków (szkliste fasetki) tylko w ścieżce słońca, gdzie sama fala prawie odbija słońce
+(kąt normalnej fali do wektora połówkowego poniżej ok. 40°); dalej morze zostaje ciemne jak na klatkach referencji,
+kilwater zachowuje swoje błyski.
+Tego samego dnia: mgła pod chmurami gęstsza (składnik zachmurzenia 0,0028 → 0,0042 · pokrycie^1,5): przy szkwałach wybrzeże
+za statkiem rozpływa się w mgle jak na ref_124, statek gracza w kamerze izometrycznej zostaje czytelny (sprawdzone
+zrzutem przy szkwałach). Burzowa noc: odcień burzy 45% jasności dnia zamiast 25% (ref_075).
+
+## 19.11: ratowanie wraku stuknięciem i kotwica
+Wraki leżą na mieliznach (1–2 m wody), a statki mają 2–6 m zanurzenia, więc warunek ratowania (do 60 m od wraku, poniżej
+1,5 m/s przez 5 s) był w praktyce nieosiągalny; do tego statek bez żagli dryfował 3–4,5 m/s. Zmiany:
+- zasięg ratowania 150 m (`SALVAGE.radius`): ładunek wyławiają szalupy i nurkowie, statek kotwiczy na głębszej wodzie,
+  jak w epoce;
+- kotwica w symulacji (`sim/systems/anchor.ts`, komenda `anchor`, komponent `anchor` w zapisie): lina jak sprężyna po
+  wybraniu 30 m długości plus opór kotwicy i liny na dnie (model cumowniczy sprężyna-tłumik, tylko w poziomie);
+  postawienie żagla albo nowy rozkaz podnosi kotwicę;
+- rozkaz pilota `salvage`: płynie ku wrakowi na żaglach bojowych, ostatnie 60 m bez żagli, rzuca kotwicę, gdy jest w 3/4
+  zasięgu szalup na wodzie głębszej o 2 m od zanurzenia; stuknięcie wraku (tryb „wskaż i płyń”) wydaje ten rozkaz;
+- znane ograniczenie: wrak pod wiatr pilot osiąga słabo (decyzje 18.11), test rozkazu idzie półwiatrem.
+Złoty hash bez zmian, audyty w progach.
+
+## 19.11: „dryf bez żagli” to rozpęd, nie wiatr (pomiar)
+Ustalona prędkość statku ze zwiniętymi żaglami po 3 minutach: slup 0,08/0,15/0,32 m/s, bryg 0,03/0,08/0,53 m/s, galeon
+0,07/0,06/0,20 m/s przy wietrze 6/9,5/14 m/s. Obserwowane 3–4,5 m/s po zwinięciu żagli to rozpęd: galeon przy 4 m/s ma
+ok. 20 kN oporu kadłuba (zgodne z oporem tarcia i fali dla kadłuba tej wielkości), więc wytraca prędkość przez minuty,
+jak statki epoki niosące się długo po zrzuceniu żagli. Fizyki nie zmieniam; pilot zwija żagle wcześniej
+(CARRY_SECONDS), a do zatrzymania w miejscu jest teraz kotwica.
+
+## 19.11: pod wodą (C3) bez zmian
+Przyciemnienie nieba w oknie Snella (1,4 → 0,8 średniej nieba) i mocniejsza poświata słońca nie zmieniły planszy: okno
+pod wodą jest prześwietlone przez ekspozycję i gradację podwodną (`grade.ts`), a główna różnica z ref_161 to ujęcie
+(gra patrzy w górę na całe okno, referencja pod kątem ze słońcem z boku). Wycofane; do zrobienia: ujęcie sceny
+`underwater` w `reference-scenes.json` pod kątem, potem ekspozycja pod wodą.
+
+## 19.11, użytkownik: „zrób menu główne, dodaj opcje, tam przenieś ustawienia grafiki, dźwięku i rozgrywki”
+- Menu główne (`ui/hud/main-menu.tsx`) na starcie i pod przyciskiem ⚙ (oraz Escape): Wznów, Nowa gra, Opcje, Jak grać.
+  Gra stoi, gdy menu jest otwarte (symulacja nie liczy kroków, scena rysuje się dalej za przyciemnieniem), HUD chowa się.
+  Karta „Jak grać” przy pierwszym uruchomieniu pokazuje się po wyjściu z menu.
+- Opcje w trzech zakładkach: Grafika (jakość, kolory, rozdzielczość), Dźwięk (nowe: głośność ogólna, morze i pogoda,
+  efekty; szyny `ambienceBus` i `effectsBus` pod `master` w `SynthAudio`, zapis w `localStorage`), Rozgrywka
+  (sterowanie, refowanie w szkwałach, wibracje, język). Dawny panel ustawień usunięty.
+- Narzędzia (Playwright, `navigator.webdriver`) i parametr `menu=0` pomijają menu na starcie, żeby zrzuty i pomiary
+  szły od razu na morze; audyt interfejsu sprawdza menu i każdą zakładkę opcji na 15 rozmiarach ekranu.
+
+## 19.11, użytkownik: „podkręć wygląd wysp i mapy”
+- Błąd: ląd wysp w ogóle się nie rysował. Trójkąty siatki wysp miały odwróconą kolejność wierzchołków, więc z góry
+  Babylon odrzucał je jako tylne ściany (widać było tylko drzewa nad wodą, a z daleka pierścienie dalekiego wybrzeża,
+  które mają wyłączone odrzucanie). Kolejność odwrócona, test pilnuje normalnych lądu skierowanych w górę.
+- Tekstury terenu (Poly Haven, CC0): `rock_face` na stromiznach rzutowana z trzech osi (GPU Gems 3 rozdz. 1),
+  `aerial_grass_rock` na wierzchach i `sandy_gravel_02` przy wodzie rzutowane z góry w dwóch skalach; wagi z wysokości
+  i nachylenia jak barwy wierzchołków, tekstura daje tylko detal (dzielona przez średnią jasność), barwy zostają
+  z `island-geometry` (`terrain-splat.ts`, wtyczka materiału).
+- Gęstsza siatka wysp od presetu high (72 × 192 zamiast 48 × 96): linia brzegu gładsza.
+- Drzewa z dwóch modeli parametrycznych (Weber i Penn 1995, jeden poziom liści): palma do 14 m wysokości terenu na
+  wyspach dżungli i na wyspach plażowych, drzewo liściaste wyżej i na klifach; instancje (Flyweight) z obrotem, skalą
+  i odcieniem z ziarna wyspy. Każda wyspa ma własne dwa meshe drzew (odrzucanie poza kadrem) i poziom szczegółu bez
+  siatki od 1,8 km. Kopie wierzchołków na wyspę, bo bufory instancji Babylon trzyma w geometrii: klony ze wspólną
+  geometrią rysowały drzewa tylko ostatniej wyspy.
+- Ląd wysp już nie jest scalony w jeden mesh: scalony był rysowany zawsze w całości (cały archipelag, 1,6 mln trójkątów
+  na high po zagęszczeniu siatki). Teraz mesh na wyspę z rzadką siatką 16 × 40 dalej niż 1,4 km; wywołań rysowania
+  w scenie przy wyspie nawet mniej (146 → 139), bo poza kadrem nic nie idzie.
+- Dalekie wybrzeże: pierścień ma cztery rzędy (stopa, krawędź, wierzch, spadek za nim) i barwy wierzchołków (żleby
+  z szumu na ścianie, jaśniejsza krawędź); ton skały 0,35 + 0,62 × zamglenie barwy mgły zamiast 0,8, bo jaśniejszy
+  od mgły wyglądał jak biała ściana, a na klatkach referencji brzeg jest ciut ciemniejszy od mgły.
+- Mapa morska jako ekran menu (gra stoi): SVG w metrach świata, północ w górę, kontury wysp z tej samej funkcji
+  wysokości co fizyka (`core/world/coastline.ts`, promienie i bisekcja), płycizny do 4 m. Dotknięcie morza wysyła
+  kurs przez `helm.navigate` (A* omija wyspy) tylko w prostym sterowaniu; w klasycznym i „Akcji” mapa tylko pokazuje.
+- Ujęcia `island` i `island-close` w `tools/shots/views.json` (największa wyspa dżungli z bliska).
+- Limit 30 kl./s (pętla pracy, pozycja M10): opcja w zakładce grafiki, zapisana na urządzeniu, domyślnie bez limitu.
+  Odświeżenia ekranu przed terminem następnej klatki są pomijane (co druga przy 60 Hz, co czwarta przy 120 Hz), termin
+  idzie całymi odstępami z 2 ms luzu na drgania, po przestoju liczy się od nowa (`app/src/frame-pacing.ts`). Dynamiczna
+  rozdzielczość pod limitem ma progi od limitu (w dół przy klatkach o 20% spóźnionych, w górę, gdy limit się trzyma);
+  ze stałymi progami zeszłaby w dół przy pierwszych spóźnionych klatkach i nie wróciła.
+
+## 19.11, użytkownik: „urealistycznij mapę: wyspy, półwyspy, kawałek kontynentu, również w grze”
+- Każdy ląd to jeden kształt: kapsuła (punkty w promieniu od odcinka, osi lądu; dla okrągłej wyspy punkt) z brzegiem
+  przesuniętym szumem fraktalnym w przestrzeni (zatoki, cyple), modelowanie odległością Quileza; nakładające się kształty
+  się łączą (wysokość to maksimum), więc półwysep wyrasta z kontynentu. Ta sama funkcja dla fizyki, rendera, płycizn
+  w shaderze i mapy.
+- Kontynent: kapsuła o promieniu 1,7 km z osią równoległą do jednej krawędzi morza (która, z ziarna), średni brzeg
+  45–55% połowy morza od środka, szorstkość 1 i sześć oktaw (zatoki do kilkudziesięciu metrów), wysokość 110–170 m
+  narastająca przez 1,2 km (przy 420 m wyrastały stożki na 280 m tuż przy brzegu). Półwyspy: 2–3 z dwóch kawałków
+  zgiętych w kolanie, zewnętrzny węższy, korzeń 300 m w głąb lądu, kolano i czubek z dala od strefy startu. Wyspy:
+  45% wydłużonych (oś do 1,8 promienia), szorstkość 0,75, z cieśniną co najmniej 150 m od kontynentu i półwyspów.
+- Porty, forty i wraki szukają brzegu marszem od punktu osi wzdłuż kierunku do pierwszej wody (`core/world/shores.ts`);
+  kontynent ma trzy porty rozłożone wzdłuż brzegu w obrębie morza. Nazwy portów bez powtórzeń.
+- Ląd rysowany w kafelkach 500 m siatki świata (Ulrich 2002, chunked LOD): rzadka siatka 50 m dla wszystkich kafelków
+  z lądem od startu, gęsta (12,5 m, od high 7,8 m) budowana na żądanie do 1,4 km od kamery, jedna na klatkę, puszczana
+  dalej niż 2,4 km; fartuchy zakrywają szczeliny między poziomami. Drzewa na kafelek (do 500 kandydatów, dżungla
+  zostawia wszystkie, plaże 45%, klify 20%), rysowane do 1,1 km. Płycizny w shaderze: odległość od osi i ten sam
+  szum brzegu w przybliżeniu; lista 32 najbliższych lądów odświeżana co 300 m ruchu kamery (wcześniej ustalona raz
+  na starcie gry).
+- Mapa morska z konturów: wysokość na siatce 40 m, izolinie metodą marching squares w zamknięte pętle (zewnętrzny
+  pierścień siatki trzymany jako głębia, więc kontur kontynentu zamyka się za krawędzią mapy), wypełnienie parzysto-
+  nieparzyste (jeziora zostają wodą), ląd w oliwkowym kolorze.
+- Zapis gry dostaje wersję świata (`WORLD_VERSION` 2). Zapis ze starszego świata: statki przeniesione na najbliższą
+  otwartą wodę, forty postawione na nowo, aktywne zlecenie i lista złupionych wraków wyzerowane; złoto, reputacja
+  i statki zostają.
+- Pilot przy ratowaniu wraku szuka kotwicowiska także na liniach obróconych od kierunku do statku (co 20°), i wybiera
+  najdalszy głęboki punkt do 60% zasięgu łodzi: na poszarpanym brzegu prosta linia przecinała cypel i rozkaz przepadał.
+  Test ratowania wybiera wrak z czystym podejściem baksztagiem (pilot słabo halsuje, decyzja 18.11).
+- Audyt rozgrywki: autopilot po dotarciu do portu rzuca kotwicę (bez niej rozpędzony statek odpływał poza 180 m od
+  kotwicowiska i port odmawiał zlecenia). Wynik: 2 zlecenia wzięte, 1 opłacone. Soak 1,50 ms na krok (próg 2 ms);
+  2,30 ms wyszło przy równoległym budowaniu i zrzutach.
+- Złoty hash bez zmian: test determinizmu nie używa archipelagu.
+- Tło dalekiego wybrzeża (pierścienie wokół kamery) nie stoi już po stronie kontynentu: wysokość pierścienia mnożona
+  przez maskę od kierunku kontynentu (zero do 60°, pełna od 90°, gładki krok); kierunek stały, liczony od środka morza,
+  bo pierścienie i tak idą za kamerą. Na ujęciu `coast` zniknął jasny płaski pas nad lasem kontynentu.
+- Nazwy portów na mapie: zachłanne rozmieszczanie etykiet punktów (Christensen, Marks i Shieber 1995, bez ich
+  wyżarzania): osiem miejsc wokół znaku, potem te same dwa razy dalej, pierwsze wolne od nazw i znaków; bez wolnego
+  miejsca to, które nachodzi najmniej. Szerokość liter Cinzel szacowana na 0,72 em (przy 0,62 dwie nazwy się stykały).
+- Mgła wojny na mapie (pętla, 19.11): komórki 250 m, obserwator co 1 s oznacza te, których środki są do 1,2 km od
+  statku gracza (`core/world/survey.ts`, system `surveySystem` po ratowaniu wraków, lista rosnąco, w zapisie gry).
+  Na mapie nieobejrzane komórki to puste płótno (wiersze scalone w prostokąty), forty i wraki tylko w obejrzanych,
+  inne statki tylko do 1,2 km, porty zawsze (ich nazwy i miejsca były powszechnie znane). Zasięg stały: od mgły
+  i nocy niezależny (do backlogu). Złoty hash bez zmian (stan rozpoznania nie wchodzi do skrótu, nie wpływa na ruch).
+- Zasięg obserwatora zależy od mgły tak samo jak wykrywanie wroga przez kapitanów AI: 1,2 km × (1 − 0,7 × mgła)
+  (`lookoutRange`); dotyczy oznaczania morza i statków na mapie. Noc pominięta, bo symulacja nie zna godziny
+  (początek doby to parametr aplikacji); przeniesienie pory dnia do symulacji zmieniłoby zapis i złoty hash.
+
+## 19.11, użytkownik: „puść trzech beta-testerów… poprawisz cokolwiek znajdą”
+Trzech agentów-testerów (prosty ster i telefon EN, klasyczny ster i monitor PL, Akcja i telefon PL), raporty
+w scratchpadzie sesji. Poprawki z raportu weterana (klasyczny ster):
+- Pryz zdobyty abordażem ma znacznik `taken`: drugi abordaż jest niemożliwy (wcześniej każdy dawał złoto i łup);
+  abordaż nigdy własnej strony.
+- Statek, który opuścił banderę, staje w dryfie: opór wzdłużny ×8 (`HOVE_TO`), traci drogę w niespełna minutę;
+  w panelu celu przycisk „Bandera opuszczona: abordaż”.
+- Uszkodzenia olinowania i płótna skalowane wytrzymałością masztów klasy (bryg 240 jako miara, przy brygu dawne
+  stawki 0,0012 i 0,0035): większe statki tracą mniej (galeon 0,63, okręt liniowy 0,37), mniejsze więcej. Niższe
+  stawki dla wszystkich (0,0004) łamały bramkę bitew ADR-0005 (bryg wygrywał z brygiem prawie bez strat), więc
+  wycofane. Kapitulacja unieruchomionego statku wymaga strat (kadłub albo załoga poniżej 80%): salwa łańcuchowa
+  nie kończy już walki ze zdrowym szkunerem po dwóch sekundach.
+- Zapasy amunicji według dział jednej burty: kule pełne 12 salw (co najmniej 60), łańcuchowa i kartacze po 3,
+  ciężka 2, rozżarzona 1 salwa; po wyczerpaniu specjalnej amunicji działa same ładują kule pełne, z komunikatem.
+- Opór kadłuba przy ruchu wstecz ×4 (`ASTERN_DRAG`): w linii wiatru statek cofa się ok. połowę wolniej.
+- Refowanie załogi z sufitem od wiatru: od 13,9 m/s najwyżej żagle bojowe, od 17,2 m/s zrefowane.
+- Ster klasyczny po puszczeniu przycisku trzyma bieżący kurs (wcześniej dokręcał 20–30°).
+- Język zapamiętywany na urządzeniu; przycisk zamknięcia karty pomocy przypięty do jej dołu; wiersz pogody
+  z etykietą „Pogoda”; pomoc klawiszy pełna (A/D, W/S, Q/E, X, Z, M, Esc), „B kryć się” jak na przycisku.
+
+Poprawki z raportu gracza zręcznościowego (tryb Akcja, telefon):
+- Kamera pościgowa w trybie Akcja idzie za rufą (alfa orbity zbiega do kierunku za rufą, wykładniczo, stała
+  1,6/s), więc lewo na padzie to lewo na ekranie; tryb Akcja zapisany ustawia kamerę pościgową także na starcie
+  (chyba że adres podaje kamerę).
+- Na mieliźnie (nowy stan `aground` z systemu wejścia na mieliznę) napęd wspomagany nie pcha naprzód; bieg wstecz
+  zdejmuje statek z dna, a wyciąganie kotwicą działa, gdy prawie stanie. Galeon przy pełnej prędkości zachowuje
+  ponad 60% kadłuba (wcześniej 18% i utrata statku).
+- Pad: ster wraca do środka, gdy pad znika spod kciuka (menu, ukryty HUD); wytrzymanie w górę lub w dół zmienia
+  bieg co 650 ms; bieg zmienia tylko ruch bardziej pionowy niż poziomy.
+- Znacznik wroga przy krawędzi wolnego środka ekranu mierzonego z bieżącego układu HUD (dwa razy na sekundę,
+  margines 24 px), a nie stałego prostokąta.
+- Panel celu ostrzega „Za daleko: mało trafień” od 220 m.
+- Krótsze polskie etykiety: „Refy”, „Łańcuch”, „Osłona” (ucinały się na 915 × 412).
+- Do backlogu: większe cele dotykowe przycisków amunicji i żagli (21–24 px), kamera pościgowa odsuwająca się
+  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka bez autopilota).
+
+Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski):
+- Stuknięcie w wodę: `pickWater` podaje Babylonowi piksele CSS (Babylon sam dzieli przez skalowanie sprzętowe);
+  wcześniej punkt wypadał 1,5 raza dalej od rogu ekranu przy DPR 2 i presecie medium (zwykły telefon), a przy
+  DPR 1 i low przy samym statku. Sprawdzone: DPR 1, 2 i 2,5 z low, medium i high trafiają co do piksela.
+- Zapis po „Nowej grze” wczytuje się na archipelagu ziarna zapisu (wcześniej ziarna z adresu albo 1797).
+- Statek ratunkowy po zatonięciu nie dziedziczy rozkazu pilota ani kotwicy.
+- Stuknięcie portu na mapie prowadzi do jego kotwicowiska, stuknięcie lądu lub płycizny do najbliższej otwartej wody
+  (wcześniej kurs na ląd, który się nie kończył).
+- Gra stoi pod kartą pomocy, jak pod menu; karta pokazuje tylko akapity dla bieżącego sterowania i bez listy
+  klawiszy na ekranie dotykowym.
+- Spotkanie otwierające: piracki szkuner i slup startują ok. 1,5 km od gracza (było 560 i 830 m: bierny gracz
+  tracił galeon w 4–7 minut na każdym ziarnie).
+- Okno opcji zawieszone od stałej góry (pasek zakładek nie skacze między zakładkami).
+- Zlecenie „bounty” płatne tylko, gdy cel padł od ognia gracza (ostatnie trafienie gracza).
+- Ostrzeżenie o mieliźnie tylko w ruchu (powyżej 1 m/s), nie przy nabrzeżu; legenda mapy z wrogim portem.
+- Do backlogu: samoobrona załogi w prostym sterowaniu, ratowanie wraku wypływające poza mapę (pilot bez granicy
+  mapy), opis i znacznik celu zlecenia, stocznia ucięta w panelu portu, większe cele dotykowe.
+- Nawigacja (pilot, kapitanowie AI, planer tras) czyta dno, które 150 m przed krawędzią morza kończy się mielizną
+  (`chartedBed`); fizyka ma prawdziwe dno. Zlecenie „bounty”: płatne, gdy działa gracza trafiły cel choć raz
+  (`hitByPlayer`); reguła „ostatnie trafienie gracza” odrzucała cele dobite przez fort albo inny statek.

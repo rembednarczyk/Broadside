@@ -79,6 +79,7 @@ export const groundingSystem: System = (ctx, dt) => {
         if (Math.floor(t * 4) !== Math.floor((t - dt) * 4)) ctx.events.push({ type: "grounded", ship: e.id, at: wp, speed });
       }
     }
+    s.aground = touching;
     if (touching && !s.sinking && Math.hypot(b.vel.x, b.vel.z) < 0.4) kedge(a, b, s);
   }
 };

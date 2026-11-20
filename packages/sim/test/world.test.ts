@@ -12,7 +12,8 @@ const run = (sim: Simulation, seconds: number, sink: DomainEvent[] = []) => {
 
 describe("islands", () => {
   const archipelago = generateArchipelago(1797);
-  const is = archipelago.islands.find((i) => i.kind === "beach") ?? archipelago.islands[0]!;
+  // A round beach island (no spine): the ships below start at set distances from its centre.
+  const is = archipelago.islands.find((i) => i.kind === "beach" && i.form === "island" && !i.spine)!;
 
   it("runs a ship aground on a shoal and holes her bottom", () => {
     const sim = new Simulation({ seed: 3, windDirection: 0, windSpeed: 9, archipelago });

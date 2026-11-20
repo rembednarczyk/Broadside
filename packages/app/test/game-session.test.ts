@@ -17,12 +17,14 @@ describe("game session", () => {
     const s = new GameSession({ seed: 1 });
     s.advance(2);
     const before = yawOf(s.sim.byId(s.playerId)!.body!.rot);
+    // Held until she has come round 0.35 rad (a galleon answers slowly), then let go.
     s.helm.steer(1);
-    for (let i = 0; i < 60 * 4; i++) s.advance(STEP);
+    for (let i = 0; i < 60 * 40 && yawOf(s.sim.byId(s.playerId)!.body!.rot) - before < 0.35; i++) s.advance(STEP);
     s.helm.steer(0);
     for (let i = 0; i < 60 * 15; i++) s.advance(STEP);
     const after = yawOf(s.sim.byId(s.playerId)!.body!.rot);
     expect(after - before).toBeGreaterThan(0.35);
+    expect(after - before).toBeLessThan(0.6);
     const hud = presentSailing(s.sim, s.playerId)!;
     expect(Math.abs(hud.course! - after)).toBeLessThan(0.15);
   });

@@ -1,4 +1,4 @@
-import { type Camera, ColorCurves, DefaultRenderingPipeline, Effect, type Engine, type Mesh, MeshBuilder, MotionBlurPostProcess, PostProcess, SSAO2RenderingPipeline, type Scene, StandardMaterial, Color3, VolumetricLightScatteringPostProcess } from "../babylon";
+import { type Camera, ColorCurves, DefaultRenderingPipeline, Effect, MotionBlurPostProcess, PostProcess, SSAO2RenderingPipeline, type Scene } from "../babylon";
 import { GRADE_FRAGMENT } from "../shaders/grade";
 import { createDropTexture } from "./lens-drops";
 import { type ColorMode, type GraphicsSettings } from "../graphics-settings";
@@ -28,8 +28,9 @@ const COLOR_LOOKS: Readonly<Record<ColorMode, ColorLook>> = {
 
 /**
  * The post-processing chain, configured by the graphics settings (Strategy by data): SSAO2 →
- * default pipeline (MSAA, bloom, ACES tone mapping, colour curves, vignette) → sun shafts
- * (GPU Gems 3 ch. 13) → motion blur → the final pass (lens, underwater, lightning, sepia grade).
+ * default pipeline (MSAA, bloom, ACES tone mapping, colour curves, vignette) → motion blur → the
+ * final pass (sun shafts in screen space after GPU Gems 3 ch. 13, lens, underwater, lightning,
+ * sepia grade).
  */
 export interface ScreenState {
   drops: number;
@@ -43,16 +44,16 @@ export interface ScreenState {
   waterline: number;
   /** 0 by day .. 1 at night: the toning cools from sepia towards a neutral grey (grade.ts). */
   night: number;
+  /** Strength of the screen-space sun shafts (0: none; the sun low, in front and not behind heavy cloud). */
+  shafts: number;
 }
 
 export class PostStack {
-  readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0, waterline: -1, night: 0 };
-  readonly sunDisc: Mesh | null;
-  private shaftsPass: VolumetricLightScatteringPostProcess | null = null;
+  readonly screen: ScreenState = { drops: 0, underwater: false, depth: 0, sunX: 0.5, sunY: 0.8, time: 0, flash: 0, waterline: -1, night: 0, shafts: 0 };
   private processing: DefaultRenderingPipeline["imageProcessing"] | null = null;
   private baseExposure = 1;
 
-  constructor(scene: Scene, engine: Engine, camera: Camera, g: GraphicsSettings, excludeFromShafts: Mesh[]) {
+  constructor(scene: Scene, camera: Camera, g: GraphicsSettings) {
     if (g.ssao) {
       const ssao = new SSAO2RenderingPipeline("ssao", scene, { ssaoRatio: 0.5, blurRatio: 0.5 }, [camera], false);
       ssao.radius = 2;
@@ -68,7 +69,6 @@ export class PostStack {
       const pre = scene.enablePrePassRenderer();
       if (pre) pre.samples = g.msaa;
     }
-    this.sunDisc = g.sunShafts > 0 ? this.shafts(scene, engine, camera, g.sunShafts, excludeFromShafts) : null;
     if (g.motionBlur) {
       const mb = new MotionBlurPostProcess("motion", scene, 1, camera);
       mb.motionStrength = 0.6;
@@ -119,27 +119,8 @@ export class PostStack {
     p.imageProcessing.colorCurves = curves;
   }
 
-  private shafts(scene: Scene, engine: Engine, camera: Camera, samples: number, exclude: Mesh[]): Mesh {
-    const disc = MeshBuilder.CreateSphere("sun-disc", { diameter: 70, segments: 12 }, scene);
-    // Only the shafts pass sees the disc; the sky shader draws the visible sun.
-    disc.layerMask = 0x20000000;
-    const m = new StandardMaterial("sun-disc", scene);
-    m.emissiveColor = new Color3(1, 0.92, 0.75);
-    m.disableLighting = true;
-    disc.material = m;
-    disc.applyFog = false;
-    disc.isPickable = false;
-    const vls = new VolumetricLightScatteringPostProcess("shafts", 0.5, camera, disc, samples, 2, engine, false, scene);
-    vls.exposure = 0.22;
-    vls.decay = 0.965;
-    vls.weight = 0.6;
-    vls.density = 0.9;
-    vls.excludedMeshes = exclude;
-    this.shaftsPass = vls;
-    return disc;
-  }
 
-  /** Meshes that need not occlude the sun shafts (land, forts): saves a full re-render of them. */
+
   /**
    * Eye adaptation (auto exposure with a clamped range, as in Unreal's and Unity HDRP's exposure):
    * the scene's exposure follows the light level, up to `gain` times the colour mode's own in
@@ -149,13 +130,12 @@ export class PostStack {
     if (this.processing) this.processing.exposure = this.baseExposure * gain;
   }
 
-  excludeFromShafts(meshes: readonly Mesh[]): void {
-    this.shaftsPass?.excludedMeshes.push(...meshes);
-  }
-
   private finalPass(scene: Scene, camera: Camera, g: GraphicsSettings): void {
     Effect.ShadersStore["gradeFragmentShader"] = GRADE_FRAGMENT;
-    const grade = new PostProcess("grade", "grade", ["amount", "contrast", "drops", "underwater", "depth", "sunScreen", "flash", "time", "waterline", "night"], ["dropSampler"], 1, camera);
+    // Samples of the sun shafts from the preset (30 to 120 for the former occlusion pass: a third here).
+    const samples = Math.max(8, Math.min(32, Math.round(g.sunShafts / 3)));
+    const grade = new PostProcess("grade", "grade", ["amount", "contrast", "drops", "underwater", "depth", "sunScreen", "flash", "time", "waterline", "night", "shafts"], ["dropSampler"], 1, camera, undefined, undefined, undefined, `#define SHAFT_SAMPLES ${samples}\n`);
+    const shaftsOn = g.sunShafts > 0 ? 1 : 0;
     const dropTex = createDropTexture(scene);
     grade.onApply = (e) => {
       const f = this.screen;
@@ -170,6 +150,7 @@ export class PostStack {
       e.setFloat("time", f.time);
       e.setFloat("waterline", f.waterline);
       e.setFloat("night", f.night);
+      e.setFloat("shafts", f.shafts * shaftsOn);
     };
   }
 }

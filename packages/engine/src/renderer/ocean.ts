@@ -69,19 +69,28 @@ export class Ocean {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "islandCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "spines", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
     this.mesh.material = this.material;
   }
 
-  /** Islands for the shallows and surf term: (x, z, radius, shoal), at most 32 (nearest first). */
-  setIslands(list: readonly { x: number; z: number; radius: number; shoal: number }[]): void {
+  /** Islands in the shallows term now (the frame bench switches the term off and on). */
+  islandCount = 0;
+
+  /** Landmasses for the shallows and surf term: centre, radius, shoal, spine and roughness, at most 32 (nearest first). */
+  setIslands(list: readonly { x: number; z: number; radius: number; shoal: number; spine?: { dx: number; dz: number }; rough?: number }[]): void {
     const a = new Array<number>(128).fill(0);
-    list.slice(0, 32).forEach((is, i) => a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal));
+    const b = new Array<number>(128).fill(0);
+    list.slice(0, 32).forEach((is, i) => {
+      a.splice(i * 4, 4, is.x, is.z, is.radius, is.shoal);
+      b.splice(i * 4, 4, is.spine?.dx ?? 0, is.spine?.dz ?? 0, is.rough ?? 0.5, 0);
+    });
     this.material.setArray4("islands", a);
-    this.material.setInt("islandCount", Math.min(32, list.length));
+    this.material.setArray4("spines", b);
+    this.islandCount = Math.min(32, list.length);
+    this.material.setInt("islandCount", this.islandCount);
   }
 
   setUnderwater(under: boolean): void {
@@ -89,12 +98,13 @@ export class Ocean {
   }
 
   /** Ships for the wake term (nearest first, at most 8): position, heading, speed and size. */
-  setShips(ships: readonly { x: number; z: number; heading: number; speed: number; length: number; beam: number }[]): void {
+  /** `slap` 0..1: how hard the sea has lately struck the sides (effects/hull-slap): whiter water along the waterline. */
+  setShips(ships: readonly { x: number; z: number; heading: number; speed: number; length: number; beam: number; slap?: number }[]): void {
     const a = new Array<number>(32).fill(0);
     const b = new Array<number>(32).fill(0);
     ships.slice(0, 8).forEach((s, i) => {
       a.splice(i * 4, 4, s.x, s.z, Math.sin(s.heading), Math.cos(s.heading));
-      b.splice(i * 4, 4, s.speed, s.length, s.beam, 0);
+      b.splice(i * 4, 4, s.speed, s.length, s.beam, s.slap ?? 0);
     });
     this.material.setArray4("shipA", a);
     this.material.setArray4("shipB", b);
