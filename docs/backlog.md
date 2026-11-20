@@ -240,7 +240,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   rzędy na niskim ekranie, 20.11).
 - [ ] Panel portu na 640 × 360: ostatni rząd stoczni wymaga przewinięcia (19 px); panel zasłania statek.
 - [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
-- [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.
+- [x] Panel celu: cienki pasek olinowania pod kadłubem, maszty stojące, gdy któryś padł; polskie stany bez rodzaju („Uszkodzenia”, „Bez napędu: abordaż”, „Bandera opuszczona”) (20.11).
 - [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
 - [ ] Pogoda: wiatr rośnie od świeżego do sztormu w ok. 80 s, sztorm trwa 2–4 min (wolniejsze przejścia, zapowiedź).
 

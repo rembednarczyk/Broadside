@@ -14,6 +14,8 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
       <div className="title">{isTextKey(cls) ? text(lang, cls) : t.classId} · {isTextKey(fac) ? text(lang, fac) : t.faction}</div>
       {/* Segmented like an action game's health bar: a quarter of the hull to a segment. */}
       <div className="bar segmented"><span style={{ width: `${Math.round(t.hull * 100)}%` }} /></div>
+      {/* Her rigging as a thinner bar under the hull's, and her masts standing: what chain shot has done (beta test 19.11). */}
+      {t.rigging !== undefined && <div className="bar rig" title={text(lang, "hud.rigging")}><span style={{ width: `${Math.round(t.rigging * 100)}%` }} /></div>}
       {/* A disabled ship can be taken (Black Flag's prompt): the crew run her down and board her. */}
       {t.state === "disabled" && !t.struck && t.id !== undefined && (
         <button className="alarm wide" onPointerDown={() => intents.board(t.id!)} data-testid="board-disabled">{text(lang, "state.disabled")}</button>
@@ -30,7 +32,10 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
       {t.kind === "fort" && t.guns ? (
         <div className="row"><span>{text(lang, "hud.guns")}</span><span>{t.guns[0]}/{t.guns[1]}</span></div>
       ) : (
-        <div className="row"><span>{text(lang, "hud.crew")}</span><span>{t.crew}</span></div>
+        <>
+          <div className="row"><span>{text(lang, "hud.crew")}</span><span>{t.crew}</span></div>
+          {t.masts && t.masts[0] < t.masts[1] && <div className="row"><span>{text(lang, "hud.masts")}</span><span>{t.masts[0]}/{t.masts[1]}</span></div>}
+        </>
       )}
       {t.silenced && <div className="alarm">{text(lang, "hud.silenced")}</div>}
       {t.struck && t.taken && <div className="alarm">{text(lang, "hud.struck")}</div>}

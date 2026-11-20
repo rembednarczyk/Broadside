@@ -74,6 +74,8 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     crew: t.crew,
     struck: t.struck,
     taken: t.taken,
+    rigging: t.rigging,
+    masts: [t.mastHp.filter((hp) => hp > 0).length, t.mastHp.length],
     far: aim.range > TELLING_RANGE,
     state: damageState(shipCondition(t)),
     side,

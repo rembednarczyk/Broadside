@@ -75,6 +75,9 @@ export interface TargetHud {
   readonly taken?: boolean;
   /** Too far for a broadside to tell (the panel warns). */
   readonly far?: boolean;
+  /** Ships: rigging 0..1 and masts standing of all (what chain shot has done). */
+  readonly rigging?: number;
+  readonly masts?: readonly [number, number];
   /** Ships: the target's id (orders about it). */
   readonly id?: number;
   /** Ships: the condition's name (core damageState: sound, damaged, battered, disabled, struck, sinking). */
