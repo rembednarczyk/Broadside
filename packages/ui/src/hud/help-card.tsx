@@ -1,4 +1,4 @@
-import { useHud } from "../store/hud-store";
+import { useHud, usesPad } from "../store/hud-store";
 import { text, type TextKey } from "../i18n/catalog";
 import { type SettingsIntents } from "../intents";
 
@@ -19,8 +19,8 @@ export const HelpCard = ({ intents }: { intents: SettingsIntents }) => {
   if (!open) return null;
   // Pointing and orders are simple steering's; the sailing paragraph also covers the classic helm; the pad is the action mode's.
   const shown = LINES.filter((k) => k !== "help.orders" || steering === "simple")
-    .filter((k) => k !== "help.sail" || steering !== "arcade")
-    .filter((k) => k !== "help.drive" || steering === "arcade")
+    .filter((k) => k !== "help.sail" || !usesPad(steering))
+    .filter((k) => k !== "help.drive" || usesPad(steering))
     .filter((k) => k !== "help.keys" || !touchOnly());
   return (
     <div className="panel help" data-testid="help">

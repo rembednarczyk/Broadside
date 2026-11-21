@@ -66,8 +66,10 @@ export const sailingHandlers: HandlerTable = {
       if (e.assist) ctx.world.removeComponent(e, "assist");
       return;
     }
-    if (e.assist) e.assist.astern = !!cmd.astern;
-    else ctx.world.addComponent(e, "assist", { astern: !!cmd.astern });
+    if (e.assist) {
+      e.assist.astern = !!cmd.astern;
+      if (cmd.fun !== undefined) e.assist.fun = cmd.fun;
+    } else ctx.world.addComponent(e, "assist", { astern: !!cmd.astern, fun: !!cmd.fun });
   },
   oars: (e, cmd) => {
     e.ship.oars = cmd.on;

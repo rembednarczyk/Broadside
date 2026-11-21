@@ -253,6 +253,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .settings .label { display: block; margin-top: calc(4 * var(--u)); font-family: var(--display); font-style: normal; font-size: calc(11 * var(--u)); letter-spacing: 0.05em; color: var(--brass-hi); }
 .settings .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); margin: calc(4 * var(--u)) 0 calc(8 * var(--u)); }
 .settings .presets.three { grid-template-columns: repeat(3, 1fr); }
+.settings .presets.four { grid-template-columns: repeat(4, 1fr); }
 .settings input[type=range] { width: 100%; margin-bottom: calc(8 * var(--u)); accent-color: var(--brass); }
 .help { width: calc(560 * var(--u)); font-size: calc(13 * var(--u)); z-index: 6; }
 .help ul { margin: calc(6 * var(--u)) 0 calc(10 * var(--u)); padding-left: calc(18 * var(--u)); }

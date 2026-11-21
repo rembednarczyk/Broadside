@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { type ColorMode, CAMERA_MODES, BabylonRenderer, DynamicResolution, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
-import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
+import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud, usesPad } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
@@ -76,7 +76,7 @@ const STEER_KEY = "broadside.steering";
 const storedSteering = ((): SteeringMode => {
   try {
     const m = localStorage.getItem(STEER_KEY);
-    return m === "classic" || m === "arcade" ? m : "simple";
+    return m === "classic" || m === "arcade" || m === "fun" ? m : "simple";
   } catch {
     return "simple";
   }
@@ -145,17 +145,18 @@ const setHaptics = (on: boolean) => {
 };
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
-  session.assist(steering === "arcade");
+  session.assist(usesPad(steering), false, steering === "fun");
   session.helm.steer(0);
   if (steering !== "simple") session.helm.navigate([], false);
-  if (steering !== "arcade") session.helm.rudder(0);
+  if (!usesPad(steering)) session.helm.rudder(0);
   patchHud({ astern: false });
-  // The action mode's view is the chase camera following the stern (Black Flag's), also on a start
-  // with the mode stored (unless the address names a camera); the camera button still cycles.
+  // Action's view: the chase camera following the stern (Black Flag's); Fun's: the isometric one from above
+  // (Overboard!'s); also on a start with the mode stored, unless the address names a camera.
   renderer.camera.trail = steering === "arcade";
-  if (steering === "arcade" && renderer.camera.mode === "isometric" && !urlCamera) {
-    renderer.camera.mode = "chase";
-    patchHud({ cameraMode: "chase" });
+  const view = steering === "arcade" ? "chase" : steering === "fun" ? "isometric" : null;
+  if (view && renderer.camera.mode !== view && (renderer.camera.mode === "isometric" || renderer.camera.mode === "chase") && !urlCamera) {
+    renderer.camera.mode = view;
+    patchHud({ cameraMode: view });
   }
 };
 applySteering(storedSteering);
@@ -163,7 +164,7 @@ applySteering(storedSteering);
 const gear = (step: 1 | -1) => {
   const h = useHud.getState();
   const sail = h.sailing?.sailTargets[0] ?? 3;
-  if (h.steering === "arcade" && step < 0 && sail === 0 && !h.astern) {
+  if (usesPad(h.steering) && step < 0 && sail === 0 && !h.astern) {
     session.assist(true, true);
     patchHud({ astern: true });
   } else if (h.astern && step > 0) {
@@ -202,7 +203,7 @@ const setSteering = (steering: SteeringMode) => {
 const intents: UiIntents = {
   helm: {
     // Under assisted sailing the keys put the helm over like the pad; otherwise they turn the course.
-    steer: (d) => (useHud.getState().steering === "arcade" ? session.helm.rudder(d) : session.helm.steer(d)),
+    steer: (d) => (usesPad(useHud.getState().steering) ? session.helm.rudder(d) : session.helm.steer(d)),
     rudder: (x) => session.helm.rudder(x),
     gear,
   },

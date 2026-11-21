@@ -109,8 +109,9 @@ export class GameSession {
   }
 
   /** Assisted sailing (the Action steering mode): on or off, and astern with the sails backed. */
-  assist(on: boolean, astern = false): void {
-    this.send({ type: "assist", ship: this.playerId, on, astern });
+  /** `fun`: the Fun mode's arcade ship (core FUN); left out, as she was. */
+  assist(on: boolean, astern = false, fun?: boolean): void {
+    this.send({ type: "assist", ship: this.playerId, on, astern, ...(fun !== undefined ? { fun } : {}) });
   }
 
   setMastSails(mast: number, level: number): void {

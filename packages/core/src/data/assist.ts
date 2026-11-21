@@ -34,3 +34,21 @@ export const assistSpeed = (length: number, set: number, wind: number): number =
   const air = ASSIST.calm + (1 - ASSIST.calm) * Math.min(1, Math.max(0, wind / ASSIST.fullWind));
   return ASSIST.froude * Math.sqrt(9.81 * length) * set * air;
 };
+
+/**
+ * The Fun mode (owner 21.11: "more like Overboard! of 1997"): the action controls with an arcade
+ * game's ship, much faster than any hull of the age of sail could go, quicker on the helm and
+ * reloading in a fraction of the time, the way Psygnosis' little pirate ship skimmed and fired.
+ * Multipliers on the assisted sailing above and on the guns' reload (sim gunnery).
+ */
+export const FUN = {
+  /** Top speed against assisted sailing's (about 22 kn for a galleon). */
+  speed: 1.8,
+  /** Drive's acceleration against assisted sailing's (the hull's drag grows fast above hull speed). */
+  accel: 3,
+  /** Turning circle against assisted sailing's (smaller: she spins round). */
+  turn: 0.6,
+  /** Reload time against the gun crews' own. */
+  reload: 0.4,
+} as const;
+

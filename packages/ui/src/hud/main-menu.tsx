@@ -121,8 +121,8 @@ const Gameplay = ({ intents }: { intents: SettingsIntents }) => {
   return (
     <>
       <div className="label">{text(lang, "settings.steering")}</div>
-      <div className="presets three">
-        {(["simple", "classic", "arcade"] as const).map((m) => (
+      <div className="presets four">
+        {(["simple", "classic", "arcade", "fun"] as const).map((m) => (
           <button key={m} className={steering === m ? "on" : ""} onPointerDown={() => intents.setSteering(m)} data-testid={`steering-${m}`}>
             {text(lang, `steering.${m}`)}
           </button>

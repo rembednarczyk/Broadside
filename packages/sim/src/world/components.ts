@@ -44,6 +44,8 @@ export interface Entity {
 
 export interface AssistState {
   astern: boolean;
+  /** The Fun mode: faster, quicker on the helm, quicker to reload (core FUN). */
+  fun?: boolean;
 }
 
 export interface Shot {

@@ -1172,3 +1172,9 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Kapitan AI opuszcza banderę przy 30% załogi i ucieka poniżej 45% (było 15% i 30%): statki epoki żagla poddawały
   się po stracie mniej więcej jednej trzeciej ludzi; w audycie bitew przegrani nie kończą już niemal bez załogi.
   Bramki ADR-0005 zielone, soak 1,42 ms na krok, złoty hash bez zmian.
+
+## 21.11, użytkownik: „nowy tryb Fun, żeby gra bardziej przypominała Overboard! z 1997; kontrola jak w Action, statek płynie znacznie szybciej i szybciej strzela”
+- Czwarta opcja sterowania „Fun” (`SteeringMode` "fun"): pad i żeglowanie wspomagane jak w Akcji, z mnożnikami
+  `core/data/assist.ts` FUN: prędkość ×1,8 (galeon 12,6 → 21,9 w. w pomiarze), napęd ×3 (opór kadłuba rośnie szybko
+  ponad prędkością kadłubową), okrąg skrętu ×0,6, przeładowanie dział ×0,4. Kamera izometryczna z góry (jak
+  w Overboard!), w Akcji pościgowa za rufą. Stan `assist.fun` w symulacji i zapisie; bieg wstecz zachowuje tryb.

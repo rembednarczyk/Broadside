@@ -65,6 +65,6 @@ describe("assisted sailing", () => {
     sim.command({ type: "assist", ship: e.id, on: true, astern: true });
     sim.step();
     const back = restore(JSON.parse(JSON.stringify(snapshot(sim, opts))), null);
-    expect(back.byId(e.id)!.assist).toEqual({ astern: true });
+    expect(back.byId(e.id)!.assist).toEqual({ astern: true, fun: false });
   });
 });

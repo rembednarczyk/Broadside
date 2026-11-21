@@ -1,4 +1,4 @@
-import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, refit, type EventQueue } from "@broadside/core";
+import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, FUN, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, refit, type EventQueue } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type SimWorld } from "../world/world";
 import { type ShipState, crewShare } from "../ship/ship-state";
@@ -117,7 +117,7 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   recoil(b, scale(dirWorld, -mass * ammo.pellets * (mortar ? speed : REAL_MUZZLE_SPEED) * 1.5), muzzle);
   events.push({ type: "gunFired", ship: e.id, at: muzzle, dir: dirWorld, pounder: g.pounder, ammo: st.ammo });
   s.stores[st.ammo] = Math.max(0, (s.stores[st.ammo] ?? 0) - 1);
-  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload");
+  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload") * (e.assist?.fun ? FUN.reload : 1);
   // The last of a special shot fired: the mount goes back to round shot (a gun crew does not stand
   // by an empty locker; before, the guns stayed "loaded" with shot there was none of and fell silent).
   if (st.ammo !== "round" && (s.stores[st.ammo] ?? 0) === 0 && canFire("round", g.kind) && (s.stores.round ?? 0) > 0) {
