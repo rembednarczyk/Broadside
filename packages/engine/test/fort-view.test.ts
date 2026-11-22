@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FORT_CLASSES, fortLayout } from "@broadside/core";
 import { BREACHED, SCARRED, partShares, partStates, stoneShade } from "../src/renderer/fort-damage";
-import { spansWithout } from "../src/renderer/fort-build";
+import { metreUVs, spansWithout } from "../src/renderer/fort-build";
 import { faceAt } from "../src/renderer/fort-marks";
 import { flagRipple } from "../src/renderer/fort-flag";
 import { figuresFor, garrisonPosts } from "../src/renderer/fort-props";
@@ -62,5 +62,16 @@ describe("a fort's garrison on its walls", () => {
       expect(Math.hypot(p.x, p.z)).toBeLessThan(def.radius + 1);
     }
     expect(garrisonPosts(FORT_CLASSES.watchtower, 4).every((p) => p.y === FORT_CLASSES.watchtower.height)).toBe(true);
+  });
+});
+
+describe("ashlar in metres on the fort's faces", () => {
+  it("runs u along a wall face and v up it, one repeat per 9.6 m whatever the block", () => {
+    // Two vertices on a face looking +x (a wall running along z), 9.6 m apart along it and 4.8 m up.
+    const uv = metreUVs([0, 0, 0, 0, 4.8, 9.6], [1, 0, 0, 1, 0, 0]);
+    expect(Math.abs(uv[2]! - uv[0]!)).toBeCloseTo(1);
+    expect(uv[3]! - uv[1]!).toBeCloseTo(0.5);
+    // A top: the ground plane.
+    expect(metreUVs([9.6, 3, 19.2], [0, 1, 0])).toEqual([1, 2]);
   });
 });

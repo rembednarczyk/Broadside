@@ -1,5 +1,5 @@
 import { type FortClassDef, FOUNDATION, fortLayout, wallNormal, type WallSegment } from "@broadside/core";
-import { Mesh, MeshBuilder, type Scene, Vector4 } from "../babylon";
+import { Mesh, MeshBuilder, type Scene, VertexBuffer, Vector4 } from "../babylon";
 import { type PartState } from "./fort-damage";
 
 /**
@@ -21,25 +21,50 @@ const EMBRASURE = 0.8;
 const BREACH = [0.38, 0.62] as const;
 const BREACH_HEIGHT = 0.35;
 
-/** UVs of a box (width x, height y, depth z) in metres: the long sides get length × height. */
-const boxUV = (width: number, height: number, depth: number): Vector4[] => {
+/**
+ * Texture coordinates in metres by planar projection on each face (a box's faces are flat): on a
+ * wall face, u along the face's horizontal and v up it; on a top, the ground plane. Done in fort
+ * space after the block is placed, so the courses run on from one block to the next.
+ */
+export const metreUVs = (positions: ArrayLike<number>, normals: ArrayLike<number>): number[] => {
+  const uvs: number[] = [];
   const r = ASHLAR_REPEAT;
-  const zFace = new Vector4(0, 0, width / r, height / r);
-  const xFace = new Vector4(0, 0, depth / r, height / r);
-  const yFace = new Vector4(0, 0, width / r, depth / r);
-  return [zFace, zFace, xFace, xFace, yFace, yFace];
+  for (let i = 0; i < positions.length / 3; i++) {
+    const x = positions[i * 3]!;
+    const y = positions[i * 3 + 1]!;
+    const z = positions[i * 3 + 2]!;
+    const nx = normals[i * 3]!;
+    const ny = normals[i * 3 + 1]!;
+    const nz = normals[i * 3 + 2]!;
+    if (Math.abs(ny) > 0.7) {
+      uvs.push(x / r, z / r);
+      continue;
+    }
+    const len = Math.hypot(nx, nz) || 1;
+    // The horizontal along the face: the normal turned a quarter about the vertical.
+    uvs.push((x * nz - z * nx) / len / r, y / r);
+  }
+  return uvs;
+};
+
+const planar = (m: Mesh): Mesh => {
+  m.bakeCurrentTransformIntoVertices();
+  const p = m.getVerticesData(VertexBuffer.PositionKind);
+  const n = m.getVerticesData(VertexBuffer.NormalKind);
+  if (p && n) m.setVerticesData(VertexBuffer.UVKind, metreUVs(p, n));
+  return m;
 };
 
 /** A block along a wall's line from t0 to t1 (shares of its length), its foot at `y0`, `height` tall, `across` offset outwards. */
 const block = (scene: Scene, w: WallSegment, t0: number, t1: number, y0: number, height: number, thickness: number, across: number): Mesh => {
   const len = Math.hypot(w.x1 - w.x0, w.z1 - w.z0);
   const depth = Math.max(0.2, (t1 - t0) * len);
-  const b = MeshBuilder.CreateBox("fort-block", { width: thickness, height, depth, faceUV: boxUV(thickness, height, depth), wrap: true }, scene);
+  const b = MeshBuilder.CreateBox("fort-block", { width: thickness, height, depth }, scene);
   const t = (t0 + t1) / 2;
   const n = wallNormal(w);
   b.position.set(w.x0 + (w.x1 - w.x0) * t + Math.sin(n) * across, y0 + height / 2, w.z0 + (w.z1 - w.z0) * t + Math.cos(n) * across);
   b.rotation.y = Math.atan2(w.x1 - w.x0, w.z1 - w.z0);
-  return b;
+  return planar(b);
 };
 
 /** Spans of 0..1 left after cutting out the given intervals (sorted, clipped). */
@@ -108,10 +133,10 @@ const towerParts = (scene: Scene, t: { x: number; z: number; radius: number; hei
   const merlons = Math.max(8, Math.round(round / 2.4));
   for (let i = 0; i < merlons; i++) {
     const a = (i / merlons) * Math.PI * 2;
-    const m = MeshBuilder.CreateBox("merlon", { width: 1.2, height: 1.4, depth: 1.0, faceUV: boxUV(1.2, 1.4, 1.0) }, scene);
+    const m = MeshBuilder.CreateBox("merlon", { width: 1.2, height: 1.4, depth: 1.0 }, scene);
     m.position.set(t.x + Math.sin(a) * (t.radius - 0.5), height + 0.7, t.z + Math.cos(a) * (t.radius - 0.5));
     m.rotation.y = a;
-    parts.push(m);
+    parts.push(planar(m));
   }
 };
 

@@ -35,7 +35,7 @@ const HAUL = 3;
 const stoneTexture = (scene: Scene): DynamicTexture => {
   const tex = new DynamicTexture("stone-tex", { width: 256, height: 256 }, scene, true);
   const c = tex.getContext() as CanvasRenderingContext2D;
-  c.fillStyle = "rgb(84,78,68)";
+  c.fillStyle = "rgb(118,110,96)";
   c.fillRect(0, 0, 256, 256);
   // Ashlar courses: 8 blocks by 16 courses per repeat (1.2 × 0.6 m at 9.6 m), staggered, deterministic shades.
   for (let row = 0; row < 16; row++) {

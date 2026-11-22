@@ -109,7 +109,7 @@ export type { FortSite } from "./fort-site";
 
 /** Half the length of a harbour chain (m), and where it lies between the landing (0) and the anchorage (1). */
 const CHAIN_HALF = 150;
-const CHAIN_AT = 0.55;
+const CHAIN_AT = 0.65;
 
 /** The boom across the approach: square to the line from the landing out to the anchorage. */
 export const harbourChain = (p: PortSite): NonNullable<FortSite["chain"]> => {

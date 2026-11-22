@@ -124,7 +124,8 @@ export class FortProps {
         log.position.set(c.x0 + (c.x1 - c.x0) * t, 0.3, c.z0 + (c.z1 - c.z0) * t);
         parts.push(log);
       }
-      m = Mesh.MergeMeshes(parts, true, true, undefined, false, true)!;
+      m = Mesh.MergeMeshes(parts, true, true)!;
+      m.material = this.iron;
       m.isPickable = false;
       for (const [x, z] of [[c.x0, c.z0], [c.x1, c.z1]] as const) {
         const post = MeshBuilder.CreateCylinder("fort-chain-post", { height: 6, diameter: 1.4, tessellation: 8 }, this.scene);
