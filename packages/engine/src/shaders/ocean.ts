@@ -1,5 +1,6 @@
 import { MAX_WAVES } from "@broadside/core";
 import { WAKE_TRAIL } from "./wake-trail";
+import { SPLASH_FOAM } from "./splash-foam";
 
 /** Value noise and its fractal sum, shared by both stages (the same numbers for the same point). */
 const NOISE = /* glsl */ `
@@ -222,6 +223,7 @@ uniform vec4 shipA[8];
 uniform vec4 shipB[8];
 uniform int shipCount;
 ${WAKE_TRAIL}
+${SPLASH_FOAM}
 uniform float underwater;
 varying vec3 vWorld;
 varying vec3 vNormal;
@@ -463,6 +465,8 @@ void main() {
   float wakeTex = wakeFar < 1.0 ? mix(lace(fp * 2.6 + 3.7, wakeCover), 0.85, wakeFar) : 0.85;
   float wakeFoam = wakeCover * mix(0.45, 1.0, wakeTex) * (0.4 + 0.35 * wk.x) * mix(0.7, 1.15, fbm(fp * 0.8 + 11.0));
   foam = max(foam, wakeFoam);
+  float sf = splashFoam(vWorld.xz);
+  if (sf > 0.0) foam = max(foam, sf * mix(0.35, 1.0, lace(fp * 2.6 + 9.1, sf)));
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
   // From the vertex stage's distances (shore): as 1 - smoothstep(1, 1 + shoal / R, t) and

@@ -1,4 +1,5 @@
 import { WakeTrails } from "./wake-trails";
+import { SplashPatches } from "./splash-patches";
 import { type Simulation } from "@broadside/sim";
 import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, type Texture, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
@@ -80,6 +81,8 @@ export class BabylonRenderer {
   private readonly views = new Map<number, ShipView>();
   /** Where the ships have sailed: the wakes follow it (wake-trails). */
   private readonly trails = new WakeTrails();
+  private readonly splashes = new SplashPatches();
+  private simTime = 0;
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
   private framed = false;
@@ -272,6 +275,7 @@ export class BabylonRenderer {
       if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
       if (e.type === "hit" && (e.part === "hull" || e.part === "gun")) this.views.get(e.ship)?.shotHit(e.at, e.damage);
       if (e.type === "hit" && e.part === "wall") this.forts.shotHit(e.ship, e.at, e.damage);
+      if (e.type === "splash") this.splashes.add(e.at.x, e.at.z, e.size, this.simTime);
     }
     this.weather.onEvents(events);
   }
@@ -349,6 +353,8 @@ export class BabylonRenderer {
     const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, slap: this.effects.slap.get(e.id) ?? 0, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.ocean.setTrails(this.trails.update(ships, sim.env.time));
+    this.simTime = sim.env.time;
+    this.ocean.setSplashes(this.splashes.uniforms(sim.env.time));
     this.syncShips(sim);
     const eyeNow = this.camera.camera.position;
     const wind = { x: Math.sin(sim.env.windDirection) * sim.env.windSpeed, z: Math.cos(sim.env.windDirection) * sim.env.windSpeed };

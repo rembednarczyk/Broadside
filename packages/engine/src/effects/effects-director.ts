@@ -168,6 +168,9 @@ export class EffectsDirector {
     // Smoke and spray drift down the wind: drag pulls them to the wind's speed, never past it.
     // The smoke screen stays put (the simulation's cloud does not drift).
     for (const em of [this.blast, this.smoke, this.fireSmoke, this.spray, this.mist, this.shreds, this.dust]) em.setAir(w.x, w.z);
+    // The largest fire this frame lights its surroundings (flash-lights glow).
+    let glow: { x: number; y: number; z: number } | null = null;
+    let glowAt = 0;
     for (const e of sim.ships()) {
       const s = e.ship!;
       const b = e.body!;
@@ -182,6 +185,10 @@ export class EffectsDirector {
         const local = vec3((i % 2 === 1 ? 1 : -1) * h.beam * 0.25, h.freeboard + 1 - s.model.com.y, h.length * (0.3 - zone * 0.3));
         const p = rotate(b.rot, local);
         const n = Math.ceil(sec.fire * 4);
+        if (sec.fire > glowAt) {
+          glowAt = sec.fire;
+          glow = { x: b.pos.x + p.x, y: b.pos.y + p.y, z: b.pos.z + p.z };
+        }
         this.flames.emit(b.pos.x + p.x, b.pos.y + p.y, b.pos.z + p.z, w.x * 0.05, 1, w.z * 0.05, n, 2);
         this.fireSmoke.emit(b.pos.x + p.x, b.pos.y + p.y + 2, b.pos.z + p.z, w.x * 0.1, 1, w.z * 0.1, Math.ceil(n / 2), 2);
       });
@@ -193,10 +200,12 @@ export class EffectsDirector {
           this.fireSmoke.emit(p.x, p.y, p.z, w.x * 0.1, 1, w.z * 0.1, 1, 0.4);
           continue;
         }
+        if (!glow) glow = p;
         this.flames.emit(p.x, p.y, p.z, w.x * 0.05, 1, w.z * 0.05, 3, 6);
         this.fireSmoke.emit(p.x, p.y + 3, p.z, w.x * 0.1, 1, w.z * 0.1, 2, 6);
       }
     }
+    if (emitFires && glow) this.lights.glow(glow.x, glow.y, glow.z, Math.max(0.6, glowAt));
     if (emitFires) for (const e of sim.world.with("spout")) this.spray.emit(e.spout.x, 1, e.spout.z, 0, 1.4, 0, 10, e.spout.radius);
     if (emitFires) {
       for (const e of sim.world.with("smoke")) {

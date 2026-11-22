@@ -1,3 +1,4 @@
+import { type SplashUniforms } from "./splash-patches";
 import { type GerstnerWave, MAX_WAVES, createRng, makeWave, packWaves, range } from "@broadside/core";
 import { BoundingInfo, Color3, Mesh, type Scene, ShaderMaterial, VertexData, Vector2, Vector3 } from "../babylon";
 import { OCEAN_FRAGMENT, OCEAN_VERTEX } from "../shaders/ocean";
@@ -98,7 +99,7 @@ export class Ocean {
     }
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
-      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "spines", "islandCount"],
+      uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "splash", "splashCount", "underwater", "detailA", "detailB", "detailCount", "islands", "spines", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
@@ -146,6 +147,12 @@ export class Ocean {
     this.material.setArray4("trailMeta", Array.from(t.meta));
     this.material.setFloats("trailReach", Array.from(t.reach));
     this.material.setInt("trailCount", t.count);
+  }
+
+  /** The newest falls of shot (splash-patches): foam where they struck. */
+  setSplashes(u: SplashUniforms): void {
+    this.material.setArray4("splash", Array.from(u.data));
+    this.material.setInt("splashCount", u.count);
   }
 
   update(waves: readonly GerstnerWave[], time: number, cameraX: number, cameraZ: number, look: OceanLook, windSpeed: number, windDirection = 0): void {

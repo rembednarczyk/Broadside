@@ -266,12 +266,13 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Miękkie cząstki (zanikanie przy geometrii) i dym w buforze o obniżonej rozdzielczości (GPU Gems 3, rozdz. 23).
 - [x] Kolumna wody przy pluśnięciu kuli, przestrzeliny 0,65–1,1 m (otwór 0,2–0,4 m) w czterech wariantach z ziarna,
   większe płomienie (kolor ponad 1) i dłuższy dym pożaru.
-- [ ] Plama piany na wodzie po pluśnięciu, światło migoczące przy pożarze, dym pożaru oświetlony od dołu.
+- [x] Plama piany po pluśnięciu (12 ostatnich, rośnie i znika w ok. 4 s, `shaders/splash-foam.ts`), migoczące światło
+  największego pożaru (ostatnie światło puli błysków). Dym pożaru oświetlony od dołu: nie robię (dym nie ma normalnych).
 - [x] Pocisk według amunicji (`effects/shot-meshes.ts`: żelazna kula według wagomiaru, rozżarzona świeci, łańcuchowa
   koziołkuje, kartacze drobne), smuga za kulą; utrata płótna i olinowania w widoku rozłożona na ok. 2 s.
 - [x] Drżenie kamery z „traumy” (Eiserloh, GDC 2016; `camera/camera-shake.ts`), wyłącznik w opcjach rozgrywki;
   komunikat po salwie gracza „trafione 7 z 14” (`presenters/salvo-tally.ts`).
-- [ ] Mignięcie paska celu przy trafieniu.
+- [x] Mignięcie paska celu przy trafieniu.
 - [ ] Kasowanie najstarszych cząstek przy pełnej puli (Babylon nie nadpisuje; pule po poprawce czasu wystarczają).
 
 ### Forty i wieże (beta-test 22.11, właściciel: „działaj ze wszystkimi poprawkami”)

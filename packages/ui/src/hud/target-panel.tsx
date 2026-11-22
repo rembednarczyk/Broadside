@@ -1,11 +1,29 @@
+import { useEffect, useRef, useState } from "react";
 import { useHud } from "../store/hud-store";
 import { type OrderIntents } from "../intents";
 import { isTextKey, text, type TextKey } from "../i18n/catalog";
+
+/**
+ * A counter that steps each time the same target's hull drops (a hit told at a glance, as an action
+ * game's health bar flashes: beta test 22.11); a new target starts again from zero.
+ */
+const useHitFlash = (who: string | null, hull: number): number => {
+  const last = useRef<{ who: string | null; hull: number }>({ who, hull });
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const was = last.current;
+    if (was.who === who && hull < was.hull - 0.002) setN((k) => k + 1);
+    else if (was.who !== who) setN(0);
+    last.current = { who, hull };
+  }, [who, hull]);
+  return n;
+};
 
 /** The ship the guns would fire at: class, flag, range and condition. */
 export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
   const t = useHud((h) => h.target);
   const lang = useHud((h) => h.language);
+  const flash = useHitFlash(t ? `${t.kind}|${t.id ?? t.classId}|${t.faction}` : null, t?.hull ?? 1);
   if (!t) return null;
   const cls = `class.${t.classId}`;
   const fac = `faction.${t.faction}`;
@@ -13,7 +31,8 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
     <div className="panel target" data-testid="target">
       <div className="title">{isTextKey(cls) ? text(lang, cls) : t.classId} · {isTextKey(fac) ? text(lang, fac) : t.faction}</div>
       {/* Segmented like an action game's health bar: a quarter of the hull to a segment. */}
-      <div className="bar segmented"><span style={{ width: `${Math.round(t.hull * 100)}%` }} /></div>
+      {/* The bar flashes when a hit takes off the target's hull (the key restarts the animation). */}
+      <div key={flash} className={`bar segmented${flash > 0 ? " hit" : ""}`}><span style={{ width: `${Math.round(t.hull * 100)}%` }} /></div>
       {/* Her rigging as a thinner bar under the hull's, and her masts standing: what chain shot has done (beta test 19.11). */}
       {t.rigging !== undefined && <div className="bar rig" title={text(lang, "hud.rigging")}><span style={{ width: `${Math.round(t.rigging * 100)}%` }} /></div>}
       {/* A disabled ship can be taken (Black Flag's prompt): the crew run her down and board her. */}

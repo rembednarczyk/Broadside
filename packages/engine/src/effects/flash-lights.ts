@@ -3,9 +3,17 @@ import { Color3, PointLight, type Scene, Vector3 } from "../babylon";
 /**
  * Muzzle-flash and explosion lights: a small pool of point lights reused round-robin (Object
  * Pool, "Game Programming Patterns" ch. 19), each a short exponential decay. A broadside lights
- * its own hull and sails for a moment, the way gunfire lights a ship at dusk.
+ * its own hull and sails for a moment, the way gunfire lights a ship at dusk. The last light of the
+ * pool is kept for a fire burning aboard (or in a fort's breach): a steady orange glow flickering
+ * with a sum of incommensurate sines (the cheap flame flicker of games: no repeat the eye can catch),
+ * fading out a quarter second after the last fire is reported.
  */
 const POOL = 4;
+/** Seconds a fire's glow lasts after it was last reported. */
+const GLOW_LIFE = 0.25;
+
+/** Flame flicker 0.55..1: three sines at incommensurate rates (pure: tested). */
+export const flicker = (t: number): number => 0.775 + 0.1 * Math.sin(t * 13.1) + 0.075 * Math.sin(t * 7.3 + 1.7) + 0.05 * Math.sin(t * 23.9 + 0.4);
 
 interface Flash {
   readonly light: PointLight;
@@ -28,9 +36,18 @@ export class FlashLights {
     }
   }
 
+  /** A fire to light this frame (the largest one the director sees); `strength` 1 for a ship's section ablaze. */
+  glow(x: number, y: number, z: number, strength: number): void {
+    const f = this.pool[POOL - 1]!;
+    f.light.position.set(x, y + 2, z);
+    f.light.range = 30 + strength * 10;
+    f.peak = strength;
+    f.life = GLOW_LIFE;
+  }
+
   fire(x: number, y: number, z: number, strength: number): void {
     const f = this.pool[this.next]!;
-    this.next = (this.next + 1) % POOL;
+    this.next = (this.next + 1) % (POOL - 1);
     f.light.position.set(x, y, z);
     f.life = 0.18;
     f.peak = strength;
@@ -38,13 +55,17 @@ export class FlashLights {
   }
 
   update(dt: number): void {
-    for (const f of this.pool) {
+    this.time += dt;
+    this.pool.forEach((f, i) => {
       if (f.life <= 0) {
         f.light.intensity = 0;
-        continue;
+        return;
       }
       f.life -= dt;
-      f.light.intensity = f.peak * Math.max(0, f.life / 0.18) ** 2 * 6;
-    }
+      if (i === POOL - 1) f.light.intensity = f.peak * Math.min(1, f.life / GLOW_LIFE * 4) * 1.6 * flicker(this.time);
+      else f.light.intensity = f.peak * Math.max(0, f.life / 0.18) ** 2 * 6;
+    });
   }
+
+  private time = 0;
 }
