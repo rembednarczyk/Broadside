@@ -1240,3 +1240,6 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   przy porcie startowym gracza w audycie soak (ziarno 11) i trzy okręty w odległości 450–700 m podniosły najgorszą
   minutę do 2,64 ms na krok (bramka ADR-0005: 2 ms; przed zmianami 1,75 ms). Z 450 m: 1,97 ms, zapas mały.
   Kod fortów to ok. 1% czasu kroku (profil). Złoty hash bez zmian.
+- Koszt klatki z cytadelą w kadrze (`fort-bench`, 800×450, SwiftShader): forty dodają 4 wywołania rysowania na ultra
+  i na low (beta-test przed poprawkami: +83 na ultra, wszystkie forty rzucały cień); udział fortów w czasie klatki
+  8% na ultra, 12% na low przy kamerze blisko cytadeli.
