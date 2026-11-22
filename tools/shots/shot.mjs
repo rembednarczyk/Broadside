@@ -66,6 +66,9 @@ if (cam) {
     camera.radius = r;
   }, cam);
 }
+// SHOT_FREEZE=1: the simulation stops after the advance (the game loop's own steps do nothing), so
+// two builds give the same frame and a before/after differs only where the change does.
+if (process.env.SHOT_FREEZE) await page.evaluate(() => { globalThis.__broadside.session.advance = () => {}; });
 // Optional HUD clicks after the advance: SHOT_CLICK is a comma-separated list of data-testid values.
 if (process.env.SHOT_CLICK) {
   await page.waitForTimeout(500);

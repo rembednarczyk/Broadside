@@ -1,6 +1,62 @@
 import { MAX_WAVES } from "@broadside/core";
 import { WAKE_TRAIL } from "./wake-trail";
 
+/** Value noise and its fractal sum, shared by both stages (the same numbers for the same point). */
+const NOISE = /* glsl */ `
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p); vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float fbm(vec2 p) {
+  float s = 0.0; float a = 0.5;
+  for (int i = 0; i < 4; i++) { s += a * vnoise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
+  return s;
+}
+`;
+
+/**
+ * Shallows and surf from the landmasses (both stages: the vertex stage for the whole sea, the
+ * fragment stage again only in the narrow surf band, where a vertex grid metres apart would blur
+ * a line six metres wide).
+ */
+const SHORE = /* glsl */ `
+${NOISE}
+// Landmasses for shallows and surf: (x, z, radius, shoal) and (spine half dx, dz, roughness, 0); up to 32.
+uniform vec4 islands[32];
+uniform vec4 spines[32];
+uniform int islandCount;
+
+// Shallows and surf: water over a shoal turns pale and green (light from the sandy bottom), and
+// waves break in a foam band at the shore (distance in island radii with the same coastline
+// wobble as the terrain, approximated by noise of its scale). Returned as two distances that
+// vary smoothly over the sea, so a linear interpolation of them is close (the shading from them,
+// smoothstep and Gaussian, stays per pixel): x the distance past the coast in shoal widths of
+// the landmass that is shallowest here, y the signed distance (m) past the nearest coast.
+vec2 shore(vec2 p) {
+  float u = 4.0;
+  float c = 60.0;
+  for (int i = 0; i < 32; i++) {
+    if (i >= islandCount) break;
+    vec4 is = islands[i];
+    vec4 sp = spines[i];
+    // Distance to the spine (a capsule; a point for a round island), as core/world/archipelago.
+    vec2 s = sp.xy;
+    float len2 = dot(s, s);
+    float k = len2 > 0.0 ? clamp(dot(p - is.xy, s) / len2, -1.0, 1.0) : 0.0;
+    float d = length(p - is.xy - s * k);
+    if (d > is.z * (1.0 + sp.z * 0.6) + is.w + 60.0) continue;
+    float wob = 1.0 + sp.z * (fbm(p * (1.8 / is.z) + 5.0) - 0.5) * 2.0;
+    // (t - 1) R with t = d / (R wob): metres past this landmass's wandering coast.
+    float past = d / wob - is.z;
+    u = min(u, past / is.w);
+    if (abs(past) < abs(c)) c = past;
+  }
+  return vec2(u, c);
+}
+`;
+
 /**
  * Ocean shader. The vertex stage evaluates the same Gerstner sum as `core/ocean/gerstner.ts`
  * (uniforms from `packWaves`), with analytic normals and a Jacobian-based crest term for foam
@@ -8,6 +64,12 @@ import { WAKE_TRAIL } from "./wake-trail";
  * The fragment stage is a physically motivated water BRDF: Schlick Fresnel between the sky
  * reflection and a depth-tinted body colour, sun glint (normalised Blinn-Phong), a cheap
  * subsurface term on back-lit crests, procedural foam and aerial perspective to the horizon.
+ *
+ * Shallows and surf are a distance field evaluated per vertex and interpolated (as Gouraud 1971
+ * interpolates the lighting's terms, and with the same caveat: a feature narrower than the grid
+ * is lost between vertices), so the 32 landmasses and their coast noise are summed some 60-130
+ * thousand times a frame instead of once per pixel; only the six-metre surf line is evaluated
+ * again per pixel, in the narrow band where it lies.
  */
 export const OCEAN_VERTEX = /* glsl */ `
 precision highp float;
@@ -31,6 +93,8 @@ varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
 varying float vHeight;
+${SHORE}
+varying vec2 vShore;
 
 // Hull-water interaction on the surface (visual): each ship pushes up a bow wave growing with
 // the square of its speed (wave-making, cf. Froude scaling), piles water along its sides, holds
@@ -133,6 +197,7 @@ void main() {
   vFold = jxx * jzz - jxz * jxz;
   vHeight = p.y;
   vWorld = p;
+  vShore = shore(p.xz);
   gl_Position = viewProjection * vec4(p, 1.0);
 }
 `;
@@ -158,21 +223,13 @@ uniform vec4 shipB[8];
 uniform int shipCount;
 ${WAKE_TRAIL}
 uniform float underwater;
-// Landmasses for shallows and surf: (x, z, radius, shoal) and (spine half dx, dz, roughness, 0); up to 32.
-uniform vec4 islands[32];
-uniform vec4 spines[32];
-uniform int islandCount;
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying float vFold;
 varying float vHeight;
+varying vec2 vShore;
 
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p); vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-}
+${SHORE}
 // Foam is lace, not a blot: a network of bubble walls between rounded open cells, closing up to a
 // solid sheet where it is thick. The walls are where the two nearest feature points of cellular
 // noise are nearly equally near (F2 - F1 small, Worley 1996); \`cover\` 0..1 thickens them.
@@ -201,46 +258,12 @@ float lace(vec2 p, float cover) {
   float w = 0.03 + cover * 0.55;
   return smoothstep(w, w - 0.06, wall) * smoothstep(0.0, 0.25, cover);
 }
-float fbm(vec2 p) {
-  float s = 0.0; float a = 0.5;
-  for (int i = 0; i < 4; i++) { s += a * vnoise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
-  return s;
-}
-
 vec3 skyColor(vec3 dir) {
   float h = clamp(dir.y, 0.0, 1.0);
   vec3 sky = mix(skyHorizon, skyZenith, pow(h, 0.45));
   float sun = max(dot(dir, sunDirection), 0.0);
   sky += sunColor * (pow(sun, 8.0) * 0.25 + pow(sun, 900.0) * 6.0);
   return sky;
-}
-
-// Wake of the ships: a Kelvin wedge (half-angle 19.47 deg) behind each stern, turbulent foam
-// along the centre that fades with distance, a bow wave ring at the stem. Returns (foam, glitter).
-// Shallows and surf: water over a shoal turns pale and green (light from the sandy bottom), and
-// waves break in a foam band at the shore (distance in island radii with the same coastline
-// wobble as the terrain is approximated by noise).
-vec2 shallows(vec2 p) {
-  float shallow = 0.0;
-  float surf = 0.0;
-  for (int i = 0; i < 32; i++) {
-    if (i >= islandCount) break;
-    vec4 is = islands[i];
-    vec4 sp = spines[i];
-    // Distance to the spine (a capsule; a point for a round island), as core/world/archipelago.
-    vec2 s = sp.xy;
-    float len2 = dot(s, s);
-    float k = len2 > 0.0 ? clamp(dot(p - is.xy, s) / len2, -1.0, 1.0) : 0.0;
-    float d = length(p - is.xy - s * k);
-    if (d > is.z * (1.0 + sp.z * 0.6) + is.w + 60.0) continue;
-    // The coast's wander from noise in space at the landmass's scale (the terrain's own noise is
-    // approximated: a shader noise of the same scale and amplitude).
-    float wob = 1.0 + sp.z * (fbm(p * (1.8 / is.z) + 5.0) - 0.5) * 2.0;
-    float t = d / (is.z * wob);
-    shallow = max(shallow, 1.0 - smoothstep(1.0, 1.0 + is.w / is.z, t));
-    surf = max(surf, exp(-pow((t - 1.0) * is.z / 6.0, 2.0)));
-  }
-  return vec2(shallow, surf);
 }
 
 // Contact shading: the hull shades and occludes the water along its sides (ambient occlusion
@@ -263,6 +286,8 @@ float hullOcclusion(vec2 p) {
   return ao;
 }
 
+// Wake of the ships: a Kelvin wedge (half-angle 19.47 deg) behind each stern, turbulent foam
+// along the centre that fades with distance, a bow wave ring at the stem. Returns (foam, glitter).
 vec2 wakes(vec2 p) {
   float foam = 0.0;
   float glit = 0.0;
@@ -440,7 +465,12 @@ void main() {
   foam = max(foam, wakeFoam);
   col = mix(col, vec3(0.92, 0.95, 0.97) * foamLight(), foam);
   col *= hullOcclusion(vWorld.xz);
-  vec2 sh = shallows(vWorld.xz);
+  // From the vertex stage's distances (shore): as 1 - smoothstep(1, 1 + shoal / R, t) and
+  // exp(-((t - 1) R / 6)^2) in the distance t in radii, written in metres past the coast.
+  // The surf's Gaussian is nil past 14 m; within 40 m of the interpolated coast (room for the
+  // interpolation's error far off, where the grid is coarse) it is taken again per pixel.
+  float surfAt = abs(vShore.y) < 40.0 ? shore(vWorld.xz).y : 60.0;
+  vec2 sh = vec2(1.0 - smoothstep(0.0, 1.0, vShore.x), exp(-pow(surfAt / 6.0, 2.0)));
   col = mix(col, mix(col, vec3(0.18, 0.32, 0.27), 0.7), sh.x * (1.0 - fresnel));
   // The surf's noise and lace only where there is surf (most of the sea is far from any shore).
   if (sh.y > 0.004) {
