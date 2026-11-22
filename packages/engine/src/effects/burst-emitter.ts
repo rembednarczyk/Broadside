@@ -39,6 +39,14 @@ export interface BurstStyle {
    * size × scale; for splinters and rags, which read by their shape in flight.
    */
   readonly stretch?: readonly [number, number];
+  /** The texture is an atlas of `cells` × `cells` sprites; each particle takes one at random. */
+  readonly cells?: number;
+  /**
+   * Height of the sea the sprite must not cut (m): a camera-facing quad reaches at most half its
+   * size below its centre, so the centre is kept that far above it (no hard line where a big puff
+   * meets the water; Babylon has no soft particles).
+   */
+  readonly floor?: number;
 }
 
 interface Request {
@@ -62,7 +70,15 @@ export class BurstEmitter {
   private readonly air = new Vector3(0, 0, 0);
 
   constructor(name: string, scene: Scene, private readonly style: BurstStyle, clock: ParticleClock) {
-    const ps = new ParticleSystem(name, style.capacity, scene);
+    const ps = new ParticleSystem(name, style.capacity, scene, null, (style.cells ?? 1) > 1);
+    if (style.cells && style.cells > 1) {
+      ps.spriteCellWidth = style.texture.getSize().width / style.cells;
+      ps.spriteCellHeight = style.texture.getSize().height / style.cells;
+      ps.startSpriteCellID = 0;
+      ps.endSpriteCellID = style.cells * style.cells - 1;
+      ps.spriteRandomStartCell = true;
+      ps.spriteCellChangeSpeed = 0;
+    }
     ps.particleTexture = style.texture;
     ps.emitter = Vector3.Zero();
     ps.emitRate = 0;
@@ -90,13 +106,17 @@ export class BurstEmitter {
     ps.addSizeGradient(0, style.minSize, style.maxSize);
     ps.addSizeGradient(1, style.minSize * style.growth, style.maxSize * style.growth);
     const quad = style.quadDrag ?? 0;
-    if (style.drag > 0 || quad > 0) {
+    const floor = style.floor;
+    if (style.drag > 0 || quad > 0 || floor !== undefined) {
       const base = ps.updateFunction;
       ps.updateFunction = (particles: Particle[]) => {
         base(particles);
         const dt = clock.dt;
         const w = this.air;
-        for (const p of particles) airDrag(p.direction, w, style.drag, quad, dt);
+        for (const p of particles) {
+          airDrag(p.direction, w, style.drag, quad, dt);
+          if (floor !== undefined) p.position.y = Math.max(p.position.y, floor + p.size * 0.5);
+        }
       };
     }
     ps.startPositionFunction = (_m: unknown, pos: Vector3) => {

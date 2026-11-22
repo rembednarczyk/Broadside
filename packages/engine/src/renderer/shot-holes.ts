@@ -8,47 +8,61 @@ import { type AbstractMesh, DynamicTexture, Mesh, Ray, type Scene, StandardMater
  * rebuilt at each hit, under the ship's hull node so they ride with her (thin instances under that
  * node did not draw, 19.11). The oldest hole gives way when
  * a ship has `MAX` (a hull shot to pieces looks the same with more). The hole is a dark, ragged
- * mouth ringed with the pale splintered wood of fresh breaks, drawn once per scene.
+ * mouth ringed with the pale splintered wood of fresh breaks, drawn once per scene in four seeded
+ * variants (an atlas; the variant follows from where the hole is).
  */
 const MAX = 40;
 
-const holeTexture = (scene: Scene): DynamicTexture => {
-  const size = 128;
-  const t = new DynamicTexture("shot-hole", { width: size, height: size }, scene, true);
-  const ctx = t.getContext() as CanvasRenderingContext2D;
-  ctx.clearRect(0, 0, size, size);
+/** Hole variants: a 2 × 2 atlas, each drawn from its own seed (spikes, lip and mouth differ). */
+const HOLE_CELLS = 2;
+
+const drawHole = (ctx: CanvasRenderingContext2D, ox: number, oy: number, size: number, seed: number): void => {
   const c = size / 2;
-  let s = 7;
+  let s = seed;
   const rnd = (): number => {
     s = (s * 16807) % 2147483647;
     return s / 2147483647;
   };
-  // Splinters: pale spikes of torn wood out from the hole.
+  // Splinters: pale spikes of torn wood out from the hole, a few long, most short; some broken away.
   ctx.fillStyle = "rgba(232,200,150,1)";
-  for (let i = 0; i < 26; i++) {
-    const a = (i / 26) * Math.PI * 2 + rnd() * 0.2;
-    const r1 = c * (0.7 + rnd() * 0.3);
-    const w = 0.1 + rnd() * 0.12;
+  const spikes = 14 + Math.floor(rnd() * 14);
+  for (let i = 0; i < spikes; i++) {
+    if (rnd() < 0.2) continue;
+    const a = (i / spikes) * Math.PI * 2 + rnd() * 0.3;
+    const r1 = c * (0.5 + rnd() * rnd() * 0.5);
+    const w = 0.08 + rnd() * 0.14;
     ctx.beginPath();
-    ctx.moveTo(c + Math.cos(a - w) * c * 0.3, c + Math.sin(a - w) * c * 0.3);
-    ctx.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1);
-    ctx.lineTo(c + Math.cos(a + w) * c * 0.3, c + Math.sin(a + w) * c * 0.3);
+    ctx.moveTo(ox + c + Math.cos(a - w) * c * 0.3, oy + c + Math.sin(a - w) * c * 0.3);
+    ctx.lineTo(ox + c + Math.cos(a) * r1, oy + c + Math.sin(a) * r1);
+    ctx.lineTo(ox + c + Math.cos(a + w) * c * 0.3, oy + c + Math.sin(a + w) * c * 0.3);
     ctx.fill();
   }
-  // The mouth: ragged and black inside, scorched brown at the lip.
+  // The mouth: ragged and black inside, scorched brown at the lip; a little off round.
+  const squash = 0.8 + rnd() * 0.3;
   const ring = (radius: number, colour: string): void => {
     ctx.fillStyle = colour;
     ctx.beginPath();
     for (let i = 0; i <= 18; i++) {
       const a = (i / 18) * Math.PI * 2;
-      const r = radius * (0.8 + rnd() * 0.35);
-      if (i === 0) ctx.moveTo(c + Math.cos(a) * r, c + Math.sin(a) * r);
-      else ctx.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r);
+      const r = radius * (0.75 + rnd() * 0.4);
+      const x = ox + c + Math.cos(a) * r;
+      const y = oy + c + Math.sin(a) * r * squash;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
     ctx.fill();
   };
-  ring(c * 0.58, "rgba(70,46,28,1)");
-  ring(c * 0.42, "rgba(8,6,5,1)");
+  ring(c * (0.42 + rnd() * 0.12), "rgba(70,46,28,1)");
+  ring(c * (0.28 + rnd() * 0.1), "rgba(8,6,5,1)");
+};
+
+const holeTexture = (scene: Scene): DynamicTexture => {
+  const cell = 128;
+  const size = cell * HOLE_CELLS;
+  const t = new DynamicTexture("shot-hole", { width: size, height: size }, scene, true);
+  const ctx = t.getContext() as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, size, size);
+  for (let k = 0; k < HOLE_CELLS * HOLE_CELLS; k++) drawHole(ctx, (k % HOLE_CELLS) * cell, Math.floor(k / HOLE_CELLS) * cell, cell, 7 + k * 12);
   t.hasAlpha = true;
   t.update();
   return t;
@@ -106,6 +120,8 @@ export class ShotHoles {
   private readonly mesh: Mesh;
   /** The holes in the hull's frame: centre, outward normal, size and twist. */
   private readonly holes: { p: Vector3; n: Vector3; size: number; twist: number }[] = [];
+  /** Cells per side of the decal's atlas (shot holes come in variants; scorching has one). */
+  private readonly cells: number;
 
   /** `hull`: the meshes the holes are laid on (the hull model, or the generated hull). */
   /** `kind`: shot holes, or scorching (the same decals with a blotch of soot). */
@@ -113,6 +129,7 @@ export class ShotHoles {
     this.mesh = new Mesh(`${kind === "hole" ? "shot-holes" : "scorch"}-${parent.name}`, scene);
     this.mesh.parent = parent;
     this.mesh.material = holeMaterial(scene, kind);
+    this.cells = kind === "hole" ? HOLE_CELLS : 1;
     this.mesh.isPickable = false;
   }
 
@@ -163,7 +180,9 @@ export class ShotHoles {
         const q = h.p.add(u.scale(a)).add(v.scale(b));
         positions.push(q.x, q.y, q.z);
         normals.push(h.n.x, h.n.y, h.n.z);
-        uvs.push((a + 1) / 2, (b + 1) / 2);
+        // The variant from the twist (a hash of where the hole is), its cell in the atlas.
+        const k = Math.floor((h.twist / (Math.PI * 2)) * 97) % (this.cells * this.cells);
+        uvs.push(((k % this.cells) + (a + 1) / 2) / this.cells, (Math.floor(k / this.cells) + (b + 1) / 2) / this.cells);
       }
       indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
     }

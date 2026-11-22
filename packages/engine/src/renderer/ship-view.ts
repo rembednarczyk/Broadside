@@ -219,6 +219,9 @@ export class ShipView {
   private readonly detail: ShipDetail;
   private readonly guns: ShipGuns;
   private readonly holes: ShotHoles;
+  /** Canvas and rigging as the view shows them: following the simulation down at a limited pace. */
+  private shownCloth: number[] = [];
+  private shownRigging = 1;
   private readonly scorch: ShotHoles;
   /** The cap rail of a modelled hull, rebuilt with gaps where it is shot away (M11). */
   private rails: { side: SideProfile; wood: StandardMaterial; shadows: ShadowGenerator | null; mesh: Mesh | null; gaps: RailGap[] } | null = null;
@@ -487,7 +490,8 @@ export class ShipView {
 
   /** A ball went into the hull at a world point: a shot hole there (M11). */
   shotHit(at: { readonly x: number; readonly y: number; readonly z: number }, damage: number): void {
-    this.holes.add(at, Math.min(1.7, 0.9 + damage * 0.03));
+    // Splintered wood around a mouth of 0.3-0.5 m (a 12-24 pounder's ball is 12-15 cm; the timbers split wider).
+    this.holes.add(at, Math.min(1.1, 0.65 + damage * 0.02));
   }
 
   /** A gun fired at a world position: the nearest one recoils. */
@@ -535,6 +539,11 @@ export class ShipView {
     this.scorchSections(s);
     const tw = windVector(windDirection, windSpeed);
     const aw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
+    // Canvas and rigging shot away come down over a second or two in the view (beta test 22.11: a
+    // chain broadside stripped a ship in one frame); repairs show at once.
+    const step = Math.max(0, Math.min(0.1, time - this.lastTime));
+    const rigging = (this.shownRigging = Math.max(s.rigging, Math.min(1, this.shownRigging) - step * 0.45));
+    this.shownCloth = s.sailCloth.map((c, i) => Math.max(c, (this.shownCloth[i] ?? 1) - step * 0.6));
     const states: SailState[] = this.plans.map((p, i) => {
       const chord = s.sailChord[p.mast]![p.sail]!;
       // A jib pivots on its stay: only its clew swings, so it turns about half the trim.
@@ -547,7 +556,7 @@ export class ShipView {
       // Luffing when the canvas is set but starved of wind; a strong breeze flutters every leech.
       const flutter = set > 0.05 ? Math.min(1, Math.max(0, 1 - fill / 0.35) + Math.max(0, windSpeed - 9) * 0.02) : 0;
       // A yard shot down (rope-cut): it comes down on deck over a second and a half, and its sail with it.
-      const downAt = s.rigging < yardFallsBelow(i) ? (this.yardsDown.get(i) ?? time) : null;
+      const downAt = rigging < yardFallsBelow(i) ? (this.yardsDown.get(i) ?? time) : null;
       if (downAt !== null) this.yardsDown.set(i, downAt);
       const yardDown = downAt === null ? undefined : { t: Math.min(1, (time - downAt) / 1.5), deck: this.model.def.hull.freeboard + 0.6 };
       const f = this.falls.get(p.mast);
@@ -560,7 +569,7 @@ export class ShipView {
     const bends = this.springs.update(dt, s.mastLoad, aw.x / awLen, 0.6);
     this.detail.ratlines.update(bends, s.mastLoad, aw.x / awLen, s.mastHp.map((h) => h <= 0));
     this.guns.update(dt);
-    this.cloth.setDamage(s.sailCloth);
+    this.cloth.setDamage(this.shownCloth);
     this.cloth.update(states, bends, time, this.clothNear ? { dt, wind: awLen } : null);
     this.updateRunning((plan) => s.sailFill[this.plans[plan]!.mast]![this.plans[plan]!.sail]!);
     this.masts.forEach((m, i) => {
