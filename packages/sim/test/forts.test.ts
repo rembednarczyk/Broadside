@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type DomainEvent, type FortSite, quatFromYaw, vec3 } from "@broadside/core";
+import { type DomainEvent, type FortSite, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { Simulation } from "../src/simulation";
+import { damageFort, fortAmmo, stormChance } from "../src/combat/forts";
 
 const run = (sim: Simulation, seconds: number, sink: DomainEvent[] = []) => {
   for (let i = 0; i < seconds * 60; i++) {
@@ -16,7 +17,8 @@ describe("forts", () => {
   it("fires on a hostile ship in range and hits her", () => {
     const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
     sim.spawnFort(site("battery", "crown"));
-    const ship = sim.spawnShip({ classId: "brig", faction: "pirates", x: 260, z: 0, heading: 0 });
+    // In front of the rampart (a battery's guns bear 60 deg either side of their embrasures).
+    const ship = sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: 260, heading: Math.PI / 2 });
     sim.command({ type: "sails", ship: ship.id, mast: "all", level: 0 });
     const ev = run(sim, 40);
     expect(ev.filter((e) => e.type === "gunFired").length).toBeGreaterThan(4);
@@ -64,6 +66,57 @@ describe("forts", () => {
   });
 });
 
+describe("fort gunnery and silencing (beta test 22.11)", () => {
+  it("fires by divisions from its embrasures, not all at once from one point", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("starFort", "crown"));
+    sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: 300, heading: Math.PI / 2 });
+    const fired: { t: number; x: number; z: number }[] = [];
+    for (let i = 0; i < 20 * 60; i++) {
+      sim.step();
+      for (const e of sim.drainEvents()) if (e.type === "gunFired" && e.ship === fort.id && e.ammo !== "shell") fired.push({ t: i / 60, x: e.at.x, z: e.at.z });
+    }
+    expect(fired.length).toBeGreaterThan(5);
+    // No two guns in one frame, and from more than one embrasure, all on the side facing the ship.
+    expect(new Set(fired.map((f) => f.t)).size).toBe(fired.length);
+    expect(new Set(fired.map((f) => `${f.x.toFixed(1)}|${f.z.toFixed(1)}`)).size).toBeGreaterThan(2);
+    expect(fired.every((f) => f.z > 0)).toBe(true);
+  });
+
+  it("will not fire inland: a battery's guns bear only to seaward", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("battery", "crown"));
+    sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: -300, heading: Math.PI / 2 });
+    expect(run(sim, 30).some((e) => e.type === "gunFired" && e.ship === fort.id)).toBe(false);
+  });
+
+  it("counts the mortars among the pieces to knock out, and remounts them when taken", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("starFort", "pirates"));
+    const f = fort.fort!;
+    f.guns = f.guns.map(() => -1);
+    const ship = sim.spawnShip({ classId: "liner", faction: "player", x: 0, z: 150, heading: 0 });
+    const ev: DomainEvent[] = [];
+    const rng = createRng(1);
+    for (let k = 0; k < 400 && !f.silenced; k++) damageFort(sim.events, fort, ship.id, 20, 100, "round", vec3(0, 8, 40), rng);
+    ev.push(...sim.drainEvents());
+    expect(f.silenced).toBe(true);
+    expect(f.hp).toBeGreaterThan(0);
+    expect(ev.some((e) => e.type === "hit" && e.part === "wall")).toBe(true);
+    f.garrison = 5;
+    sim.command({ type: "assault", ship: ship.id, fort: fort.id });
+    run(sim, 1, ev);
+    expect(ev.some((e) => e.type === "fortCaptured")).toBe(true);
+    expect(f.mortars.every((m) => m >= 0)).toBe(true);
+  });
+
+  it("gives the storming odds the assault rolls", () => {
+    expect(stormChance(100, 100)).toBe(0);
+    expect(stormChance(200, 100)).toBe(1);
+    expect(stormChance(140 / 1.0, 100)).toBeCloseTo(0.5);
+  });
+});
+
 describe("sieges by the navies", () => {
   it("a man-of-war bombards the fort of a nation at war with hers", () => {
     const sim = new Simulation({ seed: 9, windDirection: Math.PI / 2, windSpeed: 7 });
@@ -80,5 +133,48 @@ describe("sieges by the navies", () => {
     sim.spawnFort(site("watchtower", "crown"));
     const frigate = sim.spawnShip({ classId: "frigate", faction: "crown", x: 0, z: -600, heading: 0, ai: true, speed: 3 });
     expect(run(sim, 60).some((e) => e.type === "gunFired" && e.ship === frigate.id)).toBe(false);
+  });
+});
+
+describe("harbour chain and shot furnace (beta test 22.11)", () => {
+  const chained = (faction: FortSite["faction"]): FortSite => ({ x: -600, z: 0, y: 6, classId: "citadel", faction, port: 0, facing: Math.PI / 2, chain: { x0: 0, z0: -150, x1: 0, z1: 150 } });
+
+  const sail = (faction: FortSite["faction"], silenced = false) => {
+    const sim = new Simulation({ seed: 4, windDirection: Math.PI / 2, windSpeed: 7 });
+    const fort = sim.spawnFort(chained("crown"));
+    fort.fort!.silenced = silenced;
+    // Far beyond her guns' reach is not needed: the test is the chain; she runs at it from the east.
+    const ship = sim.spawnShip({ classId: "sloop", faction, x: 60, z: 0, heading: -Math.PI / 2, speed: 5 });
+    sim.command({ type: "sails", ship: ship.id, mast: "all", level: 3 });
+    const ev = run(sim, 30);
+    return { x: ship.body!.pos.x, ev };
+  };
+
+  it("holds an enemy at the boom while the fort fights", () => {
+    const r = sail("republic");
+    expect(r.x).toBeGreaterThan(-2);
+    expect(r.ev.some((e) => e.type === "chainBarred")).toBe(true);
+  });
+
+  it("lets friends through, and lowers it for all once the fort is silenced", () => {
+    expect(sail("crown").x).toBeLessThan(-10);
+    expect(sail("republic", true).x).toBeLessThan(-10);
+  });
+
+  it("parts under shot, and the furnace goes out when the walls are half down", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(chained("crown"));
+    const f = fort.fort!;
+    const ev: DomainEvent[] = [];
+    for (let k = 0; k < 10 && f.chain > 0; k++) {
+      sim.world.add({ id: 0, shot: { s: { x: 5, y: 1, z: 0, vx: -120, vy: 0, vz: 0 }, k: 0, mass: 5, ammo: "round", owner: 999, pounder: 12, age: 1, bounces: 0 } });
+      run(sim, 0.2, ev);
+    }
+    expect(f.chain).toBe(0);
+    expect(ev.some((e) => e.type === "chainBroken")).toBe(true);
+    expect(fortAmmo(f)).toBe("hot");
+    damageFort(sim.events, fort, 999, 2000, 300, "round", vec3(-600, 8, 0), createRng(2));
+    expect(f.furnace).toBe(false);
+    expect(fortAmmo(f)).toBe("round");
   });
 });

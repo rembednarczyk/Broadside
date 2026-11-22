@@ -8,6 +8,7 @@ const label = (lang: Lang, key: string, fallback: string): string => (isTextKey(
 export const JobLine = ({ j, lang }: { j: JobHud; lang: Lang }) => (
   <>
     <div className="title">{label(lang, `contract.${j.kind}`, j.kind)}</div>
+    {isTextKey(`contract.${j.kind}.what`) && <small className="what">{text(lang, `contract.${j.kind}.what` as Parameters<typeof text>[1])}</small>}
     <div className="row">
       <span>{label(lang, `class.${j.classId}`, j.classId)} · {label(lang, `faction.${j.faction}`, j.faction)}</span>
       <span>{j.reward}</span>
@@ -25,7 +26,11 @@ export const JobPanel = () => {
     <div className="panel job" data-testid="job">
       <JobLine j={j} lang={lang} />
       <div className="row">
-        <span>{j.distance !== undefined ? `${(j.distance / 1000).toFixed(1)} km · ${Math.round(j.bearing ?? 0)}°` : ""}</span>
+        {/* An arrow from her bow towards the ship of the contract (relative bearing), and the distance. */}
+        <span>
+          {j.relative !== undefined && <span className="job-arrow" style={{ transform: `rotate(${j.relative}deg)` }}>↑</span>}
+          {j.distance !== undefined ? `${(j.distance / 1000).toFixed(1)} km` : ""}
+        </span>
         <span>{j.minutes} min</span>
       </div>
     </div>

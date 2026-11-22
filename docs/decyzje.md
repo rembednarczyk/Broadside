@@ -1161,3 +1161,85 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Nawigacja (pilot, kapitanowie AI, planer tras) czyta dno, które 150 m przed krawędzią morza kończy się mielizną
   (`chartedBed`); fizyka ma prawdziwe dno. Zlecenie „bounty”: płatne, gdy działa gracza trafiły cel choć raz
   (`hitByPlayer`); reguła „ostatnie trafienie gracza” odrzucała cele dobite przez fort albo inny statek.
+- Stały rozkaz „ogień, gdy namierzy” w prostym sterowaniu (`app/src/gun-captains.ts`): burta strzela sama, gdy
+  w jej łuku do 260 m jest wrogi statek, który nie opuścił bandery; celowanie jak salwa gracza, najwyżej raz na
+  sekundę na burtę, sprawdzane cztery razy na sekundę. Tylko w prostym sterowaniu (w klasycznym i Akcji strzela
+  gracz); bez przełącznika w opcjach, dopóki właściciel o niego nie poprosi.
+- Omijanie mielizn (Reynolds) z sondą na odległość 70 s drogi, gdy przekracza 250 m (fregata przy 5 m/s skręca
+  łukiem szerszym niż dawne 250 m sond i weszła na mieliznę w walce przy brzegu); pilot płynący do punktu ucina
+  sondy na odległości punktu + 20 m (wrak na płyciźnie, kotwicowisko przy brzegu są osiągalne). Audyty ADR-0005
+  zielone, złoty hash bez zmian.
+- Kapitan AI opuszcza banderę przy 30% załogi i ucieka poniżej 45% (było 15% i 30%): statki epoki żagla poddawały
+  się po stracie mniej więcej jednej trzeciej ludzi; w audycie bitew przegrani nie kończą już niemal bez załogi.
+  Bramki ADR-0005 zielone, soak 1,42 ms na krok, złoty hash bez zmian.
+
+## 21.11, użytkownik: „nowy tryb Fun, żeby gra bardziej przypominała Overboard! z 1997; kontrola jak w Action, statek płynie znacznie szybciej i szybciej strzela”
+- Czwarta opcja sterowania „Fun” (`SteeringMode` "fun"): pad i żeglowanie wspomagane jak w Akcji, z mnożnikami
+  `core/data/assist.ts` FUN: prędkość ×1,8 (galeon 12,6 → 21,9 w. w pomiarze), napęd ×3 (opór kadłuba rośnie szybko
+  ponad prędkością kadłubową), okrąg skrętu ×0,6, przeładowanie dział ×0,4. Kamera izometryczna z góry (jak
+  w Overboard!), w Akcji pościgowa za rufą. Stan `assist.fun` w symulacji i zapisie; bieg wstecz zachowuje tryb.
+
+## 22.11, użytkownik: „optymalizacja grafiki na high i ultra, sprawdź co jeszcze można ugrać bez straty na jakości”
+- Zasada: zmiana wchodzi tylko, gdy zrzut przed i po (zamrożona symulacja, `SHOT_FREEZE=1`) nie pokazuje różnicy.
+- Płycizny jako pole odległości w wierzchołkach oceanu (interpolacja jak u Gouraud), przybój 6 m liczony jeszcze raz
+  per piksel w pasie 40 m od brzegu: pierwsza wersja bez tego pasa rozmyła linię przyboju na dalszym brzegu (odrzucona).
+- Mapa wysokości dna z siatek lądu odrzucona (ląd do −25 m, płycizna do −60 m: węższy pas).
+- Ocean w 4 × 4 kaflach z tymi samymi wierzchołkami; macierz świata jednostkowa (rozmycie ruchu nie może widzieć
+  ruchu wody), przesuwane są tylko pudełka odrzucania. 6 × 6 i 8 × 8 dałyby niewiele więcej przy 2–4 razy większej
+  liczbie wywołań rysowania.
+- Załoga: frustum i drugi poziom szczegółów od 45 m (jak skany dział), generowany w `tools/assets/crew-anim.mjs`
+  (meshoptimizer, ćwierć trójkątów, błąd do 5%); bosman i oficer zatrzymują się na ok. 3760 trójkątach (osobne części
+  stroju), progu błędu nie podnoszę.
+- Nie ruszam: szumu detalu fal (ok. 1% klatki), SSAO na ultra (11%, już w połowie rozdzielczości; mniej próbek to
+  widoczna zmiana), gęstości siatki oceanu (zmiana obrazu fal z bliska).
+
+## 22.11, użytkownik: beta-test efektów strzelania, „zgadzam się, lecisz” (kolejność poprawek z raportu)
+- Cząstki starzeją się o `dt` klatki gry: `scene.useConstantAnimationDeltaTime` (stały współczynnik 0,96) i `updateSpeed`
+  ustawiane co klatkę. Odrzucone `engine.beginFrame()`: silnik mierzyłby czas sam, niezależnie od czasu gry
+  (zamrożenie w narzędziach, limit 0,1 s).
+- Opór cząstek jako relaksacja do prędkości powietrza z szybkością `drag + quadDrag·|v − w|`, całkowana dokładnie
+  (bez przestrzelenia prędkości wiatru); wypór dymu zostaje stałym przyspieszeniem w górę, więc dym wznosi się
+  z prędkością graniczną wypór/opór.
+- Światło na cząstkach: ambient sceny plus połowa światła kluczowego (średnia z kuli Lamberta), względem 14:00,
+  od 0,03 do 1,15. Bez kierunku i bez samocienia; oświetlone billboardy z normalnymi zostają na później.
+  Ogień (błysk, płomienie, iskry) się nie przyciemnia.
+- Dym salwy: strumień (`fx-blast`) i kłęby (`fx-smoke`) jako dwa emitery; kłęby z atlasu 2 × 2 rysowanego
+  z ziarna (gromada miękkich kół oświetlonych z góry, Reeves 1983). Miękkich cząstek Babylon nie ma, więc środek
+  kłęba trzymany jest pół rozmiaru nad wodą (billboard nie sięga niżej): bez ostrej linii na wodzie.
+  Kłęby dryfują z wiatrem; statek w ruchu wypływa z nich po kilku sekundach, przy wietrze z rufy zostaje w nich dłużej.
+- Drżenie kamery jako przesunięcie widoku (`targetScreenOffset`), nie orbity: po wygaśnięciu kamera jest tam, gdzie
+  była. Domyślnie włączone, wyłącznik w opcjach rozgrywki (klucz `broadside.shake`).
+- Komunikat trafień: liczone trafienia kul gracza w inne statki do 2,5 s po ostatnim dziale, nie więcej niż dział;
+  pojedynczy strzał bez komunikatu. Liczby w komunikacie przez klucz z parametrami (`notice.hits|7|14`).
+
+## 22.11, użytkownik: beta-test fortów i wież, „działaj ze wszystkimi poprawkami”
+- Układ fortu przeniesiony z silnika do `core` (`world/fort-layout.ts`), jak kadłub w `core/hull`: renderer buduje z niego
+  kamień, symulacja strzela z jego strzelnic i sprawdza trafienia w jego mury (test płyt Kay i Kajiya 1986) i wieże.
+- Cel strojenia testera (35–45% trafień przy 200 m w fregatę burtą) nieosiągalny przy rozsądnym rozrzucie: liczą się też
+  kule w olinowaniu i rykoszety od wody w kadłub, a tor kuli jest płaski. Bramką są czasy oblężenia (galeon z 400 m
+  ucisza baterię w 2–4 min, fort gwiaździsty w 8–14 min i przeżywa); udział trafień zostaje raportem.
+- Wytrzymałość fortów podniesiona ok. 3,5 raza zamiast obniżania szansy zbicia działa: przy podanym przez testera mnożniku
+  fort padał po wyczerpaniu murów, a działa nie ubywały stopniowo. Szansa zbicia `0,6 · obrażenia / (hp / liczba sztuk)`.
+- Cytadela zostaje celem dla fregaty (ok. 9 min) albo liniowca (3 min); galeon z 400 m jej nie ucisza i tonie po ok. 12 min.
+- Pora dnia trafiła do symulacji (`startHours`, `clockRuns` w środowisku; bez opcji `hours` stałe południe, więc testy
+  i audyty bez nocy). Ciemność działa tylko na forty; kapitanowie AI widzą jak dotąd (zmiana balansu bitew osobno).
+- Bateria nie strzela w głąb lądu ani wzdłuż brzegu poza łukiem ±60° od strzelnic.
+- Teren pod fortem wyrównany (taras w połowie między najniższym i najwyższym punktem obrysu) zamiast stawiania fortu na
+  najniższym punkcie z cokołem: na zboczu cokół z jednej strony i zasypany mur z drugiej wyglądały gorzej niż wcięcie
+  w zbocze. Fizyka lądu (mielizny, linia wody) bez zmian: taras zmienia tylko ląd powyżej plaży (0,8 m).
+- Wyszukiwanie miejsca pod forty trwa ok. 0,5–1 s na świat (raz, wynik w pamięci podręcznej): do sprawdzenia na telefonie.
+- Łańcuch portowy jako odcinek w poprzek podejścia do portu (65% drogi od nabrzeża do kotwicowiska, za końcem mola, 300 m), dane
+  w miejscu fortu (`FortSite.chain`). Zatrzymanie statku jak więz kontaktowy (składowa prędkości w poprzek łańcucha
+  zerowana), bez obrażeń. Przyjaciele przepływają (łańcuch opuszczany).
+- Piec do kul gaśnie przy połowie wytrzymałości murów zamiast osobnego celu do trafienia: piec stoi na dziedzińcu,
+  płaski tor kuli go nie sięga, a moździerzy gracz ma mało.
+- Garnizon na murach jako proste figury (kapsuła i głowa, kolor kurtki frakcji) zamiast animowanej załogi statków:
+  z odległości fortu postać ma kilka pikseli, a 40 animowanych postaci na fort kosztowałoby wiele.
+- AI oblega forty wyprawami (35% szans przy wyborze kolejnego punktu patrolu, wrogi fort do 2,5 km) i całą eskadrą.
+- Promień pełnego wyporu statków (LOD fizyki) zmniejszony z 700 do 450 m: po zmianach AI eskadra korony oblegała fort
+  przy porcie startowym gracza w audycie soak (ziarno 11) i trzy okręty w odległości 450–700 m podniosły najgorszą
+  minutę do 2,64 ms na krok (bramka ADR-0005: 2 ms; przed zmianami 1,75 ms). Z 450 m: 1,97 ms, zapas mały.
+  Kod fortów to ok. 1% czasu kroku (profil). Złoty hash bez zmian.
+- Koszt klatki z cytadelą w kadrze (`fort-bench`, 800×450, SwiftShader): forty dodają 4 wywołania rysowania na ultra
+  i na low (beta-test przed poprawkami: +83 na ultra, wszystkie forty rzucały cień); udział fortów w czasie klatki
+  8% na ultra, 12% na low przy kamerze blisko cytadeli.

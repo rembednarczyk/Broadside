@@ -1,4 +1,4 @@
-import { type ContractOffer, SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue } from "@broadside/core";
+import { type ContractOffer, SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue, yawOf } from "@broadside/core";
 import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
 import { type JobHud, type PortHud } from "@broadside/ui";
 
@@ -20,7 +20,8 @@ export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
   const minutes = Math.max(0, Math.ceil((c.deadline - sim.env.time) / 60));
   if (!at) return { ...base, minutes };
   const bearing = ((Math.atan2(at.x - b.pos.x, at.z - b.pos.z) * 180) / Math.PI + 360) % 360;
-  return { ...base, minutes, distance: Math.hypot(at.x - b.pos.x, at.z - b.pos.z), bearing };
+  const relative = ((bearing - (yawOf(b.rot) * 180) / Math.PI + 540) % 360) - 180;
+  return { ...base, minutes, distance: Math.hypot(at.x - b.pos.x, at.z - b.pos.z), bearing, relative };
 };
 
 export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {

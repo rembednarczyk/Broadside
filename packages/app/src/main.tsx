@@ -1,14 +1,14 @@
 import { createRoot } from "react-dom/client";
 import { type ColorMode, CAMERA_MODES, BabylonRenderer, DynamicResolution, type GraphicsPreset, type GraphicsSettings, SynthAudio, parseGraphics, presetSettings, withSetting } from "@broadside/engine";
-import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud } from "@broadside/ui";
+import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiIntents, patchHud, useHud, usesPad } from "@broadside/ui";
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
-import { type SimSnapshot } from "@broadside/sim";
+import { type SimSnapshot, hoursNow as simHours } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
-import { presentMarker } from "./presenters/marker-presenter";
+import { jobMarker, presentMarker } from "./presenters/marker-presenter";
 import { chartTarget, presentChart } from "./presenters/chart-presenter";
 import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
@@ -23,6 +23,7 @@ import { presentCourse, presentWind } from "./presenters/course-presenter";
 import { type TapOrder, attackDrawn, orderFor, tappedAt } from "./controllers/tap-targets";
 import { presentTappables } from "./presenters/tappables";
 import { Haptics, strongest } from "./feedback/haptics";
+import { SalvoTally } from "./presenters/salvo-tally";
 // Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
 // EB Garamond for the text (SIL Open Font License).
 import "@fontsource/cinzel/600.css";
@@ -53,8 +54,19 @@ const helpSeen = ((): boolean => {
     return false;
   }
 })();
+// One game hour passes in four minutes (a day in an hour and a half).
+/** Hour of day to start at (`hours=21` or `hours=21:30`); `clock=stop` holds it (fixed light for shots). */
+const parseHours = (v: string | null): number => {
+  if (!v) return 16.3;
+  const [h, m] = v.split(":");
+  const hours = Number(h) + Number(m ?? 0) / 60;
+  return Number.isFinite(hours) ? ((hours % 24) + 24) % 24 : 16.3;
+};
+const startHours = parseHours(params.get("hours"));
+const clockRuns = params.get("clock") !== "stop";
 const saved = params.has("seed") ? null : await readSave(store, "autosave").catch(() => null);
-let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapshot) : new GameSession({ seed, weather });
+const day = { hours: startHours, clock: clockRuns };
+let session = saved ? new GameSession({ seed, weather, ...day }, saved.data as SimSnapshot) : new GameSession({ seed, weather, ...day });
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
 const GFX_KEY = "broadside.graphics";
 /** Modelled hulls (tools/assets), served beside the page in the web build and in the APK. */
@@ -76,7 +88,7 @@ const STEER_KEY = "broadside.steering";
 const storedSteering = ((): SteeringMode => {
   try {
     const m = localStorage.getItem(STEER_KEY);
-    return m === "classic" || m === "arcade" ? m : "simple";
+    return m === "classic" || m === "arcade" || m === "fun" ? m : "simple";
   } catch {
     return "simple";
   }
@@ -143,19 +155,27 @@ const setHaptics = (on: boolean) => {
   patchHud({ haptics: on });
   writeSetting(HAPTICS_KEY, on ? "1" : "0");
 };
+// Camera shake at broadsides and hits: on unless turned off on this device.
+const SHAKE_KEY = "broadside.shake";
+patchHud({ shake: readSetting(SHAKE_KEY) !== "0" });
+const setShake = (on: boolean) => {
+  patchHud({ shake: on });
+  writeSetting(SHAKE_KEY, on ? "1" : "0");
+};
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
-  session.assist(steering === "arcade");
+  session.assist(usesPad(steering), false, steering === "fun");
   session.helm.steer(0);
   if (steering !== "simple") session.helm.navigate([], false);
-  if (steering !== "arcade") session.helm.rudder(0);
+  if (!usesPad(steering)) session.helm.rudder(0);
   patchHud({ astern: false });
-  // The action mode's view is the chase camera following the stern (Black Flag's), also on a start
-  // with the mode stored (unless the address names a camera); the camera button still cycles.
+  // Action's view: the chase camera following the stern (Black Flag's); Fun's: the isometric one from above
+  // (Overboard!'s); also on a start with the mode stored, unless the address names a camera.
   renderer.camera.trail = steering === "arcade";
-  if (steering === "arcade" && renderer.camera.mode === "isometric" && !urlCamera) {
-    renderer.camera.mode = "chase";
-    patchHud({ cameraMode: "chase" });
+  const view = steering === "arcade" ? "chase" : steering === "fun" ? "isometric" : null;
+  if (view && renderer.camera.mode !== view && (renderer.camera.mode === "isometric" || renderer.camera.mode === "chase") && !urlCamera) {
+    renderer.camera.mode = view;
+    patchHud({ cameraMode: view });
   }
 };
 applySteering(storedSteering);
@@ -163,7 +183,7 @@ applySteering(storedSteering);
 const gear = (step: 1 | -1) => {
   const h = useHud.getState();
   const sail = h.sailing?.sailTargets[0] ?? 3;
-  if (h.steering === "arcade" && step < 0 && sail === 0 && !h.astern) {
+  if (usesPad(h.steering) && step < 0 && sail === 0 && !h.astern) {
     session.assist(true, true);
     patchHud({ astern: true });
   } else if (h.astern && step > 0) {
@@ -202,7 +222,7 @@ const setSteering = (steering: SteeringMode) => {
 const intents: UiIntents = {
   helm: {
     // Under assisted sailing the keys put the helm over like the pad; otherwise they turn the course.
-    steer: (d) => (useHud.getState().steering === "arcade" ? session.helm.rudder(d) : session.helm.steer(d)),
+    steer: (d) => (usesPad(useHud.getState().steering) ? session.helm.rudder(d) : session.helm.steer(d)),
     rudder: (x) => session.helm.rudder(x),
     gear,
   },
@@ -258,6 +278,7 @@ const intents: UiIntents = {
     setSteering,
     setReef,
     setHaptics,
+    setShake,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => showMenu(useHud.getState().menu ? null : "main"),
     showMenu,
@@ -275,7 +296,7 @@ const intents: UiIntents = {
       }
     },
     newGame: () => {
-      session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
+      session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather, ...day });
       session.crewOrders(useHud.getState().reef);
       applySteering(useHud.getState().steering);
       applyGraphics(graphics);
@@ -382,6 +403,7 @@ const pushNotice = (key: string) => {
 };
 
 const haptics = new Haptics();
+const salvoTally = new SalvoTally();
 // Dynamic resolution under the slider's scale when frames come too slow (off for the tools that drive
 // the page, whose shots and measurements must be at the set resolution, and with `dynres=0`).
 const autoResolution = params.get("dynres") !== "0" && !navigator.webdriver;
@@ -393,25 +415,17 @@ patchHud({ fpsCap: pacer.cap });
 dynres.setCap(pacer.cap);
 let fpsAcc = 0;
 let frames = 0;
-// One game hour passes in four minutes (a day in an hour and a half).
-/** Hour of day to start at (`hours=21` or `hours=21:30`); `clock=stop` holds it (fixed light for shots). */
-const parseHours = (v: string | null): number => {
-  if (!v) return 16.3;
-  const [h, m] = v.split(":");
-  const hours = Number(h) + Number(m ?? 0) / 60;
-  return Number.isFinite(hours) ? ((hours % 24) + 24) % 24 : 16.3;
-};
-const startHours = parseHours(params.get("hours"));
-const clockRuns = params.get("clock") !== "stop";
 // `sun=<degrees>`: a fixed bearing of the sun (0 = east, 90 = north, the +z a ship starts along), for staged shots.
 const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 180 : undefined;
-const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
+// The simulation keeps the day's clock (a fort's lookouts see less at night, core daylight).
+const hoursNow = () => simHours(session.sim.env);
 // With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
 // within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
-const WRECK_MARK = 900;
+const WRECK_MARK = 1500;
 /** Another ship is heard (her rigging and canvas) within this distance of the listener (m). */
 const NEARBY = 150;
 let wrecksOf: { a: unknown; sites: ReturnType<typeof wreckSites> } | null = null;
+const jobAhead = (p: { x: number; z: number }) => { const j = session.sim.jobs.active; const t = j ? session.sim.byId(j.target)?.body?.pos : undefined; return jobMarker(j ? { target: j.target, kind: j.offer.kind } : null, t ?? null, p, (x, z) => renderer.project(x, 2, z), clearArea(performance.now())); };
 const wreckMarker = (p: { x: number; z: number }) => {
   const a = session.sim.env.archipelago;
   if (!a) return null;
@@ -432,12 +446,13 @@ const frame = (now: number) => {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   // The game stands still while the menu or the how-to-play card is up (the sea and ships drawn as they are).
-  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt);
+  if (!useHud.getState().menu && !useHud.getState().helpOpen) session.advance(dt, useHud.getState().steering === "simple");
   const scale = autoResolution ? dynres.update(dt) : null;
   if (scale !== null) renderer.setRenderScale(scale);
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
   haptics.enabled = useHud.getState().haptics;
+  renderer.shake.enabled = useHud.getState().shake;
   haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
@@ -449,6 +464,8 @@ const frame = (now: number) => {
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);
   }
+  const tally = salvoTally.update(events, session.playerId, session.sim.env.time);
+  if (tally) pushNotice(tally);
   audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
   const aboard = presentShipAudio(session.sim, session.playerId, renderer.camera.camera.radius, hoursNow());
   if (aboard) audio.setShip(aboard);
@@ -485,7 +502,7 @@ const frame = (now: number) => {
     target: me?.body ? presentTarget(session.sim, me) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
-    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : wreckMarker(me.body.pos)) : null,
+    marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : (jobAhead(me.body.pos) ?? wreckMarker(me.body.pos))) : null,
     gold: session.sim.purse.gold,
     provisions: session.sim.purse.provisions,
   });

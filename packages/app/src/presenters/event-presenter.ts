@@ -15,7 +15,8 @@ export const cueFor = (e: DomainEvent, playerId = -1, shipAt: (id: number) => { 
     case "ricochet":
       return { kind: "splash", x: e.at.x, z: e.at.z, size: 0.5 };
     case "hit":
-      // Heavier blows crack louder (and the heaviest are heard as timbers stove in).
+      // A fort's stone cracks dull; on a ship, heavier blows crack louder (the heaviest as timbers stove in).
+      if (e.part === "wall") return { kind: "stone", x: e.at.x, z: e.at.z, size: Math.min(2, 0.6 + e.damage / 20) };
       return { kind: "wood", x: e.at.x, z: e.at.z, size: Math.min(2, 0.6 + e.damage / 20) };
     case "mastFell": {
       const at = shipAt(e.ship);
@@ -93,6 +94,12 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
       return "notice.tradeRefused";
     case "fortSilenced":
       return "notice.fortSilenced";
+    case "chainBarred":
+      return e.ship === playerId ? "notice.chainBarred" : null;
+    case "chainBroken":
+      return "notice.chainBroken";
+    case "furnaceOut":
+      return "notice.furnaceOut";
     case "fortCaptured":
       return e.by === playerId ? "notice.fortCaptured" : "notice.fortFell";
     case "assaultFailed":
@@ -104,7 +111,7 @@ export const noticeFor = (e: DomainEvent, playerId: number): string | null => {
     case "ammoOut":
       return e.ship === playerId ? "notice.ammoOut" : null;
     case "weatherChanged":
-      return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : null;
+      return e.kind === "squall" ? "notice.squall" : e.kind === "spout" ? "notice.spout" : e.kind === "rogue" ? "notice.rogue" : e.kind === "gale" ? "notice.gale" : e.kind === "storm" ? "notice.storm" : null;
     default:
       return null;
   }

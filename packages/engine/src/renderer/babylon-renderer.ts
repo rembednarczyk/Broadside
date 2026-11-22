@@ -13,6 +13,9 @@ import { ShipFill } from "./ship-fill";
 import { wetSkyOf } from "./wet-deck";
 import { hazeSunOf } from "./sun-haze";
 import { EffectsDirector } from "../effects/effects-director";
+import { ParticleClock } from "../effects/particle-clock";
+import { CameraShake } from "../camera/camera-shake";
+import { particleLight } from "../effects/particle-light";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
 import { HullModels } from "./hull-models";
@@ -84,6 +87,11 @@ export class BabylonRenderer {
   private lineK = -1;
   private lineCheck = 0;
   private readonly effects: EffectsDirector;
+  /** Ages every particle system by the frame's dt (particle-clock.ts). */
+  private readonly particleClock: ParticleClock;
+  /** Shake of the view when the player's guns fire, she is hit or something blows up near her (camera-shake.ts). */
+  readonly shake = new CameraShake();
+  private playerId = -1;
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
   readonly salvo: SalvoMarks;
@@ -125,7 +133,8 @@ export class BabylonRenderer {
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves, g.skyScale);
     this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
-    this.effects = new EffectsDirector(this.scene, g.particles);
+    this.particleClock = new ParticleClock(this.scene);
+    this.effects = new EffectsDirector(this.scene, this.particleClock, g.particles);
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
     // Torn planks show the timber of the hull they came from: the model's baked planking, else the generated decks' planks.
     this.effects.plankTexture = (shipId) => {
@@ -205,6 +214,7 @@ export class BabylonRenderer {
     // a storm by day stays dark, as it should.
     this.post.adapt(1 + 1.0 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
     this.towns?.setNight(1 - Math.min(1, look.sunIntensity / 0.8));
+    this.effects.setLight(particleLight(look));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
     // Haze lit by the sun behind it: a brighter, warmer fog than the bare horizon colour.
@@ -258,8 +268,10 @@ export class BabylonRenderer {
   onEvents(events: readonly DomainEvent[]): void {
     this.effects.onEvents(events);
     for (const e of events) {
+      this.shakeFor(e);
       if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
       if (e.type === "hit" && (e.part === "hull" || e.part === "gun")) this.views.get(e.ship)?.shotHit(e.at, e.damage);
+      if (e.type === "hit" && e.part === "wall") this.forts.shotHit(e.ship, e.at, e.damage);
     }
     this.weather.onEvents(events);
   }
@@ -268,6 +280,7 @@ export class BabylonRenderer {
     const w = sim.env.weather;
     const look = sceneLook(env.hours, w ? w.overcast : env.overcast, w ? w.fog : env.fog, env.sunAzimuth);
     const player = sim.player();
+    this.playerId = player?.id ?? -1;
     if (player?.body) {
       const p = player.body.pos;
       if (!this.framed) {
@@ -337,7 +350,9 @@ export class BabylonRenderer {
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.ocean.setTrails(this.trails.update(ships, sim.env.time));
     this.syncShips(sim);
-    this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
+    const eyeNow = this.camera.camera.position;
+    const wind = { x: Math.sin(sim.env.windDirection) * sim.env.windSpeed, z: Math.cos(sim.env.windDirection) * sim.env.windSpeed };
+    this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time, { x: eyeNow.x, z: eyeNow.z }, wind, dt));
     this.weather.frame(sim, dt);
     this.salvo.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
     this.course.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
@@ -345,7 +360,36 @@ export class BabylonRenderer {
       this.ambient.intensity = 1 + this.weather.flash * 3;
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
     }
+    // The shake as a screen offset of the view, a fixed share of the view's size.
+    const o = this.shake.step(dt);
+    const reach = this.camera.mode === "isometric" ? this.camera.viewHalf * 0.05 : this.camera.mode === "deck" ? 0.25 : this.camera.camera.radius * 0.014;
+    this.camera.camera.targetScreenOffset.set(o.x * reach, o.y * reach);
+    this.particleClock.tick(dt);
     this.scene.render();
+  }
+
+  /** Trauma for the camera: the player's own guns, shot striking her, blasts and collisions close by. */
+  private shakeFor(e: DomainEvent): void {
+    const me = this.playerId;
+    const near = (at: { x: number; z: number }, reach: number): number => {
+      const p = this.views.get(me)?.root.position;
+      return p ? Math.max(0, 1 - Math.hypot(at.x - p.x, at.z - p.z) / reach) : 0;
+    };
+    if (e.type === "gunFired" && e.ship === me) this.shake.add(0.045 * Math.sqrt(e.pounder / 12));
+    else if (e.type === "hit" && e.ship === me) this.shake.add(0.1 + Math.min(0.2, e.damage * 0.01));
+    else if (e.type === "collision" && (e.a === me || e.b === me)) this.shake.add(Math.min(0.6, e.speed * 0.15));
+    else if (e.type === "explosion") this.shake.add(0.5 * near(e.at, 120));
+    else if (e.type === "magazineExploded") this.shake.add(1.2 * near(e.at, 250));
+  }
+
+  /**
+   * Effects only, without drawing: the shot tools fast-forward the simulation in steps of `dt`
+   * and call this after each, so smoke and spray fired meanwhile are as old as the sim says.
+   */
+  advanceEffects(sim: Simulation, dt: number): void {
+    this.effects.frame(sim, dt);
+    this.weather.frame(sim, dt);
+    this.particleClock.advance(dt);
   }
 
   /**

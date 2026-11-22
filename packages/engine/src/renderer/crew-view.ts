@@ -1,4 +1,4 @@
-import { type Mesh, Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
+import { BoundingInfo, type Mesh, Matrix, Quaternion, SubMesh, type TransformNode, Vector3 } from "../babylon";
 import { type AloftPose, type ClimbClip, aloftPose, aloftSeconds } from "./crew-aloft";
 import { type CrewActivity, type CrewClipName, crewClip, wantAloft } from "./crew-roles";
 import { type CrewSpot } from "./crew-layout";
@@ -18,6 +18,8 @@ export class CrewView {
   private crew = 1;
   private max = 1;
   private shown = true;
+  private near = true;
+  private levels: { near: SubMesh; far: SubMesh }[] = [];
   /** Clip of every station last frame, to rewrite the instance buffers only when it changes. */
   private playing = "";
   /** How far up the way aloft each topman is (seconds of climbing, by station), and the time of the last frame. */
@@ -29,7 +31,23 @@ export class CrewView {
   /** Puts the men at these stations and keeps the last crew count. */
   setSpots(spots: readonly CrewSpot[]): void {
     this.spots = spots;
+    this.fitBox();
     this.setCrew(this.crew, this.max);
+  }
+
+  /** The figures' box: every station, every topman's way up and his top, with room for a man's size. */
+  private fitBox(): void {
+    if (this.figures.length === 0 || this.spots.length === 0) return;
+    const points = this.spots.flatMap((s) => (s.route ? [s.at, s.route.deck, s.route.foot, s.route.head, s.route.top] : [s.at]));
+    const lo = new Vector3(Infinity, Infinity, Infinity);
+    const hi = new Vector3(-Infinity, -Infinity, -Infinity);
+    for (const [x, y, z] of points) {
+      lo.minimizeInPlaceFromFloats(x, y, z);
+      hi.maximizeInPlaceFromFloats(x, y, z);
+    }
+    lo.addInPlaceFromFloats(-2, -1, -2);
+    hi.addInPlaceFromFloats(2, 2.5, 2);
+    for (const f of this.figures) f.setBoundingInfo(new BoundingInfo(lo, hi));
   }
 
   /** Draws the men with the animated figures: a copy of each for this ship, the stations dealt round them in turn. */
@@ -42,14 +60,40 @@ export class CrewView {
       copy.skeleton = t.skeleton;
       copy.bakedVertexAnimationManager = t.bakedVertexAnimationManager;
       copy.isPickable = false;
-      copy.alwaysSelectAsActiveMesh = true;
+      // Culled with the box of every place a man can be on this ship (the instances move and the
+      // baked animation moves the vertices: the box is set here, not followed from the matrices),
+      // so the men of a ship out of view are not animated and drawn for nothing.
+      copy.alwaysSelectAsActiveMesh = false;
+      copy.doNotSyncBoundingInfo = true;
       copy.thinInstanceRegisterAttribute("bakedVertexAnimationSettingsInstanced", 4);
       return copy;
     });
+    // Two index ranges over the same vertices (crew-rig): the full figures near the camera, the
+    // coarse ones further off (discrete level of detail), one of them drawn at a time.
+    this.levels = this.figures.map((f, i) => {
+      const l = rig.levels[i] ?? { near: f.getTotalIndices(), far: 0 };
+      const verts = f.getTotalVertices();
+      f.subMeshes = [];
+      const near = new SubMesh(0, 0, verts, 0, l.near, f);
+      const far = l.far > 0 ? new SubMesh(0, 0, verts, l.near, l.far, f) : near;
+      f.subMeshes = [this.near ? near : far];
+      return { near, far };
+    });
+    this.fitBox();
     this.plain.setEnabled(false);
     this.playing = "";
     this.setShown(this.shown);
     this.setCrew(this.crew, this.max);
+  }
+
+  /** Full figures (the camera close by) or the far level of detail. */
+  setNear(near: boolean): void {
+    if (near === this.near) return;
+    this.near = near;
+    this.figures.forEach((f, i) => {
+      const l = this.levels[i];
+      if (l) f.subMeshes = [near ? l.near : l.far];
+    });
   }
 
   setShown(shown: boolean): void {

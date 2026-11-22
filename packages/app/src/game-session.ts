@@ -2,6 +2,7 @@ import { PlayerHelm } from "./player-helm";
 import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, yawOf } from "@broadside/core";
 import { STEP, Simulation, type SimulationOptions, type SimSnapshot, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 import { aimOf } from "./aiming";
+import { GunCaptains } from "./gun-captains";
 
 /**
  * The game loop without a browser (SpinalTap's GameSession, split by ADR-0031): fixed-step
@@ -12,6 +13,9 @@ export interface SessionOptions {
   readonly seed: number;
   /** Starting weather (default: fresh wind). */
   readonly weather?: WeatherKind;
+  /** Hour of day to start at and whether the day's clock runs (the simulation keeps the time). */
+  readonly hours?: number;
+  readonly clock?: boolean;
 }
 
 /** Course change while a helm button is held (rad/s). */
@@ -32,9 +36,9 @@ export class GameSession {
     // A saved game is in the world of its own seed (a new game drew a fresh one: the address's or
     // the default seed would put her on another map, beta test 19.11).
     const seed = saved?.options.seed ?? opts.seed;
-    this.options = { seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(seed), traffic: true };
+    this.options = { seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(seed), traffic: true, ...(opts.hours !== undefined ? { hours: opts.hours, clock: opts.clock ?? true } : {}) };
     if (saved) {
-      this.sim = restore(saved, this.options.archipelago ?? null);
+      this.sim = restore(saved, this.options.archipelago ?? null, { ...(opts.hours !== undefined ? { hours: opts.hours } : {}), ...(opts.clock !== undefined ? { clock: opts.clock } : {}) });
       this.playerId = this.sim.player()!.id;
       this.helm = new PlayerHelm(this.sim, this.playerId, yawOf(this.sim.player()!.body!.rot));
       return;
@@ -88,11 +92,13 @@ export class GameSession {
   }
 
   /** Advances the simulation by real elapsed seconds; returns the number of steps taken. */
-  advance(seconds: number): number {
+  /** `fireAsTheyBear`: the gun captains' standing order of simple steering (gun-captains). */
+  advance(seconds: number, fireAsTheyBear = false): number {
     this.accumulator = Math.min(this.accumulator + Math.max(0, seconds), STEP * MAX_STEPS);
     let n = 0;
     while (this.accumulator >= STEP) {
       this.helm.apply();
+      if (fireAsTheyBear) this.fireAsTheyBear();
       this.sim.step();
       this.accumulator -= STEP;
       n++;
@@ -106,8 +112,9 @@ export class GameSession {
   }
 
   /** Assisted sailing (the Action steering mode): on or off, and astern with the sails backed. */
-  assist(on: boolean, astern = false): void {
-    this.send({ type: "assist", ship: this.playerId, on, astern });
+  /** `fun`: the Fun mode's arcade ship (core FUN); left out, as she was. */
+  assist(on: boolean, astern = false, fun?: boolean): void {
+    this.send({ type: "assist", ship: this.playerId, on, astern, ...(fun !== undefined ? { fun } : {}) });
   }
 
   setMastSails(mast: number, level: number): void {
@@ -129,6 +136,14 @@ export class GameSession {
 
 
 
+
+  /** Simple steering's standing order: the gun captains fire as the guns bear (gun-captains). */
+  fireAsTheyBear(): void {
+    this.gunCaptains ??= new GunCaptains(this.sim, this.playerId);
+    for (const c of this.gunCaptains.orders()) this.send(c);
+  }
+
+  private gunCaptains: GunCaptains | null = null;
 
   /** Boards the nearest ship alongside, if any. */
   board(): void {

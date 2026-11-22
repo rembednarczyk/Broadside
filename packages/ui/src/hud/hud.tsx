@@ -13,7 +13,7 @@ import { SeaChart } from "./sea-chart";
 import { PortPanel } from "./port-panel";
 import { HelpCard } from "./help-card";
 import { CancelCourse, ShipMenu } from "./order-controls";
-import { useHud } from "../store/hud-store";
+import { useHud, usesPad } from "../store/hud-store";
 import { isTextKey, text } from "../i18n/catalog";
 
 export const Hud = ({ intents }: { intents: UiIntents }) => {
@@ -56,7 +56,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
       <PortPanel intents={intents.port} />
       <div className="bottom">
         {steering === "classic" && <HelmPad intents={intents.helm} />}
-        {steering === "arcade" && <DrivePad intents={intents.helm} />}
+        {usesPad(steering) && <DrivePad intents={intents.helm} />}
         <CancelCourse intents={intents.orders} />
         <div className="corner">
           <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>

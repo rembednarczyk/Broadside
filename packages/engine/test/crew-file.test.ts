@@ -24,6 +24,11 @@ describe("animated crew file", () => {
       expect(f.joints.length, f.name).toBe(n * 4);
       expect(Math.max(...f.joints), f.name).toBeLessThan(crew.joints);
       expect(Math.max(...f.index), f.name).toBeLessThan(n);
+      // The far level of detail: whole triangles over the same vertices, at most three quarters of the near ones.
+      expect(f.lod.length % 3, f.name).toBe(0);
+      expect(f.lod.length, f.name).toBeGreaterThan(0);
+      expect(f.lod.length, f.name).toBeLessThanOrEqual(f.index.length * 0.76);
+      expect(Math.max(...f.lod), f.name).toBeLessThan(n);
       // Weights of a vertex add up to one; the man stands about 1.8 m tall.
       expect(f.weights[0]! + f.weights[1]! + f.weights[2]! + f.weights[3]!).toBeCloseTo(1, 4);
       let top = -Infinity;

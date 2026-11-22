@@ -34,7 +34,7 @@ export type GameCommand =
   /** Let go the anchor where the ship is (she rides to it), or weigh it. */
   | { readonly type: "anchor"; readonly ship: EntityId; readonly down: boolean }
   /** Assisted sailing (the arcade steering mode, sim/systems/assist): on or off, and going astern with the sails backed. */
-  | { readonly type: "assist"; readonly ship: EntityId; readonly on: boolean; readonly astern?: boolean }
+  | { readonly type: "assist"; readonly ship: EntityId; readonly on: boolean; readonly astern?: boolean; /** The Fun mode's arcade ship (core FUN); absent: as she was. */ readonly fun?: boolean }
   /** Standing orders to the crew: reef in a squall without being told (and make sail again after). */
   | { readonly type: "crew"; readonly ship: EntityId; readonly reef: boolean }
   /** Sail plan of one mast, or of every mast. */

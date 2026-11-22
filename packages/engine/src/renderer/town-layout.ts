@@ -1,5 +1,4 @@
-import { type Archipelago, type PortSite, createRng, hashString, range } from "@broadside/core";
-import { drawnLand } from "./island-geometry";
+import { type Archipelago, type PortSite, createRng, drawnLand, fortClearings, hashString, range } from "@broadside/core";
 
 /**
  * A harbour town behind each port: houses scattered up the slope behind the quay on gentle
@@ -29,6 +28,7 @@ export const townLayout = (a: Archipelago, port: PortSite): TownLayout => {
   // The drawn ground (the houses stand on the land as drawn, the cliffs' profile included).
   const ground = (x: number, z: number): number => drawnLand(a, x, z).y;
   const houses: House[] = [];
+  const clear = fortClearings(a);
   for (let i = 0; i < 160 && houses.length < 26; i++) {
     const a2 = inland + range(rng, -0.9, 0.9);
     const d = range(rng, 25, 110);
@@ -38,6 +38,8 @@ export const townLayout = (a: Archipelago, port: PortSite): TownLayout => {
     const slope = Math.abs(ground(x + 3, z) - y) + Math.abs(ground(x, z + 3) - y);
     if (y < 1.5 || y > 30 || slope > 2.5) continue;
     if (houses.some((h) => Math.hypot(h.x - x, h.z - z) < 9)) continue;
+    // Houses stay off a fort's glacis (beta test 22.11: they stood in the walls).
+    if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r + 6)) continue;
     houses.push({ x, y, z, w: range(rng, 5, 9), d: range(rng, 6, 11), h: range(rng, 3.5, 7), yaw: inland + range(rng, -0.3, 0.3) });
   }
   // The pier runs seaward from the shoreline.

@@ -2,6 +2,7 @@ import { wrapAngle, yawOf } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { hostileTo } from "../ai/captain";
 import { type Relations, isHostile, standing } from "@broadside/core";
+import { type Screen, smokeBetween } from "./smoke";
 
 /**
  * Target selection for a battery (aim assist for the player, the same rule an AI gun captain
@@ -19,7 +20,10 @@ const ARCS: Readonly<Record<string, { readonly centre: number; readonly half: nu
   starboard: { centre: Math.PI / 2, half: 0.7, max: 460 },
   bowChaser: { centre: 0, half: 0.6, max: 450 },
   sternChaser: { centre: Math.PI, half: 0.6, max: 420 },
-  mortar: { centre: 0, half: Math.PI, max: 800 },
+  // A ship's mortar is bedded on the centreline and trains about 0.6 rad (gunnery TRAIN_LIMIT_FREE):
+  // the bomb vessel lays it by pointing the bow (beta test 22.11: a whole-circle arc threw shells
+  // 56 deg wide of a fort on the beam).
+  mortar: { centre: 0, half: 0.6, max: 800 },
   swivel: { centre: 0, half: Math.PI, max: 160 },
 };
 
@@ -52,7 +56,8 @@ export interface FortAim {
   readonly aimHeight: number;
 }
 
-export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof typeof ARCS, rel: Relations | null = null): FortAim | null => {
+/** `smoke`: screens on the field; a fort behind smoke cannot be laid on (it cannot see us either). */
+export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof typeof ARCS, rel: Relations | null = null, smoke: readonly Screen[] = []): FortAim | null => {
   const a = ARCS[arc]!;
   const b = me.body!;
   const heading = yawOf(b.rot);
@@ -64,7 +69,9 @@ export const aimForFort = (me: Entity, forts: readonly Entity[], arc: keyof type
     const range = Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) - st.def.radius * 0.5;
     const bearing = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
     if (range > a.max || Math.abs(wrapAngle(bearing - heading - a.centre)) > a.half) continue;
-    if (!best || range < best.range) best = { fort: f, range, bearing, aimHeight: st.site.y + st.def.height * 0.5 };
+    if (best && range >= best.range) continue;
+    if (smokeBetween(smoke, b.pos.x, b.pos.z, st.site.x, st.site.z)) continue;
+    best = { fort: f, range, bearing, aimHeight: st.site.y + st.def.height * 0.5 };
   }
   return best;
 };

@@ -27,6 +27,11 @@ export class CrewRig {
   private meshes: Mesh[] | null = null;
   private manager: BakedVertexAnimationManager | null = null;
   private readonly clips = new Map<string, ClipRange>();
+  /**
+   * Per figure (as templates) the lengths of its two index ranges, one after the other in its
+   * index buffer: the full figure and the far level of detail over the same vertices.
+   */
+  readonly levels: { near: number; far: number }[] = [];
 
   constructor(scene: Scene, url: string) {
     fetch(assetUrl(url))
@@ -57,7 +62,13 @@ export class CrewRig {
       data.normals = fig.normal;
       data.uvs = fig.uv;
       data.colors = fig.color;
-      data.indices = fig.index;
+      // The near triangles, then the far ones (an empty list in an older file: the near ones again).
+      const far = fig.lod.length > 0 ? fig.lod : fig.index;
+      const indices = new Uint32Array(fig.index.length + far.length);
+      indices.set(fig.index);
+      indices.set(far, fig.index.length);
+      data.indices = indices;
+      this.levels.push({ near: fig.index.length, far: far.length });
       data.applyToMesh(mesh);
       mesh.setVerticesData(VertexBuffer.MatricesIndicesKind, fig.joints, false, 4);
       mesh.setVerticesData(VertexBuffer.MatricesWeightsKind, fig.weights, false, 4);

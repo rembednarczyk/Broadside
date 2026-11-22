@@ -9,7 +9,8 @@ import { type ContractKind } from "../data/contracts";
  * reports what happened; renderer, audio and HUD react without the simulation knowing them.
  * Events carry keys and numbers, never player-facing text (i18n lives in the UI).
  */
-export type HitPart = "hull" | "sails" | "rigging" | "mast" | "crew" | "gun" | "rudder";
+/** Part a shot struck; `wall` is a fort's stone. */
+export type HitPart = "hull" | "sails" | "rigging" | "mast" | "crew" | "gun" | "rudder" | "wall";
 
 export type DomainEvent =
   | { readonly type: "gunFired"; readonly ship: EntityId; readonly at: Vec3; readonly dir: Vec3; readonly pounder: number; readonly ammo: AmmoId }
@@ -31,6 +32,11 @@ export type DomainEvent =
   | { readonly type: "boarded"; readonly ship: EntityId; readonly by: EntityId; readonly won: boolean }
   | { readonly type: "lightning"; readonly at: Vec3 }
   | { readonly type: "fortSilenced"; readonly fort: EntityId; readonly by: EntityId | null }
+  /** A harbour chain stopped a ship (`at`: where she struck it); broken by shot, it no longer bars the way. */
+  | { readonly type: "chainBarred"; readonly fort: EntityId; readonly ship: EntityId; readonly at: Vec3 }
+  | { readonly type: "chainBroken"; readonly fort: EntityId; readonly by: EntityId | null }
+  /** A fort's shot furnace is out (its guns fire cold shot from now on). */
+  | { readonly type: "furnaceOut"; readonly fort: EntityId }
   | { readonly type: "fortCaptured"; readonly fort: EntityId; readonly by: EntityId; readonly gold: number; readonly from: Faction }
   | { readonly type: "assaultFailed"; readonly fort: EntityId; readonly by: EntityId; readonly lost: number }
   | { readonly type: "gold"; readonly amount: number; readonly reason: "prize" | "fort" | "trade" | "plunder" | "contract" | "wreck" }

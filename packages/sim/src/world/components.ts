@@ -44,6 +44,8 @@ export interface Entity {
 
 export interface AssistState {
   astern: boolean;
+  /** The Fun mode: faster, quicker on the helm, quicker to reload (core FUN). */
+  fun?: boolean;
 }
 
 export interface Shot {
@@ -102,4 +104,18 @@ export interface FortState {
   /** Ship that fired on the fort (it fires back whatever the standing). */
   provokedBy: number | null;
   silenced: boolean;
+  /** Seconds before the next gun may fire (the ripple within a division, the pause between divisions). */
+  volley: number;
+  /** Guns fired so far in the current division. */
+  division: number;
+  /** The division's error of laying: metres of range, radians of bearing (drawn once per division). */
+  lay: { range: number; bearing: number };
+  /** Hits taken per wall segment and tower (the renderer breaches the most battered). */
+  scars: number[];
+  /** Hits the harbour chain can still take (0: none, or broken). */
+  chain: number;
+  /** The shot furnace is alight (heated shot). */
+  furnace: boolean;
+  /** Time a ship was last stopped by the chain (one notice per encounter, not per step). */
+  barredAt: number;
 }

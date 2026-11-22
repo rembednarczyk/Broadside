@@ -42,7 +42,7 @@ export interface ShipSnap {
 
 export interface SimSnapshot {
   readonly version: number;
-  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean; /** The land's generator version (core WORLD_VERSION); absent: 1. */ world?: number };
+  readonly options: { seed: number; windDirection: number; windSpeed: number; weather: WeatherKind | null; archipelago: boolean; traffic?: boolean; /** The land's generator version (core WORLD_VERSION); absent: 1. */ world?: number; /** Hour of day at time 0 and a running clock; absent: the caller's. */ hours?: number; clock?: boolean };
   readonly steps: number;
   readonly nextId: number;
   readonly rng: number;
@@ -65,7 +65,7 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 export const snapshot = (sim: Simulation, options: SimulationOptions): SimSnapshot => ({
   version: SNAPSHOT_VERSION,
-  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false, world: WORLD_VERSION },
+  options: { seed: options.seed, windDirection: options.windDirection, windSpeed: options.windSpeed, weather: options.weather ?? null, archipelago: !!options.archipelago, traffic: options.traffic ?? false, world: WORLD_VERSION, ...(options.hours !== undefined ? { hours: options.hours, clock: options.clock ?? true } : {}) },
   steps: sim.steps,
   nextId: sim.nextId,
   rng: sim.rngState(),
@@ -95,9 +95,12 @@ const withOrders = (c: CaptainState): CaptainState => {
   return { ...o, role: o.role ?? "patrol", dest: o.dest ?? -1, leader: o.leader ?? -1 };
 };
 
-export const restore = (snap: SimSnapshot, archipelago: Archipelago | null): Simulation => {
+/** `day`: the start hour and clock for a save made before the day's clock was in the simulation. */
+export const restore = (snap: SimSnapshot, archipelago: Archipelago | null, day: { hours?: number; clock?: boolean } = {}): Simulation => {
   const o = snap.options;
-  const sim = new Simulation({ seed: o.seed, windDirection: o.windDirection, windSpeed: o.windSpeed, ...(o.weather ? { weather: o.weather } : {}), ...(archipelago ? { archipelago } : {}), traffic: o.traffic ?? false });
+  const hours = o.hours ?? day.hours;
+  const clock = o.clock ?? day.clock ?? true;
+  const sim = new Simulation({ seed: o.seed, windDirection: o.windDirection, windSpeed: o.windSpeed, ...(o.weather ? { weather: o.weather } : {}), ...(archipelago ? { archipelago } : {}), traffic: o.traffic ?? false, ...(hours !== undefined ? { hours, clock } : {}) });
   sim.steps = snap.steps;
   sim.restoreRng(snap.rng);
   Object.assign(sim.env, { time: snap.env.time, windDirection: snap.env.windDirection, windSpeed: snap.env.windSpeed, seaWind: snap.env.seaWind, swell: snap.env.swell, rogue: snap.env.rogue, weather: clone(snap.env.weather), cells: clone(snap.env.cells ?? []) });

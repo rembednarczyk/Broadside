@@ -25,6 +25,8 @@ export interface CrewFigureData {
   readonly joints: Float32Array;
   readonly weights: Float32Array;
   readonly index: Uint16Array;
+  /** The far level of detail: a coarser list of triangles over the same vertices (empty in older files). */
+  readonly lod: Uint16Array;
 }
 
 export interface CrewFile {
@@ -48,7 +50,7 @@ interface Header {
   clips: CrewClip[];
   vat: Range;
   atlas: Range;
-  figures: { name: string; position: Range; normal: Range; uv: Range; color: Range; joints: Range; weights: Range; index: Range }[];
+  figures: { name: string; position: Range; normal: Range; uv: Range; color: Range; joints: Range; weights: Range; index: Range; lod?: Range }[];
 }
 
 export const parseCrewFile = (buffer: ArrayBuffer): CrewFile => {
@@ -74,6 +76,7 @@ export const parseCrewFile = (buffer: ArrayBuffer): CrewFile => {
       joints: Float32Array.from(new Uint8Array(buffer, base + f.joints.offset, f.joints.length)),
       weights: f32(f.weights),
       index: new Uint16Array(buffer, base + f.index.offset, f.index.length),
+      lod: f.lod ? new Uint16Array(buffer, base + f.lod.offset, f.lod.length) : new Uint16Array(0),
     })),
   };
 };

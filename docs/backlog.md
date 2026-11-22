@@ -176,8 +176,9 @@ Kamienie milowe z planu (`docs/adr/0000-plan.md`). Zrobione pozycje oznaczamy da
 - [x] Żeglowanie wspomagane w symulacji (prędkość kadłubowa na każdym kursie, skręt po kole, wstecz), pad w HUD, klawiatura, pomoc PL i EN.
 - [ ] Sprawdzić na telefonie: czułość gałki, strefa martwa, czy kciuk nie zasłania statku; ewentualnie pad po lewej, przyciski akcji po prawej w jednej kolumnie.
 - [x] Kamera w tym trybie za rufą (beta-test 19.11).
-- [ ] Większe cele dotykowe przycisków amunicji i żagli na telefonie (21–24 px), kamera pościgowa odsuwająca się
-  w walce, cel z mapy w trybie Akcja i klasycznym (strzałka na krawędzi ekranu, bez autopilota).
+- [x] Większe cele dotykowe na ekranach dotykowych: żagle 30 px, amunicja 28 px, przyciski w rogu 32 px; bez nakładania
+  na 844 × 390, 640 × 360 i 915 × 412 (20.11; skrypt pomiaru z emulacją dotyku, zwykły audyt jej nie ma).
+- [ ] Kamera pościgowa odsuwająca się w walce; cel z mapy w trybie Akcja i klasycznym (strzałka, bez autopilota).
 
 ### M11 uszkodzenia jak w Black Flag (właściciel 19.11: „stany zdrowia i wizualne uszkodzenia, lecące deski, łańcuchy ścinają olinowanie, żagle, reje i maszty”)
 Stan wyjściowy: symulacja zna HP sekcji kadłuba, płótno i olinowanie (`sailCloth`, `rigging`), HP masztów i zdarzenie
@@ -228,18 +229,81 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Mapa: przybliżanie i przesuwanie palcami; zasięg wzroku nocą (symulacja nie zna dziś pory dnia: godzina żyje w app).
 
 ### Po beta-teście (19.11, trzech testerów; raporty w scratchpadzie sesji, poprawki w decyzjach)
-- [ ] Samoobrona załogi w prostym sterowaniu (działa strzelają same do wroga w zasięgu, jeśli gracz nie wydał rozkazu).
+- [x] Samoobrona załogi w prostym sterowaniu: kanonierzy strzelają sami do wroga w łuku burty do 260 m (20.11).
 - [x] Pilot i kapitanowie AI nie wypływają poza mapę: nawigacja czyta dno z mieliznami 150 m przed krawędzią morza.
 - [x] Cel zlecenia pojawia się z dala od wrogich mu fortów (zasięg + 400 m) i statków (900 m), do 8 prób (20.11):
   na ziarnie 3 cel przeżył do terminu (wcześniej zginął po 42 s od innych).
-- [ ] Kapitan AI w walce wchodzi na mieliznę i tonie (audyt rozgrywki, ziarno 21: fregata-cel ostrzeliwana przez
-  inny statek, na mieliźnie po 3,8 min).
-- [ ] Zlecenia: zdanie, co trzeba zrobić, i znacznik celu na krawędzi ekranu (także eskortowanego statku).
-- [ ] Panel portu: stocznia ucięta na 844 × 390 (ostatni rząd statków), panel zasłania statek.
-- [ ] Wraki łatwiejsze do znalezienia (znacznik od dalej niż 900 m albo pogłoski w porcie).
-- [ ] Panel celu: olinowanie i maszty obok kadłuba; rodzaj gramatyczny stanów statku po polsku.
-- [ ] Załoga ginie szybciej niż kadłub pod ogniem fortu i brygu (do zmierzenia audytem bitew).
-- [ ] Pogoda: wiatr rośnie od świeżego do sztormu w ok. 80 s, sztorm trwa 2–4 min (wolniejsze przejścia, zapowiedź).
+- [x] Kapitan AI sprawdza dno także na odległość 70 s drogi, gdy ta przekracza 250 m (szybki statek skręca szerokim
+  łukiem); pilot płynący do punktu nie patrzy dalej niż ten punkt (20.11). Ziarno 21: fregata-cel nie weszła
+  na mieliznę (przeżyła do 13. minuty); ziarno 3: bounty wykonane i opłacone.
+- [x] Zlecenia: zdanie, co trzeba zrobić (oferta i panel), strzałka do celu względem dziobu zamiast stopni (20.11).
+- [x] Znacznik celu zlecenia na krawędzi ekranu (bez wroga w pobliżu; stuknięcie: eskorta to „płyń za nią”, inne to walka); znaczniki znikają przy panelu portu (20.11).
+- [x] Panel portu: stocznia mieści się na 844 × 390, 915 × 412 i 1280 × 720 (ulepszenia w jednym rzędzie, ciaśniejsze
+  rzędy na niskim ekranie, 20.11).
+- [ ] Panel portu na 640 × 360: ostatni rząd stoczni wymaga przewinięcia (19 px); panel zasłania statek.
+- [x] Wraki łatwiejsze do znalezienia: wieści w porcie (postój przy kotwicowisku odsłania na mapie wodę 400 m wokół najbliższego nieobrabowanego wraku do 4 km), znacznik wraku od 1,5 km (20.11).
+- [x] Panel celu: cienki pasek olinowania pod kadłubem, maszty stojące, gdy któryś padł; polskie stany bez rodzaju („Uszkodzenia”, „Bez napędu: abordaż”, „Bandera opuszczona”) (20.11).
+- [x] Kapitulacja przy 30% załogi (było 15%), ucieczka poniżej 45% (było 30%): przegrani bitew audytu kończyli z 0–15
+  ludźmi na 110 przy kadłubie w połowie (20.11). Bramki ADR-0005 zielone; bryg z brygiem 2:1 zamiast 3:0.
+- [x] Cel zlecenia (bounty, napad; nie eskortowany kupiec) pozostawiony graczowi: inni kapitanowie AI i forty go nie
+  wybierają, chyba że ostrzelał fort (20.11). Audyt: cel z ziarna 3 przeżył do terminu (nikt go nie dobił).
+- [x] Statek AI na mieliźnie zrzuca żagle; leżący na burcie na mieliźnie nie jest liczony jako tonący (20.11). Audyt:
+  fregata-cel z ziarna 21 przeżyła do terminu z pełną załogą.
+- [ ] Autopilot audytu nie dogania celu bounty w 15 min (ziarno 3): sprawdzić pościg kapitana z rolą „hunt”.
+- [x] Pogoda: wiatr narasta ze stałą ok. 100 s (od świeżego do sztormowego w 2–4 min, było ok. 80 s), wichura i sztorm trwają 5–9 min, komunikat przy nadejściu wichury i sztormu (20.11).
+
+### Efekty strzelania (beta-test 22.11, właściciel: „dym, ogień, odłamki i jak gra to prezentuje”)
+- [x] Czas cząstek równy czasowi klatki (`effects/particle-clock.ts`): wcześniej 1 ms na klatkę, 6% czasu przy 60 kl./s;
+  dotyczy też deszczu i ławic mgły. Narzędzie zrzutów postarza cząstki w trakcie przewijania (`advanceEffects`).
+- [x] Opór względem powietrza (liniowy i kwadratowy, dokładne całkowanie) zamiast `limitVelocity`; dym dryfuje do
+  prędkości wiatru i nie szybciej.
+- [x] Dym, bryzgi i drzazgi przyciemniane światłem sceny (`effects/particle-light.ts`): nocą dym nie świeci.
+- [x] Drzazgi: odłamki 0,15–0,8 m rozciągnięte wzdłuż lotu, lecą wzdłuż toru kuli; z żagli i lin strzępy płótna.
+  Iskry cienkie i rozciągnięte, błysk wylotowy wydłużony wzdłuż lufy w kolorze ponad 1 (łapie bloom).
+- [x] Dym salwy w dwóch fazach: strumień z lufy 25–50 m/s hamowany oporem kwadratowym, potem kłęby rosnące do
+  18–36 m przez 18–32 s; tekstura kłębów z ziarna (atlas 2 × 2, `effects/billow.ts`), kłęby trzymane nad wodą
+  (Babylon nie ma miękkich cząstek). Na low i medium mniej kłębów, większych.
+- [ ] Miękkie cząstki (zanikanie przy geometrii) i dym w buforze o obniżonej rozdzielczości (GPU Gems 3, rozdz. 23).
+- [x] Kolumna wody przy pluśnięciu kuli, przestrzeliny 0,65–1,1 m (otwór 0,2–0,4 m) w czterech wariantach z ziarna,
+  większe płomienie (kolor ponad 1) i dłuższy dym pożaru.
+- [ ] Plama piany na wodzie po pluśnięciu, światło migoczące przy pożarze, dym pożaru oświetlony od dołu.
+- [x] Pocisk według amunicji (`effects/shot-meshes.ts`: żelazna kula według wagomiaru, rozżarzona świeci, łańcuchowa
+  koziołkuje, kartacze drobne), smuga za kulą; utrata płótna i olinowania w widoku rozłożona na ok. 2 s.
+- [x] Drżenie kamery z „traumy” (Eiserloh, GDC 2016; `camera/camera-shake.ts`), wyłącznik w opcjach rozgrywki;
+  komunikat po salwie gracza „trafione 7 z 14” (`presenters/salvo-tally.ts`).
+- [ ] Mignięcie paska celu przy trafieniu.
+- [ ] Kasowanie najstarszych cząstek przy pełnej puli (Babylon nie nadpisuje; pule po poprawce czasu wystarczają).
+
+### Forty i wieże (beta-test 22.11, właściciel: „działaj ze wszystkimi poprawkami”)
+- [x] Układ fortu w `core/world/fort-layout.ts` (jedno źródło dla widoku i symulacji): działa prostopadle do murów,
+  łoża moździerzy na dziedzińcu; trafienia w prostopadłościany murów i walce wież (zdarzenie `hit` z `part: "wall"`).
+- [x] Strzały z dział na murach, tylko w łuku ±60° od normalnej muru; salwa działami co 0,12–0,2 s, przerwa
+  1,5–2 s między salwami; donośność od wylotu, błąd nastawy raz na salwę (donośność 10 m + 10%, kierunek 0,02 rad);
+  działa fortu opuszczają się do −0,3 rad.
+- [x] Moździerze w puli zbicia, po zdobyciu wracają; tablica ładunków z oporem i różnicą wysokości, wyprzedzenie
+  z własnego czasu lotu; moździerz statku ±0,6 rad od dziobu, bombarda staje dziobem do fortu.
+- [x] Fort widzi gorzej we mgle i w nocy (pora dnia w symulacji, `core/weather/daylight.ts`); gracz nie celuje w fort
+  przez dym.
+- [x] Balans: wieża 1400 hp, bateria 2600, fort gwiaździsty 8000, cytadela 11000; przeładowanie dział fortu 20 s.
+  Audyt `packages/sim/test/forts.audit.ts` (galeon z 400 m: bateria 2–4 min, fort gwiaździsty 8–14 min).
+- [x] AI: ostrzał z ok. 400 m, po uciszeniu podejście na miejsce desantu od strony morza i szturm przy szansie ≥ 80%.
+- [x] Osadzenie: rysowany ląd w `core/world/drawn-land.ts` (jedno źródło dla siatki, domów, drzew i fortów); fort szuka
+  od nabrzeża w głąb miejsca, gdzie cały obrys z pierścieniem 4 m jest suchy, najbliżej brzegu przy różnicy
+  wysokości do 3 m; teren pod fortem wyrównany do tarasu (wcięcie w zbocze i nasyp, przejście 14 m), plaża
+  nietknięta; mniejszy fort, gdy na większy brak miejsca (cytadela → fort gwiaździsty → bateria); fundament 6 m;
+  bez domów i drzew w promieniu fortu + 6 m. `WORLD_VERSION` 3 (zapisy przenoszą forty na nowe miejsca).
+- [x] Widok: trafienie w kamień (odłamki, kurz 2–3 s, ślady na murze, dźwięk kamienia, bez rozbryzgu pod działem
+  na lądzie); stany części murów (porysowany, wyłom z gruzem, wieża ścięta o jedną trzecią), ogień w wyłomach,
+  kamień ciemnieje z uszkodzeniem; zbite działa i moździerze znikają (instancje); biała flaga po uciszeniu,
+  opuszczenie i podniesienie bandery przy zmianie właściciela; bandera z płótna na wietrze, wzór frakcji czytelny
+  w sepii; cień tylko fortów do 600 m od kamery; przedpiersia ze strzelnicami, lawety, UV w metrach.
+- [x] HUD: garnizon i nasz desant, szansa szturmu, działa i moździerze osobno, uciszony fort zostaje w panelu.
+- [x] Kanonierzy gracza strzelają do wrogiego fortu do 430 m; rozkaz „fort” staje 400 m burtą, po uciszeniu podchodzi
+  na szturm.
+- [x] Łańcuch portowy cytadeli (`systems/harbour-chain.ts`): zatrzymuje wrogi statek, opada po uciszeniu fortu,
+  pęka po 8 trafieniach nisko nad wodą (łańcuchowa liczy się za 3); piec do kul gaśnie poniżej połowy murów
+  (dalej zwykłe kule), dym z komina; moździerze na łożach; garnizon na murach (postać na 8 ludzi, do 40).
+- [x] AI: patrol wojenny co jakiś czas płynie pod wrogi fort (do 2,5 km), okręty eskadry dołączają do oblężenia.
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
@@ -258,12 +322,19 @@ pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po spra
 - [ ] ocean (high ok. 30%, ultra ok. 40%): detal fal z tekstury zamiast szumu daje mało (detal to już ok. 5% oceanu,
   pomiar 18.11); większe źródła do zmierzenia: `shallows` (pętla po 32 wyspach z fbm), koronka piany, gęstość siatki
   `oceanCells` na ultra (360) i wywołania `hullWater` w shaderze wierzchołków
-- [ ] statki: załoga z animacją wierzchołkową i liny ruchome (w podziale kosztu pojawiają się po 0–8%, pomiar zaszumiony:
-  powtórzyć z większą liczbą klatek)
+- [x] 22.11: załoga odrzucana przez frustum (stałe pudełko stanowisk) i drugi poziom szczegółów figurek od 45 m
+  (te same wierzchołki, ćwierć trójkątów dla większości; w kadrze pościgu 185 → 81 tys. trójkątów, załoga 7 → 6% klatki)
+- [ ] statki, reszta (pomiar 22.11, high, pościg): kadłub z modelu 10%, kule `shot` 4%, flagi 2%, żagle 3%
 - [x] post-procesy na ultra, pomiar 19.11 (12 klatek, `frame-bench` z podziałem): razem 8%, z tego SSAO 8%, bloom 2%,
   rozmycie ruchu i gradacja ok. 0%; jedyny kandydat to SSAO (już w połowie rozdzielczości)
-- [ ] płycizny na ultra nadal 7% po przyboju liczonym tylko przy brzegu; skrócenie listy wysp do 2,2 km od kamery nie
-  zmieniło kosztu w scenie pomiaru (wycofane): koszt siedzi w fbm najbliższych wysp, kandydat to maska z tekstury
+- [x] 22.11 (świat v2 podniósł płycizny do 23–24% klatki): odległości od brzegu liczone w wierzchołkach oceanu, przybój
+  per piksel tylko w pasie 40 m od brzegu; płycizny 23 → 5% (high), 24 → 5% (ultra), zrzuty bez różnicy. Mapa dna
+  z siatek lądu odrzucona: ląd kończy się na −25 m, a płycizna rozjaśnia wodę do −60 m (węższy pas, strata jakości)
+- [x] 22.11: siatka oceanu w 4 × 4 kaflach odrzucanych przez frustum (rysowane 63% wierzchołków w pościgu, 75%
+  w izometrii); ultra: ocean 852 → 655 ms. Szum detalu fal zmierzony: ok. 1% klatki, bez sensu go ruszać
+- [x] 22.11: `frame-bench` z wierszami lądu i drzew, `BENCH_PARTS` (tylko wybrane wiersze); `shot.mjs` z `SHOT_FREEZE`
+  (powtarzalne porównania przed i po). Wiersze po przełączeniu całego post-processingu nadal zaszumione (pierwsze
+  klatki po włączeniu): ufać im tylko w osobnym pomiarze z `BENCH_PARTS`
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

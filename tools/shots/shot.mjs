@@ -54,6 +54,8 @@ await page.evaluate((s) => {
     b.session.advance(1 / 30);
     if (globalThis.__shotScript) globalThis.__shotScript(b, i / 30);
     b.renderer.onEvents(b.session.sim.drainEvents());
+    // Particles age with the fast-forward (smoke fired during it is as old as the sim says).
+    b.renderer.advanceEffects(b.session.sim, 1 / 30);
   }
 }, seconds);
 if (cam) {
@@ -66,6 +68,9 @@ if (cam) {
     camera.radius = r;
   }, cam);
 }
+// SHOT_FREEZE=1: the simulation stops after the advance (the game loop's own steps do nothing), so
+// two builds give the same frame and a before/after differs only where the change does.
+if (process.env.SHOT_FREEZE) await page.evaluate(() => { globalThis.__broadside.session.advance = () => {}; });
 // Optional HUD clicks after the advance: SHOT_CLICK is a comma-separated list of data-testid values.
 if (process.env.SHOT_CLICK) {
   await page.waitForTimeout(500);

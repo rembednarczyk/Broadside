@@ -110,6 +110,8 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .mast-row.warn { color: #ffd27f; }
 .mast-row.alarm { color: var(--alarm); }
 .job { width: 100%; }
+.job .what, .harbour .what { display: block; font-style: italic; color: var(--ink-soft); margin: 0 0 calc(3 * var(--u)); line-height: 1.25; }
+.job-arrow { display: inline-block; margin-right: calc(5 * var(--u)); font-weight: 700; color: var(--brass-hi); }
 .offer button { width: 100%; margin-top: calc(6 * var(--u)); }
 
 /* --- compass and target (right) --- */
@@ -127,6 +129,8 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .target .hint { font-style: italic; color: var(--alarm); }
 .target .bar, .gauge { display: block; height: calc(5 * var(--u)); background: rgba(0, 0, 0, 0.5); border: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.35); border-radius: calc(3 * var(--u)); overflow: hidden; margin: calc(4 * var(--u)) 0; }
 .target .bar span { display: block; height: 100%; background: linear-gradient(180deg, #e2553a, #8e2a1c); }
+.target .bar.rig { height: calc(3 * var(--u)); margin-top: calc(-2 * var(--u)); }
+.target .bar.rig span { background: linear-gradient(180deg, var(--brass-hi), var(--brass-lo)); }
 .target .bar.segmented { position: relative; height: calc(7 * var(--u)); }
 .target .bar.segmented::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(0, 0, 0, 0.85) calc(25% - 1px) 25%); pointer-events: none; }
 
@@ -182,6 +186,8 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4 * var(--u)); margin: calc(6 * var(--u)) 0; }
 .port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); }
 .port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(4 * var(--u)); }
+/* The refits (three at most) in one row above the shipyard: the yard tab fits a low screen. */
+.port-grid:has([data-testid^="refit-"]) { grid-template-columns: repeat(3, 1fr); }
 .port-yard small { display: block; font-size: calc(9 * var(--u)); opacity: 0.8; }
 .port-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(4 * var(--u)); margin: calc(4 * var(--u)) 0 calc(6 * var(--u)); }
 .standings { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(6 * var(--u)); margin-top: calc(4 * var(--u)); }
@@ -197,6 +203,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .enemy-marker .arrow { display: inline-block; font-size: calc(22 * var(--u)); line-height: 1; }
 .enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }
 .enemy-marker.wreck { color: var(--brass); pointer-events: auto; padding: calc(6 * var(--u)); }
+.enemy-marker.job { color: var(--sea-blue); pointer-events: auto; padding: calc(6 * var(--u)); }
 /* The main menu and options over the paused game (main-menu.tsx): a dimmed sea, a panel in the middle. */
 .menu-screen { position: absolute; inset: 0; z-index: 5; background: radial-gradient(circle at 50% 45%, rgba(20, 14, 9, 0.25), rgba(10, 7, 4, 0.75)); pointer-events: auto; }
 .menu { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(300 * var(--u)); display: flex; flex-direction: column; gap: calc(8 * var(--u)); padding: calc(16 * var(--u)) calc(18 * var(--u)); }
@@ -246,6 +253,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .settings .label { display: block; margin-top: calc(4 * var(--u)); font-family: var(--display); font-style: normal; font-size: calc(11 * var(--u)); letter-spacing: 0.05em; color: var(--brass-hi); }
 .settings .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); margin: calc(4 * var(--u)) 0 calc(8 * var(--u)); }
 .settings .presets.three { grid-template-columns: repeat(3, 1fr); }
+.settings .presets.four { grid-template-columns: repeat(4, 1fr); }
 .settings input[type=range] { width: 100%; margin-bottom: calc(8 * var(--u)); accent-color: var(--brass); }
 .help { width: calc(560 * var(--u)); font-size: calc(13 * var(--u)); z-index: 6; }
 .help ul { margin: calc(6 * var(--u)) 0 calc(10 * var(--u)); padding-left: calc(18 * var(--u)); }
@@ -274,9 +282,23 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
   .fps { font-size: calc(10 * var(--u)); }
   .settings { width: calc(400 * var(--u)); }
   .help { width: calc(600 * var(--u)); }
+  /* The port's panel on a low screen: tighter rows, so the shipyard's last row fits (844 x 390 cut it, beta 19.11). */
+  .harbour button { padding: calc(2.5 * var(--u)) calc(2 * var(--u)); }
+  .harbour .port-grid, .harbour .port-yard, .harbour .port-tabs { gap: calc(3 * var(--u)); }
+  .harbour .label { margin: calc(2 * var(--u)) 0 calc(1 * var(--u)); }
+  .harbour .port-grid { margin: calc(3 * var(--u)) 0; }
+  .harbour .port-tabs { margin: calc(2 * var(--u)) 0 calc(3 * var(--u)); }
 }
 
 /* --- simple steering: the cancel button and the menu of a ship held down on --- */
 .cancel-course { padding: calc(6 * var(--u)) calc(12 * var(--u)); border-color: var(--brass); }
 .ship-menu { position: absolute; transform: translate(-50%, calc(-100% - 14 * var(--u))); display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: calc(120 * var(--u)); z-index: 4; padding-top: calc(10 * var(--u)); }
 .ship-menu button { padding: calc(7 * var(--u)) calc(10 * var(--u)); }
+
+/* Fingers, not a mouse: the small buttons a thumb aims at grow to a touchable height (the beta testers
+   measured 21-24 px on phones; 44-48 px is the platforms' advice, more than the panels can spare). */
+@media (pointer: coarse) {
+  .sailing button { min-height: 30px; }
+  .combat .ammo button { min-height: 28px; }
+  .corner button { min-height: 32px; min-width: 36px; }
+}

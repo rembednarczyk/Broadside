@@ -1,9 +1,9 @@
-import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, refit, type EventQueue } from "@broadside/core";
+import { type AmmoId, type GameCommand, type MountKind, type Rng, type Vec3, AMMO, FUN, canFire, gauss, rotate, vec3, normalize, quatFromAxisAngle, add, scale, reloadSeconds, shotMass, dragFactor, refit, type EventQueue } from "@broadside/core";
 import { type Entity } from "../world/components";
 import { type SimWorld } from "../world/world";
 import { type ShipState, crewShare } from "../ship/ship-state";
 import { type GunMount } from "../ship/ship-model";
-import { MORTAR_ELEVATION, elevationForRange, mortarSpeed, muzzleSpeed } from "./aim";
+import { MORTAR_ELEVATION, elevationForRange, mortarCharge, muzzleSpeed } from "./aim";
 import { type RigidBody, addAngularImpulse, applyImpulseAt, bodyToWorld } from "../physics/rigid-body";
 
 /**
@@ -43,7 +43,9 @@ export const orderFire = (s: ShipState, mount: MountKind, side: "port" | "starbo
     if (!matches(g, mount, side) || st.dismounted || st.reload > 0 || st.fuse >= 0) return;
     if ((s.stores[st.ammo] ?? 0) <= 0) return;
     st.fuse = n * RIPPLE + rng.next() * 0.03;
-    st.elevation = g.kind === "mortar" ? range : elevationForRange(range, g.pounder, st.ammo, g.pos.y + s.model.com.y - aimHeight);
+    // A mortar's "elevation" is its charge: the launch speed from the charge table.
+    const height = g.pos.y + s.model.com.y - aimHeight;
+    st.elevation = g.kind === "mortar" ? mortarCharge(range, height, g.pounder).speed : elevationForRange(range, g.pounder, st.ammo, height);
     const limit = g.kind === "broadside" ? TRAIN_LIMIT : TRAIN_LIMIT_FREE;
     st.train = Math.max(-limit, Math.min(limit, train));
     n++;
@@ -101,7 +103,7 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   // at the moment of firing are taken out (in the period, by firing on the right part of the roll).
   const tilt = Math.asin(Math.max(-1, Math.min(1, rotate(b.rot, rotate(quatFromAxisAngle(vec3(0, 1, 0), st.train), g.dir)).y)));
   const elevation = (mortar ? MORTAR_ELEVATION : st.elevation) - tilt;
-  const speed = mortar ? mortarSpeed(st.elevation) : muzzleSpeed(st.ammo, false);
+  const speed = mortar ? st.elevation : muzzleSpeed(st.ammo, false);
   // Elevate the muzzle about the horizontal axis across the bore, then into world space (the
   // ship's heel and pitch tilt the guns: firing on the up-roll carries further).
   const trained = rotate(quatFromAxisAngle(vec3(0, 1, 0), st.train), g.dir);
@@ -117,7 +119,7 @@ const spawnShot = (world: SimWorld, events: EventQueue, e: Entity, g: GunMount, 
   recoil(b, scale(dirWorld, -mass * ammo.pellets * (mortar ? speed : REAL_MUZZLE_SPEED) * 1.5), muzzle);
   events.push({ type: "gunFired", ship: e.id, at: muzzle, dir: dirWorld, pounder: g.pounder, ammo: st.ammo });
   s.stores[st.ammo] = Math.max(0, (s.stores[st.ammo] ?? 0) - 1);
-  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload");
+  st.reload = reloadSeconds(g.pounder, st.ammo, crewShare(s) * gunCrewShare(s)) * refit(s.upgrades, "reload") * (e.assist?.fun ? FUN.reload : 1);
   // The last of a special shot fired: the mount goes back to round shot (a gun crew does not stand
   // by an empty locker; before, the guns stayed "loaded" with shot there was none of and fell silent).
   if (st.ammo !== "round" && (s.stores[st.ammo] ?? 0) === 0 && canFire("round", g.kind) && (s.stores.round ?? 0) > 0) {

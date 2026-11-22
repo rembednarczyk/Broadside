@@ -90,7 +90,9 @@ export const damageControlSystem: System = (ctx, dt) => {
     // Crews abandon a burning ship one by one (Overboard!).
     if (s.sections.some((x) => x.fire > 0.6) && ctx.rng.next() < 0.25 * dt) overboard(ctx.world, ctx.events, e, 1 + Math.floor(ctx.rng.next() * 3), ctx.rng);
     const reserve = (s.model.hull.totalVolume - s.model.hull.designVolume) * 0.85;
-    const capsized = Math.abs(rollOf(e.body.rot)) > 1.2;
+    // On her beam on a bank she is stranded, not sunk: the bottom holds her (she floats off or is
+    // got off; holed, she fills and goes as any other).
+    const capsized = Math.abs(rollOf(e.body.rot)) > 1.2 && !s.aground;
     if (waterAboard(s) > reserve || capsized || s.sections.filter((x) => x.hp === 0).length >= 4) {
       s.sinking = true;
       s.sailTarget = s.sailTarget.map(() => 0);
