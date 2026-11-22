@@ -21,6 +21,7 @@ export * from "./weather/daylight";
 export * from "./world/archipelago";
 export * from "./world/shores";
 export * from "./world/fort-layout";
+export * from "./world/drawn-land";
 export * from "./world/wrecks";
 export * from "./world/contours";
 export * from "./world/survey";

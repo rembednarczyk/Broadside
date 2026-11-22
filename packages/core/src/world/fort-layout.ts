@@ -1,5 +1,5 @@
 import { type FortClassDef } from "../data/forts";
-import { type FortSite } from "./shores";
+import type { FortSite } from "./shores";
 
 /**
  * Fort layouts as wall segments and towers in fort space (origin at the fort's foot, +z towards
@@ -49,7 +49,7 @@ export interface FortLayout {
 }
 
 /** Walls reach this far below the fort's foot (the foundation the renderer draws too). */
-export const FOUNDATION = 4;
+export const FOUNDATION = 6;
 
 const star = (points: number, outer: number, inner: number): { x: number; z: number }[] =>
   Array.from({ length: points * 2 }, (_, i) => {

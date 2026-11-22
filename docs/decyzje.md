@@ -1224,3 +1224,7 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Pora dnia trafiła do symulacji (`startHours`, `clockRuns` w środowisku; bez opcji `hours` stałe południe, więc testy
   i audyty bez nocy). Ciemność działa tylko na forty; kapitanowie AI widzą jak dotąd (zmiana balansu bitew osobno).
 - Bateria nie strzela w głąb lądu ani wzdłuż brzegu poza łukiem ±60° od strzelnic.
+- Teren pod fortem wyrównany (taras w połowie między najniższym i najwyższym punktem obrysu) zamiast stawiania fortu na
+  najniższym punkcie z cokołem: na zboczu cokół z jednej strony i zasypany mur z drugiej wyglądały gorzej niż wcięcie
+  w zbocze. Fizyka lądu (mielizny, linia wody) bez zmian: taras zmienia tylko ląd powyżej plaży (0,8 m).
+- Wyszukiwanie miejsca pod forty trwa ok. 0,5–1 s na świat (raz, wynik w pamięci podręcznej): do sprawdzenia na telefonie.

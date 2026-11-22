@@ -2,6 +2,9 @@ import { createRng, hashString, pick, range } from "../math/rng";
 import { type Faction } from "../data/factions";
 import { type FortClassId } from "../data/forts";
 import { DEEP_SEA, type Archipelago, type Island, spineAt, spineLength, terrainHeight } from "./archipelago";
+import { FORT_CLASSES } from "../data/forts";
+import { naturalLand } from "./drawn-land";
+import { fortLayout } from "./fort-layout";
 
 /**
  * Places on the shores of the land (archipelago): ports with their anchorages, forts, the nearest
@@ -114,18 +117,68 @@ export interface FortSite {
   readonly facing?: number;
 }
 
-/** From a point at the water's edge inland along `bearing` to ground at least 2 m up, then 8 m further. */
-const inland = (a: Archipelago, x: number, z: number, bearing: number): { x: number; z: number; y: number } | null => {
-  const cos = Math.cos(bearing);
-  const sin = Math.sin(bearing);
-  for (let d = 0; d < 400; d += 4) {
-    if (terrainHeight(a, x + cos * d, z + sin * d) > 2) {
-      const px = x + cos * (d + 8);
-      const pz = z + sin * (d + 8);
-      return { x: px, z: pz, y: Math.max(2, terrainHeight(a, px, pz)) };
+/** The drawn ground under a fort's footprint (its walls' and towers' feet and a ring 4 m outside): lowest, highest. */
+export const fortGround = (a: Archipelago, classId: FortClassId, x: number, z: number, facing: number, dry = -Infinity): { min: number; max: number } => {
+  const def = FORT_CLASSES[classId];
+  const l = fortLayout(def);
+  const c = Math.cos(facing);
+  const sn = Math.sin(facing);
+  let min = Infinity;
+  let max = -Infinity;
+  // False as soon as a point lies below `dry` (the search rejects a wet footprint early).
+  const at = (lx: number, lz: number): boolean => {
+    const y = naturalLand(a, x + lx * c + lz * sn, z - lx * sn + lz * c).y;
+    min = Math.min(min, y);
+    max = Math.max(max, y);
+    return y >= dry;
+  };
+  // The ring outside the walls first: on a shore it is the first to get wet.
+  for (let i = 0; i < 16; i++) if (!at(Math.sin((i / 16) * Math.PI * 2) * (def.radius + 4), Math.cos((i / 16) * Math.PI * 2) * (def.radius + 4))) return { min, max };
+  for (const w of l.walls) for (let t = 0; t <= 1.001; t += 0.25) at(w.x0 + (w.x1 - w.x0) * t, w.z0 + (w.z1 - w.z0) * t);
+  for (const tw of l.towers) {
+    at(tw.x, tw.z);
+    for (let i = 0; i < 8; i++) at(tw.x + Math.sin((i / 8) * Math.PI * 2) * tw.radius, tw.z + Math.cos((i / 8) * Math.PI * 2) * tw.radius);
+  }
+  return { min, max };
+};
+
+/** Ground the whole footprint must stand above (m): clear of the beach the waves wash. */
+const DRY = 1;
+/** Rise across the footprint a fort is happy with (m); more is paid for in distance from the shore. */
+const LEVEL = 3;
+/** Rise beyond which a smaller work is tried (the terrace would cut too deep). */
+const MAX_RISE = 10;
+
+/**
+ * A fort's site: from a point at the water's edge inland along `bearing` (and up to 0.7 rad either
+ * side), the nearest spot where the whole footprint stands on dry, level drawn ground (Vauban sited
+ * his works on a level crown above the landing). The ground under it is levelled to a terrace half
+ * way between its lowest and highest point (drawn-land drawnLand), so no wall hangs over a slope.
+ * Beta test 22.11: before, the site was 8 m beyond the first ground 2 m up whatever the fort's size
+ * (9–62 m), on the simulation's height, not the drawn cliffs: citadels stood half in the sea and
+ * towers in the cliff faces. Returns null when no dry footprint is found, or none with a rise of at
+ * most `maxRise` (a smaller work is tried then).
+ */
+const fortSite = (a: Archipelago, classId: FortClassId, x: number, z: number, bearing: number, facingTo: (px: number, pz: number) => number, maxRise = Infinity): { x: number; z: number; y: number; facing: number } | null => {
+  const def = FORT_CLASSES[classId];
+  let best: { x: number; z: number; y: number; facing: number; cost: number; rise: number } | null = null;
+  for (const off of [0, -0.35, 0.35, -0.7, 0.7]) {
+    const cos = Math.cos(bearing + off);
+    const sin = Math.sin(bearing + off);
+    for (let d = def.radius * 0.5; d < 420; d += 6) {
+      const px = x + cos * d;
+      const pz = z + sin * d;
+      if (naturalLand(a, px, pz).y < DRY) continue;
+      const facing = facingTo(px, pz);
+      const g = fortGround(a, classId, px, pz, facing, DRY);
+      if (g.min < DRY) continue;
+      const cost = d + 25 * Math.max(0, g.max - g.min - LEVEL) + 15 * Math.abs(off);
+      // The terrace stands half way between the lowest and highest ground: as much cut as fill.
+      if (!best || cost < best.cost) best = { x: px, z: pz, y: (g.min + g.max) / 2, facing, cost, rise: g.max - g.min };
+      if (g.max - g.min <= LEVEL) break;
     }
   }
-  return null;
+  return best && best.rise <= maxRise ? { x: best.x, z: best.z, y: best.y, facing: best.facing } : null;
 };
 
 /**
@@ -134,15 +187,25 @@ const inland = (a: Archipelago, x: number, z: number, bearing: number): { x: num
  * watchtower or battery commanding the channels.
  */
 export const fortSites = (a: Archipelago): FortSite[] => {
+  const cached = siteCache.get(a);
+  if (cached) return cached;
   const rng = createRng(hashString(`forts-${a.seed}`));
   const out: FortSite[] = [];
   portSites(a).forEach((p, i) => {
     const is = a.islands[p.island]!;
     const seaward = Math.atan2(p.az - p.z, p.ax - p.x);
-    const site = inland(a, p.x, p.z, seaward + Math.PI + range(rng, -0.4, 0.4)) ?? inland(a, p.x, p.z, seaward + Math.PI);
-    if (!site) return;
     const classId: FortClassId = p.faction === "pirates" ? "battery" : is.radius > 220 ? "citadel" : "starFort";
-    out.push({ ...site, classId, faction: p.faction, port: i, facing: Math.atan2(p.ax - site.x, p.az - site.z) });
+    const towards = (px: number, pz: number): number => Math.atan2(p.ax - px, p.az - pz);
+    const inlandBearing = seaward + Math.PI + range(rng, -0.4, 0.4);
+    // A smaller work where the land has no room for the larger (a citadel needs a wide crown).
+    const classes = FALLBACK[classId];
+    for (const [k, cls] of classes.entries()) {
+      const site = fortSite(a, cls, p.x, p.z, inlandBearing, towards, k < classes.length - 1 ? MAX_RISE : Infinity);
+      if (site) {
+        out.push({ ...site, classId: cls, faction: p.faction, port: i });
+        return;
+      }
+    }
   });
   for (const is of a.islands.filter((i) => i.kind === "cliff" && i.form !== "mainland")) {
     const chance = rng.next();
@@ -152,8 +215,18 @@ export const fortSites = (a: Archipelago): FortSite[] => {
     const faction = pick(rng, ["crown", "republic", "empire", "pirates"] as const);
     if (chance >= 0.45) continue;
     const shore = shoreFrom(a, is, t, bearing);
-    const site = shore && inland(a, shore.x, shore.z, bearing + Math.PI);
-    if (site) out.push({ ...site, classId: tower ? "watchtower" : "battery", faction, port: null, facing: Math.atan2(Math.cos(bearing), Math.sin(bearing)) });
+    const seaFacing = Math.atan2(Math.cos(bearing), Math.sin(bearing));
+    const site = shore && fortSite(a, tower ? "watchtower" : "battery", shore.x, shore.z, bearing + Math.PI, () => seaFacing);
+    if (site) out.push({ ...site, classId: tower ? "watchtower" : "battery", faction, port: null });
   }
+  siteCache.set(a, out);
   return out;
 };
+
+const FALLBACK: Readonly<Record<FortClassId, readonly FortClassId[]>> = { citadel: ["citadel", "starFort", "battery"], starFort: ["starFort", "battery"], battery: ["battery"], watchtower: ["watchtower"] };
+
+/** Forts per archipelago (the simulation, the towns and the trees all ask). */
+const siteCache = new WeakMap<Archipelago, FortSite[]>();
+
+/** Ground kept clear of houses and trees around each fort (its glacis): the footprint plus 6 m. */
+export const fortClearings = (a: Archipelago): { x: number; z: number; r: number }[] => fortSites(a).map((f) => ({ x: f.x, z: f.z, r: FORT_CLASSES[f.classId].radius + 6 }));

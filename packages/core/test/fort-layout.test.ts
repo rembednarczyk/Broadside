@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FORT_CLASSES, type FortSite, darkness, flight, fortLayout, fortToWorld, fortTop, sightShare, speedFor, strikeFort, dragFactor, wallNormal, wrapAngle } from "../src/index";
+import { FORT_CLASSES, type FortSite, darkness, drawnLand, flight, fortGround, fortLayout, fortSites, fortToWorld, fortTop, generateArchipelago, naturalLand, portSites, sightShare, speedFor, strikeFort, dragFactor, wallNormal, wrapAngle } from "../src/index";
 
 const site = (classId: FortSite["classId"], facing = 0): FortSite => ({ x: 100, z: -50, y: 5, classId, faction: "crown", port: null, facing });
 const p = (x: number, y: number, z: number) => ({ x, y, z });
@@ -68,5 +68,26 @@ describe("the day's darkness and a lookout's sight", () => {
     expect(darkness(6)).toBeCloseTo(0.5);
     expect(sightShare(0, 0)).toBe(1);
     expect(sightShare(1, 1)).toBeCloseTo(0.3 * 0.6);
+  });
+});
+
+describe("fort sites on the drawn land (beta test 22.11)", () => {
+  it("stands every fort on a dry, levelled terrace, one at every port", () => {
+    for (const seed of [1, 2, 3, 7]) {
+      const a = generateArchipelago(seed);
+      const forts = fortSites(a);
+      expect(forts.filter((f) => f.port !== null)).toHaveLength(portSites(a).length);
+      for (const f of forts) {
+        const def = FORT_CLASSES[f.classId];
+        // The whole footprint and a ring 4 m outside it are dry land as generated.
+        expect(fortGround(a, f.classId, f.x, f.z, f.facing!).min).toBeGreaterThanOrEqual(1);
+        // The drawn ground under the walls is the terrace, level with the fort's foot.
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
+          expect(drawnLand(a, f.x + Math.sin(ang) * def.radius, f.z + Math.cos(ang) * def.radius).y).toBeCloseTo(f.y, 6);
+        }
+        expect(naturalLand(a, f.x, f.z).island).not.toBeNull();
+      }
+    }
   });
 });

@@ -1,6 +1,6 @@
 import { type Entity, type FactionId } from "@broadside/sim";
 import { Color3, DynamicTexture, Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, Vector3, type ShadowGenerator } from "../babylon";
-import { fortLayout } from "@broadside/core";
+import { FOUNDATION, fortFacing, fortLayout } from "@broadside/core";
 
 /**
  * Shore forts: walls, towers and guns built from the class layout (merged into one stone mesh
@@ -62,19 +62,19 @@ export class FortsView {
     const root = new TransformNode(`fort-${e.id}`, scene);
     root.position.set(f.site.x, f.site.y, f.site.z);
     // Face the sea: the fort's +z points away from its island's centre (towards open water).
-    root.rotation.y = f.site.facing ?? Math.atan2(f.site.x, f.site.z);
+    root.rotation.y = fortFacing(f.site);
     const layout = fortLayout(f.def);
     const parts: Mesh[] = [];
     for (const w of layout.walls) {
       const len = Math.hypot(w.x1 - w.x0, w.z1 - w.z0);
-      const b = MeshBuilder.CreateBox("wall", { width: w.thickness, height: w.height + 4, depth: len + w.thickness * 0.5 }, scene);
-      b.position.set((w.x0 + w.x1) / 2, (w.height - 4) / 2, (w.z0 + w.z1) / 2);
+      const b = MeshBuilder.CreateBox("wall", { width: w.thickness, height: w.height + FOUNDATION, depth: len + w.thickness * 0.5 }, scene);
+      b.position.set((w.x0 + w.x1) / 2, (w.height - FOUNDATION) / 2, (w.z0 + w.z1) / 2);
       b.rotation.y = Math.atan2(w.x1 - w.x0, w.z1 - w.z0);
       parts.push(b);
     }
     for (const t of layout.towers) {
-      const c = MeshBuilder.CreateCylinder("tower", { height: t.height + 4, diameter: t.radius * 2, tessellation: 14 }, scene);
-      c.position.set(t.x, (t.height - 4) / 2, t.z);
+      const c = MeshBuilder.CreateCylinder("tower", { height: t.height + FOUNDATION, diameter: t.radius * 2, tessellation: 14 }, scene);
+      c.position.set(t.x, (t.height - FOUNDATION) / 2, t.z);
       parts.push(c);
       // Crenellations around the top.
       for (let i = 0; i < 12; i++) {

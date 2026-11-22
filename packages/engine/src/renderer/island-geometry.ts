@@ -1,4 +1,6 @@
-import { type Archipelago, DEEP_SEA, type Island, createRng, hashString, landAt, range } from "@broadside/core";
+import { type Archipelago, type Island, createRng, drawnLand, fortClearings, hashString, range } from "@broadside/core";
+
+export { cliffProfile, drawnLand } from "@broadside/core";
 
 /**
  * The land's terrain in square chunks of a world grid (chunked terrain: Ulrich, "Rendering Massive
@@ -34,38 +36,12 @@ const colour = (is: Island, h: number, slope: number): Rgb => {
   return mix(ground, ROCK, sat((slope - 0.45) / 0.45));
 };
 
-/** Height of the beach the waves wash (m): below it the shore keeps the simulation's slope. */
-const BEACH = 0.8;
-
-/**
- * The land drawn as sea cliffs (the reference's coast, ref_095 and ref_176: a narrow beach, a
- * steep wall, a flat top): above the beach the height is remapped by a concave curve
- * 1 - (1 - u)^n of its share of the island's height, so the land rises n times as steeply at the
- * shore and flattens over the top, the summit where it was. Drawing only: the waterline (height 0),
- * the shoals and the land the ships run onto stay the simulation's (islandHeight, core), so the
- * coast the player sees ends where the physics' does. n = 5 for the cliff islands, 3 for the rest.
- */
-export const cliffProfile = (is: Island, y: number): number => {
-  if (y <= BEACH) return y;
-  const top = Math.max(is.height, BEACH + 1);
-  const u = (y - BEACH) / (top - BEACH);
-  if (u >= 1) return y;
-  const n = is.kind === "cliff" ? 5 : 3;
-  return BEACH + (top - BEACH) * (1 - Math.pow(1 - u, n));
-};
-
 /** Side of a chunk (m). */
 export const CHUNK = 500;
 /** Depth below which nothing is drawn (the seabed further down is never seen through the sea). */
 const FLOOR = -25;
 /** Depth the skirts hang below a chunk's edge (m), hiding the cracks between levels of detail. */
 const SKIRT = 15;
-
-/** The drawn land at a point: the highest landmass there, its height through its drawn profile. */
-export const drawnLand = (a: Archipelago, x: number, z: number): { y: number; island: Island | null } => {
-  const l = landAt(a, x, z);
-  return l ? { y: cliffProfile(l.island, l.height), island: l.island } : { y: DEEP_SEA, island: null };
-};
 
 /**
  * One chunk's terrain (world coordinates) on a grid of `cells` × `cells`, or null when no land or
@@ -159,6 +135,8 @@ const COVER: Record<Island["kind"], number> = { jungle: 1, beach: 0.45, cliff: 0
 export const chunkTrees = (a: Archipelago, x0: number, z0: number, max: number): TreeSpot[] => {
   const rng = createRng(hashString(`trees-${a.seed}-${x0}-${z0}`));
   const out: TreeSpot[] = [];
+  // No trees on a fort's glacis (beta test 22.11: trees grew through the walls and on the donjon).
+  const clear = fortClearings(a).filter((c) => c.x + c.r > x0 && c.x - c.r < x0 + CHUNK && c.z + c.r > z0 && c.z - c.r < z0 + CHUNK);
   for (let k = 0; k < max; k++) {
     const x = x0 + rng.next() * CHUNK;
     const z = z0 + rng.next() * CHUNK;
@@ -170,6 +148,7 @@ export const chunkTrees = (a: Archipelago, x0: number, z0: number, max: number):
     if (!s.island || s.y < 2.5 || keep > COVER[s.island.kind]) continue;
     const slope = Math.abs(drawnLand(a, x + 3, z).y - s.y) / 3;
     if (slope > 1.1) continue;
+    if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
     out.push({ x, y: s.y, z, scale, yaw, tint, palm: s.island.kind === "beach" || (s.island.kind === "jungle" && s.y < PALM_BELT) });
   }
   return out;

@@ -49,9 +49,9 @@ export interface Archipelago {
 /**
  * Version of the land the generator makes from a seed: bumped whenever it changes (a saved game
  * from an older world has its ships moved off the new land and its forts rebuilt, sim restore).
- * 2: the mainland, peninsulas and long islands (19.11).
+ * 2: the mainland, peninsulas and long islands (19.11). 3: forts sited on level drawn ground (22.11).
  */
-export const WORLD_VERSION = 2;
+export const WORLD_VERSION = 3;
 
 /** Depth of open sea (metres below the surface). */
 export const DEEP_SEA = -60;

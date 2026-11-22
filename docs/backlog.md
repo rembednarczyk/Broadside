@@ -287,7 +287,11 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Balans: wieża 1400 hp, bateria 2600, fort gwiaździsty 8000, cytadela 11000; przeładowanie dział fortu 20 s.
   Audyt `packages/sim/test/forts.audit.ts` (galeon z 400 m: bateria 2–4 min, fort gwiaździsty 8–14 min).
 - [x] AI: ostrzał z ok. 400 m, po uciszeniu podejście na miejsce desantu od strony morza i szturm przy szansie ≥ 80%.
-- [ ] Osadzenie: jedna funkcja wysokości lądu, płaskie miejsce dla całego obrysu, cokół, teren bez domów i drzew.
+- [x] Osadzenie: rysowany ląd w `core/world/drawn-land.ts` (jedno źródło dla siatki, domów, drzew i fortów); fort szuka
+  od nabrzeża w głąb miejsca, gdzie cały obrys z pierścieniem 4 m jest suchy, najbliżej brzegu przy różnicy
+  wysokości do 3 m; teren pod fortem wyrównany do tarasu (wcięcie w zbocze i nasyp, przejście 14 m), plaża
+  nietknięta; mniejszy fort, gdy na większy brak miejsca (cytadela → fort gwiaździsty → bateria); fundament 6 m;
+  bez domów i drzew w promieniu fortu + 6 m. `WORLD_VERSION` 3 (zapisy przenoszą forty na nowe miejsca).
 - [ ] Widok: trafienie w kamień, wyłomy i gruz, zbite działa znikają, biała flaga, cień tylko bliskich fortów,
   przedpiersia i strzelnice, lawety, UV w metrach, bandera z płótna.
 - [ ] HUD: garnizon, desant i szansa szturmu, działa i moździerze osobno, uciszony fort zostaje w panelu.
