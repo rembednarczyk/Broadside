@@ -103,8 +103,13 @@ const floodWeight = (b: RigidBody, s: ShipState): void => {
   });
 };
 
-/** Ships farther than this from the player float on the coarse samples (LOD of the physics). */
-const FAR = 700;
+/**
+ * Ships farther than this from the player float on the coarse samples (LOD of the physics). 700 m
+ * until 22.11; 450 m since AI squadrons besiege the forts by the ports (beta test of the forts): a
+ * squadron of three lying 450-700 m off the player's port took the soak run over its 2 ms a step
+ * (ADR-0005). Beyond 450 m a ship is a few pixels on a phone; the coarse samples still pitch and roll her.
+ */
+const FAR = 450;
 
 export const hydroSystem: System = (ctx) => {
   let px = 0;

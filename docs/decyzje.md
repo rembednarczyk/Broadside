@@ -1236,3 +1236,7 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Garnizon na murach jako proste figury (kapsuła i głowa, kolor kurtki frakcji) zamiast animowanej załogi statków:
   z odległości fortu postać ma kilka pikseli, a 40 animowanych postaci na fort kosztowałoby wiele.
 - AI oblega forty wyprawami (35% szans przy wyborze kolejnego punktu patrolu, wrogi fort do 2,5 km) i całą eskadrą.
+- Promień pełnego wyporu statków (LOD fizyki) zmniejszony z 700 do 450 m: po zmianach AI eskadra korony oblegała fort
+  przy porcie startowym gracza w audycie soak (ziarno 11) i trzy okręty w odległości 450–700 m podniosły najgorszą
+  minutę do 2,64 ms na krok (bramka ADR-0005: 2 ms; przed zmianami 1,75 ms). Z 450 m: 1,97 ms, zapas mały.
+  Kod fortów to ok. 1% czasu kroku (profil). Złoty hash bez zmian.
