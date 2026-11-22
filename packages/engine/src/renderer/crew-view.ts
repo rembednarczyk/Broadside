@@ -1,4 +1,4 @@
-import { BoundingInfo, type Mesh, Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
+import { BoundingInfo, type Mesh, Matrix, Quaternion, SubMesh, type TransformNode, Vector3 } from "../babylon";
 import { type AloftPose, type ClimbClip, aloftPose, aloftSeconds } from "./crew-aloft";
 import { type CrewActivity, type CrewClipName, crewClip, wantAloft } from "./crew-roles";
 import { type CrewSpot } from "./crew-layout";
@@ -18,6 +18,8 @@ export class CrewView {
   private crew = 1;
   private max = 1;
   private shown = true;
+  private near = true;
+  private levels: { near: SubMesh; far: SubMesh }[] = [];
   /** Clip of every station last frame, to rewrite the instance buffers only when it changes. */
   private playing = "";
   /** How far up the way aloft each topman is (seconds of climbing, by station), and the time of the last frame. */
@@ -66,11 +68,32 @@ export class CrewView {
       copy.thinInstanceRegisterAttribute("bakedVertexAnimationSettingsInstanced", 4);
       return copy;
     });
+    // Two index ranges over the same vertices (crew-rig): the full figures near the camera, the
+    // coarse ones further off (discrete level of detail), one of them drawn at a time.
+    this.levels = this.figures.map((f, i) => {
+      const l = rig.levels[i] ?? { near: f.getTotalIndices(), far: 0 };
+      const verts = f.getTotalVertices();
+      f.subMeshes = [];
+      const near = new SubMesh(0, 0, verts, 0, l.near, f);
+      const far = l.far > 0 ? new SubMesh(0, 0, verts, l.near, l.far, f) : near;
+      f.subMeshes = [this.near ? near : far];
+      return { near, far };
+    });
     this.fitBox();
     this.plain.setEnabled(false);
     this.playing = "";
     this.setShown(this.shown);
     this.setCrew(this.crew, this.max);
+  }
+
+  /** Full figures (the camera close by) or the far level of detail. */
+  setNear(near: boolean): void {
+    if (near === this.near) return;
+    this.near = near;
+    this.figures.forEach((f, i) => {
+      const l = this.levels[i];
+      if (l) f.subMeshes = [near ? l.near : l.far];
+    });
   }
 
   setShown(shown: boolean): void {

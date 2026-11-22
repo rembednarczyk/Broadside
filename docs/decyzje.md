@@ -1178,3 +1178,17 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   `core/data/assist.ts` FUN: prędkość ×1,8 (galeon 12,6 → 21,9 w. w pomiarze), napęd ×3 (opór kadłuba rośnie szybko
   ponad prędkością kadłubową), okrąg skrętu ×0,6, przeładowanie dział ×0,4. Kamera izometryczna z góry (jak
   w Overboard!), w Akcji pościgowa za rufą. Stan `assist.fun` w symulacji i zapisie; bieg wstecz zachowuje tryb.
+
+## 22.11, użytkownik: „optymalizacja grafiki na high i ultra, sprawdź co jeszcze można ugrać bez straty na jakości”
+- Zasada: zmiana wchodzi tylko, gdy zrzut przed i po (zamrożona symulacja, `SHOT_FREEZE=1`) nie pokazuje różnicy.
+- Płycizny jako pole odległości w wierzchołkach oceanu (interpolacja jak u Gouraud), przybój 6 m liczony jeszcze raz
+  per piksel w pasie 40 m od brzegu: pierwsza wersja bez tego pasa rozmyła linię przyboju na dalszym brzegu (odrzucona).
+- Mapa wysokości dna z siatek lądu odrzucona (ląd do −25 m, płycizna do −60 m: węższy pas).
+- Ocean w 4 × 4 kaflach z tymi samymi wierzchołkami; macierz świata jednostkowa (rozmycie ruchu nie może widzieć
+  ruchu wody), przesuwane są tylko pudełka odrzucania. 6 × 6 i 8 × 8 dałyby niewiele więcej przy 2–4 razy większej
+  liczbie wywołań rysowania.
+- Załoga: frustum i drugi poziom szczegółów od 45 m (jak skany dział), generowany w `tools/assets/crew-anim.mjs`
+  (meshoptimizer, ćwierć trójkątów, błąd do 5%); bosman i oficer zatrzymują się na ok. 3760 trójkątach (osobne części
+  stroju), progu błędu nie podnoszę.
+- Nie ruszam: szumu detalu fal (ok. 1% klatki), SSAO na ultra (11%, już w połowie rozdzielczości; mniej próbek to
+  widoczna zmiana), gęstości siatki oceanu (zmiana obrazu fal z bliska).

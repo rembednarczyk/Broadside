@@ -269,12 +269,19 @@ pomija dalekie statki i wygaszone skale detalu. Wstrzymane, do podjęcia po spra
 - [ ] ocean (high ok. 30%, ultra ok. 40%): detal fal z tekstury zamiast szumu daje mało (detal to już ok. 5% oceanu,
   pomiar 18.11); większe źródła do zmierzenia: `shallows` (pętla po 32 wyspach z fbm), koronka piany, gęstość siatki
   `oceanCells` na ultra (360) i wywołania `hullWater` w shaderze wierzchołków
-- [ ] statki: załoga z animacją wierzchołkową i liny ruchome (w podziale kosztu pojawiają się po 0–8%, pomiar zaszumiony:
-  powtórzyć z większą liczbą klatek)
+- [x] 22.11: załoga odrzucana przez frustum (stałe pudełko stanowisk) i drugi poziom szczegółów figurek od 45 m
+  (te same wierzchołki, ćwierć trójkątów dla większości; w kadrze pościgu 185 → 81 tys. trójkątów, załoga 7 → 6% klatki)
+- [ ] statki, reszta (pomiar 22.11, high, pościg): kadłub z modelu 10%, kule `shot` 4%, flagi 2%, żagle 3%
 - [x] post-procesy na ultra, pomiar 19.11 (12 klatek, `frame-bench` z podziałem): razem 8%, z tego SSAO 8%, bloom 2%,
   rozmycie ruchu i gradacja ok. 0%; jedyny kandydat to SSAO (już w połowie rozdzielczości)
-- [ ] płycizny na ultra nadal 7% po przyboju liczonym tylko przy brzegu; skrócenie listy wysp do 2,2 km od kamery nie
-  zmieniło kosztu w scenie pomiaru (wycofane): koszt siedzi w fbm najbliższych wysp, kandydat to maska z tekstury
+- [x] 22.11 (świat v2 podniósł płycizny do 23–24% klatki): odległości od brzegu liczone w wierzchołkach oceanu, przybój
+  per piksel tylko w pasie 40 m od brzegu; płycizny 23 → 5% (high), 24 → 5% (ultra), zrzuty bez różnicy. Mapa dna
+  z siatek lądu odrzucona: ląd kończy się na −25 m, a płycizna rozjaśnia wodę do −60 m (węższy pas, strata jakości)
+- [x] 22.11: siatka oceanu w 4 × 4 kaflach odrzucanych przez frustum (rysowane 63% wierzchołków w pościgu, 75%
+  w izometrii); ultra: ocean 852 → 655 ms. Szum detalu fal zmierzony: ok. 1% klatki, bez sensu go ruszać
+- [x] 22.11: `frame-bench` z wierszami lądu i drzew, `BENCH_PARTS` (tylko wybrane wiersze); `shot.mjs` z `SHOT_FREEZE`
+  (powtarzalne porównania przed i po). Wiersze po przełączeniu całego post-processingu nadal zaszumione (pierwsze
+  klatki po włączeniu): ufać im tylko w osobnym pomiarze z `BENCH_PARTS`
 
 ## Dług i pomysły
 - [x] LOD fizyki: statki dalej niż 700 m od gracza pływają na zgrubnych próbkach (80 → 30 dla fregaty); soak 0,55–0,93 ms na krok zamiast 1,05–1,40 (16.11)

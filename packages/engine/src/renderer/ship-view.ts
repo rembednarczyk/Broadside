@@ -197,6 +197,13 @@ const SCAN_GUNS = 45;
  */
 const HULL_FULL = 50;
 
+/**
+ * Within this distance the crew are the full figures (5000 triangles each), beyond it the far
+ * level of detail (a quarter of them for most): from the chase camera a man is some twenty
+ * pixels tall and the two look the same, and the full ones cost 7% of a frame there (frame bench).
+ */
+const CREW_FULL = 45;
+
 /** Beyond this distance a ship drops its ratlines, rails, lanterns and crew. */
 const FINE_DETAIL = 320;
 
@@ -234,6 +241,7 @@ export class ShipView {
     }
     // The animated crew replace the stand-ins the first time the ship comes close after they load.
     if (d < FINE_DETAIL && this.rig?.templates) this.detail.crew.useRig(this.rig);
+    this.detail.crew.setNear(d < CREW_FULL);
     this.detail.setFine(d < FINE_DETAIL);
     this.guns.setDetail(d < FINE_DETAIL * 2, d < SCAN_GUNS);
     this.stays.tubes.mesh.setEnabled(d < FINE_DETAIL);

@@ -17,7 +17,9 @@
  *    only, and the pelvis's translation scaled to the outfit's hip height), sampled at FPS.
  *    Matrix of joint j in frame f: posedWorld_j(f) * inverse(restWorld_j).
  * 3. Textures packed in one atlas (512 px cells), UVs moved into their cell.
- * 4. Edge collapse to a triangle budget (meshoptimizer; UV seams are borders it keeps).
+ * 4. Edge collapse to a triangle budget (meshoptimizer; UV seams are borders it keeps), and a
+ *    second, coarser index list over the same vertices (a quarter of the triangles) for the men
+ *    seen from afar (discrete level of detail: the game swaps the index range, not the vertices).
  *
  * Output: one binary file: "BCRW", version, header length, a JSON header (joints, fps, clips,
  * figures and the byte ranges of their arrays), then the arrays and the atlas (JPEG). Coordinates
@@ -44,6 +46,8 @@ if (!out) {
   process.exit(1);
 }
 const FPS = Number(fpsArg);
+/** Share of the triangles kept in the far level of detail. */
+const LOD_SHARE = 0.25;
 const Q = ".asset-cache/quaternius";
 const OUTFITS = `${Q}/Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits`;
 const PEASANT_TEX = `${Q}/Modular Character Outfits - Fantasy[Standard]/Textures/Peasant`;
@@ -243,8 +247,10 @@ for (const f of FIGURES) {
     }
     index.push(used.get(i));
   }
-  built.push({ name: f.name, verts, index });
-  console.log(`${f.name}: ${remap.length / 3} -> ${index.length / 3} triangles, ${verts.length} vertices`);
+  const kept32 = Uint32Array.from(index);
+  const [lod] = MeshoptSimplifier.simplify(kept32, Float32Array.from(verts.flatMap((v) => v.p)), 3, Math.floor(index.length * LOD_SHARE / 3) * 3, 0.05, []);
+  built.push({ name: f.name, verts, index, lod: Array.from(lod) });
+  console.log(`${f.name}: ${remap.length / 3} -> ${index.length / 3} triangles (far ${lod.length / 3}), ${verts.length} vertices`);
 }
 
 // --- atlas ---
@@ -289,6 +295,7 @@ const header = {
     joints: add(Uint8Array.from(b.verts.flatMap((v) => v.j))),
     weights: add(Float32Array.from(b.verts.flatMap((v) => v.w))),
     index: add(Uint16Array.from(b.index)),
+    lod: add(Uint16Array.from(b.lod)),
   })),
   atlas: add(new Uint8Array(atlas)),
 };
