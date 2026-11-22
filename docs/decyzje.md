@@ -1245,3 +1245,6 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   8% na ultra, 12% na low przy kamerze blisko cytadeli.
 - Zasięg desantu łodziami: do 400 m od murów (było 200 m) dla gracza i AI. W audycie świata liniowiec korony uciszył
   baterię, ale przez 13 min nie podszedł przez płyciznę na 200 m i nie szturmował; teraz zdobywa ją minutę po uciszeniu.
+- Moździerze po poprawkach (audyt testera): bombarda dziobem do fortu gwiaździstego trafia 2–3 z 4–6 pocisków
+  z 250–700 m (wcześniej 0 z 560–700 m); moździerze fortu bez przenosów 30–40 m (część pocisków wybucha ok. 18 m przed
+  środkiem galeonu, na olinowaniu). Burtą do fortu bombarda nie trafia: moździerz obraca się o ±0,6 rad, celuje dziób.
