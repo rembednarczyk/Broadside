@@ -1,5 +1,5 @@
 import { type Entity, type FactionId, type ShipModel, type ShipState, setFactor } from "@broadside/sim";
-import { type ShipPart, partId, rotateInv, vec3, windVector } from "@broadside/core";
+import { type ShipPart, driveWind, partId, rotateInv, vec3, windVector } from "@broadside/core";
 import { type AbstractMesh, Color3, DynamicTexture, Texture, Mesh, MeshBuilder, Quaternion, type Scene, StandardMaterial, TransformNode, Vector3, VertexData, type ShadowGenerator , type LinesMesh } from "../babylon";
 import { type Geometry, deckGeometry, hullGeometry } from "./hull-geometry";
 import { liveryOps, paint } from "./hull-livery";
@@ -538,7 +538,9 @@ export class ShipView {
     this.root.rotationQuaternion!.set(b.rot.x, b.rot.y, b.rot.z, b.rot.w);
     this.scorchSections(s);
     const tw = windVector(windDirection, windSpeed);
-    const aw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
+    const raw = rotateInv(b.rot, vec3(tw.x - b.vel.x, 0, tw.z - b.vel.z));
+    // An assisted ship's canvas fills as close-hauled at worst, never aback (core driveWind; the sim trims it so).
+    const aw = e.assist ? driveWind(raw.x, raw.z) : raw;
     // Canvas and rigging shot away come down over a second or two in the view (beta test 22.11: a
     // chain broadside stripped a ship in one frame); repairs show at once.
     const step = Math.max(0, Math.min(0.1, time - this.lastTime));

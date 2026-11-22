@@ -1263,3 +1263,8 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   środkiem wyporu przy projektowym zanurzeniu (`HullModel.buoyancyZ`), jak przy załadunku statku na równą stępkę:
   w spoczynku 0°, pod żaglami średnio od −0,8 do +0,1°. Złoty hash zmieniony ręcznie (reguła: środek masy nad środkiem
   wyporu). Dwa testy przerobione z chwilowego pomiaru na pomiar w oknie czasu (zależały od fazy fali).
+- Żagle w trybach wspomaganych (Akcja, Fun): statek płynie napędem wspomagania w każdą stronę, także pod wiatr, więc
+  płótno wypełniało się od dziobu („płynę naprzód, a żagle w drugą stronę”). Wiatr dla żagli takiego statku jest
+  obracany na brzeg martwego sektora (60° od dziobu, `driveWind`): żagle ustawione jak w bajdewindzie, nigdy na plecy.
+  Reje nie kręcą się dookoła: rejowe ±35° od ustawienia w poprzek, skośne ±80° (bez zmian, to fizyczne granice brasów
+  i szotów). W zwykłym sterowaniu żagle dalej idą za prawdziwym wiatrem.

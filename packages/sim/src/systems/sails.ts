@@ -1,4 +1,4 @@
-import { ASSIST, DEG, type RigType, type Vec3, approach, rotate, rotateInv, sailForce, sailForceAt, vec3 } from "@broadside/core";
+import { ASSIST, DEG, type RigType, type Vec3, approach, driveWind, rotate, rotateInv, sailForce, sailForceAt, vec3 } from "@broadside/core";
 import { type System } from "./context";
 import { applyForceAt, bodyToWorld, pointVelocity } from "../physics/rigid-body";
 import { type ShipState, crewShare, setFactor } from "../ship/ship-state";
@@ -63,7 +63,10 @@ export const sailSystem: System = (ctx, dt) => {
         const ceWorld = bodyToWorld(b, sail.ce);
         const tw = windAt(ctx.env, ceWorld.y, ceWorld.x, ceWorld.z);
         const pv = pointVelocity(b, ceWorld);
-        const local = rotateInv(b.rot, vec3(tw.x - pv.x, 0, tw.z - pv.z));
+        const raw = rotateInv(b.rot, vec3(tw.x - pv.x, 0, tw.z - pv.z));
+        // Assisted: trimmed as close-hauled at worst, never aback (core driveWind).
+        const dw = e.assist ? driveWind(raw.x, raw.z) : raw;
+        const local = vec3(dw.x, 0, dw.z);
         const area = sail.area * s.sailSet[i]! * (0.3 + 0.7 * s.sailCloth[i]!);
         // The trim the crew want, and the yards swung towards it as fast as the hands can brace them.
         const want = sailForce(sail.rig, area, local.x, local.z, trim).chord;

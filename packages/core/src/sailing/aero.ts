@@ -122,3 +122,23 @@ export const sailForceAt = (rig: RigType, area: number, awx: number, awz: number
   return { fx: f.fx, fz: f.fz > 0 ? f.fz * driveShare(trimSkill) : f.fz, chord: c };
 };
 
+
+/**
+ * Arc either side of the bow (radians) out of which no square-rigger sails: the wind there backs
+ * the canvas. Assisted sailing (the Action and Fun modes, sim systems/assist) drives a ship
+ * whatever the wind, even into it; her sails are then shown and trimmed for the wind at the edge
+ * of this arc, as when sailing close-hauled (`driveWind`), not filled from ahead (owner's report
+ * 22.11: "going ahead with the sails blown the other way").
+ */
+export const NO_GO = (60 * Math.PI) / 180;
+
+/** Apparent wind (body space, where the air moves to) turned out of the no-go arc, same speed. */
+export const driveWind = (awx: number, awz: number): { x: number; z: number } => {
+  const speed = Math.hypot(awx, awz);
+  if (speed < 1e-6) return { x: awx, z: awz };
+  // Where the wind comes from, off the bow (0 dead ahead, + to starboard (+x)).
+  const from = Math.atan2(-awx, -awz);
+  if (Math.abs(from) >= NO_GO) return { x: awx, z: awz };
+  const edge = (from >= 0 ? 1 : -1) * NO_GO;
+  return { x: -Math.sin(edge) * speed, z: -Math.cos(edge) * speed };
+};
