@@ -86,6 +86,8 @@ for (const size of SIZES) {
       me.body.vel = { x: 0, y: 0, z: 0 };
     });
     await page.waitForSelector(".target", { timeout: 20000 }).catch(() => {});
+    // The armoury unfolded in the classic variant (folded in the others): both states are checked.
+    if (steering === "classic") await page.click('[data-testid="armory-toggle"]').catch(() => {});
     await page.evaluate(() => document.fonts.ready);
     const found = await page.evaluate((regions) => {
       const boxes = [];
