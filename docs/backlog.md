@@ -266,7 +266,7 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Miękkie cząstki (zanikanie przy geometrii) i dym w buforze o obniżonej rozdzielczości (GPU Gems 3, rozdz. 23).
 - [x] Kolumna wody przy pluśnięciu kuli, przestrzeliny 0,65–1,1 m (otwór 0,2–0,4 m) w czterech wariantach z ziarna,
   większe płomienie (kolor ponad 1) i dłuższy dym pożaru.
-- [x] Plama piany po pluśnięciu (12 ostatnich, rośnie i znika w ok. 4 s, `shaders/splash-foam.ts`), migoczące światło
+- [x] Plama piany po pluśnięciu (12 ostatnich, rośnie i znika w ok. 3 s, `shaders/splash-foam.ts`), migoczące światło
   największego pożaru (ostatnie światło puli błysków). Dym pożaru oświetlony od dołu: nie robię (dym nie ma normalnych).
 - [x] Pocisk według amunicji (`effects/shot-meshes.ts`: żelazna kula według wagomiaru, rozżarzona świeci, łańcuchowa
   koziołkuje, kartacze drobne), smuga za kulą; utrata płótna i olinowania w widoku rozłożona na ok. 2 s.

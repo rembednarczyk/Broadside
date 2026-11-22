@@ -4,7 +4,7 @@ export const SPLASHES = 12;
 /**
  * GLSL of the foam a ball leaves where it struck the water (beta test of the firing effects: the
  * column fell back and left the sea as it was). Each splash is a disc of white water that spreads
- * as it ages (a third of its size again per second) and fades over about four seconds, densest
+ * as it ages (a quarter of its size again per second) and fades over about three seconds, densest
  * at its heart: the rings of churned water round a fall of shot. `splashFoam(p)` returns 0..1;
  * the fragment shader draws it as lace with the wake's foam.
  */
@@ -18,10 +18,11 @@ float splashFoam(vec2 p) {
     if (i >= splashCount) break;
     vec4 s = splash[i];
     vec2 d = p - s.xy;
-    float r = s.w * (1.0 + s.z * 0.35);
+    float r = s.w * (1.0 + s.z * 0.25);
     float q = dot(d, d) / (r * r);
     if (q >= 1.0) continue;
-    f = max(f, (1.0 - q) * exp(-s.z / 4.0));
+    float k = 1.0 - q;
+    f = max(f, k * sqrt(k) * 0.75 * exp(-s.z / 3.0));
   }
   return f;
 }
