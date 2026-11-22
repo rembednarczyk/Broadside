@@ -27,6 +27,10 @@ export interface SimulationOptions {
   readonly archipelago?: Archipelago;
   /** Let the population director add and remove traffic around the player (the sandbox). */
   readonly traffic?: boolean;
+  /** Hour of day at the start; omitted, a fixed noon (no night: tests, set pieces). */
+  readonly hours?: number;
+  /** The day's clock runs (default) or holds at `hours`. */
+  readonly clock?: boolean;
 }
 
 export type { SpawnShip } from "./world/spawn";
@@ -54,7 +58,7 @@ export class Simulation {
   steps = 0;
 
   constructor(opts: SimulationOptions) {
-    this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null);
+    this.env = createEnvironment(opts.seed, opts.windDirection, opts.windSpeed, opts.weather, opts.archipelago ?? null, opts.hours, opts.clock ?? true);
     this.ports = opts.archipelago ? portSites(opts.archipelago) : [];
     this.ctx = { world: this.world, env: this.env, events: this.events, rng: createRng(opts.seed), purse: this.purse, ports: this.ports, ids: this.ids, traffic: opts.traffic ?? false, relations: this.relations, jobs: this.jobs, salvage: this.salvage, survey: this.survey };
     watchReputation(this.world, this.events, this.relations);

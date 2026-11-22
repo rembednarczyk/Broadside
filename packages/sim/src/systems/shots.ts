@@ -59,10 +59,11 @@ const tryForts = (ctx: Parameters<System>[0], shot: Entity): boolean => {
   const to = vec3(sh.s.x, sh.s.y, sh.s.z);
   for (const f of ctx.world.with("fort")) {
     if (f.id === sh.owner) continue;
-    const t = hitsFort(f.fort, from, to);
-    if (t === null) continue;
+    const strike = hitsFort(f.fort, from, to);
+    if (strike === null) continue;
+    const t = strike.t;
     const at = vec3(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, from.z + (to.z - from.z) * t);
-    damageFort(ctx.events, f, sh.owner, sh.mass, Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz), sh.ammo, at, ctx.rng);
+    damageFort(ctx.events, f, sh.owner, sh.mass, Math.hypot(sh.s.vx, sh.s.vy, sh.s.vz), sh.ammo, at, ctx.rng, strike);
     if (AMMO[sh.ammo].blast > 0) ctx.events.push({ type: "explosion", at, radius: AMMO[sh.ammo].blast });
     return true;
   }

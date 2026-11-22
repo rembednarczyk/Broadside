@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type DomainEvent, type FortSite, quatFromYaw, vec3 } from "@broadside/core";
+import { type DomainEvent, type FortSite, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { Simulation } from "../src/simulation";
+import { damageFort, stormChance } from "../src/combat/forts";
 
 const run = (sim: Simulation, seconds: number, sink: DomainEvent[] = []) => {
   for (let i = 0; i < seconds * 60; i++) {
@@ -16,7 +17,8 @@ describe("forts", () => {
   it("fires on a hostile ship in range and hits her", () => {
     const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
     sim.spawnFort(site("battery", "crown"));
-    const ship = sim.spawnShip({ classId: "brig", faction: "pirates", x: 260, z: 0, heading: 0 });
+    // In front of the rampart (a battery's guns bear 60 deg either side of their embrasures).
+    const ship = sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: 260, heading: Math.PI / 2 });
     sim.command({ type: "sails", ship: ship.id, mast: "all", level: 0 });
     const ev = run(sim, 40);
     expect(ev.filter((e) => e.type === "gunFired").length).toBeGreaterThan(4);
@@ -61,6 +63,57 @@ describe("forts", () => {
     const ev = run(sim, 1);
     expect(ev.some((e) => e.type === "assaultFailed")).toBe(true);
     expect(fort.fort!.faction).toBe("crown");
+  });
+});
+
+describe("fort gunnery and silencing (beta test 22.11)", () => {
+  it("fires by divisions from its embrasures, not all at once from one point", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("starFort", "crown"));
+    sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: 300, heading: Math.PI / 2 });
+    const fired: { t: number; x: number; z: number }[] = [];
+    for (let i = 0; i < 20 * 60; i++) {
+      sim.step();
+      for (const e of sim.drainEvents()) if (e.type === "gunFired" && e.ship === fort.id && e.ammo !== "shell") fired.push({ t: i / 60, x: e.at.x, z: e.at.z });
+    }
+    expect(fired.length).toBeGreaterThan(5);
+    // No two guns in one frame, and from more than one embrasure, all on the side facing the ship.
+    expect(new Set(fired.map((f) => f.t)).size).toBe(fired.length);
+    expect(new Set(fired.map((f) => `${f.x.toFixed(1)}|${f.z.toFixed(1)}`)).size).toBeGreaterThan(2);
+    expect(fired.every((f) => f.z > 0)).toBe(true);
+  });
+
+  it("will not fire inland: a battery's guns bear only to seaward", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("battery", "crown"));
+    sim.spawnShip({ classId: "brig", faction: "pirates", x: 0, z: -300, heading: Math.PI / 2 });
+    expect(run(sim, 30).some((e) => e.type === "gunFired" && e.ship === fort.id)).toBe(false);
+  });
+
+  it("counts the mortars among the pieces to knock out, and remounts them when taken", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(site("starFort", "pirates"));
+    const f = fort.fort!;
+    f.guns = f.guns.map(() => -1);
+    const ship = sim.spawnShip({ classId: "liner", faction: "player", x: 0, z: 150, heading: 0 });
+    const ev: DomainEvent[] = [];
+    const rng = createRng(1);
+    for (let k = 0; k < 400 && !f.silenced; k++) damageFort(sim.events, fort, ship.id, 20, 100, "round", vec3(0, 8, 40), rng);
+    ev.push(...sim.drainEvents());
+    expect(f.silenced).toBe(true);
+    expect(f.hp).toBeGreaterThan(0);
+    expect(ev.some((e) => e.type === "hit" && e.part === "wall")).toBe(true);
+    f.garrison = 5;
+    sim.command({ type: "assault", ship: ship.id, fort: fort.id });
+    run(sim, 1, ev);
+    expect(ev.some((e) => e.type === "fortCaptured")).toBe(true);
+    expect(f.mortars.every((m) => m >= 0)).toBe(true);
+  });
+
+  it("gives the storming odds the assault rolls", () => {
+    expect(stormChance(100, 100)).toBe(0);
+    expect(stormChance(200, 100)).toBe(1);
+    expect(stormChance(140 / 1.0, 100)).toBeCloseTo(0.5);
   });
 });
 

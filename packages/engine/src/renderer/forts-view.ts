@@ -1,6 +1,6 @@
 import { type Entity, type FactionId } from "@broadside/sim";
 import { Color3, DynamicTexture, Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, Vector3, type ShadowGenerator } from "../babylon";
-import { fortLayout } from "./fort-geometry";
+import { fortLayout } from "@broadside/core";
 
 /**
  * Shore forts: walls, towers and guns built from the class layout (merged into one stone mesh

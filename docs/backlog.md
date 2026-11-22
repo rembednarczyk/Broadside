@@ -274,6 +274,26 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Mignięcie paska celu przy trafieniu.
 - [ ] Kasowanie najstarszych cząstek przy pełnej puli (Babylon nie nadpisuje; pule po poprawce czasu wystarczają).
 
+### Forty i wieże (beta-test 22.11, właściciel: „działaj ze wszystkimi poprawkami”)
+- [x] Układ fortu w `core/world/fort-layout.ts` (jedno źródło dla widoku i symulacji): działa prostopadle do murów,
+  łoża moździerzy na dziedzińcu; trafienia w prostopadłościany murów i walce wież (zdarzenie `hit` z `part: "wall"`).
+- [x] Strzały z dział na murach, tylko w łuku ±60° od normalnej muru; salwa działami co 0,12–0,2 s, przerwa
+  1,5–2 s między salwami; donośność od wylotu, błąd nastawy raz na salwę (donośność 10 m + 10%, kierunek 0,02 rad);
+  działa fortu opuszczają się do −0,3 rad.
+- [x] Moździerze w puli zbicia, po zdobyciu wracają; tablica ładunków z oporem i różnicą wysokości, wyprzedzenie
+  z własnego czasu lotu; moździerz statku ±0,6 rad od dziobu, bombarda staje dziobem do fortu.
+- [x] Fort widzi gorzej we mgle i w nocy (pora dnia w symulacji, `core/weather/daylight.ts`); gracz nie celuje w fort
+  przez dym.
+- [x] Balans: wieża 1400 hp, bateria 2600, fort gwiaździsty 8000, cytadela 11000; przeładowanie dział fortu 20 s.
+  Audyt `packages/sim/test/forts.audit.ts` (galeon z 400 m: bateria 2–4 min, fort gwiaździsty 8–14 min).
+- [x] AI: ostrzał z ok. 400 m, po uciszeniu podejście na miejsce desantu od strony morza i szturm przy szansie ≥ 80%.
+- [ ] Osadzenie: jedna funkcja wysokości lądu, płaskie miejsce dla całego obrysu, cokół, teren bez domów i drzew.
+- [ ] Widok: trafienie w kamień, wyłomy i gruz, zbite działa znikają, biała flaga, cień tylko bliskich fortów,
+  przedpiersia i strzelnice, lawety, UV w metrach, bandera z płótna.
+- [ ] HUD: garnizon, desant i szansa szturmu, działa i moździerze osobno, uciszony fort zostaje w panelu.
+- [ ] Kanonierzy gracza strzelają do fortu; rozkaz „fort” staje 400 m burtą.
+- [ ] Łańcuch portowy, piec do kul, modele moździerzy, garnizon na murach.
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu

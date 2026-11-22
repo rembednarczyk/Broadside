@@ -13,6 +13,9 @@ export interface SessionOptions {
   readonly seed: number;
   /** Starting weather (default: fresh wind). */
   readonly weather?: WeatherKind;
+  /** Hour of day to start at and whether the day's clock runs (the simulation keeps the time). */
+  readonly hours?: number;
+  readonly clock?: boolean;
 }
 
 /** Course change while a helm button is held (rad/s). */
@@ -33,9 +36,9 @@ export class GameSession {
     // A saved game is in the world of its own seed (a new game drew a fresh one: the address's or
     // the default seed would put her on another map, beta test 19.11).
     const seed = saved?.options.seed ?? opts.seed;
-    this.options = { seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(seed), traffic: true };
+    this.options = { seed, windDirection: 1.1, windSpeed: 8, weather: opts.weather ?? "fresh", archipelago: generateArchipelago(seed), traffic: true, ...(opts.hours !== undefined ? { hours: opts.hours, clock: opts.clock ?? true } : {}) };
     if (saved) {
-      this.sim = restore(saved, this.options.archipelago ?? null);
+      this.sim = restore(saved, this.options.archipelago ?? null, { ...(opts.hours !== undefined ? { hours: opts.hours } : {}), ...(opts.clock !== undefined ? { clock: opts.clock } : {}) });
       this.playerId = this.sim.player()!.id;
       this.helm = new PlayerHelm(this.sim, this.playerId, yawOf(this.sim.player()!.body!.rot));
       return;

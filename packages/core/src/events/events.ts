@@ -9,7 +9,8 @@ import { type ContractKind } from "../data/contracts";
  * reports what happened; renderer, audio and HUD react without the simulation knowing them.
  * Events carry keys and numbers, never player-facing text (i18n lives in the UI).
  */
-export type HitPart = "hull" | "sails" | "rigging" | "mast" | "crew" | "gun" | "rudder";
+/** Part a shot struck; `wall` is a fort's stone. */
+export type HitPart = "hull" | "sails" | "rigging" | "mast" | "crew" | "gun" | "rudder" | "wall";
 
 export type DomainEvent =
   | { readonly type: "gunFired"; readonly ship: EntityId; readonly at: Vec3; readonly dir: Vec3; readonly pounder: number; readonly ammo: AmmoId }

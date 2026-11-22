@@ -1211,3 +1211,16 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   była. Domyślnie włączone, wyłącznik w opcjach rozgrywki (klucz `broadside.shake`).
 - Komunikat trafień: liczone trafienia kul gracza w inne statki do 2,5 s po ostatnim dziale, nie więcej niż dział;
   pojedynczy strzał bez komunikatu. Liczby w komunikacie przez klucz z parametrami (`notice.hits|7|14`).
+
+## 22.11, użytkownik: beta-test fortów i wież, „działaj ze wszystkimi poprawkami”
+- Układ fortu przeniesiony z silnika do `core` (`world/fort-layout.ts`), jak kadłub w `core/hull`: renderer buduje z niego
+  kamień, symulacja strzela z jego strzelnic i sprawdza trafienia w jego mury (test płyt Kay i Kajiya 1986) i wieże.
+- Cel strojenia testera (35–45% trafień przy 200 m w fregatę burtą) nieosiągalny przy rozsądnym rozrzucie: liczą się też
+  kule w olinowaniu i rykoszety od wody w kadłub, a tor kuli jest płaski. Bramką są czasy oblężenia (galeon z 400 m
+  ucisza baterię w 2–4 min, fort gwiaździsty w 8–14 min i przeżywa); udział trafień zostaje raportem.
+- Wytrzymałość fortów podniesiona ok. 3,5 raza zamiast obniżania szansy zbicia działa: przy podanym przez testera mnożniku
+  fort padał po wyczerpaniu murów, a działa nie ubywały stopniowo. Szansa zbicia `0,6 · obrażenia / (hp / liczba sztuk)`.
+- Cytadela zostaje celem dla fregaty (ok. 9 min) albo liniowca (3 min); galeon z 400 m jej nie ucisza i tonie po ok. 12 min.
+- Pora dnia trafiła do symulacji (`startHours`, `clockRuns` w środowisku; bez opcji `hours` stałe południe, więc testy
+  i audyty bez nocy). Ciemność działa tylko na forty; kapitanowie AI widzą jak dotąd (zmiana balansu bitew osobno).
+- Bateria nie strzela w głąb lądu ani wzdłuż brzegu poza łukiem ±60° od strzelnic.

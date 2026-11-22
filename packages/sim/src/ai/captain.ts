@@ -5,6 +5,7 @@ import { type CaptainState } from "./captain-state";
 import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
+import { STORM_SHARE, stormChance } from "../combat/forts";
 import { aimHeightFor, firesAtRigging, lineStation, tacticalHeading } from "./tactics";
 import { type Screen, smokeBetween } from "../combat/smoke";
 
@@ -153,7 +154,7 @@ export const engage = (me: Entity, c: CaptainState, t: Entity, w: World2D): Game
   if (s.ammoLoad.swivel !== swivelWant && s.model.guns.some((g) => g.kind === "swivel")) cmds.push({ type: "loadAmmo", ship: me.id, mount: "swivel", ammo: swivelWant });
   if (range < 420 && Math.abs(rel) < 0.18) cmds.push({ type: "fire", ship: me.id, mount: "bowChaser", range: aimRange, bearing: brg });
   if (range < 380 && Math.abs(wrapAngle(rel - Math.PI)) < 0.2) cmds.push({ type: "fire", ship: me.id, mount: "sternChaser", range: aimRange, bearing: brg });
-  if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
+  if (range > 150 && range < 750 && Math.abs(rel) < MORTAR_ARC) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range: aimRange, bearing: brg });
   if (range < (s.ammoLoad.swivel === "rocket" ? 200 : 120)) cmds.push({ type: "fire", ship: me.id, mount: "swivel", side: rel >= 0 ? "starboard" : "port", range });
   // Close aboard with a stronger crew: grapple and board (pirates love it).
   const boarders = d.boardRatio;
@@ -224,9 +225,17 @@ const flee = (me: Entity, t: Entity | null, w: World2D): GameCommand[] => {
   ];
 };
 
-/** How far a navy captain looks for an enemy fort to attack, and the range he bombards it from. */
+/**
+ * How far a navy captain looks for an enemy fort to attack, and the range he bombards it from:
+ * about 400 m from the walls, where a fort's guns lose most of their aim (beta test 22.11: at 300 m
+ * and less a galleon was sunk before the fort fell silent).
+ */
 const FORT_SIGHT = 900;
-const BOMBARD = 300;
+const BOMBARD = 400;
+/** A ship's mortar trains about 0.6 rad either side of the bow (targeting ARCS.mortar). */
+const MORTAR_ARC = 0.6;
+/** Storming odds a captain wants before he lands his people (forts stormChance). */
+const STORM_ODDS = 0.8;
 
 const enemyFort = (me: Entity, w: World2D): Entity | null => {
   let best: Entity | null = null;
@@ -244,32 +253,54 @@ const enemyFort = (me: Entity, w: World2D): Entity | null => {
 };
 
 /**
+ * A silenced fort: stand in to a landing off its walls (on the line from the fort out to the ship,
+ * so over the water she came by, never across the land), heave to there and storm when the odds
+ * are good; with too few people she lies off and waits for help.
+ */
+const closeToStorm = (me: Entity, fe: Entity, w: World2D): GameCommand[] => {
+  const s = me.ship!;
+  const b = me.body!;
+  const st = fe.fort!;
+  const d = Math.hypot(b.pos.x - st.site.x, b.pos.z - st.site.z);
+  const odds = stormChance(Math.floor(s.crew * STORM_SHARE), st.garrison);
+  if (d < st.def.radius + 180 && odds >= STORM_ODDS) return [{ type: "assault", ship: me.id, fort: fe.id }];
+  const off = st.def.radius + 140;
+  const tx = st.site.x + ((b.pos.x - st.site.x) / Math.max(1, d)) * off;
+  const tz = st.site.z + ((b.pos.z - st.site.z) / Math.max(1, d)) * off;
+  const there = Math.hypot(tx - b.pos.x, tz - b.pos.z) < 40 || odds < STORM_ODDS;
+  if (there) return s.sailTarget[0] !== 0 ? [{ type: "sails", ship: me.id, mast: "all", level: 0 }] : [];
+  const brg = Math.atan2(tx - b.pos.x, tz - b.pos.z);
+  const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(brg, w.windDirection, s, yawOf(b.rot)), w) }];
+  if (s.sailTarget[0] !== 1) cmds.push({ type: "sails", ship: me.id, mast: "all", level: 1 });
+  return cmds;
+};
+
+/**
  * Siege: close to bombarding range, lie broadside on to the walls and fire whenever the guns
- * bear; once the fort is silenced, land a party if the crew outnumbers the garrison well.
+ * bear (a bomb vessel lies bow on instead: her mortars are bedded on the centreline, the period
+ * practice of the bomb ketch), and once the fort is silenced stand in and storm it.
  */
 const bombard = (me: Entity, c: CaptainState, fe: Entity, w: World2D): GameCommand[] => {
   const s = me.ship!;
   const b = me.body!;
   const st = fe.fort!;
   const range = Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) - st.def.radius * 0.5;
-  if (st.silenced) {
-    if (range < st.def.radius + 150 && s.crew * 0.66 > st.garrison * 1.6) return [{ type: "assault", ship: me.id, fort: fe.id }];
-    const brg = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
-    return [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(brg, w.windDirection, s, yawOf(me.body!.rot)), w) }];
-  }
+  if (st.silenced) return closeToStorm(me, fe, w);
   const heading = yawOf(b.rot);
   const brg = Math.atan2(st.site.x - b.pos.x, st.site.z - b.pos.z);
   const rel = relativeBearing(heading, b.pos.x, b.pos.z, st.site.x, st.site.z);
+  const bomb = s.model.guns.some((g) => g.kind === "mortar");
   c.side = rel >= 0 ? "starboard" : "port";
   const abeam = c.side === "starboard" ? Math.PI / 2 : -Math.PI / 2;
   const bias = Math.max(-0.6, Math.min(0.6, (range - BOMBARD) / BOMBARD)) * 0.9;
-  const desired = range > BOMBARD * 1.5 ? brg : brg - abeam + (c.side === "starboard" ? bias : -bias);
+  const desired = range > BOMBARD * 1.5 || bomb ? brg : brg - abeam + (c.side === "starboard" ? bias : -bias);
   const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(desired, w.windDirection, s, yawOf(me.body!.rot)), w) }];
-  const level: SailLevel = range > BOMBARD * 1.5 ? 3 : 2;
+  // A bomb vessel heaves to bow on at mortar range; the others keep steerage way under fighting sail.
+  const level: SailLevel = range > BOMBARD * 1.5 ? 3 : bomb && range < BOMBARD * 1.4 ? 0 : 2;
   if (s.sailTarget[0] !== level) cmds.push({ type: "sails", ship: me.id, mast: "all", level });
   const aimHeight = st.site.y + st.def.height * 0.5;
   if (range < BROADSIDE_MAX && Math.abs(wrapAngle(rel - abeam)) < ARC && sideLoaded(s, c.side) > 0) cmds.push({ type: "fire", ship: me.id, mount: "broadside", side: c.side, range, bearing: brg, aimHeight });
-  if (range > 150 && range < 750) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range, bearing: brg, aimHeight });
+  if (range > 150 && range < 750 && Math.abs(rel) < MORTAR_ARC) cmds.push({ type: "fire", ship: me.id, mount: "mortar", range, bearing: brg, aimHeight });
   return cmds;
 };
 

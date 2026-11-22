@@ -1,5 +1,5 @@
 import { type MountKind, isHostile, standing, yawOf } from "@broadside/core";
-import { type Entity, type Simulation, aimFor, aimForFort, hostileTo } from "@broadside/sim";
+import { type Entity, type Simulation, aimFor, aimForFort, hostileTo, screens } from "@broadside/sim";
 
 /**
  * Gun laying for the player (aim assist) and what the views need of it: where each broadside
@@ -23,7 +23,7 @@ export interface SalvoMark {
 export const aimOf = (sim: Simulation, me: Entity, mount: MountKind, side?: "port" | "starboard"): { range: number; bearing?: number; aimHeight: number; locked: boolean } => {
   const arc = mount === "broadside" ? (side ?? "starboard") : mount;
   const aim = aimFor(me, sim.ships(), arc, true, sim.relations);
-  const fort = aimForFort(me, sim.forts(), arc, sim.relations);
+  const fort = aimForFort(me, sim.forts(), arc, sim.relations, screens(sim.world));
   const useFort = fort && (!aim || fort.range < aim.range);
   const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
   const bearing = useFort ? fort.bearing : aim?.bearing;

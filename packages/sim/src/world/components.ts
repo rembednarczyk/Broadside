@@ -104,4 +104,12 @@ export interface FortState {
   /** Ship that fired on the fort (it fires back whatever the standing). */
   provokedBy: number | null;
   silenced: boolean;
+  /** Seconds before the next gun may fire (the ripple within a division, the pause between divisions). */
+  volley: number;
+  /** Guns fired so far in the current division. */
+  division: number;
+  /** The division's error of laying: metres of range, radians of bearing (drawn once per division). */
+  lay: { range: number; bearing: number };
+  /** Hits taken per wall segment and tower (the renderer breaches the most battered). */
+  scars: number[];
 }

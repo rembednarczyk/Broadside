@@ -1,4 +1,4 @@
-import { type Archipelago, type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D, type StormCell, CELLS, cellInfluence, driftCells } from "@broadside/core";
+import { type Archipelago, type GerstnerWave, type Rng, type SeaState, type WaveBand, type WeatherKind, type WeatherState, approach, createWeather, seaWaves, subRng, waveBands, windVector, type Wind2D, type StormCell, CELLS, SECONDS_PER_HOUR, cellInfluence, driftCells } from "@broadside/core";
 
 /**
  * Wind and sea shared by every ship. The sea follows the wind with a lag (a sea builds up and
@@ -23,18 +23,24 @@ export interface Environment {
   readonly archipelago: Archipelago | null;
   /** Storm cells drifting over the sea (local squalls). */
   cells: StormCell[];
+  /** Hour of day at time 0, and whether the clock runs (held, a fixed light for set pieces). */
+  readonly startHours: number;
+  readonly clockRuns: boolean;
 }
+
+/** Hour of day now (0..24). */
+export const hoursNow = (env: Environment): number => (env.clockRuns ? (env.startHours + env.time / SECONDS_PER_HOUR) % 24 : env.startHours);
 
 /** m/s of sea development per second towards the wind. */
 const SEA_BUILD_RATE = 0.02;
 
-export const createEnvironment = (seed: number, windDirection: number, windSpeed: number, weather?: WeatherKind, archipelago: Archipelago | null = null): Environment => {
+export const createEnvironment = (seed: number, windDirection: number, windSpeed: number, weather?: WeatherKind, archipelago: Archipelago | null = null, hours?: number, clockRuns = true): Environment => {
   const bands = waveBands(seed, windDirection);
   const weatherRng = subRng(seed, "weather");
   const w = weather ? createWeather(weather, windDirection, seed, weatherRng) : null;
   const wind = w ? w.meanWind : windSpeed;
   const sea: SeaState = { windSpeed: wind, swell: 0 };
-  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0, archipelago, cells: [] };
+  return { seed, time: 0, bands, windDirection, windSpeed: wind, seaWind: wind, swell: 0, waves: seaWaves(bands, sea), weather: w, weatherRng, rogue: 0, archipelago, cells: [], startHours: hours ?? 12, clockRuns: hours !== undefined && clockRuns };
 };
 
 /** Extra swell height of a rogue wave group, rising and falling over its 30 seconds. */

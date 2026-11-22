@@ -4,7 +4,7 @@ import { Hud, type MenuScreen, type SoundVolumes, type SteeringMode, type UiInte
 import { GameSession } from "./game-session";
 import { localSaveStore } from "./save-store";
 import { readSave, writeSave } from "@broadside/persistence";
-import { type SimSnapshot } from "@broadside/sim";
+import { type SimSnapshot, hoursNow as simHours } from "@broadside/sim";
 import { presentJob, presentPort } from "./presenters/port-presenter";
 import { presentShipAudio } from "./presenters/ship-audio-presenter";
 import { combatFocus, salvoPreview } from "./aiming";
@@ -54,8 +54,19 @@ const helpSeen = ((): boolean => {
     return false;
   }
 })();
+// One game hour passes in four minutes (a day in an hour and a half).
+/** Hour of day to start at (`hours=21` or `hours=21:30`); `clock=stop` holds it (fixed light for shots). */
+const parseHours = (v: string | null): number => {
+  if (!v) return 16.3;
+  const [h, m] = v.split(":");
+  const hours = Number(h) + Number(m ?? 0) / 60;
+  return Number.isFinite(hours) ? ((hours % 24) + 24) % 24 : 16.3;
+};
+const startHours = parseHours(params.get("hours"));
+const clockRuns = params.get("clock") !== "stop";
 const saved = params.has("seed") ? null : await readSave(store, "autosave").catch(() => null);
-let session = saved ? new GameSession({ seed, weather }, saved.data as SimSnapshot) : new GameSession({ seed, weather });
+const day = { hours: startHours, clock: clockRuns };
+let session = saved ? new GameSession({ seed, weather, ...day }, saved.data as SimSnapshot) : new GameSession({ seed, weather, ...day });
 // Graphics settings: stored on this device (a per-viewer convenience), a URL preset overrides.
 const GFX_KEY = "broadside.graphics";
 /** Modelled hulls (tools/assets), served beside the page in the web build and in the APK. */
@@ -285,7 +296,7 @@ const intents: UiIntents = {
       }
     },
     newGame: () => {
-      session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather });
+      session = new GameSession({ seed: (seed + Math.floor(performance.now())) % 100000, weather, ...day });
       session.crewOrders(useHud.getState().reef);
       applySteering(useHud.getState().steering);
       applyGraphics(graphics);
@@ -404,19 +415,10 @@ patchHud({ fpsCap: pacer.cap });
 dynres.setCap(pacer.cap);
 let fpsAcc = 0;
 let frames = 0;
-// One game hour passes in four minutes (a day in an hour and a half).
-/** Hour of day to start at (`hours=21` or `hours=21:30`); `clock=stop` holds it (fixed light for shots). */
-const parseHours = (v: string | null): number => {
-  if (!v) return 16.3;
-  const [h, m] = v.split(":");
-  const hours = Number(h) + Number(m ?? 0) / 60;
-  return Number.isFinite(hours) ? ((hours % 24) + 24) % 24 : 16.3;
-};
-const startHours = parseHours(params.get("hours"));
-const clockRuns = params.get("clock") !== "stop";
 // `sun=<degrees>`: a fixed bearing of the sun (0 = east, 90 = north, the +z a ship starts along), for staged shots.
 const sunAzimuth = params.has("sun") ? (Number(params.get("sun")) * Math.PI) / 180 : undefined;
-const hoursNow = () => (clockRuns ? (startHours + session.sim.env.time / 240) % 24 : startHours);
+// The simulation keeps the day's clock (a fort's lookouts see less at night, core daylight).
+const hoursNow = () => simHours(session.sim.env);
 // With no enemy about, the arrow at the screen's edge points at the nearest wreck still to be salvaged
 // within WRECK_MARK metres (its sites are fixed per archipelago: computed once).
 const WRECK_MARK = 1500;
