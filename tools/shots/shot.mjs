@@ -54,6 +54,8 @@ await page.evaluate((s) => {
     b.session.advance(1 / 30);
     if (globalThis.__shotScript) globalThis.__shotScript(b, i / 30);
     b.renderer.onEvents(b.session.sim.drainEvents());
+    // Particles age with the fast-forward (smoke fired during it is as old as the sim says).
+    b.renderer.advanceEffects(b.session.sim, 1 / 30);
   }
 }, seconds);
 if (cam) {

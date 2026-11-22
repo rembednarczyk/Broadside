@@ -1192,3 +1192,14 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   stroju), progu błędu nie podnoszę.
 - Nie ruszam: szumu detalu fal (ok. 1% klatki), SSAO na ultra (11%, już w połowie rozdzielczości; mniej próbek to
   widoczna zmiana), gęstości siatki oceanu (zmiana obrazu fal z bliska).
+
+## 22.11, użytkownik: beta-test efektów strzelania, „zgadzam się, lecisz” (kolejność poprawek z raportu)
+- Cząstki starzeją się o `dt` klatki gry: `scene.useConstantAnimationDeltaTime` (stały współczynnik 0,96) i `updateSpeed`
+  ustawiane co klatkę. Odrzucone `engine.beginFrame()`: silnik mierzyłby czas sam, niezależnie od czasu gry
+  (zamrożenie w narzędziach, limit 0,1 s).
+- Opór cząstek jako relaksacja do prędkości powietrza z szybkością `drag + quadDrag·|v − w|`, całkowana dokładnie
+  (bez przestrzelenia prędkości wiatru); wypór dymu zostaje stałym przyspieszeniem w górę, więc dym wznosi się
+  z prędkością graniczną wypór/opór.
+- Światło na cząstkach: ambient sceny plus połowa światła kluczowego (średnia z kuli Lamberta), względem 14:00,
+  od 0,03 do 1,15. Bez kierunku i bez samocienia; oświetlone billboardy z normalnymi zostają na później.
+  Ogień (błysk, płomienie, iskry) się nie przyciemnia.

@@ -252,6 +252,21 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [ ] Autopilot audytu nie dogania celu bounty w 15 min (ziarno 3): sprawdzić pościg kapitana z rolą „hunt”.
 - [x] Pogoda: wiatr narasta ze stałą ok. 100 s (od świeżego do sztormowego w 2–4 min, było ok. 80 s), wichura i sztorm trwają 5–9 min, komunikat przy nadejściu wichury i sztormu (20.11).
 
+### Efekty strzelania (beta-test 22.11, właściciel: „dym, ogień, odłamki i jak gra to prezentuje”)
+- [x] Czas cząstek równy czasowi klatki (`effects/particle-clock.ts`): wcześniej 1 ms na klatkę, 6% czasu przy 60 kl./s;
+  dotyczy też deszczu i ławic mgły. Narzędzie zrzutów postarza cząstki w trakcie przewijania (`advanceEffects`).
+- [x] Opór względem powietrza (liniowy i kwadratowy, dokładne całkowanie) zamiast `limitVelocity`; dym dryfuje do
+  prędkości wiatru i nie szybciej.
+- [x] Dym, bryzgi i drzazgi przyciemniane światłem sceny (`effects/particle-light.ts`): nocą dym nie świeci.
+- [x] Drzazgi: odłamki 0,15–0,8 m rozciągnięte wzdłuż lotu, lecą wzdłuż toru kuli; z żagli i lin strzępy płótna.
+  Iskry cienkie i rozciągnięte, błysk wylotowy wydłużony wzdłuż lufy w kolorze ponad 1 (łapie bloom).
+- [ ] Duży dym salwy w dwóch fazach (strumień z lufy, potem kłęby rosnące do 25–40 m, 20–35 s), tekstura kłębów
+  z ziarna, kłęby nie przecinają wody.
+- [ ] Kolumna wody przy pluśnięciu kuli, mniejsze i różne przestrzeliny, większy pożar z dymem oświetlonym od dołu.
+- [ ] Pocisk według amunicji (rozżarzona świeci, łańcuchowa, kartacze), krótki ślad; utrata płótna rozłożona na 1–3 s.
+- [ ] Drżenie kamery przy salwie (z wyłącznikiem w opcjach), sygnał trafienia w HUD.
+- [ ] Presety: mniej i większe kłęby na low, kasowanie najstarszych cząstek przy pełnej puli.
+
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
 rozdzielczości, wygładzanie krawędzi na ultra naprawione (MSAA na pre-passie SSAO), suwak rozdzielczości obok presetu

@@ -13,6 +13,8 @@ import { ShipFill } from "./ship-fill";
 import { wetSkyOf } from "./wet-deck";
 import { hazeSunOf } from "./sun-haze";
 import { EffectsDirector } from "../effects/effects-director";
+import { ParticleClock } from "../effects/particle-clock";
+import { particleLight } from "../effects/particle-light";
 import { SalvoMarks } from "./salvo-marks";
 import { CourseView } from "./course-view";
 import { HullModels } from "./hull-models";
@@ -84,6 +86,8 @@ export class BabylonRenderer {
   private lineK = -1;
   private lineCheck = 0;
   private readonly effects: EffectsDirector;
+  /** Ages every particle system by the frame's dt (particle-clock.ts). */
+  private readonly particleClock: ParticleClock;
   private readonly weather: WeatherView;
   /** Fall-of-shot marks for the player's broadsides (the app sets them each frame). */
   readonly salvo: SalvoMarks;
@@ -125,7 +129,8 @@ export class BabylonRenderer {
     this.ocean = new Ocean(this.scene, g.oceanCells, g.detailWaves);
     this.sky = new Sky(this.scene, g.cloudOctaves, g.skyScale);
     this.materials = createShipMaterials(this.scene, opts.texturesUrl, opts.graphics.preset === "low" ? "low" : opts.graphics.preset === "medium" ? "medium" : "high");
-    this.effects = new EffectsDirector(this.scene, g.particles);
+    this.particleClock = new ParticleClock(this.scene);
+    this.effects = new EffectsDirector(this.scene, this.particleClock, g.particles);
     // Spray and the cut in the sea follow the hull that is drawn (a modelled hull is longer than the physics hull).
     // Torn planks show the timber of the hull they came from: the model's baked planking, else the generated decks' planks.
     this.effects.plankTexture = (shipId) => {
@@ -205,6 +210,7 @@ export class BabylonRenderer {
     // a storm by day stays dark, as it should.
     this.post.adapt(1 + 1.0 * Math.max(0, Math.min(1, (0.05 - look.sunDir.y) / 0.3)));
     this.towns?.setNight(1 - Math.min(1, look.sunIntensity / 0.8));
+    this.effects.setLight(particleLight(look));
     this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = look.fogDensity;
     // Haze lit by the sun behind it: a brighter, warmer fog than the bare horizon colour.
@@ -345,7 +351,18 @@ export class BabylonRenderer {
       this.ambient.intensity = 1 + this.weather.flash * 3;
       this.scene.fogColor = this.scene.fogColor.add(new Color3(this.weather.flash * 0.4, this.weather.flash * 0.4, this.weather.flash * 0.5));
     }
+    this.particleClock.tick(dt);
     this.scene.render();
+  }
+
+  /**
+   * Effects only, without drawing: the shot tools fast-forward the simulation in steps of `dt`
+   * and call this after each, so smoke and spray fired meanwhile are as old as the sim says.
+   */
+  advanceEffects(sim: Simulation, dt: number): void {
+    this.effects.frame(sim, dt);
+    this.weather.frame(sim, dt);
+    this.particleClock.advance(dt);
   }
 
   /**
