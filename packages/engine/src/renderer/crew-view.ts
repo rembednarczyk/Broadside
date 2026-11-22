@@ -1,4 +1,4 @@
-import { type Mesh, Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
+import { BoundingInfo, type Mesh, Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
 import { type AloftPose, type ClimbClip, aloftPose, aloftSeconds } from "./crew-aloft";
 import { type CrewActivity, type CrewClipName, crewClip, wantAloft } from "./crew-roles";
 import { type CrewSpot } from "./crew-layout";
@@ -29,7 +29,23 @@ export class CrewView {
   /** Puts the men at these stations and keeps the last crew count. */
   setSpots(spots: readonly CrewSpot[]): void {
     this.spots = spots;
+    this.fitBox();
     this.setCrew(this.crew, this.max);
+  }
+
+  /** The figures' box: every station, every topman's way up and his top, with room for a man's size. */
+  private fitBox(): void {
+    if (this.figures.length === 0 || this.spots.length === 0) return;
+    const points = this.spots.flatMap((s) => (s.route ? [s.at, s.route.deck, s.route.foot, s.route.head, s.route.top] : [s.at]));
+    const lo = new Vector3(Infinity, Infinity, Infinity);
+    const hi = new Vector3(-Infinity, -Infinity, -Infinity);
+    for (const [x, y, z] of points) {
+      lo.minimizeInPlaceFromFloats(x, y, z);
+      hi.maximizeInPlaceFromFloats(x, y, z);
+    }
+    lo.addInPlaceFromFloats(-2, -1, -2);
+    hi.addInPlaceFromFloats(2, 2.5, 2);
+    for (const f of this.figures) f.setBoundingInfo(new BoundingInfo(lo, hi));
   }
 
   /** Draws the men with the animated figures: a copy of each for this ship, the stations dealt round them in turn. */
@@ -42,10 +58,15 @@ export class CrewView {
       copy.skeleton = t.skeleton;
       copy.bakedVertexAnimationManager = t.bakedVertexAnimationManager;
       copy.isPickable = false;
-      copy.alwaysSelectAsActiveMesh = true;
+      // Culled with the box of every place a man can be on this ship (the instances move and the
+      // baked animation moves the vertices: the box is set here, not followed from the matrices),
+      // so the men of a ship out of view are not animated and drawn for nothing.
+      copy.alwaysSelectAsActiveMesh = false;
+      copy.doNotSyncBoundingInfo = true;
       copy.thinInstanceRegisterAttribute("bakedVertexAnimationSettingsInstanced", 4);
       return copy;
     });
+    this.fitBox();
     this.plain.setEnabled(false);
     this.playing = "";
     this.setShown(this.shown);
