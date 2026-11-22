@@ -23,6 +23,7 @@ import { presentCourse, presentWind } from "./presenters/course-presenter";
 import { type TapOrder, attackDrawn, orderFor, tappedAt } from "./controllers/tap-targets";
 import { presentTappables } from "./presenters/tappables";
 import { Haptics, strongest } from "./feedback/haptics";
+import { SalvoTally } from "./presenters/salvo-tally";
 // Type of the HUD (style.css), bundled so the APK needs no network: Cinzel for titles and buttons,
 // EB Garamond for the text (SIL Open Font License).
 import "@fontsource/cinzel/600.css";
@@ -143,6 +144,13 @@ const setHaptics = (on: boolean) => {
   patchHud({ haptics: on });
   writeSetting(HAPTICS_KEY, on ? "1" : "0");
 };
+// Camera shake at broadsides and hits: on unless turned off on this device.
+const SHAKE_KEY = "broadside.shake";
+patchHud({ shake: readSetting(SHAKE_KEY) !== "0" });
+const setShake = (on: boolean) => {
+  patchHud({ shake: on });
+  writeSetting(SHAKE_KEY, on ? "1" : "0");
+};
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
   session.assist(usesPad(steering), false, steering === "fun");
@@ -259,6 +267,7 @@ const intents: UiIntents = {
     setSteering,
     setReef,
     setHaptics,
+    setShake,
     setRenderScale: (scale) => applyGraphics(withSetting(graphics, "renderScale", scale)),
     toggleSettings: () => showMenu(useHud.getState().menu ? null : "main"),
     showMenu,
@@ -383,6 +392,7 @@ const pushNotice = (key: string) => {
 };
 
 const haptics = new Haptics();
+const salvoTally = new SalvoTally();
 // Dynamic resolution under the slider's scale when frames come too slow (off for the tools that drive
 // the page, whose shots and measurements must be at the set resolution, and with `dynres=0`).
 const autoResolution = params.get("dynres") !== "0" && !navigator.webdriver;
@@ -440,6 +450,7 @@ const frame = (now: number) => {
   const events = session.sim.drainEvents();
   renderer.onEvents(events);
   haptics.enabled = useHud.getState().haptics;
+  renderer.shake.enabled = useHud.getState().shake;
   haptics.play(strongest(events, session.playerId), now / 1000);
   const listener = { x: renderer.camera.camera.target.x, z: renderer.camera.camera.target.z, heading: renderer.camera.viewHeading() };
   for (const e of events) {
@@ -451,6 +462,8 @@ const frame = (now: number) => {
     const n = noticeFor(e, session.playerId);
     if (n) pushNotice(n);
   }
+  const tally = salvoTally.update(events, session.playerId, session.sim.env.time);
+  if (tally) pushNotice(tally);
   audio.setAmbience(presentAmbience(session.sim, listener.x, listener.z, session.playerId));
   const aboard = presentShipAudio(session.sim, session.playerId, renderer.camera.camera.radius, hoursNow());
   if (aboard) audio.setShip(aboard);

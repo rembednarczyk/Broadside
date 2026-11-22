@@ -260,12 +260,19 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Dym, bryzgi i drzazgi przyciemniane światłem sceny (`effects/particle-light.ts`): nocą dym nie świeci.
 - [x] Drzazgi: odłamki 0,15–0,8 m rozciągnięte wzdłuż lotu, lecą wzdłuż toru kuli; z żagli i lin strzępy płótna.
   Iskry cienkie i rozciągnięte, błysk wylotowy wydłużony wzdłuż lufy w kolorze ponad 1 (łapie bloom).
-- [ ] Duży dym salwy w dwóch fazach (strumień z lufy, potem kłęby rosnące do 25–40 m, 20–35 s), tekstura kłębów
-  z ziarna, kłęby nie przecinają wody.
-- [ ] Kolumna wody przy pluśnięciu kuli, mniejsze i różne przestrzeliny, większy pożar z dymem oświetlonym od dołu.
-- [ ] Pocisk według amunicji (rozżarzona świeci, łańcuchowa, kartacze), krótki ślad; utrata płótna rozłożona na 1–3 s.
-- [ ] Drżenie kamery przy salwie (z wyłącznikiem w opcjach), sygnał trafienia w HUD.
-- [ ] Presety: mniej i większe kłęby na low, kasowanie najstarszych cząstek przy pełnej puli.
+- [x] Dym salwy w dwóch fazach: strumień z lufy 25–50 m/s hamowany oporem kwadratowym, potem kłęby rosnące do
+  18–36 m przez 18–32 s; tekstura kłębów z ziarna (atlas 2 × 2, `effects/billow.ts`), kłęby trzymane nad wodą
+  (Babylon nie ma miękkich cząstek). Na low i medium mniej kłębów, większych.
+- [ ] Miękkie cząstki (zanikanie przy geometrii) i dym w buforze o obniżonej rozdzielczości (GPU Gems 3, rozdz. 23).
+- [x] Kolumna wody przy pluśnięciu kuli, przestrzeliny 0,65–1,1 m (otwór 0,2–0,4 m) w czterech wariantach z ziarna,
+  większe płomienie (kolor ponad 1) i dłuższy dym pożaru.
+- [ ] Plama piany na wodzie po pluśnięciu, światło migoczące przy pożarze, dym pożaru oświetlony od dołu.
+- [x] Pocisk według amunicji (`effects/shot-meshes.ts`: żelazna kula według wagomiaru, rozżarzona świeci, łańcuchowa
+  koziołkuje, kartacze drobne), smuga za kulą; utrata płótna i olinowania w widoku rozłożona na ok. 2 s.
+- [x] Drżenie kamery z „traumy” (Eiserloh, GDC 2016; `camera/camera-shake.ts`), wyłącznik w opcjach rozgrywki;
+  komunikat po salwie gracza „trafione 7 z 14” (`presenters/salvo-tally.ts`).
+- [ ] Mignięcie paska celu przy trafieniu.
+- [ ] Kasowanie najstarszych cząstek przy pełnej puli (Babylon nie nadpisuje; pule po poprawce czasu wystarczają).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie

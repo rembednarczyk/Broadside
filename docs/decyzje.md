@@ -1203,3 +1203,11 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Światło na cząstkach: ambient sceny plus połowa światła kluczowego (średnia z kuli Lamberta), względem 14:00,
   od 0,03 do 1,15. Bez kierunku i bez samocienia; oświetlone billboardy z normalnymi zostają na później.
   Ogień (błysk, płomienie, iskry) się nie przyciemnia.
+- Dym salwy: strumień (`fx-blast`) i kłęby (`fx-smoke`) jako dwa emitery; kłęby z atlasu 2 × 2 rysowanego
+  z ziarna (gromada miękkich kół oświetlonych z góry, Reeves 1983). Miękkich cząstek Babylon nie ma, więc środek
+  kłęba trzymany jest pół rozmiaru nad wodą (billboard nie sięga niżej): bez ostrej linii na wodzie.
+  Kłęby dryfują z wiatrem; statek w ruchu wypływa z nich po kilku sekundach, przy wietrze z rufy zostaje w nich dłużej.
+- Drżenie kamery jako przesunięcie widoku (`targetScreenOffset`), nie orbity: po wygaśnięciu kamera jest tam, gdzie
+  była. Domyślnie włączone, wyłącznik w opcjach rozgrywki (klucz `broadside.shake`).
+- Komunikat trafień: liczone trafienia kul gracza w inne statki do 2,5 s po ostatnim dziale, nie więcej niż dział;
+  pojedynczy strzał bez komunikatu. Liczby w komunikacie przez klucz z parametrami (`notice.hits|7|14`).

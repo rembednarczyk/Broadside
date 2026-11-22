@@ -63,6 +63,7 @@ export interface SettingsIntents {
   setReef(on: boolean): void;
   /** Vibration on hits and broadsides (phones). */
   setHaptics(on: boolean): void;
+  setShake(on: boolean): void;
   /** The ⚙ button: the main menu (pausing the game), or back to the game. */
   toggleSettings(): void;
   /** Which menu screen to show (null: back to the game). */

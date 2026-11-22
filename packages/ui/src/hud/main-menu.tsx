@@ -112,6 +112,7 @@ const Gameplay = ({ intents }: { intents: SettingsIntents }) => {
   const steering = useHud((h) => h.steering);
   const reef = useHud((h) => h.reef);
   const haptics = useHud((h) => h.haptics);
+  const shake = useHud((h) => h.shake);
   const onOff = (on: boolean, set: (on: boolean) => void, id: string) =>
     ([true, false] as const).map((v) => (
       <button key={String(v)} className={on === v ? "on" : ""} onPointerDown={() => set(v)} data-testid={`${id}-${v ? "on" : "off"}`}>
@@ -132,6 +133,8 @@ const Gameplay = ({ intents }: { intents: SettingsIntents }) => {
       <div className="presets two">{onOff(reef, (on) => intents.setReef(on), "reef")}</div>
       <div className="label">{text(lang, "settings.haptics")}</div>
       <div className="presets two">{onOff(haptics, (on) => intents.setHaptics(on), "haptics")}</div>
+      <div className="label">{text(lang, "settings.shake")}</div>
+      <div className="presets two">{onOff(shake, (on) => intents.setShake(on), "shake")}</div>
       <div className="label">{text(lang, "settings.language")}</div>
       <div className="presets two">
         <button className={lang === "en" ? "on" : ""} onPointerDown={() => intents.setLanguage("en")}>English</button>
