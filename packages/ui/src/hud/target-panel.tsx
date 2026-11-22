@@ -53,7 +53,8 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
           <div className="row"><span>{text(lang, "hud.guns")}</span><span>{t.guns[0]}/{t.guns[1]}</span></div>
           {t.mortars && t.mortars[1] > 0 && <div className="row"><span>{text(lang, "hud.mortars")}</span><span>{t.mortars[0]}/{t.mortars[1]}</span></div>}
           {/* What a landing would meet, and its odds (beta test 22.11: a galleon's party lost every storm unseen). */}
-          {t.garrison !== undefined && t.party !== undefined && <div className="row"><span>{text(lang, "hud.garrison")}</span><span>{t.garrison} / {t.party}</span></div>}
+          {t.garrison !== undefined && <div className="row"><span>{text(lang, "hud.garrison")}</span><span>{t.garrison}</span></div>}
+          {t.party !== undefined && <div className="row"><span>{text(lang, "hud.party")}</span><span>{t.party}</span></div>}
           {t.chance !== undefined && <div className="row"><span>{text(lang, "hud.stormChance")}</span><span>{Math.round(t.chance * 100)}%</span></div>}
         </>
       ) : (
