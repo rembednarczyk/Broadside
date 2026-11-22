@@ -10,6 +10,7 @@
  * Usage: pnpm build && node tools/perf/frame-bench.mjs [query] [width=800] [height=450] [frames=6]
  *   e.g. "quality=ultra&weather=fresh&hours=17:00&camera=chase". Prints a table and JSON.
  *   BENCH_SETTINGS='{"preset":"custom",...}': graphics settings to store before loading (omit `quality`).
+ *   BENCH_PARTS=ocean,shallows: time only these rows (a quick check of one change); ship rows as `ship:*`.
  */
 import { createServer } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
@@ -40,7 +41,9 @@ await page.waitForFunction(() => globalThis.__broadside !== undefined, null, { t
 await page.evaluate(() => { const b = globalThis.__broadside; for (let i = 0; i < 90; i++) b.session.advance(1 / 30); });
 // Models and textures arrive after the first frames.
 await page.waitForTimeout(20000);
-const result = await page.evaluate((n) => {
+const only = process.env.BENCH_PARTS ? process.env.BENCH_PARTS.split(",") : null;
+const result = await page.evaluate(([n, only]) => {
+  const wanted = (name) => !only || only.includes(name) || (name.startsWith("ship:") && only.includes("ship:*"));
   const b = globalThis.__broadside;
   const r = b.renderer;
   const scene = r.scene;
@@ -93,15 +96,21 @@ const result = await page.evaluate((n) => {
   const backdrop = scene.customRenderTargets.find((t) => t.name === "sky-backdrop");
   if (backdrop) backdrop.refreshRate = 1;
   const out = { full: time() };
-  if (backdrop) {
+  if (backdrop && wanted("sky:half-rate saves")) {
     const every = time(true);
     backdrop.refreshRate = 2;
     out["sky:half-rate saves"] = every - time(true);
     backdrop.refreshRate = 1;
   }
+  // Switching the whole post-processing off and on leaves the frame cheaper than before (the
+  // pipelines rebuild their targets lazily): each row after it is timed against a frame taken
+  // just then, not against the first one, or it reads as a bogus saving.
+  let base = out.full;
   for (const [name, set] of Object.entries(parts)) {
+    if (!wanted(name)) continue;
+    if (name.includes(":")) base = time();
     set(false);
-    out[name] = out.full - time();
+    out[name] = base - time();
     set(true);
   }
   // The ships by kind of part: their meshes grouped by the first word of the material's name.
@@ -113,12 +122,14 @@ const result = await page.evaluate((n) => {
     groups.get(key).push(m);
   }
   for (const [key, meshes] of groups) {
+    if (!wanted(key)) continue;
+    base = time();
     for (const m of meshes) m.isVisible = false;
-    out[key] = out.full - time();
+    out[key] = base - time();
     for (const m of meshes) m.isVisible = true;
   }
   return { ...out, drawCalls: r.drawCalls(), pixels: scene.getEngine().getRenderWidth() * scene.getEngine().getRenderHeight() };
-}, Number(frames));
+}, [Number(frames), only]);
 await browser.close();
 server.close();
 console.log(`frame ${result.full.toFixed(0)} ms at ${result.pixels} px, ${result.drawCalls} draw calls`);
