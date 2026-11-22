@@ -83,6 +83,9 @@ const result = await page.evaluate(([n, only]) => {
       r.ocean.material.setInt("islandCount", on ? (r.ocean.islandCount ?? 0) : 0);
     },
     ships: (on) => { for (const s of ships) s.setEnabled(on); },
+    // The land (terrain chunks) and its trees, by material.
+    land: (on) => { for (const m of scene.meshes) if (m.material?.name === "terrain") m.isVisible = on; },
+    trees: (on) => { for (const m of scene.meshes) if (m.material?.name === "tree") m.isVisible = on; },
     shadows: (on) => { scene.shadowsEnabled = on; },
     post: (on) => { scene.postProcessesEnabled = on; },
     // The post-processes one by one (default pipeline's bloom, SSAO, motion blur, the grade with the sun shafts).
