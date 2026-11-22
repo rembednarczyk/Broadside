@@ -303,7 +303,8 @@ przed i po, audyt bitew, przeglądarka statku i APK.
 - [x] Łańcuch portowy cytadeli (`systems/harbour-chain.ts`): zatrzymuje wrogi statek, opada po uciszeniu fortu,
   pęka po 8 trafieniach nisko nad wodą (łańcuchowa liczy się za 3); piec do kul gaśnie poniżej połowy murów
   (dalej zwykłe kule), dym z komina; moździerze na łożach; garnizon na murach (postać na 8 ludzi, do 40).
-- [x] AI: patrol wojenny co jakiś czas płynie pod wrogi fort (do 2,5 km), okręty eskadry dołączają do oblężenia.
+- [x] AI: patrol wojenny co jakiś czas płynie pod wrogi fort (do 2,5 km), okręty eskadry dołączają do oblężenia;
+  desant łodziami do 400 m od murów (głęboki okręt nie podejdzie przez płyciznę).
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie

@@ -1243,3 +1243,5 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Koszt klatki z cytadelą w kadrze (`fort-bench`, 800×450, SwiftShader): forty dodają 4 wywołania rysowania na ultra
   i na low (beta-test przed poprawkami: +83 na ultra, wszystkie forty rzucały cień); udział fortów w czasie klatki
   8% na ultra, 12% na low przy kamerze blisko cytadeli.
+- Zasięg desantu łodziami: do 400 m od murów (było 200 m) dla gracza i AI. W audycie świata liniowiec korony uciszył
+  baterię, ale przez 13 min nie podszedł przez płyciznę na 200 m i nie szturmował; teraz zdobywa ją minutę po uciszeniu.

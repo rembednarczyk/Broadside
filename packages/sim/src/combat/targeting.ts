@@ -3,6 +3,7 @@ import { type Entity } from "../world/components";
 import { hostileTo } from "../ai/captain";
 import { type Relations, isHostile, standing } from "@broadside/core";
 import { type Screen, smokeBetween } from "./smoke";
+import { STORM_REACH } from "./forts";
 
 /**
  * Target selection for a battery (aim assist for the player, the same rule an AI gun captain
@@ -82,7 +83,7 @@ export const fortToStorm = (me: Entity, forts: readonly Entity[]): Entity | null
   for (const f of forts) {
     const st = f.fort!;
     if (!st.silenced || st.faction === me.ship!.faction) continue;
-    if (Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) < st.def.radius + 200) return f;
+    if (Math.hypot(st.site.x - b.pos.x, st.site.z - b.pos.z) < st.def.radius + STORM_REACH) return f;
   }
   return null;
 };

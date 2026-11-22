@@ -1,10 +1,11 @@
 import { wrapAngle, yawOf } from "@broadside/core";
 import { type Entity } from "../../world/components";
+import { STORM_REACH } from "../../combat/forts";
 import { type Conn, conn } from "./conn";
 import { type Sea, steerFor } from "./seamanship";
 import { type PilotState } from "./state";
 
-/** Storming reach beyond the fort's walls (combat/forts.assault takes 200 m), with a margin. */
+/** Where to heave to for the storm, off the walls (combat/forts STORM_REACH lets the boats row in from farther). */
 const STAND_OFF = 150;
 /**
  * Where to lie while the fort still fights: about 400 m off its walls, where its guns lose most
@@ -26,8 +27,9 @@ export const closeFort = (me: Entity, p: PilotState, fort: Entity | undefined, s
   const dz = b.pos.z - f.site.z;
   const d = Math.hypot(dx, dz) || 1;
   const reach = f.def.radius + (f.silenced ? STAND_OFF : BOMBARD_OFF);
+  // Silenced: storm from where she is if the boats can reach (a deep ship may not get closer over the shoals).
+  if (f.silenced && d <= f.def.radius + STORM_REACH - 20) return conn(null, 0, true, [{ type: "assault", ship: me.id, fort: fort!.id }]);
   if (d <= reach + 10) {
-    if (f.silenced) return conn(null, 0, true, [{ type: "assault", ship: me.id, fort: fort!.id }]);
     // On station: the fort abeam on whichever side turns her least, under bare poles.
     const brg = Math.atan2(-dx, -dz);
     const yaw = yawOf(b.rot);

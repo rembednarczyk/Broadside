@@ -213,6 +213,13 @@ export const damageFort = (events: EventQueue, fe: Entity, by: number, mass: num
   }
 };
 
+/**
+ * How far from a fort's walls a ship may land her storming party (m): the boats row in. 200 m until
+ * 22.11; a deep ship of the line could not stand in that close to a shore battery over its shoals,
+ * so a silenced fort was never taken by the AI (world audit, beta test of the forts).
+ */
+export const STORM_REACH = 400;
+
 /** Share of the crew a ship lands to storm a fort. */
 export const STORM_SHARE = 0.66;
 /** Each defender counts as this many attackers (walls, a prepared defence). */
@@ -231,7 +238,7 @@ export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng, 
   const s = ship.ship!;
   if (!f.silenced) return;
   const d = Math.hypot(ship.body!.pos.x - f.site.x, ship.body!.pos.z - f.site.z);
-  if (d > f.def.radius + 200) return;
+  if (d > f.def.radius + STORM_REACH) return;
   const party = Math.floor(s.crew * STORM_SHARE);
   const strength = party * (0.8 + rng.next() * 0.4);
   const defence = f.garrison * DEFENCE_FACTOR;

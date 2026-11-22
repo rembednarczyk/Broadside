@@ -5,7 +5,7 @@ import { type CaptainState } from "./captain-state";
 import { wayPoint } from "./waypoints";
 import { closeHauled, relativeBearing, sailableHeading } from "./navigation";
 import { canBoard } from "../combat/boarding";
-import { STORM_SHARE, stormChance } from "../combat/forts";
+import { STORM_REACH, STORM_SHARE, stormChance } from "../combat/forts";
 import { aimHeightFor, firesAtRigging, lineStation, tacticalHeading } from "./tactics";
 import { type Screen, smokeBetween } from "../combat/smoke";
 
@@ -290,7 +290,7 @@ const closeToStorm = (me: Entity, fe: Entity, w: World2D): GameCommand[] => {
   const st = fe.fort!;
   const d = Math.hypot(b.pos.x - st.site.x, b.pos.z - st.site.z);
   const odds = stormChance(Math.floor(s.crew * STORM_SHARE), st.garrison);
-  if (d < st.def.radius + 180 && odds >= STORM_ODDS) return [{ type: "assault", ship: me.id, fort: fe.id }];
+  if (d < st.def.radius + STORM_REACH - 20 && odds >= STORM_ODDS) return [{ type: "assault", ship: me.id, fort: fe.id }];
   const off = st.def.radius + 140;
   const tx = st.site.x + ((b.pos.x - st.site.x) / Math.max(1, d)) * off;
   const tz = st.site.z + ((b.pos.z - st.site.z) / Math.max(1, d)) * off;
@@ -298,7 +298,7 @@ const closeToStorm = (me: Entity, fe: Entity, w: World2D): GameCommand[] => {
   if (there) return s.sailTarget[0] !== 0 ? [{ type: "sails", ship: me.id, mast: "all", level: 0 }] : [];
   const brg = Math.atan2(tx - b.pos.x, tz - b.pos.z);
   const cmds: GameCommand[] = [{ type: "course", ship: me.id, heading: clearHeading(me, sailableHeading(brg, w.windDirection, s, yawOf(b.rot)), w) }];
-  if (s.sailTarget[0] !== 1) cmds.push({ type: "sails", ship: me.id, mast: "all", level: 1 });
+  if (s.sailTarget[0] !== 2) cmds.push({ type: "sails", ship: me.id, mast: "all", level: 2 });
   return cmds;
 };
 
