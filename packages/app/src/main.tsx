@@ -162,6 +162,13 @@ const setShake = (on: boolean) => {
   patchHud({ shake: on });
   writeSetting(SHAKE_KEY, on ? "1" : "0");
 };
+// The armoury under the fire controls: folded unless unfolded on this device.
+const ARMORY_KEY = "broadside.armory";
+patchHud({ armory: readSetting(ARMORY_KEY) === "1" });
+const setArmory = (on: boolean) => {
+  patchHud({ armory: on });
+  writeSetting(ARMORY_KEY, on ? "1" : "0");
+};
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
   session.assist(usesPad(steering), false, steering === "fun");
@@ -261,6 +268,7 @@ const intents: UiIntents = {
     special: (mount) => session.special(mount),
     assault: () => session.assault(),
     board: () => session.board(),
+    toggleArmory: () => setArmory(!useHud.getState().armory),
   },
   settings: {
     setLanguage: (language) => {

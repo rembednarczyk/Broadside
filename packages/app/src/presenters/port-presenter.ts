@@ -1,9 +1,7 @@
-import { type ContractOffer, SHIP_CLASSES, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue, yawOf } from "@broadside/core";
+import { type ContractOffer, PORT_SPEED, SHIP_CLASSES, portInReach, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue, yawOf } from "@broadside/core";
 import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
 import { type JobHud, type PortHud } from "@broadside/ui";
 
-/** The port the player lies alongside (within reach and nearly stopped), with its prices. */
-const ALONGSIDE = 180;
 
 const offerView = (sim: Simulation, o: ContractOffer | null): JobHud | null =>
   o ? { kind: o.kind, classId: o.classId, faction: o.faction, reward: o.reward, dest: o.dest >= 0 ? (sim.ports[o.dest]?.name ?? null) : null, minutes: Math.round(o.time / 60) } : null;
@@ -26,8 +24,9 @@ export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
 
 export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
   const b = me.body!;
-  if (Math.hypot(b.vel.x, b.vel.z) > 2) return null;
-  const index = sim.ports.findIndex((p) => Math.hypot(p.ax - b.pos.x, p.az - b.pos.z) < ALONGSIDE);
+  // The port the player lies off (core portInReach: the anchorage or the approach, slowly), with its prices.
+  if (Math.hypot(b.vel.x, b.vel.z) > PORT_SPEED) return null;
+  const index = sim.ports.findIndex((p) => portInReach(p, b.pos.x, b.pos.z));
   if (index < 0) return null;
   const site = sim.ports[index]!;
   const owner = portOwner(sim.world, index, site);

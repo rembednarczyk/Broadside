@@ -1248,3 +1248,13 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
 - Moździerze po poprawkach (audyt testera): bombarda dziobem do fortu gwiaździstego trafia 2–3 z 4–6 pocisków
   z 250–700 m (wcześniej 0 z 560–700 m); moździerze fortu bez przenosów 30–40 m (część pocisków wybucha ok. 18 m przed
   środkiem galeonu, na olinowaniu). Burtą do fortu bombarda nie trafia: moździerz obraca się o ±0,6 rad, celuje dziób.
+
+## 22.11, właściciel: panel amunicji, wyjście z portu, handel dalej od brzegu, czarny torus w burzy
+- Panel amunicji domyślnie złożony do jednej linii (bieżąca amunicja burt, kadłub, załoga, alarmy, abordaż i szturm,
+  gdy możliwe); przycisk rozwija dwa podpisane wiersze: amunicja burt oraz inne działa i zapasy. Stan zapamiętany
+  na urządzeniu (`broadside.armory`).
+- Panel portu z przyciskiem zamknięcia; zamknięty zostaje mały przycisk „Port”, panel wraca po wypłynięciu i powrocie.
+- Zasięg portu jedną regułą w `core` (`portInReach`): 320 m od kotwicowiska albo 120 m od toru podejścia do nabrzeża,
+  do 3,5 m/s (wcześniej 180 m od kotwicowiska i 2 m/s, osobno w symulacji i w HUD).
+- Słupy deszczu jako płaszczyzny obracane do kamery z wtapianymi brzegami i górą (wcześniej otwarte walce:
+  ciemna kolumna z ostrymi krawędziami i pierścieniem na tle nieba).

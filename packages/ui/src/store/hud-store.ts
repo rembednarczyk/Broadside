@@ -190,6 +190,8 @@ export interface HudState {
   readonly haptics: boolean;
   /** The view shakes at a broadside, a hit, a blast (camera-shake). */
   readonly shake: boolean;
+  /** The armoury (loads and the other weapons) unfolded under the fire controls' line. */
+  readonly armory: boolean;
   /** The crew has a course or an order (simple steering): the cancel button shows. */
   readonly courseActive: boolean;
   /** Orders for a ship held down on (screen fractions, the ship, whether she is an enemy). */
@@ -215,6 +217,6 @@ export type SteeringMode = "simple" | "classic" | "arcade" | "fun";
 /** The modes steered with the pad: Action, and Fun (the Action controls with an arcade game's ship, like Overboard!). */
 export const usesPad = (s: SteeringMode): boolean => s === "arcade" || s === "fun";
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, shake: true, courseActive: false, shipMenu: null, chart: null, fpsCap: 0, drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, shake: true, armory: false, courseActive: false, shipMenu: null, chart: null, fpsCap: 0, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

@@ -32,6 +32,25 @@ export interface PortSite {
   readonly az: number;
 }
 
+/**
+ * Where a ship can deal with a port: within PORT_REACH of its anchorage, or within PORT_LANE of the
+ * approach from the anchorage in to the landing, at no more than PORT_SPEED (one rule for the
+ * simulation's trade and the HUD's port panel). 180 m round the anchorage and 2 m/s until 22.11:
+ * a player sailing in for the town met the panel only on the shoals (owner's report).
+ */
+export const PORT_REACH = 320;
+export const PORT_LANE = 120;
+export const PORT_SPEED = 3.5;
+
+export const portInReach = (p: PortSite, x: number, z: number): boolean => {
+  if (Math.hypot(x - p.ax, z - p.az) <= PORT_REACH) return true;
+  const dx = p.x - p.ax;
+  const dz = p.z - p.az;
+  const len2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((x - p.ax) * dx + (z - p.az) * dz) / len2));
+  return Math.hypot(x - (p.ax + dx * t), z - (p.az + dz * t)) <= PORT_LANE;
+};
+
 const PORT_NAMES = [
   "Port Saint-Ange", "Fort Royal", "Puerto Viejo", "Cala Negra", "Tortue", "Kingsbay", "San Lázaro", "Isla Brava", "Redwater", "Mercy Harbour",
   "Haven of Thieves", "Santa Clara", "Port Morant", "Vera Cruz", "Saint-Pierre", "Bridgetown", "Puerto Bello", "Nombre de Dios", "Fort Dauphin", "Gallows Bay",

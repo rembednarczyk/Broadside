@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type PortHud, useHud } from "../store/hud-store";
 import { isTextKey, text, type TextKey } from "../i18n/catalog";
 import { type PortIntents } from "../intents";
@@ -72,10 +72,24 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
   const lang = useHud((h) => h.language);
   const gold = useHud((h) => h.gold);
   const [tab, setTab] = useState<Tab>("services");
+  // The port the player shut the panel of (it stays shut until she leaves the port or opens it again).
+  const [closed, setClosed] = useState<number | null>(null);
+  const index = p?.index ?? null;
+  useEffect(() => {
+    if (index === null) setClosed(null);
+  }, [index]);
   if (!p) return null;
+  if (closed === p.index) {
+    return (
+      <button className="harbour-open" onPointerDown={() => setClosed(null)} data-testid="port-open">{text(lang, "port.open")} · {p.name}</button>
+    );
+  }
   return (
     <div className="panel harbour" data-testid="port">
-      <div className="title">{p.name} · {label(lang, `faction.${p.owner}`, p.owner)}</div>
+      <div className="title">
+        {p.name} · {label(lang, `faction.${p.owner}`, p.owner)}
+        <button className="close" onPointerDown={() => setClosed(p.index)} aria-label={text(lang, "port.close")} data-testid="port-close">×</button>
+      </div>
       {p.factor === null ? (
         <div className="alarm">{text(lang, "port.hostile")}</div>
       ) : (

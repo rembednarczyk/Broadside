@@ -143,6 +143,14 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .combat .ammo button, .combat .batteries button { flex: 1; min-width: calc(52 * var(--u)); }
 .combat small { opacity: 0.75; margin-left: calc(3 * var(--u)); }
 .combat .status { display: flex; gap: calc(12 * var(--u)); justify-content: center; font-weight: 600; }
+/* Folded, the armoury is one slim line over the sea; unfolded, two labelled rows. */
+.combat:not(.open) { width: auto; padding: calc(3 * var(--u)) calc(6 * var(--u)); background: rgba(20, 14, 8, 0.55); }
+.combat .armory-line { display: flex; align-items: center; justify-content: center; gap: calc(8 * var(--u)); flex-wrap: wrap; font-weight: 600; }
+.combat.open .armory-line { margin-bottom: calc(4 * var(--u)); }
+.combat .armory-toggle { min-width: calc(110 * var(--u)); font-size: calc(12 * var(--u)); }
+.combat .armory-toggle .caret { margin-left: calc(6 * var(--u)); color: var(--brass-hi); }
+.combat .stat { white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+.combat .label { margin: calc(2 * var(--u)) 0 calc(2 * var(--u)); }
 .gauge { width: 82%; margin: calc(3 * var(--u)) auto 0; }
 .gauge span { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi)); }
 .storm { border-color: var(--red-hi); }
@@ -185,6 +193,9 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .show-hud { position: absolute; right: calc(10 * var(--u)); bottom: calc(10 * var(--u)); width: calc(36 * var(--u)); opacity: 0.6; pointer-events: auto; }
 
 /* --- port (middle, above the sea's foot) --- */
+.harbour .title { position: relative; padding-left: calc(32 * var(--u)); padding-right: calc(32 * var(--u)); }
+.harbour .title .close { position: absolute; right: 0; top: calc(-2 * var(--u)); width: calc(30 * var(--u)); height: calc(30 * var(--u)); padding: 0; font-size: calc(18 * var(--u)); line-height: 1; }
+.harbour-open { grid-area: middle; align-self: end; justify-self: center; font-size: calc(11 * var(--u)); padding: calc(5 * var(--u)) calc(12 * var(--u)); }
 .harbour { grid-area: middle; align-self: end; justify-self: center; width: min(100%, calc(460 * var(--u))); max-height: 100%; overflow-y: auto; font-size: calc(11 * var(--u)); }
 .port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4 * var(--u)); margin: calc(6 * var(--u)) 0; }
 .port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); }

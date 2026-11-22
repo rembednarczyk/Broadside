@@ -8,8 +8,13 @@ const Gauge = ({ b }: { b: BatteryHud }) => <span className="gauge"><span style=
 export const CombatPanel = ({ intents }: { intents: CombatIntents }) => {
   const c = useHud((h) => h.combat);
   const lang = useHud((h) => h.language);
+  const open = useHud((h) => h.armory);
   if (!c) return null;
   const t = (k: TextKey) => text(lang, k);
+  const name = (id: string): string => {
+    const key = `ammo.${id}`;
+    return isTextKey(key) ? text(lang, key) : id;
+  };
   const small = (label: TextKey, b: BatteryHud, onFire: () => void, id: string) =>
     b.count > 0 && (
       <button className="fire small" onPointerDown={onFire} data-testid={id} disabled={b.ready === 0}>
@@ -29,38 +34,50 @@ export const CombatPanel = ({ intents }: { intents: CombatIntents }) => {
         <small>{t("hud.starboard")}</small>
         <Gauge b={c.starboard} />
       </button>
-      <div className="panel combat">
-        <div className="ammo">
-          {c.ammo.map((a) => {
-            const key = `ammo.${a.id}`;
-            return (
-              <button key={a.id} className={c.broadsideAmmo === a.id ? "on" : ""} disabled={a.left === 0} onPointerDown={() => intents.loadAmmo(a.id)} data-testid={`ammo-${a.id}`}>
-                {isTextKey(key) ? text(lang, key) : a.id}
-                <small>{a.left}</small>
-              </button>
-            );
-          })}
-        </div>
-        <div className="batteries">
-          {small("hud.bow", c.bow, () => intents.fire("bowChaser"), "fire-bow")}
-          {small("hud.stern", c.stern, () => intents.fire("sternChaser"), "fire-stern")}
-          {small("hud.mortar", c.mortar, () => intents.fire("mortar"), "fire-mortar")}
-          {small("hud.swivel", c.swivel, () => intents.fire("swivel"), "fire-swivel")}
-          <button className={c.braced ? "on small" : "small"} onPointerDown={() => intents.brace()}>{t("hud.brace")}</button>
-          <button className="small" disabled={c.barrels === 0} onPointerDown={() => intents.drop("fireBarrel")}>{t("hud.barrel")} <small>{c.barrels}</small></button>
-          <button className="small" disabled={c.mines === 0} onPointerDown={() => intents.drop("mine")}>{t("hud.mine")} <small>{c.mines}</small></button>
-          <button className="small" disabled={c.smoke === 0} onPointerDown={() => intents.drop("smoke")} data-testid="smoke">{t("hud.smoke")} <small>{c.smoke}</small></button>
-          {c.greekFire && <button className={c.greekFire.on ? "on small" : "small"} disabled={c.greekFire.left === 0 && !c.greekFire.on} onPointerDown={() => intents.special("bowChaser")} data-testid="greek-fire">{t("ammo.greekFire")} <small>{c.greekFire.left}</small></button>}
-          {c.rockets && <button className={c.rockets.on ? "on small" : "small"} disabled={c.rockets.left === 0 && !c.rockets.on} onPointerDown={() => intents.special("swivel")} data-testid="rockets">{t("ammo.rocket")} <small>{c.rockets.left}</small></button>}
+      {/*
+        The armoury (beta of 22.11, the owner: "too much on screen"): folded by default to one line, the
+        broadside's load and the ship's state, opened by its button to the loads and the other weapons in
+        two labelled rows. Boarding and storming stay on the line when they are possible (they cannot wait).
+      */}
+      <div className={open ? "panel combat open" : "panel combat"} data-testid="armory">
+        <div className="armory-line">
+          <button className="armory-toggle" onPointerDown={() => intents.toggleArmory()} aria-expanded={open} data-testid="armory-toggle">
+            {name(c.broadsideAmmo)} <small>{c.ammo.find((a) => a.id === c.broadsideAmmo)?.left ?? 0}</small>
+            <span className="caret">{open ? "▴" : "▾"}</span>
+          </button>
+          <span className="stat">{t("hud.hull")} {Math.round(c.hull * 100)}%</span>
+          <span className="stat">{t("hud.crew")} {c.crew}/{c.crewMax}</span>
+          {c.fires > 0 && <span className="stat alarm">{t("hud.fires")} {c.fires}</span>}
+          {c.water > 0.5 && <span className="stat alarm">{t("hud.water")} {c.water.toFixed(0)} m³</span>}
           {c.canBoard && <button className="small storm" onPointerDown={() => intents.board()} data-testid="board">{t("hud.board")}</button>}
           {c.canStorm && <button className="small storm" onPointerDown={() => intents.assault()} data-testid="storm">{t("hud.storm")}</button>}
         </div>
-        <div className="status">
-          <span>{t("hud.hull")} {Math.round(c.hull * 100)}%</span>
-          <span>{t("hud.crew")} {c.crew}/{c.crewMax}</span>
-          {c.fires > 0 && <span className="alarm">{t("hud.fires")} {c.fires}</span>}
-          {c.water > 0.5 && <span className="alarm">{t("hud.water")} {c.water.toFixed(0)} m³</span>}
-        </div>
+        {open && (
+          <>
+            <div className="label">{t("hud.loads")}</div>
+            <div className="ammo">
+              {c.ammo.map((a) => (
+                <button key={a.id} className={c.broadsideAmmo === a.id ? "on" : ""} disabled={a.left === 0} onPointerDown={() => intents.loadAmmo(a.id)} data-testid={`ammo-${a.id}`}>
+                  {name(a.id)}
+                  <small>{a.left}</small>
+                </button>
+              ))}
+            </div>
+            <div className="label">{t("hud.weapons")}</div>
+            <div className="batteries">
+              {small("hud.bow", c.bow, () => intents.fire("bowChaser"), "fire-bow")}
+              {small("hud.stern", c.stern, () => intents.fire("sternChaser"), "fire-stern")}
+              {small("hud.mortar", c.mortar, () => intents.fire("mortar"), "fire-mortar")}
+              {small("hud.swivel", c.swivel, () => intents.fire("swivel"), "fire-swivel")}
+              <button className={c.braced ? "on small" : "small"} onPointerDown={() => intents.brace()}>{t("hud.brace")}</button>
+              <button className="small" disabled={c.barrels === 0} onPointerDown={() => intents.drop("fireBarrel")}>{t("hud.barrel")} <small>{c.barrels}</small></button>
+              <button className="small" disabled={c.mines === 0} onPointerDown={() => intents.drop("mine")}>{t("hud.mine")} <small>{c.mines}</small></button>
+              <button className="small" disabled={c.smoke === 0} onPointerDown={() => intents.drop("smoke")} data-testid="smoke">{t("hud.smoke")} <small>{c.smoke}</small></button>
+              {c.greekFire && <button className={c.greekFire.on ? "on small" : "small"} disabled={c.greekFire.left === 0 && !c.greekFire.on} onPointerDown={() => intents.special("bowChaser")} data-testid="greek-fire">{t("ammo.greekFire")} <small>{c.greekFire.left}</small></button>}
+              {c.rockets && <button className={c.rockets.on ? "on small" : "small"} disabled={c.rockets.left === 0 && !c.rockets.on} onPointerDown={() => intents.special("swivel")} data-testid="rockets">{t("ammo.rocket")} <small>{c.rockets.left}</small></button>}
+            </div>
+          </>
+        )}
       </div>
     </>
   );

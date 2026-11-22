@@ -41,6 +41,8 @@ export interface CombatIntents {
   special(mount: "bowChaser" | "swivel"): void;
   assault(): void;
   board(): void;
+  /** Folds or unfolds the armoury (kept on this device). */
+  toggleArmory(): void;
 }
 
 export interface PortIntents {

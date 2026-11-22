@@ -1,4 +1,4 @@
-import { type GameCommand, type PortSite, ammoPrice, crewPrice, plunderValue, priceFactor, provisionsPrice, repairBill, shipPrice, shipyardStock, tradeInValue, upgradePrice } from "@broadside/core";
+import { type GameCommand, type PortSite, PORT_SPEED, portInReach, ammoPrice, crewPrice, plunderValue, priceFactor, provisionsPrice, repairBill, shipPrice, shipyardStock, tradeInValue, upgradePrice } from "@broadside/core";
 import { changeShip, condition } from "./shipyard";
 import { acceptContract } from "./contracts";
 import { type ShipEntity } from "../commands/handler";
@@ -10,8 +10,6 @@ import { type SimWorld } from "../world/world";
  * Port services (the rules live in core/economy; this applies them to a ship alongside). The port
  * belongs to whoever holds the fort guarding it.
  */
-const ALONGSIDE = 180;
-const MAX_SPEED = 2;
 
 export const portOwner = (world: SimWorld, index: number, site: PortSite): PortSite["faction"] => {
   for (const f of world.with("fort")) if (f.fort.site.port === index) return f.fort.faction;
@@ -29,7 +27,7 @@ export const trade = (e: ShipEntity, cmd: Trade, ctx: SimContext): void => {
   const purse = ctx.purse;
   if (!site || !purse) return;
   const b = e.body;
-  if (Math.hypot(b.pos.x - site.ax, b.pos.z - site.az) > ALONGSIDE || Math.hypot(b.vel.x, b.vel.z) > MAX_SPEED) return refuse(ctx, cmd.port, "far");
+  if (!portInReach(site, b.pos.x, b.pos.z) || Math.hypot(b.vel.x, b.vel.z) > PORT_SPEED) return refuse(ctx, cmd.port, "far");
   const owner = portOwner(ctx.world, cmd.port, site);
   const factor = owner === e.ship.faction ? 0.7 : priceFactor(owner, e.ship.faction, ctx.relations);
   if (factor === null) return refuse(ctx, cmd.port, "hostile");
