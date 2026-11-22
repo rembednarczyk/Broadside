@@ -79,7 +79,7 @@ export class EffectsDirector {
     this.screen = new BurstEmitter("fx-screen", scene, { texture: this.sprites.billow, cells: BILLOW_CELLS, capacity: cap(1200), color1: rgba(0.56, 0.55, 0.53, 0.38), color2: rgba(0.46, 0.45, 0.44, 0.32), colorDead: rgba(0.5, 0.5, 0.5, 0), minSize: 14, maxSize: 26, minLife: 6, maxLife: 10, minPower: 0.3, maxPower: 1.5, gravity: new Vector3(0, 0.15, 0), additive: false, spread: 1, growth: 1.6, drag: 0.3 }, clock);
     this.lights = new FlashLights(scene);
     // A short streak of disturbed air behind each ball (shot-meshes.ts).
-    this.trail = new BurstEmitter("fx-trail", scene, { texture: this.sprites.streak, capacity: cap(1200), color1: rgba(0.75, 0.74, 0.71, 0.32), color2: rgba(0.65, 0.64, 0.62, 0.26), colorDead: rgba(0.6, 0.6, 0.6, 0), minSize: 0.35, maxSize: 0.45, minLife: 0.25, maxLife: 0.4, minPower: 0.5, maxPower: 0.8, gravity: new Vector3(0, 0, 0), additive: false, spread: 0, growth: 1.6, drag: 0, stretch: [5, 7] }, clock);
+    this.trail = new BurstEmitter("fx-trail", scene, { texture: this.sprites.streak, capacity: cap(1200), color1: rgba(0.75, 0.74, 0.71, 0.13), color2: rgba(0.65, 0.64, 0.62, 0.1), colorDead: rgba(0.6, 0.6, 0.6, 0), minSize: 0.25, maxSize: 0.3, minLife: 0.15, maxLife: 0.25, minPower: 0.5, maxPower: 0.8, gravity: new Vector3(0, 0, 0), additive: false, spread: 0, growth: 1.4, drag: 0, stretch: [3, 4] }, clock);
     this.shots = new ShotMeshes(scene, this.trail);
     this.swimmers = MeshBuilder.CreateSphere("fx-swimmer", { diameter: 0.5, segments: 4 }, scene);
     const skin = new StandardMaterial("fx-skin", scene);
