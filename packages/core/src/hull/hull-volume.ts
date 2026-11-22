@@ -23,6 +23,11 @@ export interface HullModel {
   /** Volume under the design waterline: times water density, the ship's displacement. */
   readonly designVolume: number;
   readonly totalVolume: number;
+  /**
+   * Longitudinal centre of buoyancy at the design waterline (LCB, z of the centroid of the
+   * displaced volume): a ship floats on an even keel when her centre of mass lies over it.
+   */
+  readonly buoyancyZ: number;
 }
 
 export interface HullGrid {
@@ -39,6 +44,7 @@ export const buildHullModel = (h: HullShape, grid: HullGrid = DEFAULT_GRID): Hul
   const samples: HullSample[] = [];
   const dz = h.length / grid.stations;
   let designVolume = 0;
+  let moment = 0;
   for (let s = 0; s < grid.stations; s++) {
     const u = (s + 0.5) / grid.stations;
     const keel = -keelDepth(h, u);
@@ -65,9 +71,10 @@ export const buildHullModel = (h: HullShape, grid: HullGrid = DEFAULT_GRID): Hul
         });
         const below = Math.min(1, Math.max(0, (0 - (y - dy / 2)) / dy));
         designVolume += volume * below;
+        moment += volume * below * stationZ(h, u);
       }
     }
   }
   const totalVolume = samples.reduce((sum, s) => sum + s.volume, 0);
-  return { samples, designVolume, totalVolume };
+  return { samples, designVolume, totalVolume, buoyancyZ: designVolume > 0 ? moment / designVolume : 0 };
 };

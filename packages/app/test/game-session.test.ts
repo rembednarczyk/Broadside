@@ -21,9 +21,12 @@ describe("game session", () => {
     s.helm.steer(1);
     for (let i = 0; i < 60 * 40 && yawOf(s.sim.byId(s.playerId)!.body!.rot) - before < 0.35; i++) s.advance(STEP);
     s.helm.steer(0);
+    const released = yawOf(s.sim.byId(s.playerId)!.body!.rot);
     for (let i = 0; i < 60 * 15; i++) s.advance(STEP);
     const after = yawOf(s.sim.byId(s.playerId)!.body!.rot);
-    expect(after - before).toBeGreaterThan(0.35);
+    // She holds the course she had when the helm was let go (within a few degrees).
+    expect(released - before).toBeGreaterThan(0.35);
+    expect(Math.abs(after - released)).toBeLessThan(0.08);
     expect(after - before).toBeLessThan(0.6);
     const hud = presentSailing(s.sim, s.playerId)!;
     expect(Math.abs(hud.course! - after)).toBeLessThan(0.15);

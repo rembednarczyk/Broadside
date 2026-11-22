@@ -26,7 +26,7 @@ export const wreckageSystem: System = (ctx, dt) => {
       w.left = Math.max(0, w.left - dt);
       const def = s.model.def;
       const length = def.masts[w.mast]?.height ?? 20;
-      const at = bodyToWorld(b, vec3(w.side * def.hull.beam * 0.6, -s.model.com.y, def.masts[w.mast]?.z ?? 0));
+      const at = bodyToWorld(b, vec3(w.side * def.hull.beam * 0.6, -s.model.com.y, (def.masts[w.mast]?.z ?? 0) - s.model.com.z));
       const v = pointVelocity(b, at);
       const speed = Math.hypot(v.x, v.z);
       if (speed < 1e-3) continue;

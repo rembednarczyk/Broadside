@@ -130,8 +130,10 @@ const build = (def: ShipClassDef): ShipModel => {
   const hull = buildHullModel(def.hull);
   const h = def.hull;
   const mass = hull.designVolume * WATER_DENSITY;
-  // Ballast puts the centre of mass below the waterline.
-  const com = vec3(0, -h.draft * def.ballast * 0.5, 0);
+  // Ballast puts the centre of mass below the waterline; stowage puts it over the centre of buoyancy,
+  // so she floats on an even keel (owner's report 22.11: every class trimmed 2-4 deg by the head at
+  // rest, the centre of mass amidships ahead of the buoyancy of hulls fuller aft).
+  const com = vec3(0, -h.draft * def.ballast * 0.5, hull.buoyancyZ);
   // Radii of gyration of displacement ships: roll ~0.4 B, pitch and yaw ~0.25 L (ITTC 7.5-02-07-04).
   const kRoll = 0.4 * h.beam;
   const kPitch = 0.25 * h.length;

@@ -16,10 +16,20 @@ describe("floating", () => {
     const sim = new Simulation({ seed: 1, windDirection: 0, windSpeed: 0 });
     const e = sim.spawnShip({ classId: "sloop", faction: "player", x: 0, z: 0, heading: 0 });
     sim.command({ type: "sails", ship: e.id, mast: "all", level: 0 });
-    run(sim, 30);
+    run(sim, 20);
+    // Over the next 10 s she rides the swell (a calm still has it) about the design waterline: no
+    // drift up or down, a heave of a few centimetres. An instant's vertical speed was the check once,
+    // and it depended on the swell's phase (it failed when the trim was corrected, 22.11).
     const b = e.body!;
-    expect(Math.abs(b.pos.y - e.ship!.model.com.y)).toBeLessThan(0.35);
-    expect(Math.abs(b.vel.y)).toBeLessThan(0.2);
+    let sumVy = 0;
+    let maxDy = 0;
+    for (let i = 0; i < 600; i++) {
+      sim.step();
+      sumVy += b.vel.y;
+      maxDy = Math.max(maxDy, Math.abs(b.pos.y - e.ship!.model.com.y));
+    }
+    expect(maxDy).toBeLessThan(0.35);
+    expect(Math.abs(sumVy / 600)).toBeLessThan(0.05);
     expect(Math.abs(rollOf(b.rot))).toBeLessThan(0.05);
   });
 

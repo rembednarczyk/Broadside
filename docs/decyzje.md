@@ -1258,3 +1258,8 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   do 3,5 m/s (wcześniej 180 m od kotwicowiska i 2 m/s, osobno w symulacji i w HUD).
 - Słupy deszczu jako płaszczyzny obracane do kamery z wtapianymi brzegami i górą (wcześniej otwarte walce:
   ciemna kolumna z ostrymi krawędziami i pierścieniem na tle nieba).
+- Statek wbijał się dziobem w wodę: środek masy leżał na śródokręciu, a środek wyporu kadłubów (pełniejszych z tyłu)
+  za nim, więc każda klasa stała w spoczynku 2–4° na dziób (galeon 4,1°), także pod żaglami. Środek masy teraz nad
+  środkiem wyporu przy projektowym zanurzeniu (`HullModel.buoyancyZ`), jak przy załadunku statku na równą stępkę:
+  w spoczynku 0°, pod żaglami średnio od −0,8 do +0,1°. Złoty hash zmieniony ręcznie (reguła: środek masy nad środkiem
+  wyporu). Dwa testy przerobione z chwilowego pomiaru na pomiar w oknie czasu (zależały od fazy fali).

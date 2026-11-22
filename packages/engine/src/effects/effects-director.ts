@@ -182,7 +182,7 @@ export class EffectsDirector {
         if (sec.fire <= 0) return;
         const zone = Math.floor(i / 2);
         const h = s.model.def.hull;
-        const local = vec3((i % 2 === 1 ? 1 : -1) * h.beam * 0.25, h.freeboard + 1 - s.model.com.y, h.length * (0.3 - zone * 0.3));
+        const local = vec3((i % 2 === 1 ? 1 : -1) * h.beam * 0.25, h.freeboard + 1 - s.model.com.y, h.length * (0.3 - zone * 0.3) - s.model.com.z);
         const p = rotate(b.rot, local);
         const n = Math.ceil(sec.fire * 4);
         if (sec.fire > glowAt) {

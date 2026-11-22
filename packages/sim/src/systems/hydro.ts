@@ -98,7 +98,7 @@ const floodWeight = (b: RigidBody, s: ShipState): void => {
   s.sections.forEach((sec, i) => {
     if (sec.water <= 0) return;
     const zone = Math.floor(i / 2);
-    const local: Vec3 = vec3((i % 2 === 1 ? 1 : -1) * h.beam * 0.2, -h.draft * 0.5 - s.model.com.y, h.length * (0.3 - zone * 0.3));
+    const local: Vec3 = vec3((i % 2 === 1 ? 1 : -1) * h.beam * 0.2, -h.draft * 0.5 - s.model.com.y, h.length * (0.3 - zone * 0.3) - s.model.com.z);
     applyForceAt(b, vec3(0, -WATER_DENSITY * G * sec.water, 0), bodyToWorld(b, local));
   });
 };
