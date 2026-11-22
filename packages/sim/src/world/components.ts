@@ -112,4 +112,10 @@ export interface FortState {
   lay: { range: number; bearing: number };
   /** Hits taken per wall segment and tower (the renderer breaches the most battered). */
   scars: number[];
+  /** Hits the harbour chain can still take (0: none, or broken). */
+  chain: number;
+  /** The shot furnace is alight (heated shot). */
+  furnace: boolean;
+  /** Time a ship was last stopped by the chain (one notice per encounter, not per step). */
+  barredAt: number;
 }

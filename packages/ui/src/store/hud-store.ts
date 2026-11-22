@@ -65,6 +65,12 @@ export interface TargetHud {
   readonly classId: string;
   /** Forts: guns still in action and in all. */
   readonly guns?: readonly [number, number];
+  /** Forts: mortars still in action and in all. */
+  readonly mortars?: readonly [number, number];
+  /** Forts: the garrison, the landing party the player's ship would put ashore, and its odds (0..1). */
+  readonly garrison?: number;
+  readonly party?: number;
+  readonly chance?: number;
   readonly silenced?: boolean;
   readonly faction: string;
   readonly range: number;

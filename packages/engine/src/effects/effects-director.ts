@@ -31,6 +31,9 @@ export class EffectsDirector {
   hullLength: (classId: string, physical: number) => number = (_id, physical) => physical;
   private readonly splinters: BurstEmitter;
   private readonly shreds: BurstEmitter;
+  /** Chips of stone and a cloud of mortar dust off a fort's walls. */
+  private readonly stone: BurstEmitter;
+  private readonly dust: BurstEmitter;
   /** Planks torn out by shot (M11): flying, then afloat. */
   private readonly planks: PlankDebris;
   /** The planking a ship's torn planks show (set by the renderer: the hull model's own, or the generated hulls'). */
@@ -71,6 +74,10 @@ export class EffectsDirector {
     this.splinters = new BurstEmitter("fx-splinters", scene, { texture: this.sprites.shard, capacity: cap(1500), color1: rgba(0.8, 0.64, 0.44, 1), color2: rgba(0.6, 0.45, 0.3, 1), colorDead: rgba(0.5, 0.38, 0.25, 0), minSize: 0.12, maxSize: 0.3, minLife: 0.6, maxLife: 1.4, minPower: 6, maxPower: 18, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.6, growth: 1, drag: 0, quadDrag: 0.02, stretch: [1.2, 2.6] }, clock);
     // Shreds of canvas and rope from sails and rigging: light, so the air catches them and they flutter down.
     this.shreds = new BurstEmitter("fx-shreds", scene, { texture: this.sprites.rag, capacity: cap(800), color1: rgba(0.88, 0.84, 0.74, 1), color2: rgba(0.7, 0.66, 0.56, 1), colorDead: rgba(0.7, 0.66, 0.56, 0), minSize: 0.2, maxSize: 0.45, minLife: 1.5, maxLife: 3, minPower: 4, maxPower: 10, gravity: new Vector3(0, -3, 0), additive: false, spread: 0.8, growth: 1, drag: 1.8, quadDrag: 0.1 }, clock);
+    // Shot on stone (beta test 22.11: a fort's walls threw planks): grey chips flung back off the face,
+    // and a cloud of mortar dust 4-6 m across that hangs two or three seconds.
+    this.stone = new BurstEmitter("fx-stone", scene, { texture: this.sprites.shard, capacity: cap(800), color1: rgba(0.62, 0.6, 0.55, 1), color2: rgba(0.45, 0.43, 0.4, 1), colorDead: rgba(0.4, 0.38, 0.35, 0), minSize: 0.1, maxSize: 0.35, minLife: 0.6, maxLife: 1.3, minPower: 5, maxPower: 15, gravity: new Vector3(0, -9.81, 0), additive: false, spread: 0.7, growth: 1, drag: 0, quadDrag: 0.02 }, clock);
+    this.dust = new BurstEmitter("fx-dust", scene, { texture: this.sprites.billow, cells: BILLOW_CELLS, capacity: cap(600), color1: rgba(0.72, 0.67, 0.58, 0.55), color2: rgba(0.62, 0.58, 0.5, 0.45), colorDead: rgba(0.6, 0.56, 0.5, 0), minSize: 1.5, maxSize: 2.5, minLife: 2, maxLife: 3, minPower: 1.5, maxPower: 4, gravity: new Vector3(0, -0.4, 0), additive: false, spread: 0.6, growth: 2.4, drag: 0.8, quadDrag: 0.05 }, clock);
     this.planks = new PlankDebris(scene, Math.max(40, Math.round(160 * particles)));
     this.flames = new BurstEmitter("fx-flames", scene, { texture: this.sprites.flare, capacity: cap(2500), color1: rgba(1.5, 0.95, 0.35, 0.9), color2: rgba(1.3, 0.5, 0.1, 0.8), colorDead: rgba(0.3, 0.05, 0, 0), minSize: 1.6, maxSize: 3, minLife: 0.5, maxLife: 1.1, minPower: 1, maxPower: 4, gravity: new Vector3(0, 4, 0), additive: true, spread: 0.3, growth: 0.45, drag: 0.8 }, clock);
     this.fireSmoke = new BurstEmitter("fx-fire-smoke", scene, { texture: this.sprites.billow, cells: BILLOW_CELLS, capacity: cap(2500), color1: rgba(0.13, 0.11, 0.1, 0.6), color2: rgba(0.2, 0.18, 0.16, 0.5), colorDead: rgba(0.3, 0.3, 0.3, 0), minSize: 2.5, maxSize: 4.5, minLife: 6, maxLife: 12, minPower: 2, maxPower: 5, gravity: new Vector3(0, 1.2, 0), additive: false, spread: 0.25, growth: 3.5, drag: 0.35, quadDrag: 0.05 }, clock);
@@ -103,8 +110,8 @@ export class EffectsDirector {
           this.blast.emit(e.at.x + e.dir.x, e.at.y, e.at.z + e.dir.z, e.dir.x, e.dir.y + 0.05, e.dir.z, Math.round(8 * big), 0.6);
           this.smoke.emit(e.at.x + e.dir.x * 7, e.at.y + 1.5, e.at.z + e.dir.z * 7, e.dir.x * 0.5, 0.25, e.dir.z * 0.5, Math.max(2, Math.round(5 * big * this.density)), 4);
           this.embers.emit(e.at.x, e.at.y, e.at.z, e.dir.x, e.dir.y + 0.15, e.dir.z, Math.round(6 * big), 0.3);
-          // The blast flattens the water under the muzzle: a ring of spray.
-          this.spray.emit(e.at.x + e.dir.x * 4, e.at.y - 1.5, e.at.z + e.dir.z * 4, e.dir.x * 0.5, 0.4, e.dir.z * 0.5, Math.round(5 * big), 2.5);
+          // The blast flattens the water under the muzzle: a ring of spray (a ship's; a fort's guns stand on land).
+          if (this.shipAt.has(e.ship)) this.spray.emit(e.at.x + e.dir.x * 4, e.at.y - 1.5, e.at.z + e.dir.z * 4, e.dir.x * 0.5, 0.4, e.dir.z * 0.5, Math.round(5 * big), 2.5);
           this.lights.fire(e.at.x + e.dir.x * 2, e.at.y + 1, e.at.z + e.dir.z * 2, big);
           break;
         }
@@ -148,11 +155,11 @@ export class EffectsDirector {
 
   /** The scene's light on the unlit particles (smoke, spray, splinters); fire is its own light. */
   setLight(l: ParticleLight): void {
-    for (const em of [this.blast, this.smoke, this.spray, this.column, this.mist, this.splinters, this.shreds, this.trail, this.fireSmoke, this.screen]) em.setLight(l.r, l.g, l.b);
+    for (const em of [this.blast, this.smoke, this.spray, this.column, this.mist, this.splinters, this.shreds, this.stone, this.dust, this.trail, this.fireSmoke, this.screen]) em.setLight(l.r, l.g, l.b);
   }
 
   /** Continuous effects read from the simulation each frame. */
-  frame(sim: Simulation, dt: number, burning: readonly { x: number; y: number; z: number }[] = []): void {
+  frame(sim: Simulation, dt: number, burning: readonly { x: number; y: number; z: number; chimney?: boolean }[] = []): void {
     this.lights.update(dt);
     this.fireClock += dt;
     const emitFires = this.fireClock > 0.08;
@@ -160,7 +167,7 @@ export class EffectsDirector {
     const w = windVector(sim.env.windDirection, sim.env.windSpeed);
     // Smoke and spray drift down the wind: drag pulls them to the wind's speed, never past it.
     // The smoke screen stays put (the simulation's cloud does not drift).
-    for (const em of [this.blast, this.smoke, this.fireSmoke, this.spray, this.mist, this.shreds]) em.setAir(w.x, w.z);
+    for (const em of [this.blast, this.smoke, this.fireSmoke, this.spray, this.mist, this.shreds, this.dust]) em.setAir(w.x, w.z);
     for (const e of sim.ships()) {
       const s = e.ship!;
       const b = e.body!;
@@ -181,6 +188,11 @@ export class EffectsDirector {
     }
     if (emitFires) {
       for (const p of burning) {
+        // A furnace's chimney: a thin dark plume, no flame.
+        if (p.chimney) {
+          this.fireSmoke.emit(p.x, p.y, p.z, w.x * 0.1, 1, w.z * 0.1, 1, 0.4);
+          continue;
+        }
         this.flames.emit(p.x, p.y, p.z, w.x * 0.05, 1, w.z * 0.05, 3, 6);
         this.fireSmoke.emit(p.x, p.y + 3, p.z, w.x * 0.1, 1, w.z * 0.1, 2, 6);
       }
@@ -199,7 +211,7 @@ export class EffectsDirector {
     const t = sim.env.time;
     this.planks.pool.step(dt, (x, z) => waterHeight(waves, x, z, t), (x, y, z) => this.spray.emit(x, y, z, 0, 1, 0, 3, 0.3));
     this.planks.sync();
-    for (const em of [this.blast, this.smoke, this.flash, this.spray, this.column, this.mist, this.splinters, this.shreds, this.trail, this.flames, this.fireSmoke, this.embers, this.screen]) em.flush();
+    for (const em of [this.blast, this.smoke, this.flash, this.spray, this.column, this.mist, this.splinters, this.shreds, this.stone, this.dust, this.trail, this.flames, this.fireSmoke, this.embers, this.screen]) em.flush();
   }
 
   /**
@@ -315,6 +327,12 @@ export class EffectsDirector {
     const dz = from ? at.z - from.z : 0;
     const len = Math.hypot(dx, dz) || 1;
     const n = Math.min(30, 6 + Math.round(damage));
+    if (part === "wall") {
+      // Off the face back towards the gun, spreading wide: the stone shatters, it does not splinter along.
+      this.stone.emit(at.x, at.y, at.z, (-dx / len) * 0.6, 0.5, (-dz / len) * 0.6, n, 0.6);
+      this.dust.emit(at.x, at.y, at.z, (-dx / len) * 0.4, 0.2, (-dz / len) * 0.4, Math.max(3, Math.round(n / 4)), 1.2);
+      return;
+    }
     if (part === "sails" || part === "rigging") {
       this.shreds.emit(at.x, at.y, at.z, (dx / len) * 0.6, 0.3, (dz / len) * 0.6, Math.ceil(n / (part === "sails" ? 2 : 4)), 1);
       return;
@@ -334,7 +352,7 @@ export class EffectsDirector {
 
   dispose(): void {
     this.planks.dispose();
-    for (const em of [this.blast, this.smoke, this.flash, this.spray, this.column, this.mist, this.splinters, this.shreds, this.trail, this.flames, this.fireSmoke, this.embers, this.screen]) em.dispose();
+    for (const em of [this.blast, this.smoke, this.flash, this.spray, this.column, this.mist, this.splinters, this.shreds, this.stone, this.dust, this.trail, this.flames, this.fireSmoke, this.embers, this.screen]) em.dispose();
     this.shots.dispose();
   }
 }

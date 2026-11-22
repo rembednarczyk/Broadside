@@ -38,8 +38,19 @@ export const createFort = (site: FortSite): FortState => {
     division: 0,
     lay: { range: 0, bearing: 0 },
     scars: Array.from({ length: l.walls.length + l.towers.length }, () => 0),
+    chain: def.chain && site.chain ? CHAIN_HITS : 0,
+    furnace: def.furnace,
+    barredAt: -100,
   };
 };
+
+/** Hits of round shot that part a harbour chain (chain shot counts three). */
+export const CHAIN_HITS = 8;
+/** Below this share of its walls a fort's furnace is out (the stokers driven off, the grates wrecked). */
+const FURNACE_OUT = 0.5;
+
+/** The ammunition a fort's guns fire now: heated shot only while the furnace burns. */
+export const fortAmmo = (f: FortState): FortState["def"]["ammo"] => (f.def.ammo === "hot" && !f.furnace ? "round" : f.def.ammo);
 
 const RELOAD = 20;
 const MORTAR_RELOAD = 22;
@@ -101,16 +112,17 @@ const fireGun = (world: SimWorld, events: EventQueue, fe: Entity, target: Entity
   if (!first) return false;
   // Lead the target by the shot's time of flight from this muzzle, then lay on the led point.
   const h = first.muzzle.y - aimY;
+  const ammo = fortAmmo(f);
   const r0 = Math.hypot(tp.x - first.muzzle.x, tp.z - first.muzzle.z);
-  const led = ahead(target, timeOfFlight(r0, f.def.pounder, f.def.ammo, h, FORT_DEPRESSION));
+  const led = ahead(target, timeOfFlight(r0, f.def.pounder, ammo, h, FORT_DEPRESSION));
   const range = Math.hypot(led.x - first.muzzle.x, led.z - first.muzzle.z);
   if (range > FORT_RANGE) return false;
   if (f.division === 0) f.lay = { range: gauss(rng) * (LAY_RANGE_BASE + LAY_RANGE_SHARE * range), bearing: gauss(rng) * LAY_BEARING };
   const bearing = Math.atan2(led.x - first.muzzle.x, led.z - first.muzzle.z) + f.lay.bearing;
-  const elev = elevationForRange(Math.max(10, range + f.lay.range), f.def.pounder, f.def.ammo, h, FORT_DEPRESSION);
+  const elev = elevationForRange(Math.max(10, range + f.lay.range), f.def.pounder, ammo, h, FORT_DEPRESSION);
   const dir = vec3(Math.sin(bearing) * Math.cos(elev), Math.sin(elev), Math.cos(bearing) * Math.cos(elev));
-  launchShot(world, fe.id, first.muzzle, dir, muzzleSpeed(f.def.ammo, false), f.def.pounder, f.def.ammo, rng);
-  events.push({ type: "gunFired", ship: fe.id, at: first.muzzle, dir, pounder: f.def.pounder, ammo: f.def.ammo });
+  launchShot(world, fe.id, first.muzzle, dir, muzzleSpeed(ammo, false), f.def.pounder, ammo, rng);
+  events.push({ type: "gunFired", ship: fe.id, at: first.muzzle, dir, pounder: f.def.pounder, ammo });
   f.guns[first.i] = RELOAD * (0.8 + rng.next() * 0.4);
   f.division++;
   if (f.division >= f.def.salvo) {
@@ -186,6 +198,10 @@ export const damageFort = (events: EventQueue, fe: Entity, by: number, mass: num
     if (pickIt?.mortar) f.mortars[pickIt.i] = -1;
     else if (pickIt) f.guns[pickIt.i] = -1;
   }
+  if (f.furnace && f.hp < f.def.hp * FURNACE_OUT) {
+    f.furnace = false;
+    events.push({ type: "furnaceOut", fort: fe.id });
+  }
   if (f.hp <= 0) {
     f.guns = f.guns.map(() => -1);
     f.mortars = f.mortars.map(() => -1);
@@ -229,6 +245,9 @@ export const assault = (events: EventQueue, ship: Entity, fe: Entity, rng: Rng, 
     // The new owner remounts what is left (beta test 22.11: the mortars stayed dismounted for good).
     f.guns = f.guns.map(() => 0);
     f.mortars = f.mortars.map(() => 0);
+    // The new owner relights the furnace and hauls the chain up again for her own harbour.
+    f.furnace = f.def.furnace;
+    f.chain = f.def.chain && f.site.chain ? CHAIN_HITS : 0;
     f.silenced = false;
     f.hp = f.def.hp * 0.5;
     f.provokedBy = null;

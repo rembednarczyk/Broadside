@@ -20,6 +20,8 @@ export type Cue =
   | { readonly kind: "gun"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "splash"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "wood"; readonly x: number; readonly z: number; readonly size: number }
+  /** Shot striking stone: a dull crack, then the rubble running down the wall. */
+  | { readonly kind: "stone"; readonly x: number; readonly z: number; readonly size: number }
   | { readonly kind: "boom"; readonly x: number; readonly z: number; readonly size: number }
   /** A mast going by the board (M11): the crack, the groan of the rigging as it goes over, the splash. */
   | { readonly kind: "mast"; readonly x: number; readonly z: number }
@@ -223,7 +225,10 @@ export class SynthAudio {
     if (cue.kind === "gun") this.burst(at, "lowpass", 900 + 600 / cue.size, 1.1 + cue.size * 0.5, 0.9, 0.9 * cue.size);
     else if (cue.kind === "splash") this.burst(at, "bandpass", 1400, 0.6 * cue.size, 0.25, 0);
     else if (cue.kind === "wood") this.burst(at, "highpass", 1800, 0.25, 0.5, 0.2);
-    else if (cue.kind === "mast") {
+    else if (cue.kind === "stone") {
+      this.burst(at, "bandpass", 650, 0.35 + cue.size * 0.1, 0.75, 0.6 * cue.size);
+      this.burst({ ...at, delay: at.delay + 0.12 }, "highpass", 2600, 0.9, 0.12, 0);
+    } else if (cue.kind === "mast") {
       this.burst(at, "highpass", 1200, 0.6, 0.9, 0.5);
       this.burst(at, "bandpass", 1000, 1.4, 0.4, 0);
     }

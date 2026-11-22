@@ -4,6 +4,7 @@ import { type Entity } from "../world/components";
 import { segmentHit, rigBox, type RigBox } from "../combat/hit-test";
 import { applyBlast, applyImpact } from "../combat/damage";
 import { damageFort, hitsFort } from "../combat/forts";
+import { shotOnChain } from "./harbour-chain";
 import { type ShipModel } from "../ship/ship-model";
 import { sortedById } from "../world/world";
 
@@ -70,6 +71,14 @@ const tryForts = (ctx: Parameters<System>[0], shot: Entity): boolean => {
   return false;
 };
 
+/** Shot striking a raised harbour chain low over the water (it parts after enough hits). */
+const tryChain = (ctx: Parameters<System>[0], shot: Entity): boolean => {
+  const sh = shot.shot!;
+  if (sh.s.y > 3) return false;
+  const from = vec3(sh.s.x - sh.s.vx / 60, sh.s.y - sh.s.vy / 60, sh.s.z - sh.s.vz / 60);
+  return shotOnChain(ctx.events, sortedById(ctx.world.with("fort")), from, vec3(sh.s.x, sh.s.y, sh.s.z), sh.owner, sh.ammo);
+};
+
 /** Shot striking land: it buries itself in the hillside with a puff of earth. */
 const tryLand = (ctx: Parameters<System>[0], shot: Entity): boolean => {
   const a = ctx.env.archipelago;
@@ -113,6 +122,6 @@ export const shotsSystem: System = (ctx, dt) => {
     const sh = e.shot;
     stepShot(sh.s, sh.k, dt);
     sh.age += dt;
-    if (tryShips(ctx, e, ships) || tryForts(ctx, e) || tryLand(ctx, e) || tryWater(ctx, e) || sh.age > MAX_AGE) ctx.world.remove(e);
+    if (tryShips(ctx, e, ships) || tryForts(ctx, e) || tryChain(ctx, e) || tryLand(ctx, e) || tryWater(ctx, e) || sh.age > MAX_AGE) ctx.world.remove(e);
   }
 };

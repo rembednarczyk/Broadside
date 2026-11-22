@@ -69,6 +69,23 @@ for (const size of SIZES) {
       await page.click('[data-testid="options-back"]');
       await page.click('[data-testid="close-settings"]');
     }
+    // A fort as the target (its panel is the tallest: guns, mortars, garrison and our party, storming
+    // odds): the player lies broadside on to the nearest pirate fort, 320 m off its walls.
+    await page.evaluate(() => {
+      const b = globalThis.__broadside;
+      const sim = b.session.sim;
+      const me = sim.player();
+      const f = sim.forts().find((e) => e.fort.faction === "pirates") ?? sim.forts()[0];
+      if (!me || !f) return;
+      const st = f.fort;
+      const facing = st.site.facing ?? Math.atan2(st.site.x, st.site.z);
+      const d = st.def.radius + 320;
+      me.body.pos = { ...me.body.pos, x: st.site.x + Math.sin(facing) * d, z: st.site.z + Math.cos(facing) * d };
+      const hd = facing + Math.PI / 2;
+      me.body.rot = { x: 0, y: Math.sin(hd / 2), z: 0, w: Math.cos(hd / 2) };
+      me.body.vel = { x: 0, y: 0, z: 0 };
+    });
+    await page.waitForSelector(".target", { timeout: 20000 }).catch(() => {});
     await page.evaluate(() => document.fonts.ready);
     const found = await page.evaluate((regions) => {
       const boxes = [];

@@ -3,6 +3,7 @@ import { type Faction } from "../data/factions";
 import { type FortClassId } from "../data/forts";
 import { DEEP_SEA, type Archipelago, type Island, spineAt, spineLength, terrainHeight } from "./archipelago";
 import { FORT_CLASSES } from "../data/forts";
+import { type FortSite } from "./fort-site";
 import { naturalLand } from "./drawn-land";
 import { fortLayout } from "./fort-layout";
 
@@ -104,18 +105,23 @@ export const openWater = (a: Archipelago, x: number, z: number, clearance = 120)
   return { x, z };
 };
 
-export interface FortSite {
-  readonly x: number;
-  readonly z: number;
-  /** Ground height the fort stands on. */
-  readonly y: number;
-  readonly classId: FortClassId;
-  readonly faction: Faction;
-  /** Port the fort guards (index into portSites), or null for a lone work. */
-  readonly port: number | null;
-  /** Bearing the works face (atan2(dx, dz), towards the sea). */
-  readonly facing?: number;
-}
+export type { FortSite } from "./fort-site";
+
+/** Half the length of a harbour chain (m), and where it lies between the landing (0) and the anchorage (1). */
+const CHAIN_HALF = 150;
+const CHAIN_AT = 0.55;
+
+/** The boom across the approach: square to the line from the landing out to the anchorage. */
+export const harbourChain = (p: PortSite): NonNullable<FortSite["chain"]> => {
+  const dx = p.ax - p.x;
+  const dz = p.az - p.z;
+  const d = Math.hypot(dx, dz) || 1;
+  const cx = p.x + dx * CHAIN_AT;
+  const cz = p.z + dz * CHAIN_AT;
+  const ux = -dz / d;
+  const uz = dx / d;
+  return { x0: cx - ux * CHAIN_HALF, z0: cz - uz * CHAIN_HALF, x1: cx + ux * CHAIN_HALF, z1: cz + uz * CHAIN_HALF };
+};
 
 /** The drawn ground under a fort's footprint (its walls' and towers' feet and a ring 4 m outside): lowest, highest. */
 export const fortGround = (a: Archipelago, classId: FortClassId, x: number, z: number, facing: number, dry = -Infinity): { min: number; max: number } => {
@@ -202,7 +208,7 @@ export const fortSites = (a: Archipelago): FortSite[] => {
     for (const [k, cls] of classes.entries()) {
       const site = fortSite(a, cls, p.x, p.z, inlandBearing, towards, k < classes.length - 1 ? MAX_RISE : Infinity);
       if (site) {
-        out.push({ ...site, classId: cls, faction: p.faction, port: i });
+        out.push({ ...site, classId: cls, faction: p.faction, port: i, ...(FORT_CLASSES[cls].chain ? { chain: harbourChain(p) } : {}) });
         return;
       }
     }

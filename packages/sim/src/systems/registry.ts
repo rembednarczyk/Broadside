@@ -19,6 +19,7 @@ import { weatherSystem } from "./weather";
 import { spoutSystem } from "./spouts";
 import { groundingSystem } from "./grounding";
 import { fortSystem } from "./forts";
+import { harbourChainSystem } from "./harbour-chain";
 import { provisionsSystem } from "./provisions";
 import { collisionSystem } from "./collisions";
 import { populationSystem } from "./population";
@@ -45,6 +46,7 @@ export const createSystems = (): readonly System[] => [
   hydroSystem,
   groundingSystem,
   integrateSystem,
+  harbourChainSystem,
   collisionSystem,
   gunsSystem,
   fortSystem,

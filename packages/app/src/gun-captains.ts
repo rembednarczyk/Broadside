@@ -1,4 +1,4 @@
-import { aimFor } from "@broadside/sim";
+import { aimFor, aimForFort, screens } from "@broadside/sim";
 import { type GameCommand } from "@broadside/core";
 import { type Simulation } from "@broadside/sim";
 import { aimOf } from "./aiming";
@@ -9,9 +9,15 @@ import { aimOf } from "./aiming";
  * crew sails; a new captain left to herself was sunk by the opening pirates without firing a shot
  * (beta test 19.11). A broadside goes when a hostile ship that has not struck lies in its arc
  * within BEAR_RANGE, laid as the player's own aimed broadside (aimOf); at most once a second per
- * side (guns still reloading stay silent anyway). The player's own orders come first.
+ * side (guns still reloading stay silent anyway). An enemy fort in the arc within FORT_BEAR_RANGE
+ * is fired on too. The player's own orders come first.
  */
 const BEAR_RANGE = 260;
+/**
+ * An enemy fort is fired on from farther (its walls are a big mark, and lying close under them is
+ * what kills a ship: beta test 22.11, the captains held fire at forts altogether).
+ */
+const FORT_BEAR_RANGE = 430;
 const EVERY = 1;
 
 export class GunCaptains {
@@ -32,7 +38,9 @@ export class GunCaptains {
     for (const side of ["port", "starboard"] as const) {
       if (t < this.next[side]) continue;
       const aim = aimFor(me, this.sim.ships(), side, true, this.sim.relations);
-      if (!aim || aim.range > BEAR_RANGE || aim.target.ship!.struck || aim.target.ship!.sinking) continue;
+      const shipBears = !!aim && aim.range <= BEAR_RANGE && !aim.target.ship!.struck && !aim.target.ship!.sinking;
+      const fort = shipBears ? null : aimForFort(me, this.sim.forts(), side, this.sim.relations, screens(this.sim.world));
+      if (!shipBears && (!fort || fort.range > FORT_BEAR_RANGE)) continue;
       this.next[side] = t + EVERY;
       const a = aimOf(this.sim, me, "broadside", side);
       out.push({ type: "fire", ship: this.playerId, mount: "broadside", side, range: a.range, ...(a.bearing !== undefined ? { bearing: a.bearing } : {}), aimHeight: a.aimHeight });

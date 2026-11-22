@@ -1,5 +1,5 @@
 import { type FortClassDef } from "../data/forts";
-import type { FortSite } from "./shores";
+import { type FortSite } from "./fort-site";
 
 /**
  * Fort layouts as wall segments and towers in fort space (origin at the fort's foot, +z towards
@@ -46,6 +46,8 @@ export interface FortLayout {
   readonly guns: readonly FortGun[];
   /** Mortar beds in the court (they lob over the walls). */
   readonly mortars: readonly { readonly x: number; readonly y: number; readonly z: number }[];
+  /** The shot furnace in the court, for a fort that heats its shot. */
+  readonly furnace?: { readonly x: number; readonly z: number };
 }
 
 /** Walls reach this far below the fort's foot (the foundation the renderer draws too). */
@@ -130,7 +132,7 @@ const buildLayout = (def: FortClassDef): FortLayout => {
   const walls = ring(star(points, r, r * 0.62), h, def.id === "citadel" ? 6 : 4.5);
   const towers = def.id === "citadel" ? [{ x: 0, z: 0, radius: r * 0.22, height: h * 2.2 }, ...star(points, r, r).filter((_, i) => i % 2 === 0).map((p) => ({ x: p.x, z: p.z, radius: 4, height: h * 1.3 }))] : [{ x: 0, z: 0, radius: r * 0.18, height: h * 1.4 }];
   const court = def.id === "citadel" ? r * 0.36 : r * 0.34;
-  return { walls, towers, guns: gunsAlong(walls, def.guns, h + 0.5), mortars: courtMortars(def.mortars, court, 1) };
+  return { walls, towers, guns: gunsAlong(walls, def.guns, h + 0.5), mortars: courtMortars(def.mortars, court, 1), ...(def.furnace ? { furnace: { x: -r * 0.36, z: -r * 0.2 } } : {}) };
 };
 
 /** Bearing the works face (atan2(dx, dz), towards the sea); old saves without one face away from the origin. */

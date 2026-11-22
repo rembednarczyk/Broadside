@@ -271,6 +271,7 @@ export class BabylonRenderer {
       this.shakeFor(e);
       if (e.type === "gunFired") this.views.get(e.ship)?.gunFired(e.at);
       if (e.type === "hit" && (e.part === "hull" || e.part === "gun")) this.views.get(e.ship)?.shotHit(e.at, e.damage);
+      if (e.type === "hit" && e.part === "wall") this.forts.shotHit(e.ship, e.at, e.damage);
     }
     this.weather.onEvents(events);
   }
@@ -349,7 +350,9 @@ export class BabylonRenderer {
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.ocean.setTrails(this.trails.update(ships, sim.env.time));
     this.syncShips(sim);
-    this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time));
+    const eyeNow = this.camera.camera.position;
+    const wind = { x: Math.sin(sim.env.windDirection) * sim.env.windSpeed, z: Math.cos(sim.env.windDirection) * sim.env.windSpeed };
+    this.effects.frame(sim, dt, this.forts.sync(sim.forts(), sim.env.time, { x: eyeNow.x, z: eyeNow.z }, wind, dt));
     this.weather.frame(sim, dt);
     this.salvo.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);
     this.course.frame(sim.env.waves, sim.env.time, this.camera.mode === "isometric" ? this.camera.viewHalf : 60);

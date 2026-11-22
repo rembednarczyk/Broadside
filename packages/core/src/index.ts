@@ -22,6 +22,8 @@ export * from "./world/archipelago";
 export * from "./world/shores";
 export * from "./world/fort-layout";
 export * from "./world/drawn-land";
+export * from "./world/levelled-land";
+export * from "./world/fort-site";
 export * from "./world/wrecks";
 export * from "./world/contours";
 export * from "./world/survey";

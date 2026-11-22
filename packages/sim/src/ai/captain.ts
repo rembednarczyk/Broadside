@@ -201,8 +201,16 @@ const patrol = (me: Entity, c: CaptainState, w: World2D): GameCommand[] => {
   if (leader) return keepStation(me, leader, w);
   if (c.role === "trade" && (c.dest < 0 || Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 260)) nextPort(c, w);
   else if (Math.hypot(c.wx - b.pos.x, c.wz - b.pos.z) < 120) {
-    c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
-    c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
+    // A man-of-war at war now and then sails against an enemy fort in her waters (beta test 22.11: the
+    // patrols' random walk of ±800 m seldom brought one within sight of a fort, and none was besieged).
+    const raid = c.role === "patrol" && c.leader < 0 && w.rng() < RAID_CHANCE ? fortToRaid(me, w) : null;
+    if (raid) {
+      c.wx = raid.x;
+      c.wz = raid.z;
+    } else {
+      c.wx = b.pos.x + (w.rng() - 0.5) * 1600;
+      c.wz = b.pos.z + (w.rng() - 0.5) * 1600;
+    }
   }
   // Round the islands to the waypoint (a port behind an island is reached the long way).
   const next = wayPoint(me, c, w.bed);
@@ -236,6 +244,25 @@ const BOMBARD = 400;
 const MORTAR_ARC = 0.6;
 /** Storming odds a captain wants before he lands his people (forts stormChance). */
 const STORM_ODDS = 0.8;
+
+/** Chance a patrol's next waypoint is an enemy fort, and how far she looks for one (m). */
+const RAID_CHANCE = 0.35;
+const RAID_REACH = 2500;
+
+/** The seaward bombarding station of the nearest enemy fort within RAID_REACH, or null. */
+const fortToRaid = (me: Entity, w: World2D): { x: number; z: number } | null => {
+  let best: { x: number; z: number; d: number } | null = null;
+  for (const f of w.forts) {
+    const st = f.fort!;
+    if (st.silenced || st.faction === me.ship!.faction || !isHostile(standing(me.ship!.faction, st.faction, w.relations))) continue;
+    const d = Math.hypot(st.site.x - me.body!.pos.x, st.site.z - me.body!.pos.z);
+    if (d > RAID_REACH || (best && d >= best.d)) continue;
+    const facing = st.site.facing ?? Math.atan2(st.site.x, st.site.z);
+    const off = st.def.radius + BOMBARD * 1.6;
+    best = { x: st.site.x + Math.sin(facing) * off, z: st.site.z + Math.cos(facing) * off, d };
+  }
+  return best;
+};
 
 const enemyFort = (me: Entity, w: World2D): Entity | null => {
   let best: Entity | null = null;
@@ -368,8 +395,9 @@ export const decide = (me: Entity, c: CaptainState, w: World2D): GameCommand[] =
   }
   if (!t) {
     c.mode = "patrol";
-    // A man-of-war with no ship to fight goes for an enemy fort in sight.
-    const fort = c.role === "patrol" && c.leader < 0 ? enemyFort(me, w) : null;
+    // A man-of-war with no ship to fight goes for an enemy fort in sight; a squadron's ships join their
+    // leader's siege (beta test 22.11: alone, a frigate was driven off before a star fort fell silent).
+    const fort = c.role === "patrol" ? enemyFort(me, w) : null;
     if (fort) {
       c.mode = "engage";
       return bombard(me, c, fort, w);

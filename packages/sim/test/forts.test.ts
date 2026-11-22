@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvent, type FortSite, createRng, quatFromYaw, vec3 } from "@broadside/core";
 import { Simulation } from "../src/simulation";
-import { damageFort, stormChance } from "../src/combat/forts";
+import { damageFort, fortAmmo, stormChance } from "../src/combat/forts";
 
 const run = (sim: Simulation, seconds: number, sink: DomainEvent[] = []) => {
   for (let i = 0; i < seconds * 60; i++) {
@@ -133,5 +133,48 @@ describe("sieges by the navies", () => {
     sim.spawnFort(site("watchtower", "crown"));
     const frigate = sim.spawnShip({ classId: "frigate", faction: "crown", x: 0, z: -600, heading: 0, ai: true, speed: 3 });
     expect(run(sim, 60).some((e) => e.type === "gunFired" && e.ship === frigate.id)).toBe(false);
+  });
+});
+
+describe("harbour chain and shot furnace (beta test 22.11)", () => {
+  const chained = (faction: FortSite["faction"]): FortSite => ({ x: -600, z: 0, y: 6, classId: "citadel", faction, port: 0, facing: Math.PI / 2, chain: { x0: 0, z0: -150, x1: 0, z1: 150 } });
+
+  const sail = (faction: FortSite["faction"], silenced = false) => {
+    const sim = new Simulation({ seed: 4, windDirection: Math.PI / 2, windSpeed: 7 });
+    const fort = sim.spawnFort(chained("crown"));
+    fort.fort!.silenced = silenced;
+    // Far beyond her guns' reach is not needed: the test is the chain; she runs at it from the east.
+    const ship = sim.spawnShip({ classId: "sloop", faction, x: 60, z: 0, heading: -Math.PI / 2, speed: 5 });
+    sim.command({ type: "sails", ship: ship.id, mast: "all", level: 3 });
+    const ev = run(sim, 30);
+    return { x: ship.body!.pos.x, ev };
+  };
+
+  it("holds an enemy at the boom while the fort fights", () => {
+    const r = sail("republic");
+    expect(r.x).toBeGreaterThan(-2);
+    expect(r.ev.some((e) => e.type === "chainBarred")).toBe(true);
+  });
+
+  it("lets friends through, and lowers it for all once the fort is silenced", () => {
+    expect(sail("crown").x).toBeLessThan(-10);
+    expect(sail("republic", true).x).toBeLessThan(-10);
+  });
+
+  it("parts under shot, and the furnace goes out when the walls are half down", () => {
+    const sim = new Simulation({ seed: 4, windDirection: 0, windSpeed: 3 });
+    const fort = sim.spawnFort(chained("crown"));
+    const f = fort.fort!;
+    const ev: DomainEvent[] = [];
+    for (let k = 0; k < 10 && f.chain > 0; k++) {
+      sim.world.add({ id: 0, shot: { s: { x: 5, y: 1, z: 0, vx: -120, vy: 0, vz: 0 }, k: 0, mass: 5, ammo: "round", owner: 999, pounder: 12, age: 1, bounces: 0 } });
+      run(sim, 0.2, ev);
+    }
+    expect(f.chain).toBe(0);
+    expect(ev.some((e) => e.type === "chainBroken")).toBe(true);
+    expect(fortAmmo(f)).toBe("hot");
+    damageFort(sim.events, fort, 999, 2000, 300, "round", vec3(-600, 8, 0), createRng(2));
+    expect(f.furnace).toBe(false);
+    expect(fortAmmo(f)).toBe("round");
   });
 });

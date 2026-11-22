@@ -1228,3 +1228,11 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   najniższym punkcie z cokołem: na zboczu cokół z jednej strony i zasypany mur z drugiej wyglądały gorzej niż wcięcie
   w zbocze. Fizyka lądu (mielizny, linia wody) bez zmian: taras zmienia tylko ląd powyżej plaży (0,8 m).
 - Wyszukiwanie miejsca pod forty trwa ok. 0,5–1 s na świat (raz, wynik w pamięci podręcznej): do sprawdzenia na telefonie.
+- Łańcuch portowy jako odcinek w poprzek podejścia do portu (55% drogi od nabrzeża do kotwicowiska, 300 m), dane
+  w miejscu fortu (`FortSite.chain`). Zatrzymanie statku jak więz kontaktowy (składowa prędkości w poprzek łańcucha
+  zerowana), bez obrażeń. Przyjaciele przepływają (łańcuch opuszczany).
+- Piec do kul gaśnie przy połowie wytrzymałości murów zamiast osobnego celu do trafienia: piec stoi na dziedzińcu,
+  płaski tor kuli go nie sięga, a moździerzy gracz ma mało.
+- Garnizon na murach jako proste figury (kapsuła i głowa, kolor kurtki frakcji) zamiast animowanej załogi statków:
+  z odległości fortu postać ma kilka pikseli, a 40 animowanych postaci na fort kosztowałoby wiele.
+- AI oblega forty wyprawami (35% szans przy wyborze kolejnego punktu patrolu, wrogi fort do 2,5 km) i całą eskadrą.

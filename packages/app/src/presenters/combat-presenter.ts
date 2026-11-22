@@ -1,5 +1,5 @@
 import { type MountKind, canFire, AMMO_IDS, damageState, wrapAngle, yawOf } from "@broadside/core";
-import { type Entity, type ShipState, type Simulation, aimFor, aimForFort, canBoard, fortToStorm, hullShare, shipCondition } from "@broadside/sim";
+import { type Entity, type ShipState, type Simulation, STORM_SHARE, aimFor, aimForFort, canBoard, fortToStorm, hullShare, piecesLeft, screens, shipCondition, stormChance } from "@broadside/sim";
 import { type BatteryHud, type CombatHud, type TargetHud } from "@broadside/ui";
 
 /** Reads the player's guns, stores and condition, and the current target (Presenter). */
@@ -37,6 +37,20 @@ export const presentCombat = (e: Entity, forts: readonly Entity[] = [], ships: r
   };
 };
 
+/** The nearest silenced fort not the player's within this range of its walls (m), for the panel. */
+const QUIET_FORT = 600;
+
+const silencedNear = (me: Entity, forts: readonly Entity[]): { e: Entity; range: number } | null => {
+  let best: { e: Entity; range: number } | null = null;
+  for (const e of forts) {
+    const f = e.fort!;
+    if (!f.silenced || f.faction === me.ship!.faction) continue;
+    const range = Math.hypot(f.site.x - me.body!.pos.x, f.site.z - me.body!.pos.z) - f.def.radius * 0.5;
+    if (range < QUIET_FORT && (!best || range < best.range)) best = { e, range };
+  }
+  return best;
+};
+
 /**
  * Beyond this a broadside rarely tells (m): the shot falls short or wide of a ship end-on (a beta
  * tester fired 21 times from 200-330 m for no damage); the target panel says so.
@@ -54,11 +68,17 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
   ];
   const aims = arcs.map((a) => aimFor(me, ships, a, true, sim.relations)).filter((a) => a !== null);
   const aim = aims.sort((a, b) => a.range - b.range)[0];
-  const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a, sim.relations)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
+  const smoke = screens(sim.world);
+  const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a, sim.relations, smoke)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
   const fa = fortAims[0];
-  if (fa && (!aim || fa.range < aim.range)) {
-    const f = fa.fort.fort!;
-    return { kind: "fort", classId: f.def.id, faction: f.faction, range: fa.range, hull: f.hp / f.def.hp, crew: f.garrison, struck: false, side: "ahead", guns: [f.guns.filter((g) => g >= 0).length, f.def.guns], silenced: f.silenced };
+  // A silenced fort is no longer a gun target, but stays in the panel while it can be stormed.
+  const quiet = fa ? null : silencedNear(me, sim.forts());
+  const fort = fa ? { e: fa.fort, range: fa.range } : quiet;
+  if (fort && (!aim || fort.range < aim.range)) {
+    const f = fort.e.fort!;
+    const left = piecesLeft(f);
+    const party = Math.floor(me.ship!.crew * STORM_SHARE);
+    return { kind: "fort", classId: f.def.id, faction: f.faction, range: fort.range, hull: f.hp / f.def.hp, crew: f.garrison, struck: false, side: "ahead", guns: [left.guns, f.def.guns], mortars: [left.mortars, f.def.mortars], garrison: f.garrison, party, chance: stormChance(party, f.garrison), silenced: f.silenced };
   }
   if (!aim) return null;
   const t = aim.target.ship!;

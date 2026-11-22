@@ -292,11 +292,18 @@ przed i po, audyt bitew, przeglądarka statku i APK.
   wysokości do 3 m; teren pod fortem wyrównany do tarasu (wcięcie w zbocze i nasyp, przejście 14 m), plaża
   nietknięta; mniejszy fort, gdy na większy brak miejsca (cytadela → fort gwiaździsty → bateria); fundament 6 m;
   bez domów i drzew w promieniu fortu + 6 m. `WORLD_VERSION` 3 (zapisy przenoszą forty na nowe miejsca).
-- [ ] Widok: trafienie w kamień, wyłomy i gruz, zbite działa znikają, biała flaga, cień tylko bliskich fortów,
-  przedpiersia i strzelnice, lawety, UV w metrach, bandera z płótna.
-- [ ] HUD: garnizon, desant i szansa szturmu, działa i moździerze osobno, uciszony fort zostaje w panelu.
-- [ ] Kanonierzy gracza strzelają do fortu; rozkaz „fort” staje 400 m burtą.
-- [ ] Łańcuch portowy, piec do kul, modele moździerzy, garnizon na murach.
+- [x] Widok: trafienie w kamień (odłamki, kurz 2–3 s, ślady na murze, dźwięk kamienia, bez rozbryzgu pod działem
+  na lądzie); stany części murów (porysowany, wyłom z gruzem, wieża ścięta o jedną trzecią), ogień w wyłomach,
+  kamień ciemnieje z uszkodzeniem; zbite działa i moździerze znikają (instancje); biała flaga po uciszeniu,
+  opuszczenie i podniesienie bandery przy zmianie właściciela; bandera z płótna na wietrze, wzór frakcji czytelny
+  w sepii; cień tylko fortów do 600 m od kamery; przedpiersia ze strzelnicami, lawety, UV w metrach.
+- [x] HUD: garnizon i nasz desant, szansa szturmu, działa i moździerze osobno, uciszony fort zostaje w panelu.
+- [x] Kanonierzy gracza strzelają do wrogiego fortu do 430 m; rozkaz „fort” staje 400 m burtą, po uciszeniu podchodzi
+  na szturm.
+- [x] Łańcuch portowy cytadeli (`systems/harbour-chain.ts`): zatrzymuje wrogi statek, opada po uciszeniu fortu,
+  pęka po 8 trafieniach nisko nad wodą (łańcuchowa liczy się za 3); piec do kul gaśnie poniżej połowy murów
+  (dalej zwykłe kule), dym z komina; moździerze na łożach; garnizon na murach (postać na 8 ludzi, do 40).
+- [x] AI: patrol wojenny co jakiś czas płynie pod wrogi fort (do 2,5 km), okręty eskadry dołączają do oblężenia.
 
 ### M10 wydajność (właściciel 18.11: „chwilowo przerwijmy tę optymalizację, na razie do backlogu”)
 Zrobione 18.11 (pomiar `tools/perf/frame-bench.mjs`, SwiftShader 640×360, high 2,9 → 1,9 s na klatkę): niebo w połowie
