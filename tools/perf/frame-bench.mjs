@@ -77,7 +77,7 @@ const result = await page.evaluate(([n, only]) => {
         for (const l of scene.layers) if (l.name === "sky-backdrop") l.isEnabled = on;
       } else r.sky.mesh.isVisible = on;
     },
-    ocean: (on) => { r.ocean.mesh.isVisible = on; },
+    ocean: (on) => { for (const t of r.ocean.tiles) t.isVisible = on; },
     // The shallows and surf term of the ocean (no islands: the loop and the surf's lace and noise still run).
     shallows: (on) => {
       r.ocean.material.setInt("islandCount", on ? (r.ocean.islandCount ?? 0) : 0);

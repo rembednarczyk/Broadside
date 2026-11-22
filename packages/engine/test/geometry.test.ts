@@ -89,4 +89,19 @@ describe("ocean grid", () => {
     expect(xs[mid + 1]! - xs[mid]!).toBeLessThan(2);
     expect(xs[xs.length - 1]! - xs[xs.length - 2]!).toBeGreaterThan(30);
   });
+
+  it("splits into tiles with the whole grid's triangles, in the same places", () => {
+    const tri = (g: { positions: number[]; indices: number[] }) => {
+      const out: string[] = [];
+      for (let k = 0; k < g.indices.length; k += 3) {
+        out.push([0, 1, 2].map((v) => [0, 2].map((c) => g.positions[g.indices[k + v]! * 3 + c]).join(",")).join(";"));
+      }
+      return out;
+    };
+    const whole = tri(buildOceanGrid(40));
+    const cut = [0, 10, 20, 30, 40];
+    const parts: string[] = [];
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) parts.push(...tri(buildOceanGrid(40, cut[i], cut[i + 1], cut[j], cut[j + 1])));
+    expect(parts.sort()).toEqual(whole.sort());
+  });
 });

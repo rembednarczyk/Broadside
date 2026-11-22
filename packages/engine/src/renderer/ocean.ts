@@ -1,5 +1,5 @@
 import { type GerstnerWave, MAX_WAVES, createRng, makeWave, packWaves, range } from "@broadside/core";
-import { Color3, Mesh, type Scene, ShaderMaterial, VertexData, Vector2, type Vector3 } from "../babylon";
+import { BoundingInfo, Color3, Mesh, type Scene, ShaderMaterial, VertexData, Vector2, Vector3 } from "../babylon";
 import { OCEAN_FRAGMENT, OCEAN_VERTEX } from "../shaders/ocean";
 import { type TrailUniforms } from "./wake-trails";
 
@@ -7,7 +7,9 @@ import { type TrailUniforms } from "./wake-trails";
  * Ocean surface: one grid that follows the camera. Vertex density falls off with distance (a
  * warped grid, the usual cheap alternative to a projected grid, cf. Johanson, "Real-time water
  * rendering: introducing the projected grid concept", 2004). The grid moves in whole cells of the
- * finest spacing, so the displaced surface does not swim under the camera.
+ * finest spacing, so the displaced surface does not swim under the camera. It is drawn as TILES x
+ * TILES meshes over the same vertices (chunked culling, as terrain is chunked: Ulrich 2002), so the
+ * frustum drops the part behind the camera; each tile's box is widened by the waves' reach.
  */
 const HALF = 3000;
 /** Exponent of the warp: 1 is uniform; larger packs vertices near the centre. */
@@ -16,15 +18,24 @@ const finest = (cells: number): number => (HALF * 2) / cells / 12;
 
 const warp = (t: number): number => Math.sign(t) * Math.pow(Math.abs(t), WARP) * HALF;
 
-export const buildOceanGrid = (cells = 220): { positions: number[]; indices: number[] } => {
+/** Tiles per side of the grid (each a draw call; 16 in all, a quarter of the cells per side apiece). */
+const TILES = 4;
+/** How far (m) the waves can carry the surface beyond a tile's flat outline, up, down and sideways. */
+const WAVE_REACH = 40;
+
+/**
+ * Cells i0..i1, j0..j1 of the warped grid (the whole grid by default). Tiles share their edge
+ * vertices: the same index gives the same position, so neighbours meet without cracks.
+ */
+export const buildOceanGrid = (cells = 220, i0 = 0, i1 = cells, j0 = 0, j1 = cells): { positions: number[]; indices: number[] } => {
   const positions: number[] = [];
   const indices: number[] = [];
-  for (let j = 0; j <= cells; j++) {
-    for (let i = 0; i <= cells; i++) positions.push(warp((i / cells) * 2 - 1), 0, warp((j / cells) * 2 - 1));
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) positions.push(warp((i / cells) * 2 - 1), 0, warp((j / cells) * 2 - 1));
   }
-  const row = cells + 1;
-  for (let j = 0; j < cells; j++) {
-    for (let i = 0; i < cells; i++) {
+  const row = i1 - i0 + 1;
+  for (let j = 0; j < j1 - j0; j++) {
+    for (let i = 0; i < i1 - i0; i++) {
       const a = j * row + i;
       indices.push(a, a + row, a + 1, a + 1, a + row, a + row + 1);
     }
@@ -49,7 +60,11 @@ export interface OceanLook {
 }
 
 export class Ocean {
-  readonly mesh: Mesh;
+  /** The grid's tiles (all of one material). */
+  readonly tiles: Mesh[] = [];
+  /** Each tile's box round the origin (the grid unshifted). */
+  private readonly boxes: { lo: Vector3; hi: Vector3 }[] = [];
+  private shifted = { x: NaN, z: NaN };
   private readonly material: ShaderMaterial;
 
   private readonly cells: number;
@@ -60,20 +75,34 @@ export class Ocean {
     this.cells = cells;
     const rng = createRng(4242);
     this.detail = Array.from({ length: detailWaves }, (_, i) => makeWave(range(rng, -0.9, 0.9), 1.3 + i * 0.83 + range(rng, -0.2, 0.2), 0.012 + i * 0.004, 0.6, range(rng, 0, Math.PI * 2), 8));
-    this.mesh = new Mesh("ocean", scene);
-    const grid = buildOceanGrid(cells);
-    const data = new VertexData();
-    data.positions = grid.positions;
-    data.indices = grid.indices;
-    data.applyToMesh(this.mesh);
-    this.mesh.alwaysSelectAsActiveMesh = true;
+    const cut = (k: number) => Math.round((k * cells) / TILES);
+    for (let tj = 0; tj < TILES; tj++) {
+      for (let ti = 0; ti < TILES; ti++) {
+        const tile = new Mesh(`ocean-${ti}-${tj}`, scene);
+        const grid = buildOceanGrid(cells, cut(ti), cut(ti + 1), cut(tj), cut(tj + 1));
+        const data = new VertexData();
+        data.positions = grid.positions;
+        data.indices = grid.indices;
+        data.applyToMesh(tile);
+        // The shader places the vertices (grid offset, waves); the box only has to hold them.
+        const { minimum: lo, maximum: hi } = tile.getBoundingInfo();
+        const box = { lo: new Vector3(lo.x - WAVE_REACH, -WAVE_REACH, lo.z - WAVE_REACH), hi: new Vector3(hi.x + WAVE_REACH, WAVE_REACH, hi.z + WAVE_REACH) };
+        tile.setBoundingInfo(new BoundingInfo(box.lo, box.hi));
+        tile.isPickable = false;
+        // The world matrix stays the identity (the water does not move with the grid: no false
+        // velocity for the motion blur); the box alone follows the offset.
+        tile.freezeWorldMatrix();
+        this.tiles.push(tile);
+        this.boxes.push(box);
+      }
+    }
     this.material = new ShaderMaterial("ocean", scene, { vertexSource: OCEAN_VERTEX, fragmentSource: OCEAN_FRAGMENT }, {
       attributes: ["position"],
       uniforms: ["viewProjection", "cameraPosition", "gridOffset", "time", "waveA", "waveB", "waveCount", "sunDirection", "sunColor", "skyZenith", "skyHorizon", "waterDeep", "waterShallow", "fogColor", "fogDensity", "foamAmount", "sunGlint", "shipA", "shipB", "shipCount", "trail", "trailMeta", "trailReach", "trailCount", "underwater", "detailA", "detailB", "detailCount", "islands", "spines", "islandCount"],
     });
     this.material.backFaceCulling = false;
     this.setIslands([]);
-    this.mesh.material = this.material;
+    for (const t of this.tiles) t.material = this.material;
   }
 
   /** Islands in the shallows term now (the frame bench switches the term off and on). */
@@ -137,6 +166,12 @@ export class Ocean {
     this.material.setArray4("detailB", Array.from(det.b));
     this.material.setInt("detailCount", this.detail.length);
     this.material.setVector2("gridOffset", new Vector2(ox, oz));
+    // The tiles' boxes stand where the shader draws them, for the frustum's sake.
+    if (ox !== this.shifted.x || oz !== this.shifted.z) {
+      this.shifted = { x: ox, z: oz };
+      const off = new Vector3(ox, 0, oz);
+      this.tiles.forEach((t, i) => t.getBoundingInfo().reConstruct(this.boxes[i]!.lo.add(off), this.boxes[i]!.hi.add(off), t.getWorldMatrix()));
+    }
     this.material.setVector3("sunDirection", look.sunDirection);
     this.material.setColor3("sunColor", look.sunColor);
     this.material.setColor3("skyZenith", look.skyZenith);
