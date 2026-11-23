@@ -86,6 +86,8 @@ export interface TargetHud {
   readonly masts?: readonly [number, number];
   /** Ships: the target's id (orders about it). */
   readonly id?: number;
+  /** The player marked this ship as her target (a tap on her). */
+  readonly marked?: boolean;
   /** Ships: the condition's name (core damageState: sound, damaged, battered, disabled, struck, sinking). */
   readonly state?: string;
   /** Side of the player's ship the target is on. */
@@ -116,7 +118,12 @@ export interface PortHud {
   readonly refits: readonly { readonly id: string; readonly cost: number; readonly fitted: boolean }[];
   /** The harbour master's contract (null: none, or one already taken). */
   readonly offer: JobHud | null;
+  /** Shot for sale: in the hold now, and the price of each lot the panel offers (AMMO_LOTS). */
+  readonly ammo: readonly { readonly id: string; readonly have: number; readonly prices: readonly number[] }[];
 }
+
+/** Lots of shot the port panel sells at a time. */
+export const AMMO_LOTS = [10, 50, 100] as const;
 
 /** A contract: kind, the ship it is about, the pay, and where to go. */
 export interface JobHud {
@@ -151,6 +158,8 @@ export interface ChartHud {
   /** The crew's course (from the ship) and the contract's goal. */
   readonly route: readonly Point[];
   readonly goal: Point | null;
+  /** The player's waypoint flag (a tap on the chart), or null. */
+  readonly mark: Point | null;
   /** The sea the lookout has not yet had in sight (rectangles, world metres): left blank. */
   readonly fog: readonly { readonly x: number; readonly z: number; readonly w: number; readonly h: number }[];
 }
@@ -192,6 +201,8 @@ export interface HudState {
   readonly shake: boolean;
   /** The armoury (loads and the other weapons) unfolded under the fire controls' line. */
   readonly armory: boolean;
+  /** The waypoint set on the chart: its bearing off the bow (radians, + to starboard) and distance (m). */
+  readonly waypoint: { readonly relative: number; readonly distance: number } | null;
   /** The crew has a course or an order (simple steering): the cancel button shows. */
   readonly courseActive: boolean;
   /** Orders for a ship held down on (screen fractions, the ship, whether she is an enemy). */
@@ -217,6 +228,6 @@ export type SteeringMode = "simple" | "classic" | "arcade" | "fun";
 /** The modes steered with the pad: Action, and Fun (the Action controls with an arcade game's ship, like Overboard!). */
 export const usesPad = (s: SteeringMode): boolean => s === "arcade" || s === "fun";
 
-export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, shake: true, armory: false, courseActive: false, shipMenu: null, chart: null, fpsCap: 0, drawCalls: 0, fps: 0 }));
+export const useHud = create<HudState>(() => ({ gold: 0, provisions: 0, port: null, job: null, marker: null, graphics: { preset: "high", colorMode: "sepia", renderScale: 1 }, menu: null, optionsTab: "graphics", sound: { master: 0.8, ambience: 1, effects: 1 }, helpOpen: false, hudHidden: false, cameraMode: "isometric", sailing: null, combat: null, target: null, notices: [], language: "en", steering: "simple", astern: false, reef: true, haptics: true, shake: true, armory: false, waypoint: null, courseActive: false, shipMenu: null, chart: null, fpsCap: 0, drawCalls: 0, fps: 0 }));
 
 export const patchHud = (p: Partial<HudState>): void => useHud.setState(p);

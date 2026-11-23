@@ -20,6 +20,9 @@ interface ColorLook {
   readonly finalContrast: number;
 }
 
+/** Strength of the screen-space motion blur where it is on. */
+const MOTION = 0.6;
+
 const COLOR_LOOKS: Readonly<Record<ColorMode, ColorLook>> = {
   sepia: { saturation: -40, highlightsHue: 40, highlightsDensity: 55, shadowsDensity: 20, shadowsExposure: -30, exposure: 1.15, contrast: 1.45, sepia: 0.72, finalContrast: 1.12 },
   natural: { saturation: 0, highlightsHue: 40, highlightsDensity: 8, shadowsDensity: 0, shadowsExposure: -8, exposure: 1.05, contrast: 1.2, sepia: 0, finalContrast: 1.04 },
@@ -71,11 +74,23 @@ export class PostStack {
     }
     if (g.motionBlur) {
       const mb = new MotionBlurPostProcess("motion", scene, 1, camera);
-      mb.motionStrength = 0.6;
+      mb.motionStrength = MOTION;
       mb.motionBlurSamples = 16;
       mb.isObjectBased = false;
+      this.motion = mb;
     }
     this.finalPass(scene, camera, g);
+  }
+
+  private motion: MotionBlurPostProcess | null = null;
+
+  /**
+   * Motion blur on or off for the view: screen-space blur smears the whole frame as the camera
+   * turns, the ship too. Off in the isometric view (owner 22.11: "the ship blurs as I turn the
+   * camera"), where the camera is a tool, not a lens; on in the chase, deck and cinematic views.
+   */
+  setMotionBlur(on: boolean): void {
+    if (this.motion) this.motion.motionStrength = on ? MOTION : 0;
   }
 
   private pipeline(scene: Scene, camera: Camera, g: GraphicsSettings): void {

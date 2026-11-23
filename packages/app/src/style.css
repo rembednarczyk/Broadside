@@ -116,6 +116,10 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 
 /* --- compass and target (right) --- */
 .compass { width: calc(118 * var(--u)); height: calc(118 * var(--u)); flex: none; filter: drop-shadow(0 calc(3 * var(--u)) calc(6 * var(--u)) rgba(0, 0, 0, 0.5)); }
+.compass .waypoint { fill: #e2553a; stroke: #e2553a; stroke-width: 2.4; stroke-linejoin: round; }
+.compass .waypoint-distance { fill: #f0b49a; font-size: 9px; text-anchor: middle; font-weight: 700; }
+.chart-mark line { stroke: #8e2a1c; stroke-width: 14; }
+.chart-mark path { fill: #c23a24; }
 .compass .rim { fill: none; stroke: url(#brass); stroke-width: 4; }
 .compass .dial { fill: rgba(22, 16, 10, 0.86); }
 .compass .tick { stroke: var(--brass); stroke-width: 0.8; }
@@ -126,6 +130,7 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .compass .course { fill: var(--brass-hi); stroke: #24170a; stroke-width: 0.8; }
 .compass .heading { fill: var(--ink); font-family: var(--display); font-weight: 700; font-size: 12px; text-anchor: middle; }
 .target { width: 100%; }
+.target .marked { color: #e2553a; }
 .target .hint { font-style: italic; color: var(--alarm); }
 .target .bar, .gauge { display: block; height: calc(5 * var(--u)); background: rgba(0, 0, 0, 0.5); border: calc(1 * var(--u)) solid rgba(201, 160, 80, 0.35); border-radius: calc(3 * var(--u)); overflow: hidden; margin: calc(4 * var(--u)) 0; }
 .target .bar span { display: block; height: 100%; background: linear-gradient(180deg, #e2553a, #8e2a1c); }
@@ -198,6 +203,9 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .harbour-open { grid-area: middle; align-self: end; justify-self: center; font-size: calc(11 * var(--u)); padding: calc(5 * var(--u)) calc(12 * var(--u)); }
 .harbour { grid-area: middle; align-self: end; justify-self: center; width: min(100%, calc(460 * var(--u))); max-height: 100%; overflow-y: auto; font-size: calc(11 * var(--u)); }
 .port-grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4 * var(--u)); margin: calc(6 * var(--u)) 0; }
+.port-lots { display: flex; align-items: center; gap: calc(4 * var(--u)); margin-bottom: calc(4 * var(--u)); }
+.port-lots button { min-width: calc(44 * var(--u)); }
+.port-ammo small { display: block; opacity: 0.75; }
 .port-ammo { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(4 * var(--u)); }
 .port-yard { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(4 * var(--u)); }
 /* The refits (three at most) in one row above the shipyard: the yard tab fits a low screen. */
@@ -211,8 +219,9 @@ small { font-family: var(--text); font-weight: 500; font-size: max(8px, 0.92em);
 .standing.war i { background: #c0392b; }
 
 /* --- overlays: notices, the enemy arrow, settings and the help card --- */
-.notices { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: calc(6 * var(--u)); pointer-events: none; }
-.notice { font-family: var(--display); font-weight: 700; font-size: calc(15 * var(--u)); letter-spacing: 0.05em; color: #2a1a0a; padding: calc(6 * var(--u)) calc(20 * var(--u)); background: linear-gradient(180deg, #ecd9a8, #cdb27a); border: calc(1.5 * var(--u)) solid var(--brass-lo); border-radius: calc(3 * var(--u)); box-shadow: 0 calc(3 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.5); }
+/* Notices: small slips along the very top edge (owner 22.11: they covered the middle of the sea). */
+.notices { position: absolute; top: calc(2 * var(--u)); left: 50%; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: calc(2 * var(--u)); pointer-events: none; max-width: 70%; }
+.notice { font-family: var(--display); font-weight: 700; font-size: max(8.5px, calc(10 * var(--u))); letter-spacing: 0.04em; color: #2a1a0a; padding: calc(2 * var(--u)) calc(10 * var(--u)); background: linear-gradient(180deg, rgba(236, 217, 168, 0.93), rgba(205, 178, 122, 0.93)); border: calc(1 * var(--u)) solid var(--brass-lo); border-radius: calc(3 * var(--u)); box-shadow: 0 calc(1 * var(--u)) calc(4 * var(--u)) rgba(0, 0, 0, 0.45); text-align: center; }
 .enemy-marker { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; color: #e0614f; pointer-events: none; text-shadow: 0 0 calc(4 * var(--u)) #000; }
 .enemy-marker .arrow { display: inline-block; font-size: calc(22 * var(--u)); line-height: 1; }
 .enemy-marker small { font-size: calc(11 * var(--u)); color: #f1e3c6; }

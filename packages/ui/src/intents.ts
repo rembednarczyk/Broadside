@@ -61,6 +61,8 @@ export interface SettingsIntents {
   setColorMode(mode: string): void;
   /** Simple steering (tap or draw a course, the crew sails it), the classic helm, or assisted sailing with a pad. */
   setSteering(mode: SteeringMode): void;
+  /** The next steering mode in turn (the helm button by the camera's), told in a notice. */
+  cycleSteering(): void;
   /** Standing order: the crew reefs in squalls by itself. */
   setReef(on: boolean): void;
   /** Vibration on hits and broadsides (phones). */
@@ -79,8 +81,13 @@ export interface SettingsIntents {
 }
 
 export interface ChartIntents {
-  /** A point tapped on the chart: the crew sails there (round the islands), back to the sea. */
+  /**
+   * A point tapped on the chart: the waypoint flag goes there (the compass points to it); under
+   * simple steering the crew also sails there (round the islands). Back to the sea.
+   */
   sailTo(x: number, z: number): void;
+  /** Takes the waypoint flag off the chart. */
+  clearMark(): void;
 }
 
 export interface UiIntents {

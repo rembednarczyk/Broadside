@@ -2,6 +2,7 @@ import { PlayerHelm } from "./player-helm";
 import { fortSites, openWater, generateArchipelago, type WeatherKind, type AmmoId, type GameCommand, type MountKind, type SailLevel, type ShipClassId, type UpgradeId, clamp, yawOf } from "@broadside/core";
 import { STEP, Simulation, type SimulationOptions, type SimSnapshot, canBoard, fortToStorm, restore, snapshot } from "@broadside/sim";
 import { aimOf } from "./aiming";
+import { PlayerMarks } from "./player-marks";
 import { GunCaptains } from "./gun-captains";
 
 /**
@@ -28,6 +29,8 @@ export class GameSession {
   private accumulator = 0;
   /** The player's helm and orders (classic and simple steering). */
   readonly helm: PlayerHelm;
+  /** The player's marks: the ship chosen as her target and the waypoint flag (player-marks). */
+  readonly marks: PlayerMarks;
 
   private readonly options: SimulationOptions;
 
@@ -41,12 +44,14 @@ export class GameSession {
       this.sim = restore(saved, this.options.archipelago ?? null, { ...(opts.hours !== undefined ? { hours: opts.hours } : {}), ...(opts.clock !== undefined ? { clock: opts.clock } : {}) });
       this.playerId = this.sim.player()!.id;
       this.helm = new PlayerHelm(this.sim, this.playerId, yawOf(this.sim.player()!.body!.rot));
+      this.marks = new PlayerMarks(this.sim);
       return;
     }
     this.sim = new Simulation(this.options);
     const player = this.sim.spawnShip({ classId: "galleon", faction: "player", x: 0, z: 0, heading: 0.2, player: true, speed: 3 });
     this.playerId = player.id;
     this.helm = new PlayerHelm(this.sim, this.playerId, 0.2);
+    this.marks = new PlayerMarks(this.sim);
     this.send({ type: "course", ship: this.playerId, heading: 0.2 });
     // Opening encounter: a pirate schooner hunting, a pirate sloop, a crown frigate on patrol and
     // a republic brig the crown is at war with.
@@ -130,7 +135,7 @@ export class GameSession {
   fire(mount: MountKind, side?: "port" | "starboard"): void {
     const me = this.sim.byId(this.playerId);
     if (!me?.body) return;
-    const a = aimOf(this.sim, me, mount, side);
+    const a = aimOf(this.sim, me, mount, side, this.marks.marked());
     this.send({ type: "fire", ship: this.playerId, mount, side, range: a.range, bearing: a.bearing, aimHeight: a.aimHeight });
   }
 
@@ -139,7 +144,7 @@ export class GameSession {
 
   /** Simple steering's standing order: the gun captains fire as the guns bear (gun-captains). */
   fireAsTheyBear(): void {
-    this.gunCaptains ??= new GunCaptains(this.sim, this.playerId);
+    this.gunCaptains ??= new GunCaptains(this.sim, this.playerId, () => this.marks.marked());
     for (const c of this.gunCaptains.orders()) this.send(c);
   }
 

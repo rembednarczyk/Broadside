@@ -1,5 +1,6 @@
 import { WakeTrails } from "./wake-trails";
 import { SplashPatches } from "./splash-patches";
+import { TargetMark } from "./target-mark";
 import { type Simulation } from "@broadside/sim";
 import { CascadedShadowGenerator, Matrix, Color3, Color4, DirectionalLight, Engine, HemisphericLight, Scene, SceneInstrumentation, ShadowGenerator, type Texture, Vector3 } from "../babylon";
 import { FollowCamera } from "../camera/follow-camera";
@@ -82,6 +83,8 @@ export class BabylonRenderer {
   /** Where the ships have sailed: the wakes follow it (wake-trails). */
   private readonly trails = new WakeTrails();
   private readonly splashes = new SplashPatches();
+  /** The ring under the ship the player has marked as her target. */
+  targetMark!: TargetMark;
   private simTime = 0;
   private readonly hulls: HullModels | null;
   private readonly instrumentation: SceneInstrumentation;
@@ -160,6 +163,7 @@ export class BabylonRenderer {
     this.hulls = opts.hullsUrl ? new HullModels(this.scene, opts.hullsUrl, opts.graphics.preset === "low" ? "-lite" : "") : null;
     void this.hulls?.load(MODELLED_HULLS);
     this.post = new PostStack(this.scene, this.camera.camera, g);
+    this.targetMark = new TargetMark(this.scene);
   }
 
   /** Shadows: cascaded maps on the higher presets (sharp close up, wide range), one map below. */
@@ -353,6 +357,7 @@ export class BabylonRenderer {
     const ships = sim.ships().map((e) => ({ id: e.id, x: e.body!.pos.x, z: e.body!.pos.z, heading: yawOf(e.body!.rot), speed: Math.max(0, rotateInv(e.body!.rot, e.body!.vel).z), length: this.hulls?.fitted(e.ship!.model.def.id, e.ship!.model.def.hull)?.length ?? e.ship!.model.def.hull.length, beam: e.ship!.model.def.hull.beam, slap: this.effects.slap.get(e.id) ?? 0, d: Math.hypot(e.body!.pos.x - cam.x, e.body!.pos.z - cam.z) }));
     this.ocean.setShips(ships.sort((a, b) => a.d - b.d));
     this.ocean.setTrails(this.trails.update(ships, sim.env.time));
+    this.targetMark.frame(sim.env.waves, sim.env.time);
     this.simTime = sim.env.time;
     this.ocean.setSplashes(this.splashes.uniforms(sim.env.time));
     this.syncShips(sim);
@@ -417,6 +422,7 @@ export class BabylonRenderer {
     const LENS = 0.6;
     const h = cam.y - surface;
     const waterline = Math.abs(h) < LENS && this.camera.mode !== "isometric" ? 0.5 - h / (2 * LENS) : -1;
+    this.post.setMotionBlur(this.camera.mode !== "isometric");
     Object.assign(this.post.screen, { drops: Math.min(1, rain * 0.9 + this.dropsLeft / 4), underwater: under, depth: Math.max(0, surface - cam.y), sunX: sun.x, sunY: 1 - sun.y, time: sim.env.time, flash: this.weather.flash, waterline, night: 1 - Math.min(1, look.sunIntensity / 0.8), shafts: this.shaftStrength(look, sd) });
     this.ocean.setUnderwater(under);
     if (under) {

@@ -25,7 +25,8 @@ export class GunCaptains {
   /** The captains look four times a second (the arcs' search is not free at every step). */
   private look = 0;
 
-  constructor(private readonly sim: Simulation, private readonly playerId: number) {}
+  /** `prefer`: the ship the player has marked as her target (laid on first when she bears). */
+  constructor(private readonly sim: Simulation, private readonly playerId: number, private readonly prefer: () => number | null = () => null) {}
 
   /** The orders for this moment (empty when nothing bears). */
   orders(): GameCommand[] {
@@ -37,12 +38,12 @@ export class GunCaptains {
     const out: GameCommand[] = [];
     for (const side of ["port", "starboard"] as const) {
       if (t < this.next[side]) continue;
-      const aim = aimFor(me, this.sim.ships(), side, true, this.sim.relations);
+      const aim = aimFor(me, this.sim.ships(), side, true, this.sim.relations, this.prefer());
       const shipBears = !!aim && aim.range <= BEAR_RANGE && !aim.target.ship!.struck && !aim.target.ship!.sinking;
       const fort = shipBears ? null : aimForFort(me, this.sim.forts(), side, this.sim.relations, screens(this.sim.world));
       if (!shipBears && (!fort || fort.range > FORT_BEAR_RANGE)) continue;
       this.next[side] = t + EVERY;
-      const a = aimOf(this.sim, me, "broadside", side);
+      const a = aimOf(this.sim, me, "broadside", side, this.prefer());
       out.push({ type: "fire", ship: this.playerId, mount: "broadside", side, range: a.range, ...(a.bearing !== undefined ? { bearing: a.bearing } : {}), aimHeight: a.aimHeight });
     }
     return out;

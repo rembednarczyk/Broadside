@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { type PortHud, useHud } from "../store/hud-store";
+import { AMMO_LOTS, type PortHud, useHud } from "../store/hud-store";
 import { isTextKey, text, type TextKey } from "../i18n/catalog";
 import { type PortIntents } from "../intents";
 import { JobLine } from "./job-panel";
 
-const AMMO = ["round", "heavy", "chain", "grape", "hot", "shell", "greekFire", "rocket", "smoke", "mine"] as const;
 type Tab = "services" | "shot" | "yard" | "jobs";
 const TABS: readonly { readonly id: Tab; readonly label: TextKey }[] = [
   { id: "services", label: "port.tab.services" },
@@ -36,13 +35,29 @@ const Services = ({ p, lang, gold, intents }: { p: PortHud; lang: Lang; gold: nu
   </>
 );
 
-const Shot = ({ lang, intents }: { lang: Lang; intents: PortIntents }) => (
-  <div className="port-ammo">
-    {AMMO.map((a) => (
-      <button key={a} onPointerDown={() => intents.trade("ammo", 10, a)}>{label(lang, `ammo.${a}`, a)}</button>
-    ))}
-  </div>
-);
+/** Shot by the lot (owner 22.11: ten at a time was too few): the lot chosen above, each load's price and stock. */
+const Shot = ({ p, lang, gold, intents }: { p: PortHud; lang: Lang; gold: number; intents: PortIntents }) => {
+  const [lot, setLot] = useState(0);
+  const n = AMMO_LOTS[lot]!;
+  return (
+    <>
+      <div className="port-lots">
+        <span className="label">{text(lang, "port.lot")}</span>
+        {AMMO_LOTS.map((k, i) => (
+          <button key={k} className={i === lot ? "on" : ""} onPointerDown={() => setLot(i)} data-testid={`lot-${k}`}>×{k}</button>
+        ))}
+      </div>
+      <div className="port-ammo">
+        {p.ammo.map((a) => (
+          <button key={a.id} disabled={a.prices[lot]! > gold} onPointerDown={() => intents.trade("ammo", n, a.id)} data-testid={`buy-ammo-${a.id}`}>
+            {label(lang, `ammo.${a.id}`, a.id)}
+            <small>{a.have} · {a.prices[lot]}</small>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+};
 
 const Yard = ({ p, lang, gold, intents }: { p: PortHud; lang: Lang; gold: number; intents: PortIntents }) => (
   <>
@@ -100,7 +115,7 @@ export const PortPanel = ({ intents }: { intents: PortIntents }) => {
             ))}
           </div>
           {tab === "services" && <Services p={p} lang={lang} gold={gold} intents={intents} />}
-          {tab === "shot" && <Shot lang={lang} intents={intents} />}
+          {tab === "shot" && <Shot p={p} lang={lang} gold={gold} intents={intents} />}
           {tab === "jobs" && (p.offer ? (
             <div className="offer">
               <JobLine j={p.offer} lang={lang} />

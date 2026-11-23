@@ -28,7 +28,8 @@ const ARCS: Readonly<Record<string, { readonly centre: number; readonly half: nu
   swivel: { centre: 0, half: Math.PI, max: 160 },
 };
 
-export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof ARCS, hostileOnly = true, rel: Relations | null = null): Aim | null => {
+/** `prefer`: a ship the player has marked as her target; laid on before any nearer one when it bears. */
+export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof ARCS, hostileOnly = true, rel: Relations | null = null, prefer: number | null = null): Aim | null => {
   const a = ARCS[arc]!;
   const b = me.body!;
   const heading = yawOf(b.rot);
@@ -44,6 +45,7 @@ export const aimFor = (me: Entity, ships: readonly Entity[], arc: keyof typeof A
     const range = Math.hypot(px - b.pos.x, pz - b.pos.z);
     const bearing = Math.atan2(px - b.pos.x, pz - b.pos.z);
     if (range > a.max || Math.abs(wrapAngle(bearing - heading - a.centre)) > a.half) continue;
+    if (o.id === prefer) return { target: o, range, bearing };
     if (!best || range < best.range) best = { target: o, range, bearing };
   }
   return best;

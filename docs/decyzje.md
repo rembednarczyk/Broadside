@@ -1268,3 +1268,18 @@ Poprawki z raportu nawigatora-nowicjusza (proste sterowanie, telefon, angielski)
   obracany na brzeg martwego sektora (60° od dziobu, `driveWind`): żagle ustawione jak w bajdewindzie, nigdy na plecy.
   Reje nie kręcą się dookoła: rejowe ±35° od ustawienia w poprzek, skośne ±80° (bez zmian, to fizyczne granice brasów
   i szotów). W zwykłym sterowaniu żagle dalej idą za prawdziwym wiatrem.
+
+## 23.11, właściciel: komunikaty, rozmycie, chorągiewka na mapie, amunicja, wybór celu, przycisk sterowania, dźwięk
+- Komunikaty małe, przy samej górze ekranu (czcionka 10u, nie mniej niż 8,5 px).
+- Rozmycie ruchu (ultra, cinematic) wyłączone w widoku izometrycznym: rozmycie ekranowe smużyło cały obraz przy obrocie
+  kamery, statek też. W widokach pościgowym, pokładowym i filmowym zostaje.
+- Chorągiewka: tapnięcie mapy stawia ją w każdym trybie sterowania (w prostym dodatkowo załoga tam płynie); kompas
+  pokazuje kierunek i odległość, chorągiewka znika po dopłynięciu na 150 m albo przyciskiem na mapie. Nie zapisuje się.
+- Amunicja w porcie po 10, 50 albo 100 sztuk, z ceną i stanem w ładowni przy każdym rodzaju.
+- Wybór celu: tapnięcie w statek (każdy tryb) zaznacza go, drugie tapnięcie odznacza; burty, kanonierzy, panel celu
+  i kamera izometryczna wybierają go przed bliższymi, gdy jest w łuku dział; czerwony pierścień pod nim. Strzela się
+  tylko do wrogów jak dotąd (zaznaczony neutralny jest pokazywany, nie ostrzeliwany).
+- Przycisk ze sterem przy ikonach na dole przełącza tryby po kolei: wskaż i płyń → ster → akcja → fun, z komunikatem.
+- Dźwięk na telefonie (zacięty, bez efektów): w przeglądarce na komputerze efekty grają (pomiar Web Audio), więc
+  zmiany celują w znane przyczyny na Androidzie: bufor „playback”, limit 4 dźwięków jednego rodzaju na 0,12 s,
+  wstrzymanie w tle. Niesprawdzone na telefonie.

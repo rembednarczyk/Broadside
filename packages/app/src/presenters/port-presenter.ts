@@ -1,6 +1,6 @@
-import { type ContractOffer, PORT_SPEED, SHIP_CLASSES, portInReach, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue, yawOf } from "@broadside/core";
+import { type AmmoId, type ContractOffer, PORT_SPEED, SHIP_CLASSES, ammoPrice, portInReach, UPGRADE_IDS, upgradePrice, crewPrice, plunderValue, priceFactor, repairBill, shipPrice, shipyardStock, tradeInValue, yawOf } from "@broadside/core";
 import { type Entity, type Simulation, condition, portOwner } from "@broadside/sim";
-import { type JobHud, type PortHud } from "@broadside/ui";
+import { AMMO_LOTS, type JobHud, type PortHud } from "@broadside/ui";
 
 
 const offerView = (sim: Simulation, o: ContractOffer | null): JobHud | null =>
@@ -21,6 +21,9 @@ export const presentJob = (sim: Simulation, me: Entity): JobHud | null => {
   const relative = ((bearing - (yawOf(b.rot) * 180) / Math.PI + 540) % 360) - 180;
   return { ...base, minutes, distance: Math.hypot(at.x - b.pos.x, at.z - b.pos.z), bearing, relative };
 };
+
+/** Shot the ports sell, in the panel's order. */
+const PORT_AMMO: readonly AmmoId[] = ["round", "heavy", "chain", "grape", "hot", "shell", "greekFire", "rocket", "smoke", "mine"];
 
 export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
   const b = me.body!;
@@ -54,5 +57,6 @@ export const presentPort = (sim: Simulation, me: Entity): PortHud | null => {
     refits: UPGRADE_IDS.map((id) => ({ id, cost: upgradePrice(id, def.price, f), fitted: s.upgrades.includes(id) })),
     offer: sim.jobs.active ? null : offerView(sim, sim.contractOffer(index)),
     standings: (["crown", "republic", "empire"] as const).map((faction) => ({ faction, value: sim.relations[faction] })),
+    ammo: PORT_AMMO.map((id) => ({ id, have: s.stores[id] ?? 0, prices: AMMO_LOTS.map((n) => ammoPrice(id, n, f)) })),
   };
 };

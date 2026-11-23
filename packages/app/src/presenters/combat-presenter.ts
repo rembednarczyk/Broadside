@@ -57,7 +57,20 @@ const silencedNear = (me: Entity, forts: readonly Entity[]): { e: Entity; range:
  */
 const TELLING_RANGE = 220;
 
-export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => {
+/** A marked ship is shown while within this range of the player (m), wherever she lies. */
+const MARKED_RANGE = 1500;
+
+/** The marked ship as an aim (range and bearing from the player), when she is afloat and in reach. */
+const markedAim = (sim: Simulation, me: Entity, id: number | null): { target: Entity; range: number; bearing: number } | null => {
+  const t = id === null ? null : sim.byId(id);
+  if (!t?.body || !t.ship || t.ship.sinking) return null;
+  const b = me.body!;
+  const range = Math.hypot(t.body.pos.x - b.pos.x, t.body.pos.z - b.pos.z);
+  return range < MARKED_RANGE ? { target: t, range, bearing: Math.atan2(t.body.pos.x - b.pos.x, t.body.pos.z - b.pos.z) } : null;
+};
+
+/** `marked`: the ship the player has chosen as her target (shown before any other). */
+export const presentTarget = (sim: Simulation, me: Entity, marked: number | null = null): TargetHud | null => {
   const ships = sim.ships();
   const has = (k: MountKind) => me.ship!.model.guns.some((g) => g.kind === k);
   const arcs = [
@@ -67,14 +80,15 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
     ...(has("mortar") ? (["mortar"] as const) : []),
   ];
   const aims = arcs.map((a) => aimFor(me, ships, a, true, sim.relations)).filter((a) => a !== null);
-  const aim = aims.sort((a, b) => a.range - b.range)[0];
+  const chosen = markedAim(sim, me, marked);
+  const aim = chosen ?? aims.sort((a, b) => a.range - b.range)[0];
   const smoke = screens(sim.world);
   const fortAims = arcs.map((a) => aimForFort(me, sim.forts(), a, sim.relations, smoke)).filter((a) => a !== null).sort((a, b) => a.range - b.range);
   const fa = fortAims[0];
   // A silenced fort is no longer a gun target, but stays in the panel while it can be stormed.
   const quiet = fa ? null : silencedNear(me, sim.forts());
   const fort = fa ? { e: fa.fort, range: fa.range } : quiet;
-  if (fort && (!aim || fort.range < aim.range)) {
+  if (fort && !chosen && (!aim || fort.range < aim.range)) {
     const f = fort.e.fort!;
     const left = piecesLeft(f);
     const party = Math.floor(me.ship!.crew * STORM_SHARE);
@@ -87,6 +101,7 @@ export const presentTarget = (sim: Simulation, me: Entity): TargetHud | null => 
   return {
     kind: "ship",
     id: aim.target.id,
+    ...(chosen ? { marked: true } : {}),
     classId: t.model.def.id,
     faction: t.faction,
     range: aim.range,

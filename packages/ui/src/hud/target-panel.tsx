@@ -29,7 +29,7 @@ export const TargetPanel = ({ intents }: { intents: OrderIntents }) => {
   const fac = `faction.${t.faction}`;
   return (
     <div className="panel target" data-testid="target">
-      <div className="title">{isTextKey(cls) ? text(lang, cls) : t.classId} · {isTextKey(fac) ? text(lang, fac) : t.faction}</div>
+      <div className="title">{t.marked && <span className="marked" title={text(lang, "hud.marked")}>◎ </span>}{isTextKey(cls) ? text(lang, cls) : t.classId} · {isTextKey(fac) ? text(lang, fac) : t.faction}</div>
       {/* Segmented like an action game's health bar: a quarter of the hull to a segment. */}
       {/* The bar flashes when a hit takes off the target's hull (the key restarts the animation). */}
       <div key={flash} className={`bar segmented${flash > 0 ? " hit" : ""}`}><span style={{ width: `${Math.round(t.hull * 100)}%` }} /></div>

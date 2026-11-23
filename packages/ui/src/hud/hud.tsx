@@ -59,6 +59,7 @@ export const Hud = ({ intents }: { intents: UiIntents }) => {
         {usesPad(steering) && <DrivePad intents={intents.helm} />}
         <CancelCourse intents={intents.orders} />
         <div className="corner">
+          <button className="lang helm-mode" onPointerDown={() => intents.settings.cycleSteering()} aria-label={text(lang, `steering.${steering}`)} data-testid="next-steering">☸</button>
           <button className="lang" onPointerDown={() => intents.settings.nextCamera()} data-testid="next-camera">{isTextKey(camKey) ? text(lang, camKey) : cam}</button>
           <button className="lang" onPointerDown={() => intents.settings.showMenu("chart")} data-testid="open-chart">{text(lang, "chart.button")}</button>
           <button className="lang" onPointerDown={() => intents.settings.toggleHud()} data-testid="hide-hud">◎</button>

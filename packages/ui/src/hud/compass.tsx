@@ -3,6 +3,7 @@ import { useHud } from "../store/hud-store";
 /** Ship-relative compass: the bow is up, the arrow shows where the wind comes from. */
 export const Compass = () => {
   const s = useHud((h) => h.sailing);
+  const way = useHud((h) => h.waypoint);
   if (!s) return null;
   const windDeg = (s.windFromRelative * 180) / Math.PI;
   const courseDeg = s.course === null ? null : (((s.course - s.heading) * 180) / Math.PI);
@@ -30,6 +31,13 @@ export const Compass = () => {
           <circle cx="0" cy="-36" r="3" className="course" />
         </g>
       )}
+      {/* The waypoint set on the chart: a flag on the rim at its bearing, its distance under the heading. */}
+      {way && (
+        <g transform={`rotate(${(way.relative * 180) / Math.PI})`} data-testid="compass-waypoint">
+          <path d="M0,-46 L0,-30 M0,-46 L8,-42 L0,-38" className="waypoint" />
+        </g>
+      )}
+      {way && <text y="20" className="waypoint-distance">{way.distance >= 1000 ? `${(way.distance / 1000).toFixed(1)} km` : `${Math.round(way.distance)} m`}</text>}
       <text y="6" className="heading">{(((s.heading * 180) / Math.PI + 360) % 360).toFixed(0)}°</text>
     </svg>
   );

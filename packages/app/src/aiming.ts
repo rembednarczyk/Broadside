@@ -20,11 +20,12 @@ export interface SalvoMark {
 }
 
 /** Where a battery would lay its guns now: the nearer of the best ship and fort in its arc. */
-export const aimOf = (sim: Simulation, me: Entity, mount: MountKind, side?: "port" | "starboard"): { range: number; bearing?: number; aimHeight: number; locked: boolean } => {
+export const aimOf = (sim: Simulation, me: Entity, mount: MountKind, side?: "port" | "starboard", prefer: number | null = null): { range: number; bearing?: number; aimHeight: number; locked: boolean } => {
   const arc = mount === "broadside" ? (side ?? "starboard") : mount;
-  const aim = aimFor(me, sim.ships(), arc, true, sim.relations);
+  const aim = aimFor(me, sim.ships(), arc, true, sim.relations, prefer);
   const fort = aimForFort(me, sim.forts(), arc, sim.relations, screens(sim.world));
-  const useFort = fort && (!aim || fort.range < aim.range);
+  // The marked ship comes before a nearer fort.
+  const useFort = fort && (!aim || (fort.range < aim.range && aim.target.id !== prefer));
   const range = (useFort ? fort.range : aim?.range) ?? (mount === "mortar" ? 400 : mount === "swivel" ? 80 : 220);
   const bearing = useFort ? fort.bearing : aim?.bearing;
   // The gunners lay for what the shot is for (Black Flag's chain shot at the rigging): chain and bar
@@ -36,9 +37,12 @@ export const aimOf = (sim: Simulation, me: Entity, mount: MountKind, side?: "por
 };
 
 /** The nearest enemy ship or fort still fighting within gun range (the camera frames it). */
-export const combatFocus = (sim: Simulation, playerId: number): { x: number; z: number } | null => {
+export const combatFocus = (sim: Simulation, playerId: number, prefer: number | null = null): { x: number; z: number } | null => {
   const me = sim.byId(playerId);
   if (!me?.body) return null;
+  // The marked ship, while she is afloat and within the frame's reach.
+  const marked = prefer === null ? null : sim.byId(prefer);
+  if (marked?.body && !marked.ship?.sinking && Math.hypot(marked.body.pos.x - me.body.pos.x, marked.body.pos.z - me.body.pos.z) < FOCUS_RANGE * 2) return { x: marked.body.pos.x, z: marked.body.pos.z };
   const p = me.body.pos;
   let best: { x: number; z: number; d: number } | null = null;
   const consider = (x: number, z: number): void => {
@@ -55,7 +59,7 @@ export const combatFocus = (sim: Simulation, playerId: number): { x: number; z: 
  * Where each broadside would fall if fired now (Black Flag's aiming arc): a row of points along
  * the fall of shot, as long as the gun deck, at the laid range and bearing.
  */
-export const salvoPreview = (sim: Simulation, playerId: number): SalvoMark[] => {
+export const salvoPreview = (sim: Simulation, playerId: number, prefer: number | null = null): SalvoMark[] => {
   const me = sim.byId(playerId);
   if (!me?.body || me.ship!.sinking) return [];
   const b = me.body;
@@ -67,7 +71,7 @@ export const salvoPreview = (sim: Simulation, playerId: number): SalvoMark[] => 
     const guns = s.model.guns.map((g, i) => ({ g, i })).filter(({ g }) => g.kind === "broadside" && g.side === side);
     if (guns.length === 0) continue;
     const ready = guns.filter(({ i }) => s.guns[i]!.reload === 0 && !s.guns[i]!.dismounted).length / guns.length;
-    const a = aimOf(sim, me, "broadside", side);
+    const a = aimOf(sim, me, "broadside", side, prefer);
     const brg = a.bearing ?? heading + (side === "starboard" ? Math.PI / 2 : -Math.PI / 2);
     const cx = b.pos.x + Math.sin(brg) * a.range;
     const cz = b.pos.z + Math.cos(brg) * a.range;

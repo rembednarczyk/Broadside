@@ -2,6 +2,7 @@ import { type EN } from "./catalog-en";
 
 /** Polish texts, one for every English key (the options' language switch). */
 export const PL: Record<keyof typeof EN, string> = {
+  "hud.marked": "Wybrany cel (tapnij go ponownie, aby odznaczyć)",
   "hud.speed": "Prędkość",
   "settings.title": "Ustawienia",
   "camera.isometric": "Izometria",
@@ -44,6 +45,10 @@ export const PL: Record<keyof typeof EN, string> = {
   "weather.storm": "Sztorm",
   "weather.fog": "Mgła",
   "weather.rain": "Deszcz",
+  "notice.steer.simple": "Sterowanie: wskaż i płyń",
+  "notice.steer.classic": "Sterowanie: ster",
+  "notice.steer.arcade": "Sterowanie: akcja",
+  "notice.steer.fun": "Sterowanie: fun",
   "notice.squall": "Nadchodzi szkwał!",
   "notice.gale": "Barometr spada: nadchodzi wichura",
   "notice.storm": "Nadchodzi sztorm: refować żagle",
@@ -51,6 +56,7 @@ export const PL: Record<keyof typeof EN, string> = {
   "notice.rogue": "Fale olbrzymie!",
   "port.title": "Port",
   "port.hostile": "Kapitan portu nie chce z wami handlować",
+  "port.lot": "Kupuj po",
   "port.close": "Zamknij port",
   "port.open": "Port",
   "port.repair": "Naprawa",
@@ -147,6 +153,9 @@ export const PL: Record<keyof typeof EN, string> = {
   "settings.fpsCap": "Klatki na sekundę",
   "fps.30": "30 (równiej, chłodniej)",
   "fps.free": "Bez limitu",
+  "chart.flag": "Tapnij mapę, by postawić chorągiewkę: kompas wskaże do niej kierunek.",
+  "chart.clearMark": "Zdejmij chorągiewkę",
+  "notice.waypoint": "Dotarłeś do chorągiewki z mapy",
   "chart.button": "Mapa",
   "chart.title": "Mapa morska",
   "chart.you": "Twój statek",

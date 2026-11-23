@@ -27,9 +27,9 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
   const t = (k: TextKey) => text(lang, k);
   if (!chart) return null;
   const h = chart.half;
+  // A tap sets the waypoint flag in every steering mode (owner 22.11); simple steering also sails there.
   const plot = steering === "simple";
   const onTap = (e: PointerEvent<SVGSVGElement>) => {
-    if (!plot) return;
     const m = e.currentTarget.getScreenCTM();
     if (!m) return;
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
@@ -66,6 +66,12 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
           ))}
           {chart.route.length > 1 && <polyline points={points(chart.route)} className="chart-route" />}
           {chart.goal && <circle cx={chart.goal.x} cy={-chart.goal.z} r={size * 1.6} className="chart-goal" />}
+          {chart.mark && (
+            <g transform={`translate(${chart.mark.x} ${-chart.mark.z})`} className="chart-mark" data-testid="chart-mark">
+              <line x1={0} y1={0} x2={0} y2={-size * 4} />
+              <path d={`M0,${-size * 4} L${size * 2.6},${-size * 3.2} L0,${-size * 2.4} Z`} />
+            </g>
+          )}
           {chart.wrecks.map((w, i) => (
             <path key={`w${i}`} d={`M${w.x - size} ${-w.z - size}L${w.x + size} ${-w.z + size}M${w.x + size} ${-w.z - size}L${w.x - size} ${-w.z + size}`} className={w.salvaged ? "chart-wreck done" : "chart-wreck"} />
           ))}
@@ -102,7 +108,8 @@ export const SeaChart = ({ intents, settings }: { intents: ChartIntents; setting
             <span><i className="key fort" />{t("chart.forts")}</span>
             <span><i className="key wreck">✕</i>{t("chart.wrecks")}</span>
           </div>
-          <small>{t(plot ? "chart.tap" : "chart.view")}</small>
+          <small>{t(plot ? "chart.tap" : "chart.flag")}</small>
+          {chart.mark && <button className="wide" onPointerDown={() => intents.clearMark()} data-testid="chart-clear-mark">{t("chart.clearMark")}</button>}
           <button className="wide" onPointerDown={() => settings.showMenu("main")} data-testid="chart-back">{t("menu.back")}</button>
           <button className="wide" onPointerDown={() => settings.showMenu(null)} data-testid="chart-close">{t("menu.resume")}</button>
         </div>

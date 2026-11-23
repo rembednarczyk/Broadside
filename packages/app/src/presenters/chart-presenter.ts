@@ -50,7 +50,8 @@ export const fogRects = (a: Archipelago, seen: readonly number[]): { x: number; 
  * of war (core/world/survey): forts and wrecks only where the lookout has been, other ships only
  * within his sight now; the ports stay on the chart (their names and places were common knowledge).
  */
-export const presentChart = (sim: Simulation, playerId: number): ChartHud | null => {
+/** `mark`: the waypoint flag the player set on the chart (null: none). */
+export const presentChart = (sim: Simulation, playerId: number, mark: { x: number; z: number } | null = null): ChartHud | null => {
   const a = sim.env.archipelago;
   if (!a) return null;
   const fixed = trace(a);
@@ -85,6 +86,7 @@ export const presentChart = (sim: Simulation, playerId: number): ChartHud | null
     ships,
     route: course.path,
     goal: course.goal ? { x: course.goal.x, z: course.goal.z } : null,
+    mark,
   };
 };
 

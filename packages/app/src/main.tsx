@@ -13,11 +13,12 @@ import { chartTarget, presentChart } from "./presenters/chart-presenter";
 import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
 import { deviceToggles } from "./device-settings";
+import { bindTargetTaps } from "./controllers/target-taps";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
 import { cueFor, noticeFor } from "./presenters/event-presenter";
-import { type AmmoId, clamp, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wreckSites } from "@broadside/core";
+import { type AmmoId, clamp, type ShipClassId, type UpgradeId, type WeatherKind, WEATHER, wrapAngle, wreckSites, yawOf } from "@broadside/core";
 import { bindKeyboard } from "./controllers/keyboard";
 import { bindCourseGestures } from "./controllers/course-gestures";
 import { presentCourse, presentWind } from "./presenters/course-presenter";
@@ -183,7 +184,7 @@ const gear = (step: 1 | -1) => {
 /** The main menu's screens (null: back to the game, which is paused while a screen is up). */
 const showMenu = (menu: MenuScreen | null) => {
   // The chart is drawn once on opening: the game stands still behind it.
-  patchHud({ menu, shipMenu: null, chart: menu === "chart" ? presentChart(session.sim, session.playerId) : null });
+  patchHud({ menu, shipMenu: null, chart: menu === "chart" ? presentChart(session.sim, session.playerId, session.marks.waypoint) : null });
   // The how-to-play card on the first start, once the player has left the menu for the sea.
   if (!menu && helpPending) {
     helpPending = false;
@@ -266,6 +267,12 @@ const intents: UiIntents = {
     setGraphicsPreset: (p) => applyGraphics(presetSettings(p as GraphicsPreset, graphics.colorMode)),
     setColorMode: (c) => applyGraphics({ ...graphics, colorMode: c as ColorMode }),
     setSteering,
+    cycleSteering: () => {
+      const modes: readonly SteeringMode[] = ["simple", "classic", "arcade", "fun"];
+      const next = modes[(modes.indexOf(useHud.getState().steering) + 1) % modes.length]!;
+      setSteering(next);
+      pushNotice(`notice.steer.${next}`);
+    },
     setReef,
     setHaptics,
     setShake,
@@ -302,8 +309,13 @@ const intents: UiIntents = {
   chart: {
     // A course from the chart: the crew sails there round the islands (A*, sim/ai/pilot/plan).
     sailTo: (x, z) => {
-      session.helm.navigate([chartTarget(session.sim, x, z)], false);
+      session.marks.waypoint = { x, z };
+      if (useHud.getState().steering === "simple") session.helm.navigate([chartTarget(session.sim, x, z)], false);
       showMenu(null);
+    },
+    clearMark: () => {
+      session.marks.waypoint = null;
+      patchHud({ chart: presentChart(session.sim, session.playerId, null), waypoint: null });
     },
   },
 };
@@ -330,6 +342,34 @@ const shipOrder = (kind: "board" | "follow" | "engage") => (target: number) => {
   const t = session.sim.byId(target);
   if (t?.body) issue({ kind, target, at: { x: t.body.pos.x, z: t.body.pos.z } });
 };
+// Helm, action and fun: a tap on a ship marks her as the target (simple steering marks in its own taps).
+bindTargetTaps(canvas, {
+  enabled: () => useHud.getState().steering !== "simple",
+  shipAt: (x, y) => {
+    const hit = tappedAt(x, y, tappables());
+    return hit?.kind === "ship" ? hit.id : null;
+  },
+  mark: (id) => session.marks.toggleFocus(id),
+});
+// The waypoint flag: its bearing off the bow and distance for the compass, taken down on arrival.
+const steerToMark = () => {
+  const me = session.sim.byId(session.playerId)?.body;
+  const w = session.marks.waypoint;
+  if (!me || !w) return void (useHud.getState().waypoint && patchHud({ waypoint: null }));
+  const distance = Math.hypot(w.x - me.pos.x, w.z - me.pos.z);
+  if (distance < 150) {
+    session.marks.waypoint = null;
+    pushNotice("notice.waypoint");
+    return;
+  }
+  patchHud({ waypoint: { relative: wrapAngle(Math.atan2(w.x - me.pos.x, w.z - me.pos.z) - yawOf(me.rot)), distance } });
+};
+const markTarget = () => {
+  const t = session.marks.marked();
+  const b = t === null ? null : session.sim.byId(t);
+  renderer.targetMark.visible = !useHud.getState().hudHidden;
+  renderer.targetMark.set(b?.body && b.ship ? { x: b.body.pos.x, z: b.body.pos.z, size: b.ship.model.def.hull.length } : null);
+};
 bindCourseGestures(canvas, {
   enabled: () => useHud.getState().steering === "simple",
   pick: (x, y) => renderer.pickWater(x, y),
@@ -339,6 +379,7 @@ bindCourseGestures(canvas, {
   },
   tap: (x, y, append) => {
     const hit = tappedAt(x, y, tappables());
+    if (hit?.kind === "ship") session.marks.toggleFocus(hit.id);
     const water = renderer.pickWater(x, y);
     if (append && !hit && water) {
       session.helm.navigate([water], false, true);
@@ -471,13 +512,15 @@ const frame = (now: number) => {
   const nearState = near ? presentShipAudio(session.sim, near.id, 0, hoursNow()) : null;
   audio.setNearby(nearState && near ? { ...nearState, aboard: 0.5 * (1 - near.d / NEARBY) } : null, near ? Math.sin(Math.atan2(near.x - listener.x, near.z - listener.z) - listener.heading) : 0);
   renderer.salvo.visible = !useHud.getState().hudHidden;
-  renderer.salvo.set(salvoPreview(session.sim, session.playerId));
+  renderer.salvo.set(salvoPreview(session.sim, session.playerId, session.marks.marked()));
+  markTarget();
+  steerToMark();
   const course = presentCourse(session.sim, session.playerId);
   renderer.course.visible = !useHud.getState().hudHidden;
   renderer.course.setRoute(course.path, course.goal);
   renderer.course.setWind(presentWind(session.sim, session.playerId, drawing, course.goal ?? course.path[course.path.length - 1] ?? null));
   if (useHud.getState().courseActive !== (course.path.length > 0)) patchHud({ courseActive: course.path.length > 0 });
-  const focus = combatFocus(session.sim, session.playerId);
+  const focus = combatFocus(session.sim, session.playerId, session.marks.marked());
   renderer.focus = focus;
   renderer.frame(session.sim, { hours: hoursNow(), ...(sunAzimuth === undefined ? {} : { sunAzimuth }), overcast: Number(params.get("overcast") ?? 0.55), fog: 0 }, dt);
   fpsAcc += dt;
@@ -491,7 +534,7 @@ const frame = (now: number) => {
   patchHud({
     sailing: presentSailing(session.sim, session.playerId),
     combat: me ? presentCombat(me, session.sim.forts(), session.sim.ships()) : null,
-    target: me?.body ? presentTarget(session.sim, me) : null,
+    target: me?.body ? presentTarget(session.sim, me, session.marks.marked()) : null,
     port: me?.body ? presentPort(session.sim, me) : null,
     job: me?.body ? presentJob(session.sim, me) : null,
     marker: me?.body ? (focus ? presentMarker(renderer.project(focus.x, 2, focus.z), Math.hypot(focus.x - me.body.pos.x, focus.z - me.body.pos.z), clearArea(performance.now())) : (jobAhead(me.body.pos) ?? wreckMarker(me.body.pos))) : null,
