@@ -37,7 +37,7 @@ export const Compass = () => {
           <path d="M0,-46 L0,-30 M0,-46 L8,-42 L0,-38" className="waypoint" />
         </g>
       )}
-      {way && <text y="20" className="waypoint-distance">{way.distance >= 1000 ? `${(way.distance / 1000).toFixed(1)} km` : `${Math.round(way.distance)} m`}</text>}
+      {way && <text y="31" className="waypoint-distance">{way.distance >= 1000 ? `${(way.distance / 1000).toFixed(1)} km` : `${Math.round(way.distance)} m`}</text>}
       <text y="6" className="heading">{(((s.heading * 180) / Math.PI + 360) % 360).toFixed(0)}°</text>
     </svg>
   );
