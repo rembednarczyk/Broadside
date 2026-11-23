@@ -36,6 +36,9 @@ export type Cue =
   | { readonly kind: "chest" };
 
 const REF_DISTANCE = 40;
+/** Voice limiting: at most VOICES sounds of one kind start within WINDOW seconds. */
+const VOICES = 4;
+const WINDOW = 0.12;
 
 export class SynthAudio {
   private ctx: AudioContext | null = null;
@@ -78,7 +81,10 @@ export class SynthAudio {
     }
     const Ctx = globalThis.AudioContext ?? (globalThis as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
-    this.ctx = new Ctx();
+    // A larger output buffer: phones (Android's WebView above all) starve the "interactive" default's
+    // small one under a busy frame, and the output stutters on its last block (owner's report 22.11:
+    // "a stuck sound, no gunfire heard"). A few tens of milliseconds of latency do not matter here.
+    this.ctx = new Ctx({ latencyHint: "playback" });
     this.master = this.ctx.createGain();
     const comp = this.ctx.createDynamicsCompressor();
     this.master.connect(comp).connect(this.ctx.destination);
@@ -215,8 +221,36 @@ export class SynthAudio {
     }
   }
 
+  /** Pauses the sound while the app is in the background, and starts it again on return. */
+  setActive(on: boolean): void {
+    if (!this.ctx) return;
+    if (on) void this.ctx.resume();
+    else void this.ctx.suspend();
+  }
+
+  /** When each kind of placed sound last played, and how many since (voice limiting). */
+  private readonly recent = new Map<string, { t: number; n: number }>();
+
+  /**
+   * Voice limiting (as game audio engines cap the voices of a sound): at most VOICES of one kind
+   * start within WINDOW seconds; a broadside's dozens of splashes and cracks would otherwise each
+   * build their own nodes, and a phone's audio thread falls behind.
+   */
+  private allowed(kind: string): boolean {
+    const now = this.ctx!.currentTime;
+    const r = this.recent.get(kind);
+    if (!r || now - r.t > WINDOW) {
+      this.recent.set(kind, { t: now, n: 1 });
+      return true;
+    }
+    if (r.n >= VOICES) return false;
+    r.n++;
+    return true;
+  }
+
   play(cue: Cue, l: Listener): void {
     if (!this.ctx || this.ctx.state !== "running") return;
+    if ("x" in cue && !this.allowed(cue.kind)) return;
     if (cue.kind === "bell") return this.bell();
     if (cue.kind === "coins" || cue.kind === "clash" || cue.kind === "capstan" || cue.kind === "chest") return this.playNear(cue.kind);
     const at = this.place(cue.x, cue.z, l);

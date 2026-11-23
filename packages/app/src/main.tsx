@@ -12,6 +12,7 @@ import { jobMarker, presentMarker } from "./presenters/marker-presenter";
 import { chartTarget, presentChart } from "./presenters/chart-presenter";
 import { clearArea } from "./presenters/clear-area";
 import { FramePacer, readSetting, writeSetting } from "./frame-pacing";
+import { deviceToggles } from "./device-settings";
 import { presentAmbience } from "./presenters/ambience-presenter";
 import { presentSailing } from "./presenters/sailing-presenter";
 import { presentCombat, presentTarget } from "./presenters/combat-presenter";
@@ -148,27 +149,8 @@ const setReef = (on: boolean) => {
     // Storage unavailable: the choice lasts for this run only.
   }
 };
-// Vibration on hits and broadsides: on unless turned off on this device.
-const HAPTICS_KEY = "broadside.haptics";
-patchHud({ haptics: readSetting(HAPTICS_KEY) !== "0", language: readSetting("broadside.lang") === "pl" ? "pl" : "en" });
-const setHaptics = (on: boolean) => {
-  patchHud({ haptics: on });
-  writeSetting(HAPTICS_KEY, on ? "1" : "0");
-};
-// Camera shake at broadsides and hits: on unless turned off on this device.
-const SHAKE_KEY = "broadside.shake";
-patchHud({ shake: readSetting(SHAKE_KEY) !== "0" });
-const setShake = (on: boolean) => {
-  patchHud({ shake: on });
-  writeSetting(SHAKE_KEY, on ? "1" : "0");
-};
-// The armoury under the fire controls: folded unless unfolded on this device.
-const ARMORY_KEY = "broadside.armory";
-patchHud({ armory: readSetting(ARMORY_KEY) === "1" });
-const setArmory = (on: boolean) => {
-  patchHud({ armory: on });
-  writeSetting(ARMORY_KEY, on ? "1" : "0");
-};
+// Vibration, camera shake and the armoury's fold, kept on this device (device-settings).
+const { setHaptics, setShake, setArmory } = deviceToggles(patchHud);
 /** Assisted sailing for the Action steering mode (sim/systems/assist); the other modes sail by the wind. */
 const applySteering = (steering: SteeringMode) => {
   session.assist(usesPad(steering), false, steering === "fun");
@@ -400,7 +382,9 @@ addEventListener("keydown", () => audio.unlock());
 const autosave = () => void writeSave(store, "autosave", session.save(), new Date().toISOString());
 setInterval(autosave, 60_000);
 document.addEventListener("visibilitychange", () => {
+  // The sound stops in the background and starts afresh on return (Android left it stuck on a block).
   if (document.visibilityState === "hidden") autosave();
+  audio.setActive(document.visibilityState !== "hidden");
 });
 let noticeId = 0;
 const pushNotice = (key: string) => {
